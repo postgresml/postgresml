@@ -25,12 +25,6 @@
     doc.title.clone()
   };
 
-  let career_apply_path = if !document_not_found{
-    format!("/careers/apply/{}", doc.title.clone())
-  } else {
-    String::from("careers")
-  };
-
   let career_apply_url = if is_career {
     let mut path = doc.url.split("/").collect::<Vec<&str>>();
     path.insert(path.len()-1, "apply");

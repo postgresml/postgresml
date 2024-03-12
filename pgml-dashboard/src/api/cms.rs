@@ -775,7 +775,7 @@ async fn get_careers(
 
 #[get("/careers/apply/<title>", rank = 4)]
 pub async fn careers_apply(title: PathBuf, cluster: &Cluster) -> Result<ResponseOk, crate::responses::NotFound> {
-    let mut layout =
+    let layout =
         crate::components::layouts::marketing::Base::new("Apply for a career", Some(&cluster)).no_transparent_nav();
 
     let job_title = title.display().to_string().replace("-", " ");
