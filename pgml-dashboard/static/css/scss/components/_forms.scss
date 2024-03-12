@@ -292,3 +292,13 @@
     line-height: 24px;
     letter-spacing: 0.18px;
 }
+
+// fix autofill color for chrome
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active{
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: white;
+    transition: background-color 5000s ease-in-out 0s;
+}
