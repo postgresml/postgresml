@@ -34,6 +34,11 @@ div[data-controller="sections-split"] {
         max-height: 100vh;
     }
 
+    .right-center-navbar {
+        height: 100%;
+        min-height: calc( 100vh - 88px );
+    }
+
     .glow-1 {
         overflow: hidden;
         left: 50%;
@@ -77,16 +82,38 @@ div[data-controller="sections-split"] {
     }
 
     .glow-4 {
-        overflow: hidden;
         left: 50%;
         top: 65%;
-        position: absolute;
         width: 726.853px;
         height: 371.406px;
+        overflow: hidden;
+        position: absolute;
         transform: rotate(-59.934deg);
         flex-shrink: 0;
         border-radius: 726.853px;
         background: radial-gradient(46.38% 45.17% at 22.72% 36.9%, rgba(85, 66, 199, 0.60) 26.4%, rgba(174, 110, 255, 0.60) 100%);
         filter: blur(224.99658203125px);
     }
+
+    .glow-5 {
+        overflow: hidden;
+        position: absolute;
+        left: 50%;
+        top: -75px;
+        width: 121.519px;
+        height: 265.196px;
+        transform: rotate(-138.124deg);
+        flex-shrink: 0;
+        border-radius: 665.196px;
+        background: radial-gradient(55.54% 61.91% at 93.5% 14.5%, rgba(66, 132, 199, 0.40) 0%, rgba(152, 203, 255, 0.40) 100%);
+        filter: blur(112.498291015625px);
+
+        @include media-breakpoint-up(md) {
+            left: 50%;
+            top: -10%;
+            width: 321.519px;
+            height: 465.196px;
+        }
+    }
+    
 }
