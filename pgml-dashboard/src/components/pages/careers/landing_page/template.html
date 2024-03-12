@@ -1,6 +1,8 @@
 <%
   use crate::components::sections::common_resources::{CommonResources, Cards};
   use crate::components::sections::EmploymentBenefits;
+  use crate::components::cards::NewsletterSubscribe;
+  use crate::utils::config::standalone_dashboard;
 %>
 
 <div data-controller="pages-careers-landing-page" class="overflow-hidden tuck-under-navbar">
@@ -84,7 +86,15 @@
         <%+ EmploymentBenefits::new() %>
       </div>
 
-      <%+ CommonResources::new().show(Vec::from([Cards::Contribute, Cards::Docs, Cards::Community])) %>
+      <% if !standalone_dashboard() { %>
+      <div class="mt-5 container">
+        <%+ NewsletterSubscribe::new() %>
+      </div>
+      <% } %>
+
+      <div class="mt-5">
+        <%+ CommonResources::new().show(Vec::from([Cards::Contribute, Cards::Docs, Cards::Community])) %>
+      </div>
 
     </div>
   </div>

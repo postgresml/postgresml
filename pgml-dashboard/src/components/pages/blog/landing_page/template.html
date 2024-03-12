@@ -4,8 +4,7 @@
   use crate::components::sections::common_resources::{Cards, CommonResources};
   use crate::components::pages::blog::blog_search::call::Call as BlogSearchCall;
   use crate::components::cards::NewsletterSubscribe;
-
-
+  use crate::utils::config::standalone_dashboard;
 
   let cards = featured_cards.iter().map(|card| {
     ArticlePreview::new(card).featured().render_once().unwrap()
@@ -37,9 +36,12 @@
       <%+ BlogSearchCall::new() %>
     </div>
 
+
+    <% if !standalone_dashboard() { %>
     <div class="mt-5 container">
       <%+ NewsletterSubscribe::new() %>
     </div>
+    <% } %>
 
     <div class="mt-5">
       <%+ CommonResources::new().show(Vec::from([Cards::Contribute, Cards::Docs, Cards::Community])) %>
