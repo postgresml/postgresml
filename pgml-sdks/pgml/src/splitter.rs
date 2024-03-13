@@ -21,8 +21,8 @@ pub(crate) struct SplitterDatabaseData {
 /// A text splitter
 #[derive(alias, Debug, Clone)]
 pub struct Splitter {
-    pub name: String,
-    pub parameters: Json,
+    pub(crate) name: String,
+    pub(crate) parameters: Json,
     pub(crate) database_data: Option<SplitterDatabaseData>,
 }
 
