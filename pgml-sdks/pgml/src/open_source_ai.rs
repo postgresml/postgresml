@@ -13,6 +13,7 @@ use crate::{
 #[cfg(feature = "python")]
 use crate::types::{GeneralJsonAsyncIteratorPython, GeneralJsonIteratorPython, JsonPython};
 
+/// A drop in replacement for OpenAI
 #[derive(alias, Debug, Clone)]
 pub struct OpenSourceAI {
     database_url: Option<String>,
@@ -169,6 +170,20 @@ impl Iterator for AsyncToSyncJsonIterator {
     chat_completions_create_stream_async
 )]
 impl OpenSourceAI {
+    /// Creates a new [OpenSourceAI]
+    ///
+    /// # Arguments
+    ///
+    /// * `database_url`: The database url to use. If `None`, `PGML_DATABASE_URL` environment variable will be used.
+    ///
+    /// # Example
+    /// ```
+    /// use pgml::OpenSourceAI;
+    /// async fn run() -> anyhow::Result<()> {
+    ///     let ai = OpenSourceAI::new(None);
+    ///     Ok(())
+    /// }
+    /// ```
     pub fn new(database_url: Option<String>) -> Self {
         Self { database_url }
     }
@@ -216,6 +231,7 @@ mistralai/Mistral-7B-v0.1
         }
     }
 
+    /// Returns an async iterator of completions
     #[allow(clippy::too_many_arguments)]
     pub async fn chat_completions_create_stream_async(
         &self,
@@ -278,6 +294,7 @@ mistralai/Mistral-7B-v0.1
         Ok(GeneralJsonAsyncIterator(Box::pin(iter)))
     }
 
+    /// Returns an iterator of completions
     #[allow(clippy::too_many_arguments)]
     pub fn chat_completions_create_stream(
         &self,
@@ -302,6 +319,7 @@ mistralai/Mistral-7B-v0.1
         ))))
     }
 
+    /// An async function that returns completions
     #[allow(clippy::too_many_arguments)]
     pub async fn chat_completions_create_async(
         &self,
@@ -371,6 +389,7 @@ mistralai/Mistral-7B-v0.1
         .into())
     }
 
+    /// A function that returns completions
     #[allow(clippy::too_many_arguments)]
     pub fn chat_completions_create(
         &self,

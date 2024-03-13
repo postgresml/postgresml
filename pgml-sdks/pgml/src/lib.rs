@@ -20,7 +20,7 @@ mod filter_builder;
 mod languages;
 pub mod migrations;
 mod model;
-pub mod models;
+mod models;
 mod open_source_ai;
 mod order_by_builder;
 mod pipeline;

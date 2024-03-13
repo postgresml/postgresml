@@ -102,12 +102,10 @@ pub(crate) struct CollectionDatabaseData {
 /// A collection of documents
 #[derive(alias, Debug, Clone)]
 pub struct Collection {
-    pub name: String,
-    pub database_url: Option<String>,
-    pub pipelines_table_name: String,
-    pub documents_table_name: String,
-    pub chunks_table_name: String,
-    pub documents_tsvectors_table_name: String,
+    pub(crate) name: String,
+    pub(crate) database_url: Option<String>,
+    pub(crate) pipelines_table_name: String,
+    pub(crate) documents_table_name: String,
     pub(crate) database_data: Option<CollectionDatabaseData>,
 }
 
@@ -137,16 +135,21 @@ impl Collection {
     /// Creates a new [Collection]
     ///
     /// # Arguments
-    ///
     /// * `name` - The name of the collection.
     /// * `database_url` - An optional database_url. If passed, this url will be used instead of
-    /// the `DATABASE_URL` environment variable.
+    /// the `PGML_DATABASE_URL` environment variable.
+    ///
+    /// # Errors
+    /// * If the `name` is not composed of alphanumeric characters, whitespace, or '-' and '_'
     ///
     /// # Example
-    ///
     /// ```
     /// use pgml::Collection;
-    /// let collection = Collection::new("my_collection", None);
+    /// use anyhow::Result;
+    /// async fn doc() -> Result<()> {
+    ///     let mut collection = Collection::new("my_collection", None)?;
+    ///     Ok(())
+    /// }
     /// ```
     pub fn new(name: &str, database_url: Option<String>) -> anyhow::Result<Self> {
         if !name
@@ -157,19 +160,12 @@ impl Collection {
                 "Name must only consist of letters, numebers, white space, and '-' or '_'"
             )
         }
-        let (
-            pipelines_table_name,
-            documents_table_name,
-            chunks_table_name,
-            documents_tsvectors_table_name,
-        ) = Self::generate_table_names(name);
+        let (pipelines_table_name, documents_table_name) = Self::generate_table_names(name);
         Ok(Self {
             name: name.to_string(),
             database_url,
             pipelines_table_name,
             documents_table_name,
-            chunks_table_name,
-            documents_tsvectors_table_name,
             database_data: None,
         })
     }
@@ -261,6 +257,26 @@ impl Collection {
     }
 
     /// Adds a new  [Pipeline] to the [Collection]
+    ///
+    /// # Arguments
+    /// * `pipeline` - The [Pipeline] to add to the [Collection]
+    ///
+    /// # Errors
+    /// * If the [Pipeline] does not have schema
+    ///
+    /// # Example
+    /// ```
+    /// use pgml::Collection;
+    /// use pgml::Pipeline;
+    /// use anyhow::Result;
+    /// use serde_json::json;
+    /// async fn doc() -> Result<()> {
+    ///     let mut collection = Collection::new("my_collection", None)?;
+    ///     let mut pipeline = Pipeline::new("my_pipeline", Some(json!({}).into()))?;
+    ///     collection.add_pipeline(&mut pipeline).await?;
+    ///     Ok(())
+    /// }
+    /// ```
     #[instrument(skip(self))]
     pub async fn add_pipeline(&mut self, pipeline: &mut Pipeline) -> anyhow::Result<()> {
         // The flow for this function:
@@ -305,6 +321,23 @@ impl Collection {
     }
 
     /// Removes a [Pipeline] from the [Collection]
+    ///
+    /// # Arguments
+    /// * `pipeline` - The [Pipeline] to remove from the [Collection]
+    ///
+    /// # Example
+    /// ```
+    /// use pgml::Collection;
+    /// use pgml::Pipeline;
+    /// use anyhow::Result;
+    /// use serde_json::json;
+    /// async fn doc() -> Result<()> {
+    ///     let mut collection = Collection::new("my_collection", None)?;
+    ///     let mut pipeline = Pipeline::new("my_pipeline", None)?;
+    ///     collection.remove_pipeline(&mut pipeline).await?;
+    ///     Ok(())
+    /// }
+    /// ```
     #[instrument(skip(self))]
     pub async fn remove_pipeline(&mut self, pipeline: &Pipeline) -> anyhow::Result<()> {
         // The flow for this function:
@@ -334,6 +367,26 @@ impl Collection {
     }
 
     /// Enables a [Pipeline] on the [Collection]
+    ///
+    /// # Arguments
+    /// * `pipeline` - The [Pipeline] to enable
+    ///
+    /// # Errors
+    /// * If the pipeline has not already been added to the [Collection]
+    ///
+    /// # Example
+    /// ```
+    /// use pgml::Collection;
+    /// use pgml::Pipeline;
+    /// use anyhow::Result;
+    /// use serde_json::json;
+    /// async fn doc() -> Result<()> {
+    ///     let mut collection = Collection::new("my_collection", None)?;
+    ///     let mut pipeline = Pipeline::new("my_pipeline", None)?;
+    ///     collection.enable_pipeline(&mut pipeline).await?;
+    ///     Ok(())
+    /// }
+    /// ```
     #[instrument(skip(self))]
     pub async fn enable_pipeline(&mut self, pipeline: &mut Pipeline) -> anyhow::Result<()> {
         // The flow for this function:
@@ -356,6 +409,26 @@ impl Collection {
     }
 
     /// Disables a [Pipeline] on the [Collection]
+    ///
+    /// # Arguments
+    /// * `pipeline` - The [Pipeline] to remove
+    ///
+    /// # Errors
+    /// * If the pipeline has not already been added to the [Collection]
+    ///
+    /// # Example
+    /// ```
+    /// use pgml::Collection;
+    /// use pgml::Pipeline;
+    /// use anyhow::Result;
+    /// use serde_json::json;
+    /// async fn doc() -> Result<()> {
+    ///     let mut collection = Collection::new("my_collection", None)?;
+    ///     let mut pipeline = Pipeline::new("my_pipeline", None)?;
+    ///     collection.disable_pipeline(&pipeline).await?;
+    ///     Ok(())
+    /// }
+    /// ```
     #[instrument(skip(self))]
     pub async fn disable_pipeline(&self, pipeline: &Pipeline) -> anyhow::Result<()> {
         // The flow for this function:
@@ -390,7 +463,23 @@ impl Collection {
         Ok(())
     }
 
-    /// Upserts documents into the database
+    /// Upserts documents into [Collection]
+    ///
+    /// # Arguments
+    /// * `documents` - A vector of [Json] documents to upsert
+    /// * `args` - A [Json] object containing arguments for the upsert
+    ///
+    /// # Example
+    /// ```
+    /// use pgml::Collection;
+    /// use anyhow::Result;
+    /// use serde_json::json;
+    /// async fn doc() -> Result<()> {
+    ///     let mut collection = Collection::new("my_collection", None)?;
+    ///     collection.upsert_documents(vec![json!({"id": "1", "name": "one"}).into()], None).await?;
+    ///     Ok(())
+    /// }
+    /// ```
     #[instrument(skip(self, documents))]
     pub async fn upsert_documents(
         &mut self,
@@ -558,6 +647,31 @@ impl Collection {
     }
 
     /// Gets the documents on a [Collection]
+    ///
+    /// # Arguments
+    ///
+    /// * `args` - A JSON object containing the following keys:
+    ///   * `limit` - The maximum number of documents to return. Defaults to 1000.
+    ///   * `order_by` - A JSON array of objects that specify the order of the documents to return.
+    ///     Each object must have a `field` key with the name of the field to order by, and a `direction`
+    ///     key with the value `asc` or `desc`.
+    ///   * `last_row_id` - The id of the last document returned
+    ///   * `offset` - The number of documents to skip before returning results.
+    ///   * `filter` - A JSON object specifying the filter to apply to the documents.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use pgml::Collection;
+    /// use serde_json::json;
+    /// use anyhow::Result;
+    /// async fn run() -> anyhow::Result<()> {
+    ///     let collection = Collection::new("my_collection", None)?;
+    ///     let documents = collection.get_documents(Some(json!({
+    ///         "limit": 2,
+    ///     }).into()));
+    ///     Ok(())
+    /// }
     #[instrument(skip(self))]
     pub async fn get_documents(&self, args: Option<Json>) -> anyhow::Result<Vec<Json>> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
@@ -617,6 +731,26 @@ impl Collection {
     }
 
     /// Deletes documents in a [Collection]
+    ///
+    /// # Arguments
+    ///
+    /// * `filter` - A JSON object specifying the filter to apply to the documents.
+    ///
+    /// # Example
+    /// ```
+    /// use pgml::Collection;
+    /// use serde_json::json;
+    /// use anyhow::Result;
+    /// async fn run() -> anyhow::Result<()> {
+    ///    let collection = Collection::new("my_collection", None)?;
+    ///    collection.delete_documents(json!({
+    ///        "id": {
+    ///            "$eq": 1
+    ///        }
+    ///    }).into());
+    ///    Ok(())
+    /// }
+    /// ```
     #[instrument(skip(self))]
     pub async fn delete_documents(&self, filter: Json) -> anyhow::Result<()> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
@@ -633,6 +767,34 @@ impl Collection {
     }
 
     #[instrument(skip(self))]
+    /// Performs search over the documents in a [Collection]
+    ///
+    /// # Arguments
+    ///
+    /// * `query` - A JSON object specifying the query to perform.
+    /// * `pipeline` - The [Pipeline] to use for the search.
+    ///
+    /// # Example
+    /// ```
+    /// use pgml::Collection;
+    /// use pgml::Pipeline;
+    /// use serde_json::json;
+    /// use anyhow::Result;
+    /// async fn run() -> anyhow::Result<()> {
+    ///    let mut collection = Collection::new("my_collection", None)?;
+    ///    let mut pipeline = Pipeline::new("my_pipeline", None)?;
+    ///    let results = collection.search(json!({
+    ///        "query": {
+    ///            "semantic_search": {
+    ///                "title": {
+    ///                    "query": "This is a an example query string",
+    ///                },
+    ///            }
+    ///        }
+    ///    }).into(), &mut pipeline).await?;
+    ///    Ok(())
+    /// }
+    /// ```
     pub async fn search(&mut self, query: Json, pipeline: &mut Pipeline) -> anyhow::Result<Json> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
         let (built_query, values) = build_search_query(self, query.clone(), pipeline).await?;
@@ -676,6 +838,7 @@ impl Collection {
     }
 
     #[instrument(skip(self))]
+    /// Same as search but the [Collection] is not mutable. This will not work with [Pipeline]s that use remote embeddings
     pub async fn search_local(&self, query: Json, pipeline: &Pipeline) -> anyhow::Result<Json> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
         let (built_query, values) = build_search_query(self, query.clone(), pipeline).await?;
@@ -689,6 +852,29 @@ impl Collection {
         Ok(results)
     }
 
+    /// Adds a search event to the database
+    ///
+    /// # Arguments
+    ///
+    /// * `search_id` - The id of the search
+    /// * `search_result` - The index of the search result
+    /// * `event` - The event to add
+    /// * `pipeline` - The [Pipeline] used for the search
+    ///
+    /// # Example
+    /// ```
+    /// use pgml::Collection;
+    /// use pgml::Pipeline;
+    /// use serde_json::json;
+    /// use anyhow::Result;
+    /// async fn run() -> anyhow::Result<()> {
+    ///    let mut collection = Collection::new("my_collection", None)?;
+    ///    let mut pipeline = Pipeline::new("my_pipeline", None)?;
+    ///    collection.add_search_event(1, 1, json!({
+    ///        "event": "click",
+    ///    }).into(), &mut pipeline).await?;
+    ///    Ok(())
+    /// }
     #[instrument(skip(self))]
     pub async fn add_search_event(
         &self,
@@ -723,6 +909,31 @@ impl Collection {
     }
 
     /// Performs vector search on the [Collection]
+    ///
+    /// # Arguments
+    /// * `query` - The query to search for
+    /// * `pipeline` - The [Pipeline] to use for the search
+    ///
+    /// # Example
+    /// ```
+    /// use pgml::Collection;
+    /// use pgml::Pipeline;
+    /// use serde_json::json;
+    /// use anyhow::Result;
+    /// async fn run() -> anyhow::Result<()> {
+    ///    let mut collection = Collection::new("my_collection", None)?;
+    ///    let mut pipeline = Pipeline::new("my_pipeline", None)?;
+    ///    let results = collection.vector_search(json!({
+    ///        "query": {
+    ///            "fields": {
+    ///                "title": {
+    ///                    "query": "This is an example query string"
+    ///                }
+    ///             }
+    ///        }
+    ///    }).into(), &mut pipeline).await?;
+    ///    Ok(())
+    /// }
     #[instrument(skip(self))]
     #[allow(clippy::type_complexity)]
     pub async fn vector_search(
@@ -784,6 +995,20 @@ impl Collection {
         }
     }
 
+    /// Archives a [Collection]
+    /// This will free up the name to be reused. It does not delete it.
+    ///
+    /// # Example
+    /// ```
+    /// use pgml::Collection;
+    /// use pgml::Pipeline;
+    /// use serde_json::json;
+    /// use anyhow::Result;
+    /// async fn run() -> anyhow::Result<()> {
+    ///    let mut collection = Collection::new("my_collection", None)?;
+    ///    collection.archive().await?;
+    ///    Ok(())
+    /// }
     #[instrument(skip(self))]
     pub async fn archive(&mut self) -> anyhow::Result<()> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
@@ -822,12 +1047,26 @@ impl Collection {
         Ok(())
     }
 
+    /// A legacy query builder.
+    #[deprecated(since = "1.0.0", note = "please use `vector_search` instead")]
     #[instrument(skip(self))]
     pub fn query(&self) -> QueryBuilder {
         QueryBuilder::new(self.clone())
     }
 
     /// Gets all pipelines for the [Collection]
+    ///
+    /// # Example
+    /// ```
+    /// use pgml::Collection;
+    /// use pgml::Pipeline;
+    /// use serde_json::json;
+    /// use anyhow::Result;
+    /// async fn run() -> anyhow::Result<()> {
+    ///    let mut collection = Collection::new("my_collection", None)?;
+    ///    let pipelines = collection.get_pipelines().await?;
+    ///    Ok(())
+    /// }
     #[instrument(skip(self))]
     pub async fn get_pipelines(&mut self) -> anyhow::Result<Vec<Pipeline>> {
         self.verify_in_database(false).await?;
@@ -842,6 +1081,21 @@ impl Collection {
     }
 
     /// Gets a [Pipeline] by name
+    ///
+    /// # Arguments
+    /// * `name` - The name of the [Pipeline]
+    ///
+    /// # Example
+    /// ```
+    /// use pgml::Collection;
+    /// use pgml::Pipeline;
+    /// use serde_json::json;
+    /// use anyhow::Result;
+    /// async fn run() -> anyhow::Result<()> {
+    ///    let mut collection = Collection::new("my_collection", None)?;
+    ///    let pipeline = collection.get_pipeline("my_pipeline").await?;
+    ///    Ok(())
+    /// }
     #[instrument(skip(self))]
     pub async fn get_pipeline(&mut self, name: &str) -> anyhow::Result<Pipeline> {
         self.verify_in_database(false).await?;
@@ -857,6 +1111,18 @@ impl Collection {
     }
 
     /// Check if the [Collection] exists in the database
+    ///
+    /// # Example
+    /// ```
+    /// use pgml::Collection;
+    /// use pgml::Pipeline;
+    /// use serde_json::json;
+    /// use anyhow::Result;
+    /// async fn run() -> anyhow::Result<()> {
+    ///    let mut collection = Collection::new("my_collection", None)?;
+    ///    let exists = collection.exists().await?;
+    ///    Ok(())
+    /// }
     #[instrument(skip(self))]
     pub async fn exists(&self) -> anyhow::Result<bool> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
@@ -869,6 +1135,29 @@ impl Collection {
         Ok(collection.is_some())
     }
 
+    /// Upsert all files in a directory that match the file_types
+    ///
+    /// # Arguments
+    /// * `path` - The path to the directory to upsert
+    /// * `args` - A [Json](serde_json::Value) object with the following keys:
+    ///   * `file_types` - An array of file extensions to match. E.G. ['md', 'txt']
+    ///   * `file_batch_size` - The number of files to upsert at a time. Defaults to 10.
+    ///   * `follow_links` - Whether to follow symlinks. Defaults to false.
+    ///   * `ignore_paths` - An array of regexes to ignore. E.G. ['.*ignore.*']
+    ///
+    /// # Example
+    /// ```
+    /// use pgml::Collection;
+    /// use pgml::Pipeline;
+    /// use serde_json::json;
+    /// use anyhow::Result;
+    /// async fn run() -> anyhow::Result<()> {
+    ///    let mut collection = Collection::new("my_collection", None)?;
+    ///    collection.upsert_directory("/path/to/my/files", json!({
+    ///        "file_types": ["md", "txt"]
+    ///    }).into()).await?;
+    ///    Ok(())
+    /// }
     #[instrument(skip(self))]
     pub async fn upsert_directory(&mut self, path: &str, args: Json) -> anyhow::Result<()> {
         self.verify_in_database(false).await?;
@@ -944,6 +1233,22 @@ impl Collection {
         Ok(())
     }
 
+    /// Gets the sync status of a [Pipeline]
+    ///
+    /// # Arguments
+    /// * `pipeline` - The [Pipeline] to get the sync status of
+    ///
+    /// # Example
+    /// ```
+    /// use pgml::Collection;
+    /// use pgml::Pipeline;
+    /// use anyhow::Result;
+    /// async fn run() -> anyhow::Result<()> {
+    ///    let mut collection = Collection::new("my_collection", None)?;
+    ///    let mut pipeline = Pipeline::new("my_pipeline", None)?;
+    ///    let status = collection.get_pipeline_status(&mut pipeline).await?;
+    ///    Ok(())
+    /// }
     #[instrument(skip(self))]
     pub async fn get_pipeline_status(&mut self, pipeline: &mut Pipeline) -> anyhow::Result<Json> {
         self.verify_in_database(false).await?;
@@ -952,6 +1257,20 @@ impl Collection {
         pipeline.get_status(project_info, &pool).await
     }
 
+    #[instrument(skip(self))]
+    /// Generates a PlantUML ER Diagram for a [Collection] and [Pipeline] tables
+    ///
+    /// # Example
+    /// ```
+    /// use pgml::Collection;
+    /// use pgml::Pipeline;
+    /// use anyhow::Result;
+    /// async fn run() -> anyhow::Result<()> {
+    ///    let mut collection = Collection::new("my_collection", None)?;
+    ///    let mut pipeline = Pipeline::new("my_pipeline", None)?;
+    ///    let er_diagram = collection.generate_er_diagram(&mut pipeline).await?;
+    ///    Ok(())
+    /// }
     #[instrument(skip(self))]
     pub async fn generate_er_diagram(&mut self, pipeline: &mut Pipeline) -> anyhow::Result<String> {
         self.verify_in_database(false).await?;
@@ -1074,6 +1393,21 @@ entity "{schema}.{key}_tsvectors" as {nice_name_key}_tsvectors {{
         Ok(uml_entites)
     }
 
+    /// Upserts a file into a [Collection]
+    ///
+    /// # Arguments
+    /// * `path` - The path to the file to upsert
+    ///
+    /// # Example
+    /// ```
+    /// use pgml::Collection;
+    /// use anyhow::Result;
+    /// async fn run() -> anyhow::Result<()> {
+    ///    let mut collection = Collection::new("my_collection", None)?;
+    ///    collection.upsert_file("my_file.txt").await?;
+    ///    Ok(())
+    /// }
+    #[instrument(skip(self))]
     pub async fn upsert_file(&mut self, path: &str) -> anyhow::Result<()> {
         self.verify_in_database(false).await?;
         let path = Path::new(path);
@@ -1085,16 +1419,11 @@ entity "{schema}.{key}_tsvectors" as {nice_name_key}_tsvectors {{
         self.upsert_documents(vec![document.into()], None).await
     }
 
-    fn generate_table_names(name: &str) -> (String, String, String, String) {
-        [
-            ".pipelines",
-            ".documents",
-            ".chunks",
-            ".documents_tsvectors",
-        ]
-        .into_iter()
-        .map(|s| format!("{}{}", name, s))
-        .collect_tuple()
-        .unwrap()
+    fn generate_table_names(name: &str) -> (String, String) {
+        [".pipelines", ".documents"]
+            .into_iter()
+            .map(|s| format!("{}{}", name, s))
+            .collect_tuple()
+            .unwrap()
     }
 }
