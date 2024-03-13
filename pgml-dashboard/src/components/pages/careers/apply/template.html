@@ -38,12 +38,12 @@
 
           <div class="mb-3">
             <label class="form-label">Phone Number</label>
-            <input class="form-control" type="phone" name="phone" placeholder="(415)123-4567" size="42">
+            <input class="form-control" type="tel" name="phone" placeholder="(415)123-4567" size="42">
           </div>
 
           <div class="mb-3">
             <label class="form-label">LinkedIn URL</label>
-            <input class="form-control" type="linkedin" name="linkedin" placeholder="PostgresML" size="42">
+            <input class="form-control" type="text" name="linkedin" placeholder="PostgresML" size="42">
           </div>
 
           <div class="mb-3 w-100">
@@ -75,7 +75,7 @@
   
   let success_message = format!(r#"
   <div class="d-flex flex-column gap-2 p-2">
-    <p class="text-center">You have successfully applied for the <span class="text-capitalize">{}</span> role! We’ll be in contract with you shortly. </p>
+    <p class="text-center">You have successfully applied for the <span class="text-capitalize">{}</span> role! We’ll be in contact with you shortly. </p>
     <a class="btn btn-primary-web-app mx-auto" href="/careers" data-turbo-frame="_top">Careers</a>
   </div>
   "#, job_title);
