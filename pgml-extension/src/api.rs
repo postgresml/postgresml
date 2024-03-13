@@ -647,6 +647,10 @@ pub fn transform_json(
     inputs: default!(Vec<&str>, "ARRAY[]::TEXT[]"),
     cache: default!(bool, false),
 ) -> JsonB {
+    if let Err(err) = crate::bindings::transformers::whitelist::verify_task(&task.0) {
+        error!("{err}");
+    }
+
     match crate::bindings::transformers::transform(&task.0, &args.0, inputs) {
         Ok(output) => JsonB(output),
         Err(e) => error!("{e}"),
@@ -663,6 +667,9 @@ pub fn transform_string(
     cache: default!(bool, false),
 ) -> JsonB {
     let task_json = json!({ "task": task });
+    if let Err(err) = crate::bindings::transformers::whitelist::verify_task(&task_json) {
+        error!("{err}");
+    }
     match crate::bindings::transformers::transform(&task_json, &args.0, inputs) {
         Ok(output) => JsonB(output),
         Err(e) => error!("{e}"),
@@ -680,6 +687,9 @@ pub fn transform_conversational_json(
 ) -> JsonB {
     if !task.0["task"].as_str().is_some_and(|v| v == "conversational") {
         error!("ARRAY[]::JSONB inputs for transform should only be used with a conversational task");
+    }
+    if let Err(err) = crate::bindings::transformers::whitelist::verify_task(&task.0) {
+        error!("{err}");
     }
     match crate::bindings::transformers::transform(&task.0, &args.0, inputs) {
         Ok(output) => JsonB(output),
@@ -700,6 +710,9 @@ pub fn transform_conversational_string(
         error!("ARRAY[]::JSONB inputs for transform should only be used with a conversational task");
     }
     let task_json = json!({ "task": task });
+    if let Err(err) = crate::bindings::transformers::whitelist::verify_task(&task_json) {
+        error!("{err}");
+    }
     match crate::bindings::transformers::transform(&task_json, &args.0, inputs) {
         Ok(output) => JsonB(output),
         Err(e) => error!("{e}"),
