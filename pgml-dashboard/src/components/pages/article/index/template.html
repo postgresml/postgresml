@@ -24,6 +24,14 @@
   } else {
     doc.title.clone()
   };
+
+  let career_apply_url = if is_career {
+    let mut path = doc.url.split("/").collect::<Vec<&str>>();
+    path.insert(path.len()-1, "apply");
+    (path.join("/").to_string(), "Apply Now!")
+  } else {
+   (String::from("/contact"),"Contact")
+  };
 %>
 
 <div data-controller="pages-article-index" class="tuck-under-navbar">
@@ -114,7 +122,7 @@
         </div>
 
         <div class="d-flex show mt-5">
-          <a class="btn btn-primary-web-app" href="/contact">Contact</a>
+          <a class="btn btn-primary-web-app" href="<%- career_apply_url.0 %>"><%- career_apply_url.1 %></a>
         </div>
         <% } %>
       </article>

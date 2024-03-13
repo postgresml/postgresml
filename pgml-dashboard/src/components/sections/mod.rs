@@ -19,3 +19,7 @@ pub use have_questions::HaveQuestions;
 // src/components/sections/related_articles
 pub mod related_articles;
 pub use related_articles::RelatedArticles;
+
+// src/components/sections/split
+pub mod split;
+pub use split::Split;
