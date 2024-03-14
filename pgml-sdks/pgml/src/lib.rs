@@ -1052,7 +1052,7 @@ mod tests {
     #[tokio::test]
     async fn can_vector_search_with_local_embeddings() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let collection_name = "test r_c_cvswle_9";
+        let collection_name = "test r_c_cvswle_13";
         let mut collection = Collection::new(collection_name, None)?;
         let documents = generate_dummy_documents(10);
         collection.upsert_documents(documents.clone(), None).await?;
@@ -1095,10 +1095,12 @@ mod tests {
                                 "parameters": {
                                     "instruction": "Represent the Wikipedia document for retrieval"
                                 },
-                                "full_text_filter": "test"
+                                "full_text_filter": "test",
+                                "boost": 1.2
                             },
                             "body": {
-                                "query": "Test document: 2"
+                                "query": "Test document: 2",
+                                "boost": 1.0
                             },
                         },
                         "filter": {

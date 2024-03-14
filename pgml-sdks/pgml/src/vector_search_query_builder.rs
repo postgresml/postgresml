@@ -25,6 +25,7 @@ struct ValidField {
     query: String,
     parameters: Option<Json>,
     full_text_filter: Option<String>,
+    boost: Option<f32>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -98,6 +99,8 @@ pub async fn build_vector_search_query(
 
         let mut query = Query::select();
 
+        let boost = vf.boost.unwrap_or(1.);
+
         match model_runtime {
             ModelRuntime::Python => {
                 // Build the embedding CTE
@@ -118,7 +121,7 @@ pub async fn build_vector_search_query(
 
                 query
                     .expr(Expr::cust(format!(
-                        r#"1 - (embeddings.embedding <=> (SELECT embedding FROM "{key}_embedding")::vector) AS score"#
+                        r#"(1 - (embeddings.embedding <=> (SELECT embedding FROM "{key}_embedding")::vector)) * {boost} AS score"#
                     )))
                     .order_by_expr(Expr::cust(format!(
                         r#"embeddings.embedding <=> (SELECT embedding FROM "{key}_embedding")::vector"#
@@ -152,7 +155,7 @@ pub async fn build_vector_search_query(
                 // Build the score CTE
                 query
                     .expr(Expr::cust_with_values(
-                        r#"1 - (embeddings.embedding <=> $1::vector) AS score"#,
+                        r#"(1 - (embeddings.embedding <=> $1::vector)) {boost} AS score"#,
                         [embedding.clone()],
                     ))
                     .order_by_expr(
