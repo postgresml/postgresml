@@ -5,8 +5,8 @@
 SELECT pgml.embed('intfloat/e5-small', 'hi mom');
 SELECT pgml.embed('intfloat/e5-small', 'hi mom', '{"device": "cuda"}');
 SELECT pgml.embed('intfloat/e5-small', 'hi mom', '{"device": "cpu"}');
-
 SELECT pgml.embed('hkunlp/instructor-xl', 'hi mom', '{"instruction": "Encode it with love"}');
+SELECT pgml.embed('mixedbread-ai/mxbai-embed-large-v1', 'test', '{"prompt": "test prompt: "}');
 
 SELECT pgml.transform_stream(
   task   => '{
