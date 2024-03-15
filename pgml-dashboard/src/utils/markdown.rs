@@ -1286,6 +1286,13 @@ impl SiteSearch {
             .collect()
     }
 
+    pub async fn add_search_event(&self, search_id: i64, search_result: i64) -> anyhow::Result<()> {
+        self.collection.add_search_event(search_id, search_result + 1, serde_json::json!({
+            "clicked": true
+        }).into(), &self.pipeline).await?;
+        Ok(())
+    }
+
     pub async fn search(
         &self,
         query: &str,

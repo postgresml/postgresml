@@ -650,8 +650,13 @@ impl Collection {
 
 #[post("/search_event", data = "<search_event>")]
 async fn search_event(search_event: Form<crate::forms::SearchEvent>, site_search: &State<crate::utils::markdown::SiteSearch>) -> ResponseOk {
-    eprintln!("WE GOT IT: {:?}", search_event.clicked);
-    ResponseOk("".to_string())
+    match site_search.add_search_event(search_event.search_id, search_event.clicked).await {
+        Ok(_) => ResponseOk("ok".to_string()),
+        Err(e) => {
+            eprintln!("{:?}", e);
+            ResponseOk("error".to_string())    
+        }
+    }
 }
 
 #[get("/search?<query>", rank = 20)]

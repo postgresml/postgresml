@@ -18,24 +18,22 @@ export default class extends Controller {
 
     this.timer;
 
-    // Listen to click events and store clicked results
-    document.addEventListener("click", function(e) {
-      const target = e.target.closest(".search-result");
-      if (target) {
-        const resultIndex = target.getAttribute("data-result-index");
-        const searchId = target.getAttribute("data-search-id");
-        fetch('/search_event', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            search_id: searchId,
-            clicked: resultIndex,
-          }),
-        });
-      }
-    });
+    document.addEventListener("click", this.handle_search_click);
+  }
+
+  handle_search_click(e) {
+    const target = e.target.closest(".search-result");
+    if (target) {
+      const resultIndex = target.getAttribute("data-result-index");
+      const searchId = target.getAttribute("data-search-id");
+      const formData = new FormData();
+      formData.append("search_id", searchId);
+      formData.append("clicked", resultIndex);
+      fetch('/search_event', {
+        method: 'POST',
+        body: formData,
+      });
+    }
   }
 
   search(e) {
@@ -46,7 +44,7 @@ export default class extends Controller {
     }, 250);
   }
 
-  focusSearchInput = (e) => {
+  focusSearchInput = () => {
     this.searchInput.focus()
     this.searchTriggerTarget.blur()
   }
@@ -63,5 +61,6 @@ export default class extends Controller {
   disconnect() {
     this.searchTriggerTarget.removeEventListener('shown.bs.modal', this.focusSearchInput)
     this.searchTriggerTarget.removeEventListener('hidden.bs.modal', this.updateSearch)
+    document.removeEventListener("click", this.handle_search_click);
   }
 }
