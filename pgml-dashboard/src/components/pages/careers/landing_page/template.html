@@ -1,6 +1,8 @@
 <%
   use crate::components::sections::common_resources::{CommonResources, Cards};
   use crate::components::sections::EmploymentBenefits;
+  use crate::components::cards::NewsletterSubscribe;
+  use crate::utils::config::standalone_dashboard;
 %>
 
 <div data-controller="pages-careers-landing-page" class="overflow-hidden tuck-under-navbar">
@@ -39,7 +41,7 @@
   
             <div class="col">
               <div class="card generic-card card-generic-job-position h-100">
-                <a class="card-body d-flex flex-column" href="/contact">
+                <a class="card-body d-flex flex-column" href="/careers/apply/generic-position">
                   <h4>Don't see an exact fit?</h4>
                   <p class="text-white-300">We still want to hear from you if you’re passionate about contributing to PostgresML. Contact us.</p>
                   <span class="material-symbols-outlined goto-arrow goto-shift-animation mt-auto ms-auto text-white">arrow_forward</span>
@@ -84,7 +86,15 @@
         <%+ EmploymentBenefits::new() %>
       </div>
 
-      <%+ CommonResources::new().show(Vec::from([Cards::Contribute, Cards::Docs, Cards::Community])) %>
+      <% if !standalone_dashboard() { %>
+      <div class="mt-5 container">
+        <%+ NewsletterSubscribe::new() %>
+      </div>
+      <% } %>
+
+      <div class="mt-5">
+        <%+ CommonResources::new().show(Vec::from([Cards::Contribute, Cards::Docs, Cards::Community])) %>
+      </div>
 
     </div>
   </div>

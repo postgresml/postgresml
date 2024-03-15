@@ -9,4 +9,17 @@ div[data-controller="cards-newsletter-subscribe"] {
         background-image: url("/dashboard/static/images/newsletter_subscribe_background_mobile.png");
         background-color: #{$pink};
     }
+
+    .message {
+        display: none;
+
+        &.success, &.error {
+            display: block;
+        }
+
+        bottom: -3rem;
+        @include media-breakpoint-up(xl) {
+            left: 0px;
+        }
+    }
 }

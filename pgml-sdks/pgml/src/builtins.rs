@@ -5,7 +5,7 @@ use tracing::instrument;
 /// Provides access to builtin database methods
 #[derive(alias, Debug, Clone)]
 pub struct Builtins {
-    pub database_url: Option<String>,
+    database_url: Option<String>,
 }
 
 use crate::{get_or_initialize_pool, query_runner::QueryRunner, types::Json};

@@ -6,10 +6,13 @@ import { javascript } from "@codemirror/lang-javascript";
 import { rust } from "@codemirror/lang-rust";
 import { json } from "@codemirror/lang-json";
 import { EditorView, ViewPlugin, Decoration } from "@codemirror/view";
-import { RangeSetBuilder, Facet} from "@codemirror/state";
+import { RangeSetBuilder, Facet } from "@codemirror/state";
 import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
 
-import { highlightStyle, editorTheme } from "../../../static/js/utilities/code_mirror_theme";
+import {
+  highlightStyle,
+  editorTheme,
+} from "../../../static/js/utilities/code_mirror_theme";
 
 const buildEditorView = (target, content, languageExtension, classes) => {
   let editorView = new EditorView({
@@ -17,48 +20,55 @@ const buildEditorView = (target, content, languageExtension, classes) => {
     extensions: [
       basicSetup,
       languageExtension !== null ? languageExtension() : [], // if no language chosen do not highlight syntax
-      EditorView.theme(editorTheme), 
+      EditorView.theme(editorTheme),
       syntaxHighlighting(HighlightStyle.define(highlightStyle)),
       EditorView.contentAttributes.of({ contenteditable: false }),
       addClasses.of(classes),
-      highlight
+      highlight,
     ],
     parent: target,
-    highlightActiveLine: false
+    highlightActiveLine: false,
   });
   return editorView;
 };
 
-const highlight = ViewPlugin.fromClass(class {
-  constructor(view) {
-    this.decorations = highlightLine(view)
-  }
+const highlight = ViewPlugin.fromClass(
+  class {
+    constructor(view) {
+      this.decorations = highlightLine(view);
+    }
 
-  update(update) {
-    if (update.docChanged || update.viewportChanged)
-      this.decorations = highlightLine(update.view)
-  }
-}, {
-  decorations: v => v.decorations
-})
+    update(update) {
+      if (update.docChanged || update.viewportChanged)
+        this.decorations = highlightLine(update.view);
+    }
+  },
+  {
+    decorations: (v) => v.decorations,
+  },
+);
 
 function highlightLine(view) {
-  let builder = new RangeSetBuilder()
-  let classes = view.state.facet(addClasses).shift()
-  for (let {from, to} of view.visibleRanges) {
-    for (let pos = from; pos <= to;) {
-      let lineClasses = classes.shift()
-      let line = view.state.doc.lineAt(pos)
-      builder.add(line.from, line.from, Decoration.line({attributes: {class: lineClasses}}))
-      pos = line.to + 1
+  let builder = new RangeSetBuilder();
+  let classes = view.state.facet(addClasses).shift();
+  for (let { from, to } of view.visibleRanges) {
+    for (let pos = from; pos <= to; ) {
+      let lineClasses = classes.shift();
+      let line = view.state.doc.lineAt(pos);
+      builder.add(
+        line.from,
+        line.from,
+        Decoration.line({ attributes: { class: lineClasses } }),
+      );
+      pos = line.to + 1;
     }
   }
-  return builder.finish()
+  return builder.finish();
 }
 
 const addClasses = Facet.define({
-  combone: values => values
-})
+  combone: (values) => values,
+});
 
 const language = (element) => {
   switch (element.getAttribute("language")) {
@@ -77,26 +87,26 @@ const language = (element) => {
     default:
       return null;
   }
-}
+};
 
 const codeBlockCallback = (element) => {
-  let highlights = element.getElementsByClassName("highlight")
+  let highlights = element.getElementsByClassName("highlight");
   let classes = [];
-  for(let lineNum = 0; lineNum < highlights.length; lineNum++) {
-    classes.push(highlights[lineNum].classList)
+  for (let lineNum = 0; lineNum < highlights.length; lineNum++) {
+    classes.push(highlights[lineNum].classList);
   }
-  
-  let content = element.textContent.trim()
+
+  let content = element.textContent.trim();
   element.innerHTML = "";
 
-  return [element, content, classes]
-}
+  return [element, content, classes];
+};
 
 // Add Codemirror with data controller
 export default class extends Controller {
   connect() {
-    let [element, content, classes] = codeBlockCallback(this.element)
-    let lang = language(this.element)
+    let [element, content, classes] = codeBlockCallback(this.element);
+    let lang = language(this.element);
 
     buildEditorView(element, content, lang, classes);
   }
@@ -107,11 +117,11 @@ class CodeBlockA extends HTMLElement {
   constructor() {
     super();
 
-    this.language = language(this)
+    this.language = language(this);
   }
 
   connectedCallback() {
-    let [element, content, classes] = codeBlockCallback(this)
+    let [element, content, classes] = codeBlockCallback(this);
 
     buildEditorView(element, content, this.language, classes);
   }

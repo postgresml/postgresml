@@ -6,7 +6,7 @@ import * as marked from "marked";
 
 const getRandomInt = () => {
   return Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
-}
+};
 
 const LOADING_MESSAGE = `
 <div class="d-flex align-items-end">
@@ -20,13 +20,13 @@ const getBackgroundImageURLForSide = (side, brain) => {
     return "/dashboard/static/images/chatbot_user.webp";
   } else {
     if (brain == "teknium/OpenHermes-2.5-Mistral-7B") {
-      return "/dashboard/static/images/logos/openhermes.webp"
+      return "/dashboard/static/images/logos/openhermes.webp";
     } else if (brain == "Gryphe/MythoMax-L2-13b") {
-      return "/dashboard/static/images/logos/mythomax.webp"
+      return "/dashboard/static/images/logos/mythomax.webp";
     } else if (brain == "berkeley-nest/Starling-LM-7B-alpha") {
-      return "/dashboard/static/images/logos/starling.webp"    
+      return "/dashboard/static/images/logos/starling.webp";
     } else if (brain == "openai") {
-      return "/dashboard/static/images/logos/openai.webp"
+      return "/dashboard/static/images/logos/openai.webp";
     }
   }
 };
@@ -73,15 +73,15 @@ const knowledgeBaseIdToName = (knowledgeBase) => {
 
 const brainIdToName = (brain) => {
   if (brain == "teknium/OpenHermes-2.5-Mistral-7B") {
-    return "OpenHermes"
+    return "OpenHermes";
   } else if (brain == "Gryphe/MythoMax-L2-13b") {
-    return "MythoMax"
+    return "MythoMax";
   } else if (brain == "berkeley-nest/Starling-LM-7B-alpha") {
-    return "Starling"    
+    return "Starling";
   } else if (brain == "openai") {
-    return "ChatGPT"
+    return "ChatGPT";
   }
-}
+};
 
 const createKnowledgeBaseNotice = (knowledgeBase) => {
   return `
@@ -92,12 +92,12 @@ const createKnowledgeBaseNotice = (knowledgeBase) => {
 };
 
 class Message {
-  constructor(id, side, brain, text, is_partial=false) {
-    this.id = id
-    this.side = side
-    this.brain = brain
-    this.text = text
-    this.is_partial = is_partial
+  constructor(id, side, brain, text, is_partial = false) {
+    this.id = id;
+    this.side = side;
+    this.brain = brain;
+    this.text = text;
+    this.is_partial = is_partial;
   }
 
   get_html() {
@@ -106,7 +106,7 @@ class Message {
 }
 
 class RawMessage extends Message {
-  constructor(id, side, text, is_partial=false) {
+  constructor(id, side, text, is_partial = false) {
     super(id, side, text, is_partial);
   }
 
@@ -126,17 +126,28 @@ class MessageHistory {
       this.messageHistory[knowledgeBase] = [];
     }
     if (message.is_partial) {
-      let current_message = this.messageHistory[knowledgeBase].find(item => item.id == message.id);     
+      let current_message = this.messageHistory[knowledgeBase].find(
+        (item) => item.id == message.id,
+      );
       if (!current_message) {
         this.messageHistory[knowledgeBase].push(message);
       } else {
         current_message.text += message.text;
       }
     } else {
-      if (this.messageHistory[knowledgeBase].length == 0 || message.side != "system") {
-          this.messageHistory[knowledgeBase].push(message);
-      } else if (this.messageHistory[knowledgeBase][this.messageHistory[knowledgeBase].length -1].side == "system") {
-        this.messageHistory[knowledgeBase][this.messageHistory[knowledgeBase].length -1] = message
+      if (
+        this.messageHistory[knowledgeBase].length == 0 ||
+        message.side != "system"
+      ) {
+        this.messageHistory[knowledgeBase].push(message);
+      } else if (
+        this.messageHistory[knowledgeBase][
+          this.messageHistory[knowledgeBase].length - 1
+        ].side == "system"
+      ) {
+        this.messageHistory[knowledgeBase][
+          this.messageHistory[knowledgeBase].length - 1
+        ] = message;
       } else {
         this.messageHistory[knowledgeBase].push(message);
       }
@@ -156,7 +167,7 @@ export default class extends Controller {
   initialize() {
     this.messageHistory = new MessageHistory();
     this.messageIdToKnowledgeBaseId = {};
-    
+
     this.expanded = false;
     this.chatbot = document.getElementById("chatbot");
     this.expandContractImage = document.getElementById(
@@ -179,7 +190,14 @@ export default class extends Controller {
   }
 
   openConnection() {
-    const url = ((window.location.protocol === "https:") ? "wss://" : "ws://") + window.location.hostname + (((window.location.port != 80) && (window.location.port != 443)) ? ":" + window.location.port : "") + window.location.pathname + "/get-answer";
+    const url =
+      (window.location.protocol === "https:" ? "wss://" : "ws://") +
+      window.location.hostname +
+      (window.location.port != 80 && window.location.port != 443
+        ? ":" + window.location.port
+        : "") +
+      window.location.pathname +
+      "/get-answer";
     this.socket = new WebSocket(url);
     this.socket.onmessage = (message) => {
       let result = JSON.parse(message.data);
@@ -190,11 +208,20 @@ export default class extends Controller {
       } else {
         let message;
         if (result.partial_result) {
-          message = new Message(result.id, "bot", this.brain, result.partial_result, true);
+          message = new Message(
+            result.id,
+            "bot",
+            this.brain,
+            result.partial_result,
+            true,
+          );
         } else {
           message = new Message(result.id, "bot", this.brain, result.result);
         }
-        this.messageHistory.add_message(message, this.messageIdToKnowledgeBaseId[message.id]);
+        this.messageHistory.add_message(
+          message,
+          this.messageIdToKnowledgeBaseId[message.id],
+        );
         this.redrawChat();
       }
       this.chatHistory.scrollTop = this.chatHistory.scrollHeight;
@@ -215,10 +242,16 @@ export default class extends Controller {
     const result = await fetch("/chatbot/get-history");
     const history = await result.json();
     if (history.error) {
-      console.log("Error getting chat history", history.error)
+      console.log("Error getting chat history", history.error);
     } else {
       for (const message of history.result) {
-        const newMessage = new Message(getRandomInt(), message.side, message.brain, message.content, false);
+        const newMessage = new Message(
+          getRandomInt(),
+          message.side,
+          message.brain,
+          message.content,
+          false,
+        );
         console.log(newMessage);
         this.messageHistory.add_message(newMessage, message.knowledge_base);
       }
@@ -239,12 +272,15 @@ export default class extends Controller {
 
     // Hide or show example questions
     this.hideExampleQuestions();
-    if (messages.length == 0 || (messages.length == 1 && messages[0].side == "system")) {
+    if (
+      messages.length == 0 ||
+      (messages.length == 1 && messages[0].side == "system")
+    ) {
       document
         .getElementById(`chatbot-example-questions-${this.knowledgeBase}`)
         .style.setProperty("display", "flex", "important");
     }
-    
+
     this.chatHistory.scrollTop = this.chatHistory.scrollHeight;
   }
 
@@ -255,20 +291,25 @@ export default class extends Controller {
     this.hideExampleQuestions();
     this.redrawChat();
 
-    let loadingMessage = new Message("loading", "bot", this.brain, LOADING_MESSAGE);
+    let loadingMessage = new Message(
+      "loading",
+      "bot",
+      this.brain,
+      LOADING_MESSAGE,
+    );
     this.chatHistory.insertAdjacentHTML(
       "beforeend",
       createHistoryMessage(loadingMessage),
     );
     this.chatHistory.scrollTop = this.chatHistory.scrollHeight;
-    
+
     let id = getRandomInt();
     this.messageIdToKnowledgeBaseId[id] = this.knowledgeBase;
     let socketData = {
       id,
       question,
       model: this.brain,
-      knowledge_base: this.knowledgeBase
+      knowledge_base: this.knowledgeBase,
     };
     this.socket.send(JSON.stringify(socketData));
   }
@@ -293,8 +334,7 @@ export default class extends Controller {
     e.preventDefault();
     // Don't continue if the question is empty
     const question = this.questionInput.value.trim();
-    if (question.length == 0)
-      return;
+    if (question.length == 0) return;
     // Handle resetting the input
     // There is probably a better way to do this, but this was the best/easiest I found
     this.questionInput.value = "";
@@ -305,18 +345,20 @@ export default class extends Controller {
   }
 
   handleBrainChange() {
-    let selected = document.querySelector('input[name="chatbot-brain-options"]:checked').value;
-    if (selected == this.brain)
-      return;
+    let selected = document.querySelector(
+      'input[name="chatbot-brain-options"]:checked',
+    ).value;
+    if (selected == this.brain) return;
     this.brain = selected;
     this.questionInput.focus();
     this.addBrainAndKnowledgeBaseChangedSystemMessage();
   }
 
   handleKnowledgeBaseChange() {
-    let selected = document.querySelector('input[name="chatbot-knowledge-base-options"]:checked').value;
-    if (selected == this.knowledgeBase)
-      return;
+    let selected = document.querySelector(
+      'input[name="chatbot-knowledge-base-options"]:checked',
+    ).value;
+    if (selected == this.knowledgeBase) return;
     this.knowledgeBase = selected;
     this.redrawChat();
     this.questionInput.focus();
@@ -327,7 +369,12 @@ export default class extends Controller {
     let knowledge_base = knowledgeBaseIdToName(this.knowledgeBase);
     let brain = brainIdToName(this.brain);
     let content = `Chatting with ${brain} about ${knowledge_base}`;
-    const newMessage = new Message(getRandomInt(), "system", this.brain, content);
+    const newMessage = new Message(
+      getRandomInt(),
+      "system",
+      this.brain,
+      content,
+    );
     this.messageHistory.add_message(newMessage, this.knowledgeBase);
     this.redrawChat();
   }
@@ -355,7 +402,7 @@ export default class extends Controller {
     const toastElement = createToast(message, level);
     showToast(toastElement, {
       autohide: true,
-      delay: 7000
+      delay: 7000,
     });
   }
 

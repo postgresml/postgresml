@@ -6,8 +6,7 @@ use sea_query::Iden;
 use serde::{Deserialize, Serialize};
 use std::ops::{Deref, DerefMut};
 
-/// A wrapper around serde_json::Value
-// #[derive(sqlx::Type, sqlx::FromRow, Debug)]
+/// A wrapper around `serde_json::Value`
 #[derive(alias_manual, sqlx::Type, Debug, Clone, Deserialize, PartialEq, Eq)]
 #[sqlx(transparent)]
 pub struct Json(pub serde_json::Value);
@@ -80,7 +79,7 @@ impl TryToNumeric for serde_json::Value {
     }
 }
 
-/// A wrapper around sqlx::types::PrimitiveDateTime
+/// A wrapper around `sqlx::types::PrimitiveDateTime`
 #[derive(sqlx::Type, Debug, Clone)]
 #[sqlx(transparent)]
 pub struct DateTime(pub sqlx::types::time::PrimitiveDateTime);
@@ -124,6 +123,7 @@ impl IntoTableNameAndSchema for String {
     }
 }
 
+/// A wrapper around `std::pin::Pin<Box<dyn Stream<Item = anyhow::Result<Json>> + Send>>`
 #[derive(alias_manual)]
 pub struct GeneralJsonAsyncIterator(
     pub std::pin::Pin<Box<dyn Stream<Item = anyhow::Result<Json>> + Send>>,
@@ -140,6 +140,7 @@ impl Stream for GeneralJsonAsyncIterator {
     }
 }
 
+/// A wrapper around `Box<dyn Iterator<Item = anyhow::Result<Json>> + Send>`
 #[derive(alias_manual)]
 pub struct GeneralJsonIterator(pub Box<dyn Iterator<Item = anyhow::Result<Json>> + Send>);
 
