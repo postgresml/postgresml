@@ -6,11 +6,15 @@ use sailfish::TemplateOnce;
 #[template(path = "pages/blog/blog_search/response/template.html")]
 pub struct Response {
     html: Vec<String>,
+    search_id: Option<i64>,
 }
 
 impl Response {
-    pub fn new() -> Response {
-        Response { html: Vec::new() }
+    pub fn new(search_id: Option<i64>) -> Response {
+        Response {
+            html: Vec::new(),
+            search_id,
+        }
     }
 
     pub fn pattern(mut self, mut articles: Vec<DocMeta>, is_search: bool) -> Response {
@@ -53,7 +57,8 @@ impl Response {
         };
 
         articles.reverse();
-        while articles.len() > 0 {
+        let mut search_result_index = 0;
+        while !articles.is_empty() {
             // Get the row pattern or repeat the last two row patterns.
             let pattern = match layout.get(cycle) {
                 Some(pattern) => pattern,
@@ -74,11 +79,12 @@ impl Response {
                     for (i, doc) in row.into_iter().enumerate() {
                         let template = pattern[i];
                         html.push(
-                            ArticlePreview::new(&doc.unwrap())
+                            ArticlePreview::new(&doc.unwrap(), self.search_id, Some(search_result_index))
                                 .card_type(template)
                                 .render_once()
                                 .unwrap(),
-                        )
+                        );
+                        search_result_index += 1;
                     }
                 } else {
                     html.push(format!(
@@ -101,24 +107,36 @@ impl Response {
                         {}
                       </div>
                         "#,
-                        ArticlePreview::new(&row[0].clone().unwrap())
+                        ArticlePreview::new(&row[0].clone().unwrap(), self.search_id, Some(search_result_index))
                             .big()
                             .render_once()
                             .unwrap(),
-                        ArticlePreview::new(&row[1].clone().unwrap()).render_once().unwrap(),
-                        ArticlePreview::new(&row[2].clone().unwrap()).render_once().unwrap(),
-                        ArticlePreview::new(&row[0].clone().unwrap()).render_once().unwrap(),
-                        ArticlePreview::new(&row[1].clone().unwrap()).render_once().unwrap(),
-                        ArticlePreview::new(&row[2].clone().unwrap()).render_once().unwrap()
-                    ))
+                        ArticlePreview::new(&row[1].clone().unwrap(), self.search_id, Some(search_result_index + 1))
+                            .render_once()
+                            .unwrap(),
+                        ArticlePreview::new(&row[2].clone().unwrap(), self.search_id, Some(search_result_index + 2))
+                            .render_once()
+                            .unwrap(),
+                        ArticlePreview::new(&row[0].clone().unwrap(), self.search_id, Some(search_result_index + 3))
+                            .render_once()
+                            .unwrap(),
+                        ArticlePreview::new(&row[1].clone().unwrap(), self.search_id, Some(search_result_index + 4))
+                            .render_once()
+                            .unwrap(),
+                        ArticlePreview::new(&row[2].clone().unwrap(), self.search_id, Some(search_result_index + 5))
+                            .render_once()
+                            .unwrap()
+                    ));
+                    search_result_index += 6;
                 }
             } else {
                 html.push(
-                    ArticlePreview::new(&articles.pop().unwrap())
+                    ArticlePreview::new(&articles.pop().unwrap(), self.search_id, Some(search_result_index))
                         .card_type("default")
                         .render_once()
                         .unwrap(),
-                )
+                );
+                search_result_index += 1;
             }
             cycle += 1;
         }
