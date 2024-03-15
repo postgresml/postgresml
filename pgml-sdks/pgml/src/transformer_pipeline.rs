@@ -117,6 +117,13 @@ impl Stream for TransformerStream {
 
 #[alias_methods(new, transform, transform_stream)]
 impl TransformerPipeline {
+    /// Creates a new [TransformerPipeline]
+    ///
+    /// # Arguments
+    /// * `task` - The task to run
+    /// * `model` - The model to use
+    /// * `args` - The arguments to pass to the task
+    /// * `database_url` - The database url to use. If None, the `PGML_DATABASE_URL` environment variable will be used
     pub fn new(
         task: &str,
         model: Option<String>,
@@ -141,6 +148,11 @@ impl TransformerPipeline {
         }
     }
 
+    /// Calls transform
+    ///
+    /// # Arguments
+    /// * `inputs` - The inputs to the task
+    /// * `args` - The arguments to pass to the task
     #[instrument(skip(self))]
     pub async fn transform(&self, inputs: Vec<Json>, args: Option<Json>) -> anyhow::Result<Json> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
@@ -176,6 +188,9 @@ impl TransformerPipeline {
         Ok(Json(results))
     }
 
+    /// Calls transform
+    /// The same as transformer but it returns an iterator
+    /// The `batch_size` argument can be used to control the number of results returned in each batch
     #[instrument(skip(self))]
     pub async fn transform_stream(
         &self,

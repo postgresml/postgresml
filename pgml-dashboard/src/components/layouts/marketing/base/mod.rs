@@ -34,6 +34,7 @@ pub struct Base {
     pub alert_banner: AlertBanner,
     pub user: Option<User>,
     pub theme: Theme,
+    pub no_transparent_nav: bool,
 }
 
 impl Base {
@@ -54,6 +55,7 @@ impl Base {
             footer,
             alert_banner: AlertBanner::from_notification(Notification::next_alert(context)),
             user,
+            no_transparent_nav: false,
             ..Default::default()
         }
     }
@@ -87,6 +89,11 @@ impl Base {
 
     pub fn theme(mut self, theme: Theme) -> Self {
         self.theme = theme;
+        self
+    }
+
+    pub fn no_transparent_nav(mut self) -> Self {
+        self.no_transparent_nav = true;
         self
     }
 

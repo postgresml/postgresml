@@ -54,10 +54,10 @@ pub(crate) struct ModelDatabaseData {
 /// A model used for embedding, inference, etc...
 #[derive(alias, Debug, Clone)]
 pub struct Model {
-    pub name: String,
-    pub runtime: ModelRuntime,
-    pub parameters: Json,
-    pub(crate) database_data: Option<ModelDatabaseData>,
+    pub(crate) name: String,
+    pub(crate) runtime: ModelRuntime,
+    pub(crate) parameters: Json,
+    database_data: Option<ModelDatabaseData>,
 }
 
 impl Default for Model {
@@ -69,19 +69,6 @@ impl Default for Model {
 #[alias_methods(new, transform)]
 impl Model {
     /// Creates a new [Model]
-    ///
-    /// # Arguments
-    ///
-    /// * `name` - The name of the model.
-    /// * `source` - The source of the model. Defaults to `pgml`, but can be set to providers like `openai`.
-    /// * `parameters` - The parameters to the model. Defaults to None
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use pgml::Model;
-    /// let model = Model::new(Some("intfloat/e5-small".to_string()), None, None, None);
-    /// ```
     pub fn new(name: Option<String>, source: Option<String>, parameters: Option<Json>) -> Self {
         let name = name.unwrap_or("intfloat/e5-small".to_string());
         let parameters = parameters.unwrap_or(Json(serde_json::json!({})));

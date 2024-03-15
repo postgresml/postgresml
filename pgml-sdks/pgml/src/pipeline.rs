@@ -175,11 +175,12 @@ pub struct PipelineDatabaseData {
     pub created_at: DateTime,
 }
 
+/// A pipeline that describes transformations to documents
 #[derive(alias, Debug, Clone)]
 pub struct Pipeline {
-    pub name: String,
-    pub schema: Option<Json>,
-    pub parsed_schema: Option<ParsedSchema>,
+    pub(crate) name: String,
+    pub(crate) schema: Option<Json>,
+    pub(crate) parsed_schema: Option<ParsedSchema>,
     database_data: Option<PipelineDatabaseData>,
 }
 
@@ -203,6 +204,11 @@ fn json_to_schema(schema: &Json) -> anyhow::Result<ParsedSchema> {
 
 #[alias_methods(new)]
 impl Pipeline {
+    /// Creates a [Pipeline]
+    ///
+    /// # Arguments
+    /// * `name` - The name of the pipeline
+    /// * `schema` - The schema of the pipeline. This is a JSON object where the keys are the field names and the values are the field actions.
     pub fn new(name: &str, schema: Option<Json>) -> anyhow::Result<Self> {
         let parsed_schema = schema.as_ref().map(json_to_schema).transpose()?;
         Ok(Self {
@@ -215,7 +221,7 @@ impl Pipeline {
 
     /// Gets the status of the [Pipeline]
     #[instrument(skip(self))]
-    pub async fn get_status(
+    pub(crate) async fn get_status(
         &mut self,
         project_info: &ProjectInfo,
         pool: &Pool<Postgres>,

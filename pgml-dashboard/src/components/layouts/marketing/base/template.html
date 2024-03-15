@@ -16,7 +16,7 @@
         <main>
             <%+ alert_banner %>
 
-            <%+ MarketingNavbar::new(user) %>
+            <%+ MarketingNavbar::new(user).no_transparent_nav(no_transparent_nav) %>
 
             <%- content.unwrap_or_default() %>
             <%- footer.unwrap_or_default() %>

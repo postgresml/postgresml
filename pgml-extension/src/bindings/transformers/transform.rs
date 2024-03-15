@@ -46,8 +46,6 @@ pub fn transform<T: serde::Serialize>(
     args: &serde_json::Value,
     inputs: T,
 ) -> Result<serde_json::Value> {
-    whitelist::verify_task(task)?;
-
     let task = serde_json::to_string(task)?;
     let args = serde_json::to_string(args)?;
     let inputs = serde_json::to_string(&inputs)?;

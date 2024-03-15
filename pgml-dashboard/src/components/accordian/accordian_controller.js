@@ -13,10 +13,9 @@ export default class extends Controller {
       } else {
         this.bodies[i].style.maxHeight = this.bodies[i].offsetHeight + "px";
       }
-    } 
+    }
   }
 
-  
   titleClick(e) {
     let target = e.currentTarget.getAttribute("data-value");
     e.currentTarget.classList.add("selected");
@@ -24,7 +23,7 @@ export default class extends Controller {
     let body = document.querySelector(`[data-accordian-target="${target}"]`);
     body.classList.add("selected");
     body.style.maxHeight = this.heights.get(body) + "px";
-    
+
     for (let i = 0; i < this.bodies.length; i++) {
       if (body != this.bodies[i]) {
         this.bodies[i].classList.remove("selected");
