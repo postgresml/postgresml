@@ -1,48 +1,67 @@
 import {
-    Controller
+  Controller
 } from '@hotwired/stimulus'
 
 export default class extends Controller {
-    static targets = [
-        'searchTrigger',
-    ]
+  static targets = [
+    'searchTrigger',
+  ]
 
-    connect() {
-        this.target = document.getElementById("search");
-        this.searchInput = document.getElementById("search-input");
-        this.searchFrame = document.getElementById("search-results")
+  connect() {
+    this.target = document.getElementById("search");
+    this.searchInput = document.getElementById("search-input");
+    this.searchFrame = document.getElementById("search-results")
 
-        this.target.addEventListener('shown.bs.modal', this.focusSearchInput)
-        this.target.addEventListener('hidden.bs.modal', this.updateSearch)
-        this.searchInput.addEventListener('input', (e) => this.search(e))
+    this.target.addEventListener('shown.bs.modal', this.focusSearchInput)
+    this.target.addEventListener('hidden.bs.modal', this.updateSearch)
+    this.searchInput.addEventListener('input', (e) => this.search(e))
 
-        this.timer;
-    }
+    this.timer;
 
-    search(e) {
-        clearTimeout(this.timer);
-        const query = e.currentTarget.value
-        this.timer = setTimeout(() => {
-            this.searchFrame.src = `/search?query=${query}`
-        }, 250);
-    }
+    // Listen to click events and store clicked results
+    document.addEventListener("click", function(e) {
+      const target = e.target.closest(".search-result");
+      if (target) {
+        const resultIndex = target.getAttribute("data-result-index");
+        const searchId = target.getAttribute("data-search-id");
+        fetch('/search_event', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            search_id: searchId,
+            clicked: resultIndex,
+          }),
+        });
+      }
+    });
+  }
 
-    focusSearchInput = (e) => {
-        this.searchInput.focus()
-        this.searchTriggerTarget.blur()
-    }
+  search(e) {
+    clearTimeout(this.timer);
+    const query = e.currentTarget.value
+    this.timer = setTimeout(() => {
+      this.searchFrame.src = `/search?query=${query}`
+    }, 250);
+  }
 
-    updateSearch = () => {
-      this.searchTriggerTarget.value = this.searchInput.value
-    }
+  focusSearchInput = (e) => {
+    this.searchInput.focus()
+    this.searchTriggerTarget.blur()
+  }
 
-    openSearch = (e) => {
-      new bootstrap.Modal(this.target).show()
-      this.searchInput.value = e.currentTarget.value
-    }
+  updateSearch = () => {
+    this.searchTriggerTarget.value = this.searchInput.value
+  }
 
-    disconnect() {
-        this.searchTriggerTarget.removeEventListener('shown.bs.modal', this.focusSearchInput)
-        this.searchTriggerTarget.removeEventListener('hidden.bs.modal', this.updateSearch)
-    }
+  openSearch = (e) => {
+    new bootstrap.Modal(this.target).show()
+    this.searchInput.value = e.currentTarget.value
+  }
+
+  disconnect() {
+    this.searchTriggerTarget.removeEventListener('shown.bs.modal', this.focusSearchInput)
+    this.searchTriggerTarget.removeEventListener('hidden.bs.modal', this.updateSearch)
+  }
 }

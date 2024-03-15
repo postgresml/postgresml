@@ -8,6 +8,7 @@ use crate::utils::markdown::SearchResult;
 #[derive(TemplateOnce)]
 #[template(path = "components/search.html")]
 pub struct Search {
+    pub search_id: i64,
     pub query: String,
     pub results: Vec<SearchResult>,
 }

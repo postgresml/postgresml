@@ -30,3 +30,9 @@ pub struct ChatbotPostData {
     #[serde(rename = "knowledgeBase")]
     pub knowledge_base: u8,
 }
+
+#[derive(FromForm)]
+pub struct SearchEvent {
+    pub search_id: i64,
+    pub clicked: i64
+}
