@@ -41,7 +41,12 @@ if meta.author.is_some() {
   );
 %>
 
+<%
+if let (Some(search_id), Some(search_result_index)) = (search_id, search_result_index) { %>
+<div data-controller="cards-blog-article-preview" class="blog-search-result" data-search-id="<%- search_id %>" data-result-index="<%- search_result_index %>">
+<% } else { %>
 <div data-controller="cards-blog-article-preview">
+<% } %>
   <% if card_type == String::from("featured") {%>
   <a class="doc-card feature-card d-flex flex-column flex-xxl-row" href="<%- meta.path %>">
     <div class="cover-image-container">

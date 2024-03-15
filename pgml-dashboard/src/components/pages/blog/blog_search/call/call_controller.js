@@ -10,6 +10,23 @@ export default class extends Controller {
   connect() {
     this.timer;
     this.tags = "";
+
+    document.addEventListener("click", this.handle_search_click);
+  }
+
+  handle_search_click(e) {
+    const target = e.target.closest(".blog-search-result");
+    if (target) {
+      const resultIndex = target.getAttribute("data-result-index");
+      const searchId = target.getAttribute("data-search-id");
+      const formData = new FormData();
+      formData.append("search_id", searchId);
+      formData.append("clicked", resultIndex);
+      fetch('/search_event', {
+        method: 'POST',
+        body: formData,
+      });
+    }
   }
 
   search() {
@@ -48,5 +65,9 @@ export default class extends Controller {
 
     this.tags = "";
     this.search();
+  }
+
+  disconnect() {
+    document.removeEventListener("click", this.handle_search_click);
   }
 }

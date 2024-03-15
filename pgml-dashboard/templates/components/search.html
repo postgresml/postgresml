@@ -1,11 +1,11 @@
 <turbo-frame id="search-results">
   <div class="list-group">
-    <% if query.len() < 1 { %>
+    <% if query.is_empty() { %>
     <p class="mb-0">Type to start searching</p>
     <% } else if !results.is_empty() {
-      for result in results.iter() {
+      for (i, result) in results.iter().enumerate() {
     %>
-    <a class="list-group-item" href="<%- result.path %>" data-turbo-frame="_top">
+    <a class="list-group-item search-result" data-result-index="<%- i %>" data-search-id="<%- search_id %>" href="<%- result.path %>" data-turbo-frame="_top">
       <div class="text-white">
         <h5 class="h5 mb-1"><%= result.title %></h5>
         <% if !result.snippet.is_empty() { %>

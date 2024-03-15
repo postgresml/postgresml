@@ -38,13 +38,17 @@ impl DocMeta {
 pub struct ArticlePreview {
     card_type: String,
     meta: DocMeta,
+    search_id: Option<i64>,
+    search_result_index: Option<i64>,
 }
 
 impl ArticlePreview {
-    pub fn new(meta: &DocMeta) -> ArticlePreview {
+    pub fn new(meta: &DocMeta, search_id: Option<i64>, search_result_index: Option<i64>) -> ArticlePreview {
         ArticlePreview {
             card_type: String::from("default"),
             meta: meta.to_owned(),
+            search_id,
+            search_result_index,
         }
     }
 
@@ -76,7 +80,7 @@ impl ArticlePreview {
     pub async fn from_path(path: &str) -> ArticlePreview {
         let doc = Document::from_path(&PathBuf::from(path)).await.unwrap();
         let meta = DocMeta::from_document(doc);
-        ArticlePreview::new(&meta)
+        ArticlePreview::new(&meta, None, None)
     }
 }
 

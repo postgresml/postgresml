@@ -1286,12 +1286,19 @@ impl SiteSearch {
             .collect()
     }
 
+    pub async fn add_search_event(&self, search_id: i64, search_result: i64) -> anyhow::Result<()> {
+        self.collection.add_search_event(search_id, search_result + 1, serde_json::json!({
+            "clicked": true
+        }).into(), &self.pipeline).await?;
+        Ok(())
+    }
+
     pub async fn search(
         &self,
         query: &str,
         doc_type: Option<DocType>,
         doc_tags: Option<Vec<String>>,
-    ) -> anyhow::Result<Vec<Document>> {
+    ) -> anyhow::Result<(i64, Vec<Document>)> {
         let mut search = serde_json::json!({
             "query": {
                 // "full_text_search": {
@@ -1335,15 +1342,22 @@ impl SiteSearch {
         }
         let results = self.collection.search_local(search.into(), &self.pipeline).await?;
 
-        results["results"]
-            .as_array()
-            .context("Error getting results from search")?
-            .iter()
-            .map(|r| {
-                let document: Document = serde_json::from_value(r["document"].clone())?;
-                Ok(document)
-            })
-            .collect()
+        let search_id = results["search_id"]
+            .as_i64()
+            .context("Error getting search_id from search")?;
+
+        Ok((
+            search_id,
+            results["results"]
+                .as_array()
+                .context("Error getting results from search")?
+                .iter()
+                .map(|r| {
+                    let document: Document = serde_json::from_value(r["document"].clone())?;
+                    anyhow::Ok(document)
+                })
+                .collect::<anyhow::Result<Vec<Document>>>()?,
+        ))
     }
 
     pub async fn build(&mut self) -> anyhow::Result<()> {

@@ -7,7 +7,7 @@
   use crate::utils::config::standalone_dashboard;
 
   let cards = featured_cards.iter().map(|card| {
-    ArticlePreview::new(card).featured().render_once().unwrap()
+    ArticlePreview::new(card, None, None).featured().render_once().unwrap()
   }).collect::<Vec<String>>();
 %>
 

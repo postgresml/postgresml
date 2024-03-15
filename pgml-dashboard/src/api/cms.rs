@@ -8,6 +8,7 @@ use std::str::FromStr;
 use comrak::{format_html_with_plugins, parse_document, Arena, ComrakPlugins};
 use lazy_static::lazy_static;
 use markdown::mdast::Node;
+use rocket::form::Form;
 use rocket::{fs::NamedFile, http::uri::Origin, route::Route, State};
 use yaml_rust::YamlLoader;
 
@@ -646,9 +647,26 @@ impl Collection {
     }
 }
 
+#[post("/search_event", data = "<search_event>")]
+async fn search_event(
+    search_event: Form<crate::forms::SearchEvent>,
+    site_search: &State<crate::utils::markdown::SiteSearch>,
+) -> ResponseOk {
+    match site_search
+        .add_search_event(search_event.search_id, search_event.clicked)
+        .await
+    {
+        Ok(_) => ResponseOk("ok".to_string()),
+        Err(e) => {
+            eprintln!("{:?}", e);
+            ResponseOk("error".to_string())
+        }
+    }
+}
+
 #[get("/search?<query>", rank = 20)]
 async fn search(query: &str, site_search: &State<crate::utils::markdown::SiteSearch>) -> ResponseOk {
-    let results = site_search
+    let (search_id, results) = site_search
         .search(query, None, None)
         .await
         .expect("Error performing search");
@@ -688,6 +706,7 @@ async fn search(query: &str, site_search: &State<crate::utils::markdown::SiteSea
 
     ResponseOk(
         Template(Search {
+            search_id,
             query: query.to_string(),
             results,
         })
@@ -697,25 +716,26 @@ async fn search(query: &str, site_search: &State<crate::utils::markdown::SiteSea
 
 #[get("/search_blog?<query>&<tag>", rank = 20)]
 async fn search_blog(query: &str, tag: &str, site_search: &State<crate::utils::markdown::SiteSearch>) -> ResponseOk {
-    let tag = if tag.len() > 0 {
+    let tag = if !tag.is_empty() {
         Some(Vec::from([tag.to_string()]))
     } else {
         None
     };
 
     // If user is not making a search return all blogs in default design.
-    let results = if query.len() > 0 || tag.clone().is_some() {
+    let (search_id, results) = if !query.is_empty() || tag.clone().is_some() {
         let results = site_search.search(query, Some(DocType::Blog), tag.clone()).await;
 
-        let results = match results {
-            Ok(results) => results
-                .into_iter()
-                .map(|document| article_preview::DocMeta::from_document(document))
-                .collect::<Vec<article_preview::DocMeta>>(),
-            Err(_) => Vec::new(),
-        };
-
-        results
+        match results {
+            Ok((search_id, results)) => (
+                Some(search_id),
+                results
+                    .into_iter()
+                    .map(article_preview::DocMeta::from_document)
+                    .collect::<Vec<article_preview::DocMeta>>(),
+            ),
+            Err(_) => (None, Vec::new()),
+        }
     } else {
         let mut results = Vec::new();
 
@@ -725,13 +745,13 @@ async fn search_blog(query: &str, tag: &str, site_search: &State<crate::utils::m
             results.push(article_preview::DocMeta::from_document(doc));
         }
 
-        results
+        (None, results)
     };
 
-    let is_search = query.len() > 0 || tag.is_some();
+    let is_search = !query.is_empty() || tag.is_some();
 
     ResponseOk(
-        crate::components::pages::blog::blog_search::Response::new()
+        crate::components::pages::blog::blog_search::Response::new(search_id)
             .pattern(results, is_search)
             .render_once()
             .unwrap(),
@@ -896,6 +916,7 @@ pub fn routes() -> Vec<Route> {
         get_docs_asset,
         get_user_guides,
         search,
+        search_event,
         search_blog
     ]
 }
