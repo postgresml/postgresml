@@ -212,8 +212,8 @@ pipeline = Pipeline("test_pipeline")
 
 There are two different forms of search that can be done after adding a `Pipeline` to a `Collection`&#x20;
 
-* [Vector Search](https://postgresml.org/docs/introduction/apis/client-sdks/search)
-* [Document Search](https://postgresml.org/docs/introduction/apis/client-sdks/document-search)
+* [Vector Search](https://postgresml.org/docs/introduction/apis/client-sdk/search)
+* [Document Search](https://postgresml.org/docs/introduction/apis/client-sdk/document-search)
 
 See their respective pages for more information on searching.
 

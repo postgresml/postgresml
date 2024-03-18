@@ -273,7 +273,7 @@ while True:
 ```
 
 {% hint style="info" %}
-We are utilizing the OpenSourceAI class in our pgml library. This is actually a drop in replacement for OpenAI. [Find the docs here](https://postgresml.org/docs/introduction/apis/client-sdks/opensourceai).
+We are utilizing the OpenSourceAI class in our pgml library. This is actually a drop in replacement for OpenAI. [Find the docs here](https://postgresml.org/docs/introduction/apis/client-sdk/opensourceai).
 {% endhint %}
 
 This program let's us have conversations like the following:
@@ -289,7 +289,7 @@ You just asked me what my name is, and I am a friendly and helpful chatbot named
 Note that we have a list of dictionaries called `history` we use to store the chat history, and instead of feeding text into our model, we are inputting the `history` list. Our library automatically converts this list of dictionaries into the format expected by the model. Notice the `roles` in the dictionaries are the same as the `roles` of the messages in the previous example. This list of dictionaries with keys `role` and `content`  as a storage system for messages is pretty standard and used by us as well as OpenAI and HuggingFace.
 
 {% hint style="info" %}
-Once again we are using `pgml` to abstract away the complicated pieces for our machine learning task. This isn't a guide on how to use our libraries, but for more information [check out our docs](https://postgresml.org/docs/introduction/apis/client-sdks/getting-started).
+Once again we are using `pgml` to abstract away the complicated pieces for our machine learning task. This isn't a guide on how to use our libraries, but for more information [check out our docs](https://postgresml.org/docs/introduction/apis/client-sdk/getting-started).
 {% endhint %}
 
 Our search returned the exact section of the Wikipedia article we wanted! Let's talk a little bit about what is going on here.

@@ -1,6 +1,6 @@
 # Document Search
 
-SDK is specifically designed to provide powerful, flexible document search. `Pipeline`s are required to perform search. See the [Pipelines](https://postgresml.org/docs/introduction/apis/client-sdks/pipelines) for more information about using `Pipeline`s.
+SDK is specifically designed to provide powerful, flexible document search. `Pipeline`s are required to perform search. See the [Pipelines](https://postgresml.org/docs/introduction/apis/client-sdk/pipelines) for more information about using `Pipeline`s.
 
 This section will assume we have previously ran the following code:
 
@@ -120,7 +120,7 @@ Just like `vector_search`, `search` takes in two arguments. The first is a `JSON
 
 Lets break this query down a little bit more. We are asking for a maximum of 10 documents ranked by `full_text_search` on the `abstract` and `semantic_search` on the `abstract` and `body`. We are also filtering out all documents that do not have the key `user_id` equal to `1`.  The `full_text_search` provides a score for the `abstract`, and `semantic_search` provides scores for the `abstract` and the `body`. The `boost` parameter is a multiplier applied to these scores before they are summed together and sorted by `score` `DESC`.&#x20;
 
-The `filter` is structured the same way it is when performing `vector_search` see [filtering with vector\_search](https://postgresml.org/docs/introduction/apis/client-sdks/search)[ ](https://postgresml.org/docs/introduction/apis/client-sdks/search#metadata-filtering)for more examples on filtering documents.
+The `filter` is structured the same way it is when performing `vector_search` see [filtering with vector\_search](https://postgresml.org/docs/introduction/apis/client-sdk/search)[ ](https://postgresml.org/docs/introduction/apis/client-sdk/search#metadata-filtering)for more examples on filtering documents.
 
 ## Fine-Tuning Document Search
 

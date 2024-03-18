@@ -108,7 +108,7 @@ SELECT pgml.transform(
 ```
 
 ## Tabular data
-- [47+ classification and regression algorithms](https://postgresml.org/docs/introduction/apis/sql-extensions/pgml.train/)
+- [47+ classification and regression algorithms](https://postgresml.org/docs/introduction/apis/sql-extension/pgml.train/)
 - [8 - 40X faster inference than HTTP based model serving](https://postgresml.org/blog/postgresml-is-8x-faster-than-python-http-microservices)
 - [Millions of transactions per second](https://postgresml.org/blog/scaling-postgresml-to-one-million-requests-per-second)
 - [Horizontal scalability](https://github.com/postgresml/pgcat)
