@@ -55,7 +55,6 @@ import torch.nn.functional as F
 from trl import SFTTrainer, DataCollatorForCompletionOnlyLM
 from trl.trainer import ConstantLengthDataset
 from peft import LoraConfig, get_peft_model
-from pypgrx import print_info, insert_logs
 from abc import abstractmethod
 
 transformers.logging.set_verbosity_info()
@@ -1017,8 +1016,7 @@ class PGMLCallback(TrainerCallback):
             logs["step"] = state.global_step
             logs["max_steps"] = state.max_steps
             logs["timestamp"] = str(datetime.now())
-            print_info(json.dumps(logs, indent=4))
-            insert_logs(self.project_id, self.model_id, json.dumps(logs))
+            r_print_info(json.dumps(logs, indent=4))
 
 
 class FineTuningBase:
@@ -1100,9 +1098,9 @@ class FineTuningBase:
                 trainable_model_params += param.numel()
 
         # Calculate and print the number and percentage of trainable parameters
-        print_info(f"Trainable model parameters: {trainable_model_params}")
-        print_info(f"All model parameters: {all_model_params}")
-        print_info(
+        r_print_info(f"Trainable model parameters: {trainable_model_params}")
+        r_print_info(f"All model parameters: {all_model_params}")
+        r_print_info(
             f"Percentage of trainable model parameters: {100 * trainable_model_params / all_model_params:.2f}%"
         )
 
@@ -1398,7 +1396,7 @@ class FineTuningConversation(FineTuningBase):
                 "bias": "none",
                 "task_type": "CAUSAL_LM",
             }
-            print_info(
+            r_print_info(
                 "LoRA configuration are not set. Using default parameters"
                 + json.dumps(self.lora_config_params)
             )
@@ -1465,7 +1463,7 @@ class FineTuningConversation(FineTuningBase):
             peft_config=LoraConfig(**self.lora_config_params),
             callbacks=[PGMLCallback(self.project_id, self.model_id)],
         )
-        print_info("Creating Supervised Fine Tuning trainer done. Training ... ")
+        r_print_info("Creating Supervised Fine Tuning trainer done. Training ... ")
 
         # Train
         self.trainer.train()
