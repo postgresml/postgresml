@@ -1,8 +1,4 @@
----
-description: >-
-  The question "Does it Scale?" has become somewhat of a meme in software engineering.
----
-# Million Requests per Second
+# Scaling to 1 Million Requests per Second
 
 The question "Does it Scale?" has become somewhat of a meme in software engineering. There is a good reason for it though, because most businesses plan for success. If your app, online store, or SaaS becomes popular, you want to be sure that the system powering it can serve all your new customers.
 

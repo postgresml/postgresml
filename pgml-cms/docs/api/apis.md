@@ -1,4 +1,4 @@
-# APIs
+# Overview
 
 ## Introduction
 
@@ -8,9 +8,9 @@ The extensions provide all of the ML & AI functionality via SQL APIs, like train
 
 We also provide Client SDKs that implement the best practices on top of the SQL APIs, to ease adoption and implement common application use cases in applications, like chatbots or search engines.
 
-## SQL Extensions
+## SQL Extension
 
-Postgres is designed to be _**extensible**_. This has created a rich open-source ecosystem of additional functionality built around the core project. Some [extensions](https://www.postgresql.org/docs/current/contrib.html) are include in the base Postgres distribution, but others are also available via the [PostgreSQL Extension Network](https://pgxn.org/).\
+PostgreSQL is designed to be _**extensible**_. This has created a rich open-source ecosystem of additional functionality built around the core project. Some [extensions](https://www.postgresql.org/docs/current/contrib.html) are include in the base Postgres distribution, but others are also available via the [PostgreSQL Extension Network](https://pgxn.org/).\
 \
 There are 2 foundational extensions included in a PostgresML deployment that provide functionality inside the database through SQL APIs.
 
@@ -19,11 +19,11 @@ There are 2 foundational extensions included in a PostgresML deployment that pro
 
 Learn more about developing with the [sql-extensions](sql-extensions/ "mention")
 
-## Client SDKs
+## Client SDK
 
-PostgresML provides client SDKs that streamline ML & AI use cases in both JavaScript and Python. With these SDKs, you can seamlessly manage various database tables related to documents, text chunks, text splitters, LLM (Language Model) models, and embeddings. By leveraging the SDK's capabilities, you can efficiently index LLM embeddings using pgvector with HNSW for fast and accurate queries.
+PostgresML provides a client SDK that streamlines ML & AI use cases in both JavaScript and Python. With this SDK, you can seamlessly manage various database tables related to documents, text chunks, text splitters, LLM (Language Model) models, and embeddings. By leveraging the SDK's capabilities, you can efficiently index LLM embeddings using pgvector with HNSW for fast and accurate queries.
 
-These SDKs delegate all work to the extensions running in the database, which minimizes software and hardware dependencies that need to be maintained at the application layer, as well as securing data and models inside the data center. Our SDKs minimize data transfer to maximize performance, efficiency, security and reliability.
+The SDK delegates all work to the extension running in the database, which minimizes software and hardware dependencies that need to be maintained at the application layer, as well as securing data and models inside the data center. Our SDK minimizes data transfer to maximize performance, efficiency, security and reliability.
 
 Learn more about developing with the [client-sdks](client-sdks/ "mention")
 
