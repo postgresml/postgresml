@@ -26,3 +26,6 @@ In this example, we will use [Open Table-and-Text Question Answering (OTT-QA)](h
 
 ## [Summarizing Question Answering](./summarizing_question_answering.py)
 This is an example to find documents relevant to a question from the collection of documents and then summarize those documents.
+
+## [Load Data](./load_data.py)
+This is a simple example to show best practices for upserting data to a collection.
