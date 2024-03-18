@@ -3,7 +3,7 @@ A command line tool to build and deploy a **_knowledge based_** chatbot using Po
 
 There are two stages in building a knowledge based chatbot:
 - Build a knowledge base by ingesting documents, chunking documents, generating embeddings and indexing these embeddings for fast query
-- Generate responses to user queries by retrieving relevant documents and generating responses using OpenAI and [OpenSourceAI API](https://postgresml.org/docs/introduction/apis/client-sdk/opensourceai)
+- Generate responses to user queries by retrieving relevant documents and generating responses using OpenAI and [OpenSourceAI API](https://postgresml.org/docs/api/client-sdk/opensourceai)
 
 This tool automates the above two stages and provides a command line interface to build and deploy a knowledge based chatbot.
 

@@ -56,13 +56,13 @@ lazy_static! {
         "Docs",
         false,
         HashMap::from([
-            ("sdks/tutorials/semantic-search-using-instructor-model", "introduction/apis/client-sdk/tutorials/semantic-search-using-instructor-model"),
+            ("sdks/tutorials/semantic-search-using-instructor-model", "api/client-sdk/tutorials/semantic-search-using-instructor-model"),
             ("data-storage-and-retrieval/documents", "resources/data-storage-and-retrieval/documents"),
             ("guides/setup/quick_start_with_docker", "resources/developer-docs/quick-start-with-docker"),
             ("guides/transformers/setup", "resources/developer-docs/quick-start-with-docker"),
-            ("transformers/fine_tuning/", "introduction/apis/sql-extension/pgml.tune"),
-            ("guides/predictions/overview", "introduction/apis/sql-extension/pgml.predict/"),
-            ("machine-learning/supervised-learning/data-pre-processing", "introduction/apis/sql-extension/pgml.train/data-pre-processing"),
+            ("transformers/fine_tuning/", "api/sql-extension/pgml.tune"),
+            ("guides/predictions/overview", "api/sql-extension/pgml.predict/"),
+            ("machine-learning/supervised-learning/data-pre-processing", "api/sql-extension/pgml.train/data-pre-processing"),
         ])
     );
 }

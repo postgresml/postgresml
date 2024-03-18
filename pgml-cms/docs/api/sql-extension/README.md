@@ -13,7 +13,7 @@ PostgresML integrates [🤗 Hugging Face Transformers](https://huggingface.co/tr
 
 * [pgml.embed.md](pgml.embed.md "mention") returns vector embeddings for nearest neighbor searches and other vector database use cases
 * [pgml.generate.md](pgml.generate.md "mention") returns streaming text responses for chatbots
-* [pgml.transform](../../introduction/apis/sql-extension/pgml.transform "mention") allows you to perform dozens of natural language processing (NLP) tasks with thousands of models, like sentiment analysis, question and answering, translation, summarization and text generation
+* [pgml.transform](../../api/sql-extension/pgml.transform/ "mention") allows you to perform dozens of natural language processing (NLP) tasks with thousands of models, like sentiment analysis, question and answering, translation, summarization and text generation
 * [pgml.tune.md](pgml.tune.md "mention") fine tunes an open source model on your own data
 
 ## Train & deploy your own models
@@ -34,7 +34,7 @@ SELECT pgml.train(
 );
 ```
 
-See [pgml.train](../../introduction/apis/sql-extension/pgml.train "mention") for more information.
+See [pgml.train](../../api/sql-extension/pgml.train/README.md) for more information.
 
 ### Deploy
 
@@ -66,4 +66,4 @@ FROM new_sales
 ORDER BY prediction DESC;
 ```
 
-See[pgml.predict](../../introduction/apis/sql-extension/pgml.predict "mention") for more information.
+See[pgml.predict](../../api/sql-extension/pgml.predict/ "mention") for more information.

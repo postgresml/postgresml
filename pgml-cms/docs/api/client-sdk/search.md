@@ -1,6 +1,6 @@
 # Vector Search
 
-SDK is specifically designed to provide powerful, flexible vector search. `Pipeline`s are required to perform search. See [Pipelines ](https://postgresml.org/docs/introduction/apis/client-sdk/pipelines)for more information about using `Pipeline`s.
+SDK is specifically designed to provide powerful, flexible vector search. `Pipeline`s are required to perform search. See [Pipelines ](https://postgresml.org/docs/api/client-sdk/pipelines)for more information about using `Pipeline`s.
 
 This section will assume we have previously ran the following code:
 
