@@ -43,7 +43,7 @@ async def main():
 
     # The default batch size is 100, but we can override that if we have thousands or
     # millions of documents to upload it will be faster with a larger batch size
-    await collection.upsert_documents(documents, {"batch_size": 1000})
+    # await collection.upsert_documents(documents, {"batch_size": 1000})
 
     # Now we can search over our collection or do whatever else we want
     # See other examples for more information on searching
