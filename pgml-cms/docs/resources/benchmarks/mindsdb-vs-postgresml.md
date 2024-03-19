@@ -44,7 +44,7 @@ Another difference is that PostgresML also supports embedding models, and closel
 
 The architectural implementations for these projects is significantly different. PostgresML takes a data centric approach with Postgres as the provider for both storage _and_ compute. To provide horizontal scalability for inference, the PostgresML team has also created [PgCat](https://github.com/postgresml/pgcat) to distribute workloads across many Postgres databases. On the other hand, MindsDB takes a service oriented approach that connects to various databases over the network.
 
-\\
+
 
 <figure><img src="../../.gitbook/assets/mindsdb-pgml-architecture.png" alt=""><figcaption></figcaption></figure>
 
@@ -59,7 +59,7 @@ The architectural implementations for these projects is significantly different.
 | On Premise    | ✅             | ✅          |
 | Web UI        | ✅             | ✅          |
 
-\\
+
 
 The difference in architecture leads to different tradeoffs and challenges. There are already hundreds of ways to get data into and out of a Postgres database, from just about every other service, language and platform that makes PostgresML highly compatible with other application workflows. On the other hand, the MindsDB Python service accepts connections from specifically supported clients like `psql` and provides a pseudo-SQL interface to the functionality. The service will parse incoming MindsDB commands that look similar to SQL (but are not), for tasks like configuring database connections, or doing actual machine learning. These commands typically have what looks like a sub-select, that will actually fetch data over the wire from configured databases for Machine Learning training and inference.
 
@@ -287,7 +287,7 @@ PostgresML is the clear winner in terms of performance. It seems to me that it c
 | translation\_en\_to\_es | t5-base                                   | 1573    | 1148           | 294            |
 | summarization           | sshleifer/distilbart-cnn-12-6             | 4289    | 3450           | 479            |
 
-\\
+
 
 There is a general trend, the larger and slower the model is, the more work is spent inside libtorch, the less the performance of the rest matters, but for interactive models and use cases there is a significant difference. We've tried to cover the most generous use case we could between these two. If we were to compare XGBoost or other classical algorithms, that can have sub millisecond prediction times in PostgresML, the 20ms Python service overhead of MindsDB just to parse the incoming query would be hundreds of times slower.
 
