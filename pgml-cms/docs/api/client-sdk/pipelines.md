@@ -1,3 +1,9 @@
+---
+description: >-
+  Pipelines are composed of a model, splitter, and additional optional
+  arguments.
+---
+
 # Pipelines
 
 `Pipeline`s define the schema for the transformation of documents. Different `Pipeline`s can be used for different tasks.
@@ -263,7 +269,7 @@ await collection.enable_pipeline(pipeline)
 {% endtab %}
 {% endtabs %}
 
-Enabling a `Pipeline` will cause it to automatically run  on all documents it may have missed while disabled.
+Enabling a `Pipeline` will cause it to automatically run on all documents it may have missed while disabled.
 
 ## **Remove a Pipeline**
 

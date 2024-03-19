@@ -1,3 +1,9 @@
+---
+description: >-
+  Batch predict from data in a table. Online predict with parameters passed in a
+  query. Automatically reuse pre-processing steps from training.
+---
+
 # pgml.predict()
 
 ## API
@@ -51,7 +57,7 @@ LIMIT 25;
 
 ### Classification Example
 
-If you've already been through the [pgml.train](../../../api/sql-extension/pgml.train/ "mention") examples, you can see the predictive results of those models:
+If you've already been through the [pgml.train](../pgml.train "mention") examples, you can see the predictive results of those models:
 
 ```sql
 SELECT

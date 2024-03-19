@@ -1,3 +1,9 @@
+---
+description: >-
+  Organizational building blocks of the SDK. Manage all documents and related
+  chunks, embeddings, tsvectors, and pipelines.
+---
+
 # Collections
 
 Collections are the organizational building blocks of the SDK. They manage all documents and related chunks, embeddings, tsvectors, and pipelines.
@@ -130,7 +136,7 @@ await collection.upsert_documents(documents)
 {% endtab %}
 {% endtabs %}
 
-Documents  can be merged by setting the `merge` option. On conflict, new document keys will override old document keys.
+Documents can be merged by setting the `merge` option. On conflict, new document keys will override old document keys.
 
 {% tabs %}
 {% tab title="JavaScript" %}
