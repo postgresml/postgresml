@@ -90,8 +90,8 @@ impl LandingPage {
 
             match link.title.to_lowercase().as_ref() {
                 "benchmarks" => benchmarks_folder = link.children,
-                "sql extensions" => extension_folder = link.children,
-                "client sdks" => client_sdks_folder = link.children,
+                "sql extension" | "sql extensions" => extension_folder = link.children,
+                "client sdk" | "client sdks" => client_sdks_folder = link.children,
                 _ => {
                     if !link.children.is_empty() {
                         for item in link.children.clone() {
@@ -196,7 +196,7 @@ impl DocCard {
                 .unwrap_or(&"book".to_owned())
                 .to_owned(),
             title: index.title.clone(),
-            description: doc.description.clone().unwrap_or_else(|| "No description".to_owned()),
+            description: doc.description.clone().unwrap_or_else(|| "".to_owned()),
             icon_color: icon_color.to_owned(),
             href: index.href.clone(),
         }
