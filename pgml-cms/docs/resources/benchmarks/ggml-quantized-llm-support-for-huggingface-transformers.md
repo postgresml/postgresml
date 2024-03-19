@@ -1,3 +1,7 @@
+---
+description: Quantization allows PostgresML to fit larger models in less RAM.
+---
+
 # GGML Quantized LLM support for Huggingface Transformers
 
 Quantization allows PostgresML to fit larger models in less RAM. These algorithms perform inference significantly faster on NVIDIA, Apple and Intel hardware. Half-precision floating point and quantized optimizations are now available for your favorite LLMs downloaded from Huggingface.
