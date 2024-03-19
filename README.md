@@ -963,7 +963,7 @@ Feel free to explore other aspects of the data, such as the distribution of text
 
 ### 4. Splitting Data into Training and Test Sets
 
-Create views for training and test data by splitting the shuffled dataset. In this example, 80% is allocated for training, and 20% for testing.
+Create views for training and test data by splitting the shuffled dataset. In this example, 80% is allocated for training, and 20% for testing. We will use `pgml.imdb_test_view` in [section 6](#6-inference-using-fine-tuned-model) for batch predictions using the finetuned model.
 
 ```sql
 -- Create a view for training data
@@ -1275,12 +1275,24 @@ Once the dataset is loaded and shuffled, we delve into understanding the distrib
 
 ```sql
 -- Explore class distribution
-SELECT
+SELECTpgml=# SELECT
     output,
     COUNT(*) AS class_count
 FROM pgml.fingpt_sentiment_shuffled_view
 GROUP BY output
 ORDER BY output;
+
+       output        | class_count
+---------------------+-------------
+ mildly negative     |        2108
+ mildly positive     |        2548
+ moderately negative |        2972
+ moderately positive |        6163
+ negative            |       11749
+ neutral             |       29215
+ positive            |       21588
+ strong negative     |         218
+ strong positive     |         211
 
 ```
 
