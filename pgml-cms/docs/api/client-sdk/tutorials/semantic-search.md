@@ -4,7 +4,7 @@ description: Example for Semantic Search
 
 # Semantic Search
 
-This tutorial demonstrates using the `pgml` SDK to create a collection, add documents, build a pipeline for vector search, make a sample query, and archive the collection when finished.&#x20;
+This tutorial demonstrates using the `pgml` SDK to create a collection, add documents, build a pipeline for vector search, make a sample query, and archive the collection when finished.
 
 [Link to full JavaScript implementation](../../../../../pgml-sdks/pgml/javascript/examples/semantic\_search.js)
 

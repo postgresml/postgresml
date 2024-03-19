@@ -6,9 +6,9 @@ description: The key concepts that make up PostgresML.
 
 PostgresML is a complete MLOps platform built on PostgreSQL.
 
-> _Move the models to the database_, _rather than continuously moving the data to the models._
+> _Move the models to the database, rather than continuously moving the data to the models._
 
-The data for ML & AI systems is inherently larger and more dynamic than the models. It's more efficient, manageable and reliable to move the models to the database, rather than continuously moving the data to the models\_.\_ PostgresML allows you to take advantage of the fundamental relationship between data and models, by extending the database with the following capabilities and goals:
+The data for ML & AI systems is inherently larger and more dynamic than the models. It's more efficient, manageable and reliable to move the models to the database, rather than continuously moving the data to the models. PostgresML allows you to take advantage of the fundamental relationship between data and models, by extending the database with the following capabilities and goals:
 
 * **Model Serving** - _**GPU accelerated**_ inference engine for interactive applications, with no additional networking latency or reliability costs.
 * **Model Store** - Download _**open-source**_ models including state of the art LLMs from HuggingFace, and track changes in performance between versions.
