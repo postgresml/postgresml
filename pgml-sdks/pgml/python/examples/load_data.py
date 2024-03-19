@@ -1,7 +1,9 @@
 import asyncio
 from pgml import Collection, Pipeline
 import pandas as pd
+from dotenv import load_dotenv
 
+load_dotenv()
 
 # Initialize Collection
 collection = Collection("load_data_demo")
@@ -16,6 +18,7 @@ pipeline = Pipeline(
         }
     },
 )
+
 
 async def init_collection():
     await collection.add_pipeline(pipeline)

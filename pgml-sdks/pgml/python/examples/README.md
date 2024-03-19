@@ -1,10 +1,10 @@
 # Examples
 
 ## Prerequisites
-Before running any examples first install dependencies and set the DATABASE_URL environment variable:
+Before running any examples first install dependencies and set the PGML_DATABASE_URL environment variable:
 ```
 pip install -r requirements.txt
-export DATABASE_URL={YOUR DATABASE URL}
+export PGML_DATABASE_URL={YOUR DATABASE URL}
 ```
 
 Optionally, configure a .env file containing a DATABASE_URL variable.
@@ -29,3 +29,6 @@ This is an example to find documents relevant to a question from the collection 
 
 ## [Load Data](./load_data.py)
 This is a simple example to show best practices for upserting data to a collection.
+
+## [Offline Summarization](./offline_summarization.py)
+This sample shows how to perform summarization over documents that have been added to a collection using SQL.
