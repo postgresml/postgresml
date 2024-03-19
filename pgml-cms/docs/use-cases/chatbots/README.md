@@ -243,7 +243,7 @@ asyncio.run(main())
 You just asked me my name, and I responded that my name is Hermes. Is there anything else you would like to know?
 ```
 
-By chaining these special tags we can build a conversation that Hermes has been trained to understand and is a great function approximator for.&#x20;
+By chaining these special tags we can build a conversation that Hermes has been trained to understand and is a great function approximator for.
 
 {% hint style="info" %}
 This example highlights that modern LLM's are stateless function approximators. Notice we have included the first question we asked and the models response in our input. Every time we ask it a new question in our conversation, we will have to supply the entire conversation history if we want it to know what we already discussed. LLMs have no built in way to remember past questions and conversations.
@@ -294,13 +294,13 @@ Once again we are using `pgml` to abstract away the complicated pieces for our m
 
 Our search returned the exact section of the Wikipedia article we wanted! Let's talk a little bit about what is going on here.
 
-First we create a `pipeline`. A pipeline is composed of a `splitter` that splits a document, and a `model` that embeds the document. In this case we are using the default for both.&#x20;
+First we create a `pipeline`. A pipeline is composed of a `splitter` that splits a document, and a `model` that embeds the document. In this case we are using the default for both.
 
 Second we create a `collection`. A `collection` is just some number of documents that we can search over. In relation to our hypothetical example and diagram above, you can think of the `collection` as the Store - the storage of chunk's text and embeddings we can search over.
 
-After creating the `collection` we add the `pipeline` to it. This means every time we upsert new documents, the `pipeline` will automatically split and embed those documents.&#x20;
+After creating the `collection` we add the `pipeline` to it. This means every time we upsert new documents, the `pipeline` will automatically split and embed those documents.
 
-We extract the text from the Wikipedia article using the `wikipediaapi` library and upsert it into our collection.&#x20;
+We extract the text from the Wikipedia article using the `wikipediaapi` library and upsert it into our collection.
 
 After our collection has split and embedded the Wikipedia document we search over it getting the best matching chunk and print that chunk's text out.
 

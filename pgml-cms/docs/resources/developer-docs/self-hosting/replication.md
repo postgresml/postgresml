@@ -88,7 +88,7 @@ By default, S3 buckets are protected against public access, which is important f
 
 #### **Configure pgBackRest**
 
-pgBackRest can be configured by editing the `/etc/pgbackrest.conf` file. This file should be readable by the `postgres` user and nobody else, since it'll contain some important information.&#x20;
+pgBackRest can be configured by editing the `/etc/pgbackrest.conf` file. This file should be readable by the `postgres` user and nobody else, since it'll contain some important information.
 
 Using the S3 bucket we created above, we can configure pgBackRest to use it for the WAL archive:
 
@@ -138,7 +138,7 @@ Before configuring the replica, we need to make sure it's running the same softw
 
 #### Replicating data
 
-A streaming replica is byte-for-byte identical to the primary, so in order to create one, we first need to copy all the database files stored on the primary over to the replica. Postgres provides a very handy command line tool for this called `pg_basebackup`.&#x20;
+A streaming replica is byte-for-byte identical to the primary, so in order to create one, we first need to copy all the database files stored on the primary over to the replica. Postgres provides a very handy command line tool for this called `pg_basebackup`.
 
 On Ubuntu 22.04, the PostgreSQL 14 Debian package automatically creates a new Postgres data directory and cluster configuration. Since the replica has to have the same data as the primary, first thing we need to do is to delete that automatically created data directory and replace it with the one stored on the primary.
 
