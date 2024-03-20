@@ -1017,6 +1017,7 @@ class PGMLCallback(TrainerCallback):
             logs["max_steps"] = state.max_steps
             logs["timestamp"] = str(datetime.now())
             r_print_info(json.dumps(logs, indent=4))
+            r_insert_logs(self.project_id, self.model_id, json.dumps(logs))
 
 
 class FineTuningBase:
