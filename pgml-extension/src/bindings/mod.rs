@@ -23,9 +23,15 @@ fn r_insert_logs(project_id: i64, model_id: i64, logs: String) -> PyResult<Strin
 }
 
 #[pyfunction]
-fn r_print_info(info: String) -> PyResult<String> {
-    info!("{}", info);
-    Ok(info)
+fn r_log(level: String, message: String) -> PyResult<String> {
+    match level.as_str() {
+        "info" => info!("{}", message),
+        "warning" => warning!("{}", message),
+        "debug" => debug1!("{}", message),
+        "error" => error!("{}", message),
+        _ => info!("{}", message),
+    };
+    Ok(message)
 }
 
 #[cfg(feature = "python")]
@@ -40,7 +46,7 @@ macro_rules! create_pymodule {
                     let module = pyo3::types::PyModule::from_code(py, src, "transformers.py", "__main__")
                         .format_traceback(py)?;
                     module.add_function(wrap_pyfunction!($crate::bindings::r_insert_logs, module)?)?;
-                    module.add_function(wrap_pyfunction!($crate::bindings::r_print_info, module)?)?;
+                    module.add_function(wrap_pyfunction!($crate::bindings::r_log, module)?)?;
                     Ok(module.into())
                 })
             });

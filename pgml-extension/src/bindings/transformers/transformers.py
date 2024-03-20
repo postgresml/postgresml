@@ -1011,12 +1011,11 @@ class PGMLCallback(TrainerCallback):
         self.model_id = model_id
 
     def on_log(self, args, state, control, logs=None, **kwargs):
-        _ = logs.pop("total_flos", None)
         if state.is_local_process_zero:
             logs["step"] = state.global_step
             logs["max_steps"] = state.max_steps
             logs["timestamp"] = str(datetime.now())
-            r_print_info(json.dumps(logs, indent=4))
+            r_log("info", json.dumps(logs, indent=4))
             r_insert_logs(self.project_id, self.model_id, json.dumps(logs))
 
 
@@ -1099,9 +1098,9 @@ class FineTuningBase:
                 trainable_model_params += param.numel()
 
         # Calculate and print the number and percentage of trainable parameters
-        r_print_info(f"Trainable model parameters: {trainable_model_params}")
-        r_print_info(f"All model parameters: {all_model_params}")
-        r_print_info(
+        r_log("info", f"Trainable model parameters: {trainable_model_params}")
+        r_log("info", f"All model parameters: {all_model_params}")
+        r_log("info",
             f"Percentage of trainable model parameters: {100 * trainable_model_params / all_model_params:.2f}%"
         )
 
@@ -1397,7 +1396,7 @@ class FineTuningConversation(FineTuningBase):
                 "bias": "none",
                 "task_type": "CAUSAL_LM",
             }
-            r_print_info(
+            r_log("info",
                 "LoRA configuration are not set. Using default parameters"
                 + json.dumps(self.lora_config_params)
             )
@@ -1464,7 +1463,7 @@ class FineTuningConversation(FineTuningBase):
             peft_config=LoraConfig(**self.lora_config_params),
             callbacks=[PGMLCallback(self.project_id, self.model_id)],
         )
-        r_print_info("Creating Supervised Fine Tuning trainer done. Training ... ")
+        r_log("info","Creating Supervised Fine Tuning trainer done. Training ... ")
 
         # Train
         self.trainer.train()
