@@ -61,6 +61,8 @@ table.table.table-lg {
   }
 
   &.selectable {
+    --bs-table-hover-bg: #{$gray-700};
+
     tbody {
       tr:hover {
         cursor: pointer;
@@ -70,7 +72,7 @@ table.table.table-lg {
   }
 
   & {
-    --bs-table-hover-bg: #{$gray-800};
+    --bs-table-hover-bg: #{$slate-shade-100};
   }
 
   .table-cell-content {
