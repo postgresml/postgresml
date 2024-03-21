@@ -33,7 +33,6 @@ table.table.table-lg {
 
   tbody {
     tr {
-      &:hover,
       &.active {
         td {
           background: #{$gray-800};
@@ -65,6 +64,7 @@ table.table.table-lg {
     tbody {
       tr:hover {
         cursor: pointer;
+        background: #{$gray-800};
       }
     }
   }
