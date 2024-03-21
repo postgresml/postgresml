@@ -69,6 +69,10 @@ table.table.table-lg {
     }
   }
 
+  & {
+    --bs-table-hover-bg: #{$gray-800};
+  }
+
   .table-cell-content {
     height: 100%;
   }
