@@ -14,7 +14,7 @@ impl Row {
     pub fn new(columns: &[Component]) -> Row {
         Row {
             columns: columns.to_vec(),
-            action: "click->tables-large-table#selectRow".to_string(),
+            action: "".to_string(),
             data: vec![],
         }
     }
@@ -27,6 +27,10 @@ impl Row {
     pub fn data(mut self, name: &str, value: &str) -> Self {
         self.data.push((name.to_owned(), value.to_owned()));
         self
+    }
+
+    pub fn selectable(self) -> Self {
+        self.action("click->tables-large-table#selectRow")
     }
 }
 
