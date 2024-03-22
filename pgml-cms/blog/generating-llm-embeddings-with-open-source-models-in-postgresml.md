@@ -22,10 +22,10 @@ PostgresML makes it easy to generate embeddings from text in your database using
 
 This article is the first in a multipart series that will show you how to build a post-modern semantic search and recommendation engine, including personalization, using open source models.
 
-1. Generating LLM Embeddings with HuggingFace models
-2. Tuning vector recall with pgvector
-3. Personalizing embedding results with application data
-4. Optimizing semantic results with an XGBoost ranking model - coming soon!
+1. [Generating LLM Embeddings with HuggingFace models](generating-llm-embeddings-with-open-source-models-in-postgresml.md)
+2. [Tuning vector recall with pgvector](tuning-vector-recall-while-generating-query-embeddings-in-the-database.md)
+3. [Personalizing embedding results with application data](personalize-embedding-results-with-application-data-in-your-database.md)
+4. [Optimizing semantic results with an XGBoost ranking model](/docs/use-cases/improve-search-results-with-machine-learning)
 
 ## Introduction
 
