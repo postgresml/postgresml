@@ -18,7 +18,7 @@ Montana Low
 
 April 21, 2023
 
-PostgresML makes it easy to generate embeddings from text in your database using a large selection of state-of-the-art models with one simple call to **`pgml.embed`**`(model_name, text)`. Prove the results in this series to your own satisfaction, for free, by signing up for a GPU accelerated database.
+PostgresML makes it easy to generate embeddings from text in your database using a large selection of state-of-the-art models with one simple call to `pgml.embed(model_name, text)`. Prove the results in this series to your own satisfaction, for free, by signing up for a GPU accelerated database.
 
 This article is the first in a multipart series that will show you how to build a post-modern semantic search and recommendation engine, including personalization, using open source models.
 
