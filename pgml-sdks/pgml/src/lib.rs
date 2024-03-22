@@ -4,6 +4,7 @@
 //!
 //! With this SDK, you can seamlessly manage various database tables related to documents, text chunks, text splitters, LLM (Language Model) models, and embeddings. By leveraging the SDK's capabilities, you can efficiently index LLM embeddings using PgVector for fast and accurate queries.
 
+use once_cell::sync::Lazy;
 use parking_lot::RwLock;
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use std::collections::HashMap;
@@ -123,24 +124,15 @@ fn internal_init_logger(level: Option<String>, format: Option<String>) -> anyhow
 
 // Normally the global async runtime is handled by tokio but because we are a library being called
 // by javascript and other langauges, we occasionally need to handle it ourselves
-#[allow(dead_code)]
-static mut RUNTIME: Option<Runtime> = None;
+static RUNTIME: Lazy<Runtime> = Lazy::new(|| {
+    Builder::new_multi_thread()
+        .enable_all()
+        .build()
+        .expect("Error creating tokio runtime")
+});
 
-#[allow(dead_code)]
 fn get_or_set_runtime<'a>() -> &'a Runtime {
-    unsafe {
-        if let Some(r) = &RUNTIME {
-            r
-        } else {
-            // Need to use multi thread for JavaScript
-            let runtime = Builder::new_multi_thread()
-                .enable_all()
-                .build()
-                .expect("Error creating tokio runtime");
-            RUNTIME = Some(runtime);
-            get_or_set_runtime()
-        }
-    }
+    &RUNTIME
 }
 
 #[cfg(feature = "python")]
