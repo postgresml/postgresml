@@ -22,7 +22,6 @@ Why should you care? It's not every day you get to dive headfirst into the world
 Save 25% on your ticket with our discount code: 2024\_POSTGRESML\_25
 {% endhint %}
 
-\
 PostgresML CEO and founder, Montana Low, will kick off the event on April 17th with a keynote about navigating the confluence of hardware evolution and machine learning technology.&#x20;
 
 We’ll also be hosting a masterclass in retrieval augmented generation (RAG) on April 18th. Our own Silas Marvin will give hands-on guidance to equip you with the ability to implement RAG directly within your database.&#x20;
@@ -36,5 +35,3 @@ If you’d like some 1:1 time with our team at PgConf [contact us here](https://
 So, why sit on the sidelines when you could be right in the thick of it, soaking up knowledge, making connections, and maybe even stumbling upon your next big breakthrough? Clear your schedule, grab your ticket, and get ready to geek out with us in San Jose.
 
 See you there!
-
-\
