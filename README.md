@@ -49,6 +49,7 @@
 - [LLM Fine-tuning](#llm-fine-tuning)
     - [Text Classification - 2 classes](#text-classification-2-classes)
     - [Text Classification - 9 classes](#text-classification-9-classes)
+    - [Conversation](#conversation)
 <!-- - [Regression](#regression)
 - [Classification](#classification) -->
 
@@ -1342,3 +1343,265 @@ SELECT pgml.tune(
 );
 
 ```
+
+## Conversation
+
+In this section, we will discuss conversational task using state-of-the-art NLP techniques. Conversational AI has garnered immense interest and significance in recent years due to its wide range of applications, from virtual assistants to customer service chatbots and beyond.
+
+### Understanding the Conversation Task
+
+At the core of conversational AI lies the conversation task, a fundamental NLP problem that involves processing and generating human-like text-based interactions. Let's break down this task into its key components:
+
+- **Input:** The input to the conversation task typically consists of a sequence of conversational turns, often represented as text. These turns can encompass a dialogue between two or more speakers, capturing the flow of communication over time.
+
+- **Model:** Central to the conversation task is the NLP model, which is trained to understand the nuances of human conversation and generate appropriate responses. These models leverage sophisticated transformer based architectures like Llama2, Mistral, GPT etc., empowered by large-scale datasets and advanced training techniques.
+
+- **Output:** The ultimate output of the conversation task is the model's response to the input conversation. This response aims to be contextually relevant, coherent, and engaging, reflecting a natural human-like interaction.
+
+### Versatility of the Conversation Task
+
+What makes the conversation task truly remarkable is its remarkable versatility. Beyond its traditional application in dialogue systems, the conversation task can be adapted to solve several NLP problems by tweaking the input representation or task formulation.
+
+- **Text Classification:** By providing individual utterances with corresponding labels, the conversation task can be repurposed for tasks such as sentiment analysis, intent detection, or topic classification.
+
+    **Input:**
+    - System: Chatbot: "Hello! How can I assist you today?"
+    - User: "I'm having trouble connecting to the internet."
+
+    **Model Output (Text Classification):**
+    - Predicted Label: Technical Support
+    - Confidence Score: 0.85
+
+- **Token Classification:**Annotating the conversation with labels for specific tokens or phrases enables applications like named entity recognition within conversational text.
+
+    **Input:**
+    - System: Chatbot: "Please describe the issue you're facing in detail."
+    - User: "I can't access any websites, and the Wi-Fi indicator on my router is blinking."
+
+    **Model Output (Token Classification):**
+    - User's Description: "I can't access any websites, and the Wi-Fi indicator on my router is blinking."
+    - Token Labels:
+    - "access" - Action
+    - "websites" - Entity (Location)
+    - "Wi-Fi" - Entity (Technology)
+    - "indicator" - Entity (Device Component)
+    - "blinking" - State
+
+- **Question Answering:** Transforming conversational exchanges into a question-answering format enables extracting relevant information and providing concise answers, akin to human comprehension and response.
+
+    **Input:**
+    - System: Chatbot: "How can I help you today?"
+    - User: "What are the symptoms of COVID-19?"
+
+    **Model Output (Question Answering):**
+    - Answer: "Common symptoms of COVID-19 include fever, cough, fatigue, shortness of breath, loss of taste or smell, and body aches."
+
+### Fine-tuning Llama2-7b model using LoRA
+In this section, we will explore how to fine-tune the Llama2-7b-chat large language model for the financial sentiment data discussed in the previous [section](#text-classification-9-classes) utilizing the pgml.tune function and employing the LoRA approach.  LoRA is a technique that enables efficient fine-tuning of large language models by only updating a small subset of the model's weights during fine-tuning, while keeping the majority of the weights frozen. This approach can significantly reduce the computational requirements and memory footprint compared to traditional full model fine-tuning.
+
+```sql
+SELECT pgml.tune(
+    'fingpt-llama2-7b-chat',
+    task => 'conversation',
+    relation_name => 'pgml.fingpt_sentiment_train_view',
+    model_name => 'meta-llama/Llama-2-7b-chat-hf',
+    test_size => 0.8,
+    test_sampling => 'last',
+    hyperparams => '{
+        "training_args" : {
+            "learning_rate": 2e-5,
+            "per_device_train_batch_size": 4,
+            "per_device_eval_batch_size": 4,
+            "num_train_epochs": 1,
+            "weight_decay": 0.01,
+            "hub_token" : "HF_TOKEN", 
+            "push_to_hub" : true,
+            "optim" : "adamw_bnb_8bit",
+            "gradient_accumulation_steps" : 4,
+            "gradient_checkpointing" : true
+        },
+        "dataset_args" : { "system_column" : "instruction", "user_column" : "input", "assistant_column" : "output" },
+        "lora_config" : {"r": 2, "lora_alpha" : 4, "lora_dropout" : 0.05, "bias": "none", "task_type": "CAUSAL_LM"},
+        "load_in_8bit" : false,
+        "token" : "HF_TOKEN"
+    }'
+);
+```
+Let's break down each argument and its significance:
+
+1. **Model Name (`model_name`):**
+   - This argument specifies the name or identifier of the base model that will be fine-tuned. In the context of the provided query, it refers to the pre-trained model "meta-llama/Llama-2-7b-chat-hf."
+
+2. **Task (`task`):**
+   - Indicates the specific task for which the model is being fine-tuned. In this case, it's set to "conversation," signifying that the model will be adapted to process conversational data.
+
+3. **Relation Name (`relation_name`):**
+   - Refers to the name of the dataset or database relation containing the training data used for fine-tuning. In the provided query, it's set to "pgml.fingpt_sentiment_train_view."
+
+4. **Test Size (`test_size`):**
+   - Specifies the proportion of the dataset reserved for testing, expressed as a fraction. In the example, it's set to 0.8, indicating that 80% of the data will be used for training, and the remaining 20% will be held out for testing.
+
+5. **Test Sampling (`test_sampling`):**
+   - Determines the strategy for sampling the test data. In the provided query, it's set to "last," indicating that the last portion of the dataset will be used for testing.
+
+6. **Hyperparameters (`hyperparams`):**
+   - This argument encapsulates a JSON object containing various hyperparameters essential for the fine-tuning process. Let's break down its subcomponents:
+     - **Training Args (`training_args`):** Specifies parameters related to the training process, including learning rate, batch size, number of epochs, weight decay, optimizer settings, and other training configurations.
+     - **Dataset Args (`dataset_args`):** Provides arguments related to dataset processing, such as column names for system responses, user inputs, and assistant outputs.
+     - **LORA Config (`lora_config`):** Defines settings for the LORA (Learned Optimizer and Rate Adaptation) algorithm, including parameters like the attention radius (`r`), LORA alpha (`lora_alpha`), dropout rate (`lora_dropout`), bias, and task type.
+     - **Load in 8-bit (`load_in_8bit`):** Determines whether to load data in 8-bit format, which can be beneficial for memory and performance optimization.
+     - **Token (`token`):** Specifies the Hugging Face token required for accessing private repositories and pushing the fine-tuned model to the Hugging Face Hub.
+
+7. **Hub Private Repo (`hub_private_repo`):**
+   - This optional parameter indicates whether the fine-tuned model should be pushed to a private repository on the Hugging Face Hub. In the provided query, it's set to `true`, signifying that the model will be stored in a private repository.
+
+### Training Args:
+
+Expanding on the `training_args` within the `hyperparams` argument provides insight into the specific parameters governing the training process of the model. Here's a breakdown of the individual training arguments and their significance:
+
+- **Learning Rate (`learning_rate`):**
+   - Determines the step size at which the model parameters are updated during training. A higher learning rate may lead to faster convergence but risks overshooting optimal solutions, while a lower learning rate may ensure more stable training but may take longer to converge.
+
+- **Per-device Train Batch Size (`per_device_train_batch_size`):**
+   - Specifies the number of training samples processed in each batch per device during training. Adjusting this parameter can impact memory usage and training speed, with larger batch sizes potentially accelerating training but requiring more memory.
+
+- **Per-device Eval Batch Size (`per_device_eval_batch_size`):**
+   - Similar to `per_device_train_batch_size`, this parameter determines the batch size used for evaluation (validation) during training. It allows for efficient evaluation of the model's performance on validation data.
+
+- **Number of Train Epochs (`num_train_epochs`):**
+   - Defines the number of times the entire training dataset is passed through the model during training. Increasing the number of epochs can improve model performance up to a certain point, after which it may lead to overfitting.
+
+- **Weight Decay (`weight_decay`):**
+   - Introduces regularization by penalizing large weights in the model, thereby preventing overfitting. It helps to control the complexity of the model and improve generalization to unseen data.
+
+- **Hub Token (`hub_token`):**
+   - A token required for authentication when pushing the fine-tuned model to the Hugging Face Hub or accessing private repositories. It ensures secure communication with the Hub platform.
+
+- **Push to Hub (`push_to_hub`):**
+   - A boolean flag indicating whether the fine-tuned model should be uploaded to the Hugging Face Hub after training. Setting this parameter to `true` facilitates sharing and deployment of the model for wider usage.
+
+- **Optimizer (`optim`):**
+   - Specifies the optimization algorithm used during training. In the provided query, it's set to "adamw_bnb_8bit," indicating the use of the AdamW optimizer with gradient clipping and 8-bit quantization.
+
+- **Gradient Accumulation Steps (`gradient_accumulation_steps`):**
+   - Controls the accumulation of gradients over multiple batches before updating the model's parameters. It can help mitigate memory constraints and stabilize training, especially with large batch sizes.
+
+- **Gradient Checkpointing (`gradient_checkpointing`):**
+    - Enables gradient checkpointing, a memory-saving technique that trades off compute for memory during backpropagation. It allows training of larger models or with larger batch sizes without running out of memory.
+
+Each of these training arguments plays a crucial role in shaping the training process, ensuring efficient convergence, regularization, and optimization of the model for the specific task at hand. Adjusting these parameters appropriately is essential for achieving optimal model performance.
+
+### LORA Args:
+
+Expanding on the `lora_config` within the `hyperparams` argument provides clarity on its role in configuring the LORA (Learned Optimizer and Rate Adaptation) algorithm:
+
+- **Attention Radius (`r`):**
+   - Specifies the radius of the attention window for the LORA algorithm. It determines the range of tokens considered for calculating attention weights, allowing the model to focus on relevant information while processing conversational data.
+
+- **LORA Alpha (`lora_alpha`):**
+   - Controls the strength of the learned regularization term in the LORA algorithm. A higher alpha value encourages sparsity in attention distributions, promoting selective attention and enhancing interpretability.
+
+- **LORA Dropout (`lora_dropout`):**
+   - Defines the dropout rate applied to the LORA attention scores during training. Dropout introduces noise to prevent overfitting and improve generalization by randomly zeroing out a fraction of attention weights.
+
+- **Bias (`bias`):**
+   - Determines whether bias terms are included in the LORA attention calculation. Bias terms can introduce additional flexibility to the attention mechanism, enabling the model to learn more complex relationships between tokens.
+
+- **Task Type (`task_type`):**
+   - Specifies the type of task for which the LORA algorithm is applied. In this context, it's set to "CAUSAL_LM" for causal language modeling, indicating that the model predicts the next token based on the previous tokens in the sequence.
+
+Configuring these LORA arguments appropriately ensures that the attention mechanism of the model is optimized for processing conversational data, allowing it to capture relevant information and generate coherent responses effectively.
+
+### Dataset Args:
+
+Expanding on the `dataset_args` within the `hyperparams` argument provides insight into its role in processing the dataset:
+
+- **System Column (`system_column`):**
+   - Specifies the name or identifier of the column containing system responses (e.g., prompts or instructions) within the dataset. This column is crucial for distinguishing between different types of conversational turns and facilitating model training.
+
+- **User Column (`user_column`):**
+   - Indicates the column containing user inputs or queries within the dataset. These inputs form the basis for the model's understanding of user intentions, sentiments, or requests during training and inference.
+
+- **Assistant Column (`assistant_column`):**
+   - Refers to the column containing assistant outputs or responses generated by the model during training. These outputs serve as targets for the model to learn from and are compared against the actual responses during evaluation to assess model performance.
+
+Configuring these dataset arguments ensures that the model is trained on the appropriate input-output pairs, enabling it to learn from the conversational data and generate contextually relevant responses.
+
+Once the fine-tuning is completed, you will see the model in your Hugging Face repository (example: https://huggingface.co/santiadavani/fingpt-llama2-7b-chat). Since we are using LoRA to fine tune the model we only save the adapter weights (~2MB) instead of all the 7B weights (14GB) in Llama2-7b model.  
+
+## Inference
+For inference, we will be utilizing the [OpenSourceAI](https://postgresml.org/docs/use-cases/opensourceai) class from the [pgml SDK](https://postgresml.org/docs/api/client-sdk/getting-started). Here's an example code snippet:
+
+```python
+import pgml
+
+database_url = "DATABASE_URL"
+
+client = pgml.OpenSourceAI(database_url)
+
+results = client.chat_completions_create(
+    {
+        "model" : "santiadavani/fingpt-llama2-7b-chat",
+        "token" : "TOKEN",
+        "load_in_8bit": "true",
+        "temperature" : 0.1,
+        "repetition_penalty" : 1.5,
+    },
+    [
+        {
+            "role" : "system",
+            "content" : "What is the sentiment of this news? Please choose an answer from {strong negative/moderately negative/mildly negative/neutral/mildly positive/moderately positive/strong positive}.",
+        },
+        {
+            "role": "user",
+            "content": "Starbucks says the workers violated safety policies while workers said they'd never heard of the policy before and are alleging retaliation.",
+        },
+    ]
+)
+
+print(results)
+```
+
+In this code snippet, we first import the pgml module and create an instance of the OpenSourceAI class, providing the necessary database URL. We then call the chat_completions_create method, specifying the model we want to use (in this case, "santiadavani/fingpt-llama2-7b-chat"), along with other parameters such as the token, whether to load the model in 8-bit precision, the temperature for sampling, and the repetition penalty.
+
+The chat_completions_create method takes two arguments: a dictionary containing the model configuration and a list of dictionaries representing the chat conversation. In this example, the conversation consists of a system prompt asking for the sentiment of a given news snippet, and a user message containing the news text.
+
+The results are:
+
+```json
+{
+    "choices": [
+        {
+            "index": 0,
+            "message": {
+                "content": " Moderately negative ",
+                "role": "assistant"
+            }
+        }
+    ],
+    "created": 1711144872,
+    "id": "b663f701-db97-491f-b186-cae1086f7b79",
+    "model": "santiadavani/fingpt-llama2-7b-chat",
+    "object": "chat.completion",
+    "system_fingerprint": "e36f4fa5-3d0b-e354-ea4f-950cd1d10787",
+    "usage": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+    }
+}
+```
+
+This dictionary contains the response from the language model, `santiadavani/fingpt-llama2-7b-chat`, for the given news text.
+
+The key information in the response is:
+
+1. `choices`: A list containing the model's response. In this case, there is only one choice.
+2. `message.content`: The actual response from the model, which is " Moderately negative".
+3. `model`: The name of the model used, "santiadavani/fingpt-llama2-7b-chat".
+4. `created`: A timestamp indicating when the response was generated.
+5. `id`: A unique identifier for this response.
+6. `object`: Indicates that this is a "chat.completion" object.
+7. `usage`: Information about the token usage for this response, although all values are 0 in this case.
+
+So, the language model has analyzed the news text **_Starbucks says the workers violated safety policies while workers said they'd never heard of the policy before and are alleging retaliation._** and determined that the sentiment expressed in this text is **_Moderately negative_**
