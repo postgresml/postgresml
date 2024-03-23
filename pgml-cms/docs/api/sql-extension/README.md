@@ -5,7 +5,7 @@ description: >-
   SOTA open source models from HuggingFace.
 ---
 
-# SQL Extensions
+# SQL Extension
 
 ## Open Source Models
 
@@ -13,12 +13,12 @@ PostgresML integrates [🤗 Hugging Face Transformers](https://huggingface.co/tr
 
 * [pgml.embed.md](pgml.embed.md "mention") returns vector embeddings for nearest neighbor searches and other vector database use cases
 * [pgml.generate.md](pgml.generate.md "mention") returns streaming text responses for chatbots
-* [pgml.transform](pgml.transform/ "mention") allows you to perform dozens of natural language processing (NLP) tasks with thousands of models, like sentiment analysis, question and answering, translation, summarization and text generation
+* [pgml.transform](../../api/sql-extension/pgml.transform/ "mention") allows you to perform dozens of natural language processing (NLP) tasks with thousands of models, like sentiment analysis, question and answering, translation, summarization and text generation
 * [pgml.tune.md](pgml.tune.md "mention") fine tunes an open source model on your own data
 
 ## Train & deploy your own models
 
-PostgresML also supports more than 50 machine learning algorithms to train your own models for classification, regression or clustering. We organize a family of Models in Projects that are intended to address a particular opportunity. Different algorithms can be used in the same Project, to test and compare the performance of various approaches, and track progress over time, all within your database.&#x20;
+PostgresML also supports more than 50 machine learning algorithms to train your own models for classification, regression or clustering. We organize a family of Models in Projects that are intended to address a particular opportunity. Different algorithms can be used in the same Project, to test and compare the performance of various approaches, and track progress over time, all within your database.
 
 ### Train
 
@@ -34,7 +34,7 @@ SELECT pgml.train(
 );
 ```
 
-&#x20;See [pgml.train](pgml.train/ "mention") for more information.
+See [pgml.train](../../api/sql-extension/pgml.train/README.md) for more information.
 
 ### Deploy
 
@@ -52,7 +52,7 @@ See [pgml.deploy.md](pgml.deploy.md "mention") for more information.
 
 ### Predict
 
-Use your Model on novel data points not seen during training to infer a new data point.&#x20;
+Use your Model on novel data points not seen during training to infer a new data point.
 
 ```sql
 SELECT pgml.predict(
@@ -66,4 +66,4 @@ FROM new_sales
 ORDER BY prediction DESC;
 ```
 
-See[pgml.predict](pgml.predict/ "mention") for more information.
+See[pgml.predict](../../api/sql-extension/pgml.predict/ "mention") for more information.

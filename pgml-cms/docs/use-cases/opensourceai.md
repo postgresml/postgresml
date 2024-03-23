@@ -4,7 +4,7 @@ OpenSourceAI is a drop in replacement for OpenAI's chat completion endpoint.
 
 ### Setup
 
-Follow the instillation section in [getting-started.md](../introduction/apis/client-sdks/getting-started.md "mention")
+Follow the instillation section in [getting-started.md](../api/client-sdk/getting-started.md "mention")
 
 When done, set the environment variable `DATABASE_URL` to your PostgresML database url.
 
@@ -41,8 +41,8 @@ Our OpenSourceAI class provides 4 functions:
 
 They all take the same arguments:
 
-* `model` a `String` or Object&#x20;
-* `messages` an Array/List of Objects&#x20;
+* `model` a `String` or Object
+* `messages` an Array/List of Objects
 * `max_tokens` the maximum number of new tokens to produce. Default none
 * `temperature` the temperature of the model. Default 0.8
 * `n` the number of choices to create. Default 1
@@ -131,7 +131,7 @@ We don't charge per token, so OpenAI “usage” metrics are not particularly re
 
 Notice there is near one to one relation between the parameters and return type of OpenAI’s chat.completions.create and our chat\_completion\_create.
 
-The best part of using open-source AI is the flexibility with models. Unlike OpenAI, we are not restricted to using a few censored models, but have access to almost any model out there.&#x20;
+The best part of using open-source AI is the flexibility with models. Unlike OpenAI, we are not restricted to using a few censored models, but have access to almost any model out there.
 
 Here is an example of streaming with the popular Mythalion model, an uncensored MythoMax variant designed for chatting.
 
@@ -453,7 +453,7 @@ results = client.chat_completions_create(
 {% endtab %}
 {% endtabs %}
 
-Notice that we don't specify a model name, but model JSON this time. The JSON keys in the model argument roughly follow the task argument when using our [text-generation SQL API](../introduction/apis/sql-extensions/pgml.transform/text-generation.md).
+Notice that we don't specify a model name, but model JSON this time. The JSON keys in the model argument roughly follow the task argument when using our [text-generation SQL API](../api/sql-extension/pgml.transform/text-generation.md).
 
 To access a gated repo like `meta-llama/Llama-2-7b-chat-hf` simply provide the necessary hugging face token.
 

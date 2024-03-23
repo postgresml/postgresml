@@ -21,6 +21,7 @@ impl Table {
 
     pub fn selectable(mut self) -> Self {
         self.classes.push_str(" selectable");
+        self.rows = self.rows.into_iter().map(|r| r.selectable()).collect();
         self
     }
 }

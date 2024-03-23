@@ -84,14 +84,13 @@ impl LandingPage {
         let mut benchmarks_folder: Vec<IndexLink> = Vec::new();
         let mut extension_folder: Vec<IndexLink> = Vec::new();
         let mut client_sdks_folder: Vec<IndexLink> = Vec::new();
-
         while !children.is_empty() {
             let link = children.pop().unwrap();
 
             match link.title.to_lowercase().as_ref() {
                 "benchmarks" => benchmarks_folder = link.children,
-                "sql extensions" => extension_folder = link.children,
-                "client sdks" => client_sdks_folder = link.children,
+                "sql extension" => extension_folder = link.children,
+                "client sdk" => client_sdks_folder = link.children,
                 _ => {
                     if !link.children.is_empty() {
                         for item in link.children.clone() {

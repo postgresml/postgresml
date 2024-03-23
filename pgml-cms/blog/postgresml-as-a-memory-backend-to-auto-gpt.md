@@ -88,7 +88,7 @@ Adding PostgresML as a memory backend to Auto-GPT is a relatively simple process
     POSTGRESML_TABLENAME =autogpt_text_embeddings
     ```
 
-    If you are using PostgresML cloud, use the hostname and credentials from the cloud platform.&#x20;
+    If you are using PostgresML cloud, use the hostname and credentials from the cloud platform.
 
 !!! note
 

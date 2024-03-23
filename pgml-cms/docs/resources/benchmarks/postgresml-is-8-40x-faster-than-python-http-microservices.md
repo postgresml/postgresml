@@ -1,7 +1,7 @@
 ---
-description: >-
-  PostgresML is a simpler alternative to that ever-growing complexity.
+description: PostgresML is a simpler alternative to that ever-growing complexity.
 ---
+
 # PostgresML is 8-40x faster than Python HTTP microservices
 
 Machine learning architectures can be some of the most complex, expensive and _difficult_ arenas in modern systems. The number of technologies and the amount of required hardware compete for tightening headcount, hosting, and latency budgets. Unfortunately, the trend in the industry is only getting worse along these lines, with increased usage of state-of-the-art architectures that center around data warehouses, microservices and NoSQL databases.

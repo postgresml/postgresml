@@ -6,19 +6,19 @@ description: PostgresML Frequently Asked Questions
 
 ## What is PostgresML?
 
-PostgresML is an open-source database extension that turns Postgres into an end-to-end machine learning platform. It allows you to build, train, and deploy ML models directly within your Postgres database without moving data between systems.&#x20;
+PostgresML is an open-source database extension that turns Postgres into an end-to-end machine learning platform. It allows you to build, train, and deploy ML models directly within your Postgres database without moving data between systems.
 
-## What is a DB extension?&#x20;
+## What is a DB extension?
 
 A database extension is software that extends the capabilities of a database. Postgres allows extensions to add new data types, functions, operators, indexes, etc. PostgresML uses extensions to bring machine learning capabilities natively into Postgres.
 
-## How does it work?&#x20;
+## How does it work?
 
 PostgresML installs as extensions in Postgres. It provides SQL API functions for each step of the ML workflow like importing data, transforming features, training models, making predictions, etc. Models are stored back into Postgres tables. This unified approach eliminates complexity.
 
 ## What are the benefits?
 
-Benefits include faster development cycles, reduced latency, tighter integration between ML and applications, leveraging Postgres' reliability and ACID transactions, and horizontal scaling.&#x20;
+Benefits include faster development cycles, reduced latency, tighter integration between ML and applications, leveraging Postgres' reliability and ACID transactions, and horizontal scaling.
 
 ## What are the cons?
 
@@ -31,10 +31,10 @@ Hosted PostgresML is a fully managed cloud service that provides all the capabil
 With hosted PostgresML, you get:
 
 * Flexible compute resources - Choose CPU, RAM or GPU machines tailored to your workload
-* Horizontally scalable inference with read-only replicas&#x20;
-* High availability for production applications with multi-region deployments&#x20;
-* Support for multiple users and databases&#x20;
-* Automated backups and point-in-time restore&#x20;
-* Monitoring dashboard with metrics and logs&#x20;
+* Horizontally scalable inference with read-only replicas
+* High availability for production applications with multi-region deployments
+* Support for multiple users and databases
+* Automated backups and point-in-time restore
+* Monitoring dashboard with metrics and logs
 
 In summary, hosted PostgresML removes the operational burden so you can focus on developing machine learning applications, while still getting the benefits of the unified PostgresML architecture.

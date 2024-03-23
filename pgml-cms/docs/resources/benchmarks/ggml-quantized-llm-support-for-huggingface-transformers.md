@@ -1,10 +1,8 @@
 ---
-description: >-
-  Quantization allows PostgresML to fit larger models in less RAM.
+description: Quantization allows PostgresML to fit larger models in less RAM.
 ---
+
 # GGML Quantized LLM support for Huggingface Transformers
-
-
 
 Quantization allows PostgresML to fit larger models in less RAM. These algorithms perform inference significantly faster on NVIDIA, Apple and Intel hardware. Half-precision floating point and quantized optimizations are now available for your favorite LLMs downloaded from Huggingface.
 
@@ -60,8 +58,7 @@ SELECT pgml.transform(
 
 ## Quantization
 
-_Discrete quantization is not a new idea. It's been used by both algorithms and artists for more than a hundred years._\
-
+_Discrete quantization is not a new idea. It's been used by both algorithms and artists for more than a hundred years._
 
 Going beyond 16-bit down to 8 or 4 bits is possible, but not with hardware accelerated floating point operations. If we want hardware acceleration for smaller types, we'll need to use small integers w/ vectorized instruction sets. This is the process of _quantization_. Quantization can be applied to existing models trained with 32-bit floats, by converting the weights to smaller integer primitives that will still benefit from hardware accelerated instruction sets like Intel's [AVX](https://en.wikipedia.org/wiki/Advanced\_Vector\_Extensions). A simple way to quantize a model can be done by first finding the maximum and minimum values of the weights, then dividing the range of values into the number of buckets available in your integer type, 256 for 8-bit, 16 for 4-bit. This is called _post-training quantization_, and it's the simplest way to quantize a model.
 
