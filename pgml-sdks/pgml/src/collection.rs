@@ -935,7 +935,6 @@ impl Collection {
     ///    Ok(())
     /// }
     #[instrument(skip(self))]
-    #[allow(clippy::type_complexity)]
     pub async fn vector_search(
         &mut self,
         query: Json,
@@ -993,6 +992,32 @@ impl Collection {
                 None => Err(anyhow::anyhow!(e)),
             },
         }
+    }
+
+    /// Same as vector_search but assumes embeddings are done locally
+    #[instrument(skip(self))]
+    pub async fn vector_search_local(
+        &self,
+        query: Json,
+        pipeline: &Pipeline,
+    ) -> anyhow::Result<Vec<Json>> {
+        let pool = get_or_initialize_pool(&self.database_url).await?;
+        let (built_query, values) =
+            build_vector_search_query(query.clone(), self, pipeline).await?;
+        let results: Vec<(Json, String, f64)> = sqlx::query_as_with(&built_query, values)
+            .fetch_all(&pool)
+            .await?;
+        Ok(results
+            .into_iter()
+            .map(|v| {
+                serde_json::json!({
+                    "document": v.0,
+                    "chunk": v.1,
+                    "score": v.2
+                })
+                .into()
+            })
+            .collect())
     }
 
     /// Archives a [Collection]
