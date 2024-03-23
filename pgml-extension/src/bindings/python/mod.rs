@@ -6,10 +6,8 @@ use pgrx::*;
 use pyo3::prelude::*;
 use pyo3::types::PyTuple;
 
-use crate::config::get_config;
+use crate::config::PGML_VENV;
 use crate::create_pymodule;
-
-static CONFIG_NAME: &str = "pgml.venv";
 
 create_pymodule!("/src/bindings/python/python.py");
 
@@ -23,8 +21,8 @@ pub fn activate_venv(venv: &str) -> Result<bool> {
 }
 
 pub fn activate() -> Result<bool> {
-    match get_config(CONFIG_NAME) {
-        Some(venv) => activate_venv(&venv),
+    match PGML_VENV.1.get() {
+        Some(venv) => activate_venv(&venv.to_string_lossy()),
         None => Ok(false),
     }
 }

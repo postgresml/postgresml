@@ -1,16 +1,58 @@
+use lazy_static::lazy_static;
+use pgrx::{GucContext, GucFlags, GucRegistry, GucSetting};
 use std::ffi::CStr;
 
 #[cfg(any(test, feature = "pg_test"))]
 use pgrx::{pg_schema, pg_test};
-use pgrx_pg_sys::AsPgCStr;
 
-pub fn get_config(name: &str) -> Option<String> {
-    // SAFETY: name is not null because it is a Rust reference.
-    let ptr = unsafe { pgrx_pg_sys::GetConfigOption(name.as_pg_cstr(), true, false) };
-    (!ptr.is_null()).then(move || {
-        // SAFETY: assuming pgrx_pg_sys is providing a valid, null terminated pointer.
-        unsafe { CStr::from_ptr(ptr) }.to_string_lossy().to_string()
-    })
+lazy_static! {
+    pub static ref PGML_VENV: (&'static str, GucSetting<Option<&'static CStr>>) =
+        ("pgml.venv", GucSetting::<Option<&'static CStr>>::new(None));
+    pub static ref PGML_HF_WHITELIST: (&'static str, GucSetting<Option<&'static CStr>>) = (
+        "pgml.huggingface_whitelist",
+        GucSetting::<Option<&'static CStr>>::new(None),
+    );
+    pub static ref PGML_HF_TRUST_REMOTE_CODE: (&'static str, GucSetting<bool>) =
+        ("pgml.huggingface_trust_remote_code", GucSetting::<bool>::new(false));
+    pub static ref PGML_HF_TRUST_WHITELIST: (&'static str, GucSetting<Option<&'static CStr>>) = (
+        "pgml.huggingface_trust_remote_code_whitelist",
+        GucSetting::<Option<&'static CStr>>::new(None),
+    );
+}
+
+pub fn initialize_server_params() {
+    GucRegistry::define_string_guc(
+        PGML_VENV.0,
+        "Python's virtual environment path",
+        "",
+        &PGML_VENV.1,
+        GucContext::Userset,
+        GucFlags::default(),
+    );
+    GucRegistry::define_string_guc(
+        PGML_HF_WHITELIST.0,
+        "Models allowed to be downloaded from huggingface",
+        "",
+        &PGML_HF_WHITELIST.1,
+        GucContext::Userset,
+        GucFlags::default(),
+    );
+    GucRegistry::define_bool_guc(
+        PGML_HF_TRUST_REMOTE_CODE.0,
+        "Whether model can execute remote codes",
+        "",
+        &PGML_HF_TRUST_REMOTE_CODE.1,
+        GucContext::Userset,
+        GucFlags::default(),
+    );
+    GucRegistry::define_string_guc(
+        PGML_HF_TRUST_WHITELIST.0,
+        "Models allowed to execute remote codes when pgml.hugging_face_trust_remote_code = 'on'",
+        "",
+        &PGML_HF_TRUST_WHITELIST.1,
+        GucContext::Userset,
+        GucFlags::default(),
+    );
 }
 
 #[cfg(any(test, feature = "pg_test"))]
@@ -27,16 +69,10 @@ mod tests {
     use super::*;
 
     #[pg_test]
-    fn read_config_max_connections() {
-        let name = "max_connections";
-        assert_eq!(get_config(name), Some("100".into()));
-    }
-
-    #[pg_test]
     fn read_pgml_huggingface_whitelist() {
         let name = "pgml.huggingface_whitelist";
         let value = "meta-llama/Llama-2-7b";
         set_config(name, value).unwrap();
-        assert_eq!(get_config(name), Some(value.into()));
+        assert_eq!(PGML_HF_WHITELIST.1.get().unwrap().to_string_lossy(), value);
     }
 }
