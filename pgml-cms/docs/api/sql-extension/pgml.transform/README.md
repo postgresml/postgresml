@@ -1,6 +1,7 @@
 ---
 description: >-
-  Perform dozens of state-of-the-art natural language processing (NLP) tasks with thousands of models. Serve with the same Postgres infrastructure.
+  Perform dozens of state-of-the-art natural language processing (NLP) tasks
+  with thousands of models. Serve with the same Postgres infrastructure.
 layout:
   title:
     visible: true

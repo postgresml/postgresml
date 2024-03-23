@@ -1,6 +1,7 @@
 ---
 description: >-
-    Release trained models when ML quality metrics computed during training improve. Track model deployments over time and rollback if needed.
+  Release trained models when ML quality metrics computed during training
+  improve. Track model deployments over time and rollback if needed.
 ---
 
 # pgml.deploy()
@@ -32,7 +33,7 @@ pgml.deploy(
 There are 3 different deployment strategies available:
 
 | Strategy      | Description                                                                                      |
-| ------------- |--------------------------------------------------------------------------------------------------|
+| ------------- | ------------------------------------------------------------------------------------------------ |
 | `most_recent` | The most recently trained model for this project is immediately deployed, regardless of metrics. |
 | `best_score`  | The model that achieved the best key metric score is immediately deployed.                       |
 | `rollback`    | The model that was deployed before to the current one is deployed.                               |
@@ -84,8 +85,6 @@ SELECT * FROM pgml.deploy(
 (1 row)
 ```
 
-
-
 ### Rolling Back
 
 In case the new model isn't performing well in production, it's easy to rollback to the previous version. A rollback creates a new deployment for the old model. Multiple rollbacks in a row will oscillate between the two most recently deployed models, making rollbacks a safe and reversible operation.
@@ -130,7 +129,7 @@ SELECT * FROM pgml.deploy(
 
 ### Specific Model IDs
 
-In the case you need to deploy an exact model that is not the `most_recent` or `best_score`, you may deploy a model by id. Model id's can be found in the `pgml.models` table. 
+In the case you need to deploy an exact model that is not the `most_recent` or `best_score`, you may deploy a model by id. Model id's can be found in the `pgml.models` table.
 
 #### SQL
 

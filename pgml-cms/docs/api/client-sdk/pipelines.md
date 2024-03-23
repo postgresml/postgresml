@@ -1,14 +1,16 @@
 ---
-description: Pipelines are composed of a model, splitter, and additional optional arguments. 
+description: >-
+  Pipelines are composed of a model, splitter, and additional optional
+  arguments.
 ---
 
 # Pipelines
 
-`Pipeline`s define the schema for the transformation of documents. Different `Pipeline`s can be used for different tasks.&#x20;
+`Pipeline`s define the schema for the transformation of documents. Different `Pipeline`s can be used for different tasks.
 
 ## Defining Schema
 
-New `Pipeline`s require schema. Here are a few examples of variations of schema along with common use cases.&#x20;
+New `Pipeline`s require schema. Here are a few examples of variations of schema along with common use cases.
 
 For the following section we will assume we have documents that have the structure:
 
@@ -104,7 +106,7 @@ pipeline = Pipeline(
 {% endtab %}
 {% endtabs %}
 
-This `Pipeline` splits and embeds the `body` text enabling semantic search using vectors. This is a very popular `Pipeline` for RAG.&#x20;
+This `Pipeline` splits and embeds the `body` text enabling semantic search using vectors. This is a very popular `Pipeline` for RAG.
 
 We support most every open source model on [Hugging Face](https://huggingface.co/), and OpenAI's embedding models. To use a model from OpenAI specify the `source` as `openai`, and make sure and set the environment variable `OPENAI_API_KEY`.
 
@@ -214,10 +216,10 @@ pipeline = Pipeline("test_pipeline")
 
 ## Searching with Pipelines
 
-There are two different forms of search that can be done after adding a `Pipeline` to a `Collection`&#x20;
+There are two different forms of search that can be done after adding a `Pipeline` to a `Collection`
 
-* [Vector Search](https://postgresml.org/docs/introduction/apis/client-sdks/search)
-* [Document Search](https://postgresml.org/docs/introduction/apis/client-sdks/document-search)
+* [Vector Search](https://postgresml.org/docs/api/client-sdk/search)
+* [Document Search](https://postgresml.org/docs/api/client-sdk/document-search)
 
 See their respective pages for more information on searching.
 
@@ -267,7 +269,7 @@ await collection.enable_pipeline(pipeline)
 {% endtab %}
 {% endtabs %}
 
-Enabling a `Pipeline` will cause it to automatically run  on all documents it may have missed while disabled.
+Enabling a `Pipeline` will cause it to automatically run on all documents it may have missed while disabled.
 
 ## **Remove a Pipeline**
 

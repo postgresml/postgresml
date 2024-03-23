@@ -243,7 +243,7 @@ asyncio.run(main())
 You just asked me my name, and I responded that my name is Hermes. Is there anything else you would like to know?
 ```
 
-By chaining these special tags we can build a conversation that Hermes has been trained to understand and is a great function approximator for.&#x20;
+By chaining these special tags we can build a conversation that Hermes has been trained to understand and is a great function approximator for.
 
 {% hint style="info" %}
 This example highlights that modern LLM's are stateless function approximators. Notice we have included the first question we asked and the models response in our input. Every time we ask it a new question in our conversation, we will have to supply the entire conversation history if we want it to know what we already discussed. LLMs have no built in way to remember past questions and conversations.
@@ -273,7 +273,7 @@ while True:
 ```
 
 {% hint style="info" %}
-We are utilizing the OpenSourceAI class in our pgml library. This is actually a drop in replacement for OpenAI. [Find the docs here](https://postgresml.org/docs/introduction/apis/client-sdks/opensourceai).
+We are utilizing the OpenSourceAI class in our pgml library. This is actually a drop in replacement for OpenAI. [Find the docs here](https://postgresml.org/docs/api/client-sdk/opensourceai).
 {% endhint %}
 
 This program let's us have conversations like the following:
@@ -289,18 +289,18 @@ You just asked me what my name is, and I am a friendly and helpful chatbot named
 Note that we have a list of dictionaries called `history` we use to store the chat history, and instead of feeding text into our model, we are inputting the `history` list. Our library automatically converts this list of dictionaries into the format expected by the model. Notice the `roles` in the dictionaries are the same as the `roles` of the messages in the previous example. This list of dictionaries with keys `role` and `content`  as a storage system for messages is pretty standard and used by us as well as OpenAI and HuggingFace.
 
 {% hint style="info" %}
-Once again we are using `pgml` to abstract away the complicated pieces for our machine learning task. This isn't a guide on how to use our libraries, but for more information [check out our docs](https://postgresml.org/docs/introduction/apis/client-sdks/getting-started).
+Once again we are using `pgml` to abstract away the complicated pieces for our machine learning task. This isn't a guide on how to use our libraries, but for more information [check out our docs](https://postgresml.org/docs/api/client-sdk/getting-started).
 {% endhint %}
 
 Our search returned the exact section of the Wikipedia article we wanted! Let's talk a little bit about what is going on here.
 
-First we create a `pipeline`. A pipeline is composed of a `splitter` that splits a document, and a `model` that embeds the document. In this case we are using the default for both.&#x20;
+First we create a `pipeline`. A pipeline is composed of a `splitter` that splits a document, and a `model` that embeds the document. In this case we are using the default for both.
 
 Second we create a `collection`. A `collection` is just some number of documents that we can search over. In relation to our hypothetical example and diagram above, you can think of the `collection` as the Store - the storage of chunk's text and embeddings we can search over.
 
-After creating the `collection` we add the `pipeline` to it. This means every time we upsert new documents, the `pipeline` will automatically split and embed those documents.&#x20;
+After creating the `collection` we add the `pipeline` to it. This means every time we upsert new documents, the `pipeline` will automatically split and embed those documents.
 
-We extract the text from the Wikipedia article using the `wikipediaapi` library and upsert it into our collection.&#x20;
+We extract the text from the Wikipedia article using the `wikipediaapi` library and upsert it into our collection.
 
 After our collection has split and embedded the Wikipedia document we search over it getting the best matching chunk and print that chunk's text out.
 

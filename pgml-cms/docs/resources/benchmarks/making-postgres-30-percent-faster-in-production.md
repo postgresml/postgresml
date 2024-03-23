@@ -1,7 +1,9 @@
 ---
 description: >-
-  Anyone who runs Postgres at scale knows that performance comes with trade offs.
+  Anyone who runs Postgres at scale knows that performance comes with trade
+  offs.
 ---
+
 # Making Postgres 30 Percent Faster in Production
 
 Anyone who runs Postgres at scale knows that performance comes with trade offs. The typical playbook is to place a pooler like PgBouncer in front of your database and turn on transaction mode. This makes multiple clients reuse the same server connection, which allows thousands of clients to connect to your database without causing a fork bomb.
@@ -18,7 +20,7 @@ This is not only a performance benefit, but also a usability improvement for cli
 
 ## Benchmark
 
-\\
+
 
 <figure><img src="../../.gitbook/assets/pgcat_prepared_throughput.svg" alt=""><figcaption></figcaption></figure>
 

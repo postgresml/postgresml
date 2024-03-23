@@ -104,7 +104,7 @@ Replace `14` in `postgresql-server-dev-14` with your Postgres version.
 
 #### Install pgvector
 
-&#x20;You can install `pgvector` directly from GitHub by just running:
+You can install `pgvector` directly from GitHub by just running:
 
 ```
 git clone https://github.com/pgvector/pgvector /tmp/pgvector

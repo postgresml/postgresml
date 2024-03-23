@@ -1,6 +1,7 @@
 ---
 description: >-
-    Generate high quality embeddings with faster end-to-end vector operations without an additional vector database. 
+  Generate high quality embeddings with faster end-to-end vector operations
+  without an additional vector database.
 ---
 
 # pgml.embed()

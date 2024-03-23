@@ -4,7 +4,7 @@ description: Task to fill words in a sentence that are hidden
 
 # Fill Mask
 
-Fill-mask refers to a task where certain words in a sentence are hidden or "masked", and the objective is to predict what words should fill in those masked positions. Such models are valuable when we want to gain statistical insights about the language used to train the model.&#x20;
+Fill-mask refers to a task where certain words in a sentence are hidden or "masked", and the objective is to predict what words should fill in those masked positions. Such models are valuable when we want to gain statistical insights about the language used to train the model.
 
 ```sql
 SELECT pgml.transform(

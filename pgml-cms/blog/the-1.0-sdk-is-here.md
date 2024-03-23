@@ -1,5 +1,5 @@
 ---
-featured: true
+featured: false
 tags:
   - product
 description: >-
