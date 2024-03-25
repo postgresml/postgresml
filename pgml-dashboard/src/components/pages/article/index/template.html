@@ -105,7 +105,7 @@
     </div>
 
     <div class="row position-relative">
-      <article class="docs col-12 col-xxl-10 overflow-x-auto py-4 px-xl-5 mx-auto">
+      <article class="docs col-12 col-xxl-9 overflow-x-auto py-4 px-xl-5 mx-auto">
         <% if document_not_found {%>
         <div class="show">
           <h2>Oops, document not found!</h2>
@@ -128,7 +128,7 @@
       </article>
 
       <% if !toc.is_empty() && is_blog { %>
-      <div class="d-none d-xxl-block col-2 position-sticky stick-under-topnav h-100 z-1">
+      <div class="d-none d-xxl-block col-3 position-sticky stick-under-topnav h-100 z-1">
         <%+ Toc::new(&toc)%>
       </div>
       <% } %>
