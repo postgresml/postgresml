@@ -5,6 +5,7 @@ import time
 import queue
 import sys
 import json
+from datetime import datetime
 
 import datasets
 from InstructorEmbedding import INSTRUCTOR
@@ -44,8 +45,20 @@ from transformers import (
     GPTQConfig,
     PegasusForConditionalGeneration,
     PegasusTokenizer,
+    TrainerCallback,
 )
+
 import threading
+import logging
+import evaluate
+import torch.nn.functional as F
+from trl import SFTTrainer, DataCollatorForCompletionOnlyLM
+from trl.trainer import ConstantLengthDataset
+from peft import LoraConfig, get_peft_model
+from abc import abstractmethod
+
+transformers.logging.set_verbosity_info()
+
 
 __cache_transformer_by_model_id = {}
 __cache_sentence_transformer_by_name = {}
@@ -983,3 +996,616 @@ def generate(model_id, data, config):
             )
             all_preds.extend(decoded_preds)
     return all_preds
+
+
+#######################
+# LLM Fine-Tuning
+#######################
+
+
+class PGMLCallback(TrainerCallback):
+    "A callback that prints a message at the beginning of training"
+
+    def __init__(self, project_id, model_id):
+        self.project_id = project_id
+        self.model_id = model_id
+
+    def on_log(self, args, state, control, logs=None, **kwargs):
+        if state.is_local_process_zero:
+            logs["step"] = state.global_step
+            logs["max_steps"] = state.max_steps
+            logs["timestamp"] = str(datetime.now())
+            r_log("info", json.dumps(logs, indent=4))
+            r_insert_logs(self.project_id, self.model_id, json.dumps(logs))
+
+
+class FineTuningBase:
+    def __init__(
+        self,
+        project_id: int,
+        model_id: int,
+        train_dataset: datasets.Dataset,
+        test_dataset: datasets.Dataset,
+        path: str,
+        hyperparameters: dict,
+    ) -> None:
+
+        # initialize class variables
+        self.project_id = project_id
+        self.model_id = model_id
+        self.train_dataset = train_dataset
+        self.test_dataset = test_dataset
+        self.token = None
+        self.load_in_8bit = False
+        self.tokenizer_args = None
+
+        # check if path is a directory
+        if not os.path.isdir(path):
+            os.makedirs(path, exist_ok=True)
+
+        self.path = path
+
+        # check if hyperparameters is a dictionary
+        if "model_name" not in hyperparameters:
+            raise ValueError("model_name is a required hyperparameter")
+        else:
+            self.model_name = hyperparameters.pop("model_name")
+
+        if "token" in hyperparameters:
+            self.token = hyperparameters.pop("token")
+
+        if "training_args" in hyperparameters:
+            self.training_args = hyperparameters.pop("training_args")
+        else:
+            self.training_args = None
+
+        if "project_name" in hyperparameters:
+            project_name = "_".join(hyperparameters.pop("project_name").split())
+            self.training_args["hub_model_id"] = project_name
+
+        if "load_in_8bit" in hyperparameters:
+            self.load_in_8bit = hyperparameters.pop("load_in_8bit")
+
+        if "tokenizer_args" in hyperparameters:
+            self.tokenizer_args = hyperparameters.pop("tokenizer_args")
+
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            self.model_name, token=self.token
+        )
+
+    def print_number_of_trainable_model_parameters(self, model):
+        """Prints the number of trainable parameters in the model.
+
+        This function traverses all the parameters of a given PyTorch model to
+        count the total number of parameters as well as the number of trainable
+        (i.e., requires gradient) parameters.
+
+        Args:
+            model: A PyTorch model whose parameters you want to count.
+        """
+
+        # Initialize counters for trainable and total parameters
+        trainable_model_params = 0
+        all_model_params = 0
+
+        # Loop through all named parameters in the model
+        for _, param in model.named_parameters():
+            # Update the total number of parameters
+            all_model_params += param.numel()
+
+            # Check if the parameter requires gradient and update the trainable parameter counter
+            if param.requires_grad:
+                trainable_model_params += param.numel()
+
+        # Calculate and print the number and percentage of trainable parameters
+        r_log("info", f"Trainable model parameters: {trainable_model_params}")
+        r_log("info", f"All model parameters: {all_model_params}")
+        r_log("info",
+            f"Percentage of trainable model parameters: {100 * trainable_model_params / all_model_params:.2f}%"
+        )
+
+    def tokenize_function(self):
+        pass
+
+    def prepare_tokenized_datasets(self):
+        pass
+
+    def compute_metrics(self):
+        pass
+
+    def train(self):
+        pass
+
+
+class FineTuningTextClassification(FineTuningBase):
+    def __init__(
+        self,
+        project_id: int,
+        model_id: int,
+        train_dataset: datasets.Dataset,
+        test_dataset: datasets.Dataset,
+        path: str,
+        hyperparameters: dict,
+    ) -> None:
+        """
+        Initializes a FineTuning object.
+
+        Args:
+            project_id (int): The ID of the project.
+            model_id (int): The ID of the model.
+            train_dataset (Dataset): The training dataset.
+            test_dataset (Dataset): The test dataset.
+            path (str): The path to save the model.
+            hyperparameters (dict): The hyperparameters for fine-tuning.
+
+        Returns:
+            None
+        """
+        super().__init__(
+            project_id, model_id, train_dataset, test_dataset, path, hyperparameters
+        )
+
+        self.classes = list(set(self.train_dataset["class"]))
+        self.num_labels = len(self.classes)
+
+        # create label2id and id2label dictionaries
+        self.label2id = {}
+        self.id2label = {}
+        for _id, label in enumerate(self.classes):
+            self.label2id[label] = _id
+            self.id2label[_id] = label
+
+        # add label column to train and test datasets
+        def add_label_column(example):
+            example["label"] = self.label2id[example["class"]]
+            return example
+
+        self.train_dataset = self.train_dataset.map(add_label_column)
+        self.test_dataset = self.test_dataset.map(add_label_column)
+
+        # load model
+        self.model = AutoModelForSequenceClassification.from_pretrained(
+            self.model_name,
+            num_labels=self.num_labels,
+            id2label=self.id2label,
+            label2id=self.label2id,
+        )
+
+        self.model.config.id2label = self.id2label
+        self.model.config.label2id = self.label2id
+
+    def tokenize_function(self, example):
+        """
+        Tokenizes the input text using the tokenizer specified in the class.
+
+        Args:
+            example (dict): The input example containing the text to be tokenized.
+
+        Returns:
+            tokenized_example (dict): The tokenized example.
+
+        """
+        if self.tokenizer_args:
+            tokenized_example = self.tokenizer(example["text"], **self.tokenizer_args)
+        else:
+            tokenized_example = self.tokenizer(
+                example["text"], padding=True, truncation=True, return_tensors="pt"
+            )
+        return tokenized_example
+
+    def prepare_tokenized_datasets(self):
+        """
+        Tokenizes the train and test datasets using the provided tokenize_function.
+
+        Returns:
+            None
+        """
+        self.train_dataset = self.train_dataset.map(
+            self.tokenize_function, batched=True
+        )
+        self.test_dataset = self.test_dataset.map(self.tokenize_function, batched=True)
+
+    def compute_metrics(self, eval_pred):
+        """
+        Compute the F1 score and accuracy metrics for evaluating model performance.
+
+        Args:
+            eval_pred (tuple): A tuple containing the logits and labels.
+
+        Returns:
+            dict: A dictionary containing the computed F1 score and accuracy.
+
+        """
+        f1_metric = evaluate.load("f1")
+        accuracy_metric = evaluate.load("accuracy")
+
+        logits, labels = eval_pred
+        probabilities = F.softmax(torch.from_numpy(logits), dim=1)
+        predictions = torch.argmax(probabilities, dim=1)
+
+        f1 = f1_metric.compute(
+            predictions=predictions, references=labels, average="macro"
+        )["f1"]
+        accuracy = accuracy_metric.compute(predictions=predictions, references=labels)[
+            "accuracy"
+        ]
+
+        return {"f1": f1, "accuracy": accuracy}
+
+    def train(self):
+        """
+        Trains the model using the specified training arguments, datasets, tokenizer, and data collator.
+        Saves the trained model after training.
+        """
+        data_collator = DataCollatorWithPadding(tokenizer=self.tokenizer)
+
+        args = TrainingArguments(
+            output_dir=self.path, logging_dir=self.path, **self.training_args
+        )
+
+        self.trainer = Trainer(
+            model=self.model,
+            args=args,
+            train_dataset=self.train_dataset,
+            eval_dataset=self.test_dataset,
+            tokenizer=self.tokenizer,
+            data_collator=data_collator,
+            compute_metrics=self.compute_metrics,
+            callbacks=[PGMLCallback(self.project_id, self.model_id)],
+        )
+
+        self.trainer.train()
+
+        self.trainer.save_model()
+
+    def evaluate(self):
+        """
+        Evaluate the performance of the model on the evaluation dataset.
+
+        Returns:
+            metrics (dict): A dictionary containing the evaluation metrics.
+        """
+        metrics = self.trainer.evaluate()
+
+        # Update the keys to match hardcoded metrics in Task definition
+        if "eval_f1" in metrics.keys():
+            metrics["f1"] = metrics.pop("eval_f1")
+
+        if "eval_accuracy" in metrics.keys():
+            metrics["accuracy"] = metrics.pop("eval_accuracy")
+
+        # Drop all the keys that are not floats or ints to be compatible for pgml-extension metrics typechecks
+        metrics = {
+            key: value
+            for key, value in metrics.items()
+            if isinstance(value, (int, float))
+        }
+
+        return metrics
+
+
+class FineTuningTextPairClassification(FineTuningTextClassification):
+    def __init__(
+        self,
+        project_id: int,
+        model_id: int,
+        train_dataset: datasets.Dataset,
+        test_dataset: datasets.Dataset,
+        path: str,
+        hyperparameters: dict,
+    ) -> None:
+        """
+        Initializes a FineTuning object.
+
+        Args:
+            project_id (int): The ID of the project.
+            model_id (int): The ID of the model.
+            train_dataset (Dataset): The training dataset.
+            test_dataset (Dataset): The test dataset.
+            path (str): The path to save the model.
+            hyperparameters (dict): The hyperparameters for fine-tuning.
+
+        Returns:
+            None
+        """
+        super().__init__(
+            project_id, model_id, train_dataset, test_dataset, path, hyperparameters
+        )
+
+    def tokenize_function(self, example):
+        """
+        Tokenizes the input text using the tokenizer specified in the class.
+
+        Args:
+            example (dict): The input example containing the text to be tokenized.
+
+        Returns:
+            tokenized_example (dict): The tokenized example.
+
+        """
+        if self.tokenizer_args:
+            tokenized_example = self.tokenizer(
+                example["text1"], example["text2"], **self.tokenizer_args
+            )
+        else:
+            tokenized_example = self.tokenizer(
+                example["text1"],
+                example["text2"],
+                padding=True,
+                truncation=True,
+                return_tensors="pt",
+            )
+        return tokenized_example
+
+
+class FineTuningConversation(FineTuningBase):
+    def __init__(
+        self,
+        project_id: int,
+        model_id: int,
+        train_dataset: datasets.Dataset,
+        test_dataset: datasets.Dataset,
+        path: str,
+        hyperparameters: dict,
+    ) -> None:
+        """
+        Initializes a FineTuning object.
+
+        Args:
+            project_id (int): The ID of the project.
+            model_id (int): The ID of the model.
+            train_dataset (Dataset): The training dataset.
+            test_dataset (Dataset): The test dataset.
+            path (str): The path to save the model.
+            hyperparameters (dict): The hyperparameters for fine-tuning.
+
+        Returns:
+            None
+        """
+        super().__init__(
+            project_id, model_id, train_dataset, test_dataset, path, hyperparameters
+        )
+
+        # max sequence length
+        self.max_seq_length = None
+
+        # lora config parameters
+        self.lora_config_params = None
+
+        if "max_seq_length" in hyperparameters.keys():
+            self.max_seq_length = hyperparameters.pop("max_seq_length")
+        elif hasattr(self.tokenizer, "model_max_length"):
+            self.max_seq_length = self.tokenizer.model_max_length
+        else:
+            self.max_seq_length = 1024
+
+        if self.max_seq_length > 1e6:
+            self.max_seq_length = 1024
+
+        # train and test dataset
+        self.train_dataset = train_dataset
+        self.test_dataset = test_dataset
+
+        if "lora_config" in hyperparameters:
+            self.lora_config_params = hyperparameters.pop("lora_config")
+        else:
+            self.lora_config_params = {
+                "r": 2,
+                "lora_alpha": 4,
+                "lora_dropout": 0.05,
+                "bias": "none",
+                "task_type": "CAUSAL_LM",
+            }
+            r_log("info",
+                "LoRA configuration are not set. Using default parameters"
+                + json.dumps(self.lora_config_params)
+            )
+
+        self.prompt_template = None
+        if "prompt_template" in hyperparameters.keys():
+            self.prompt_template = hyperparameters.pop("prompt_template")
+
+    def train(self):
+
+        args = TrainingArguments(
+            output_dir=self.path, logging_dir=self.path, **self.training_args
+        )
+
+        def formatting_prompts_func(example):
+
+            system_content = example["system"]
+            user_content = example["user"]
+            assistant_content = example["assistant"]
+
+            if self.prompt_template:
+                text = self.prompt_template.format(
+                    system=system_content,
+                    user=user_content,
+                    assistant=assistant_content,
+                    eos_token=self.tokenizer.eos_token,
+                )
+            elif hasattr(self.tokenizer, "apply_chat_template"):
+                messages = [
+                    {"role": "system", "content": system_content},
+                    {"role": "user", "content": user_content},
+                    {"role": "assistant", "content": assistant_content},
+                ]
+                text = self.tokenizer.apply_chat_template(messages, tokenize=False)
+            else:
+                raise ValueError(
+                    "Tokenizer doesn't have a chat template. Please pass a template in hyperparameters"
+                )
+
+            return text
+
+        if self.load_in_8bit:
+            model = AutoModelForCausalLM.from_pretrained(
+                self.model_name,
+                load_in_8bit=True,
+                token=self.token,
+            )
+        else:
+            model = AutoModelForCausalLM.from_pretrained(
+                self.model_name,
+                torch_dtype=torch.bfloat16,
+                token=self.token,
+            )
+
+        # SFT Trainer
+        self.trainer = SFTTrainer(
+            model,
+            args=args,
+            train_dataset=self.train_dataset,
+            eval_dataset=self.test_dataset,
+            formatting_func=formatting_prompts_func,
+            max_seq_length=self.max_seq_length,
+            packing=True,
+            peft_config=LoraConfig(**self.lora_config_params),
+            callbacks=[PGMLCallback(self.project_id, self.model_id)],
+        )
+        r_log("info","Creating Supervised Fine Tuning trainer done. Training ... ")
+
+        # Train
+        self.trainer.train()
+
+        # Save the model
+        self.trainer.save_model()
+
+    def evaluate(self):
+        metrics = self.trainer.evaluate()
+        # Drop all the keys that are not floats or ints to be compatible for pgml-extension metrics typechecks
+        metrics = {
+            key: value
+            for key, value in metrics.items()
+            if isinstance(value, (int, float))
+        }
+        return metrics
+
+
+def finetune_text_classification(
+    task, hyperparams, path, x_train, x_test, y_train, y_test, project_id, model_id
+):
+    hyperparams = orjson.loads(hyperparams)
+    # Prepare dataset
+    train_dataset = datasets.Dataset.from_dict(
+        {
+            "text": x_train,
+            "class": y_train,
+        }
+    )
+    test_dataset = datasets.Dataset.from_dict(
+        {
+            "text": x_test,
+            "class": y_test,
+        }
+    )
+
+    finetuner = FineTuningTextClassification(
+        project_id=project_id,
+        model_id=model_id,
+        train_dataset=train_dataset,
+        test_dataset=test_dataset,
+        path=path,
+        hyperparameters=hyperparams,
+    )
+
+    finetuner.prepare_tokenized_datasets()
+
+    finetuner.train()
+
+    metrics = finetuner.evaluate()
+
+    return metrics
+
+
+def finetune_text_pair_classification(
+    task,
+    hyperparams,
+    path,
+    text1_train,
+    text1_test,
+    text2_train,
+    text2_test,
+    class_train,
+    class_test,
+    project_id,
+    model_id,
+):
+    # Get model and tokenizer
+    hyperparams = orjson.loads(hyperparams)
+
+    # Prepare dataset
+    train_dataset = datasets.Dataset.from_dict(
+        {
+            "text1": text1_train,
+            "text2": text2_train,
+            "class": class_train,
+        }
+    )
+    test_dataset = datasets.Dataset.from_dict(
+        {
+            "text1": text1_test,
+            "text2": text2_test,
+            "class": class_test,
+        }
+    )
+
+    finetuner = FineTuningTextPairClassification(
+        project_id=project_id,
+        model_id=model_id,
+        train_dataset=train_dataset,
+        test_dataset=test_dataset,
+        path=path,
+        hyperparameters=hyperparams,
+    )
+
+    finetuner.prepare_tokenized_datasets()
+
+    finetuner.train()
+
+    metrics = finetuner.evaluate()
+
+    return metrics
+
+
+## Conversation
+def finetune_conversation(
+    task,
+    hyperparams,
+    path,
+    system_train,
+    user_test,
+    assistant_train,
+    system_test,
+    user_train,
+    assistant_test,
+    project_id,
+    model_id,
+):
+
+    train_dataset = datasets.Dataset.from_dict(
+        {
+            "system": system_train,
+            "user": user_train,
+            "assistant": assistant_train,
+        }
+    )
+
+    test_dataset = datasets.Dataset.from_dict(
+        {
+            "system": system_test,
+            "user": user_test,
+            "assistant": assistant_test,
+        }
+    )
+    hyperparams = orjson.loads(hyperparams)
+
+    finetuner = FineTuningConversation(
+        project_id, model_id, train_dataset, test_dataset, path, hyperparams
+    )
+
+    finetuner.train()
+
+    metrics = finetuner.evaluate()
+
+    return metrics
