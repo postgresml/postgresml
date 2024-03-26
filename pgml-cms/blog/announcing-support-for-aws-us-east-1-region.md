@@ -27,13 +27,7 @@ To demonstrate the impact of moving the data closer to your application, we've c
 
 <figure><img src=".gitbook/assets/image (8).png" alt=""><figcaption></figcaption></figure>
 
-\
-
-
 <figure><img src=".gitbook/assets/image (9).png" alt=""><figcaption></figcaption></figure>
-
-\
-
 
 ## Using the New Region
 
