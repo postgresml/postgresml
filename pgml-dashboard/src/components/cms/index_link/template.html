@@ -16,13 +16,13 @@
     <% if level == 1 {%>
     <div class="d-flex flex-row gap-2 align-items-center">
         <div class="menu-item flex-grow-1" data-navigation-left-nav-docs-target="level1Container">
-            <a class='d-block p-2 <% if active {%><%- String::from("active") %><% } %>' href="<%- href %>" <%- turbo_action_level_1 %> data-navigation-left-nav-docs-target="level1Link">
+            <a data-turbo-is-visitable class='d-block p-2 <% if active {%><%- String::from("active") %><% } %>' href="<%- href %>" <%- turbo_action_level_1 %> data-navigation-left-nav-docs-target="level1Link">
                 <span class="text-wrap"><%- title %></span>
             </a>
         </div>
     </div>
     <% } else {%>
-    <a class="nav-link ps-1 text-break <%- color %>" href="<%- href %>" <%- turbo_action_high_levels %> data-navigation-left-nav-docs-target="highLevels"><%- title %></a>
+    <a data-turbo-is-visitable class="nav-link ps-1 text-break <%- color %>" href="<%- href %>" <%- turbo_action_high_levels %> data-navigation-left-nav-docs-target="highLevels"><%- title %></a>
     <% } %>
 
     <% } else {
@@ -42,7 +42,7 @@
     <% if level == 1 {%>
     <div class="menu-item flex-grow-1 d-flex flex-row align-items-center">
         <div class='w-100 d-flex flex-row gap-2 align-items-start <% if active || open {%><%- String::from("active") %><% } %> justify-content-between doc-left-nav-level1-link-container' data-navigation-left-nav-docs-target="level1Container">
-            <a class='d-block p-2' href="<%- href %>" <%- turbo_action_level_1 %> data-navigation-left-nav-docs-target="level1Link">
+            <a data-turbo-is-visitable class='d-block p-2' href="<%- href %>" <%- turbo_action_level_1 %> data-navigation-left-nav-docs-target="level1Link">
                 <span class="text-wrap"><%- title %></span>
             </a>
             <div class="pt-2">
@@ -52,7 +52,7 @@
     </div>
     <% } else {%>
     <span class="ps-1 py-0 d-flex justify-content-between align-items-start text-break" >
-        <a class="nav-link px-0 text-break <%- color %>" href="<%- href %>" <%- turbo_action_high_levels %> data-navigation-left-nav-docs-target="highLevels">
+        <a data-turbo-is-visitable class="nav-link px-0 text-break <%- color %>" href="<%- href %>" <%- turbo_action_high_levels %> data-navigation-left-nav-docs-target="highLevels">
             <span class="text-wrap"><%- title %></span>
         </a>
         <div class="pt-2">
