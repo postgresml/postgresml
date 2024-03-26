@@ -1372,7 +1372,7 @@ What makes the conversation task truly remarkable is its remarkable versatility.
     - Predicted Label: Technical Support
     - Confidence Score: 0.85
 
-- **Token Classification:**Annotating the conversation with labels for specific tokens or phrases enables applications like named entity recognition within conversational text.
+- **Token Classification:** Annotating the conversation with labels for specific tokens or phrases enables applications like named entity recognition within conversational text.
 
     **Input:**
     - System: Chatbot: "Please describe the issue you're facing in detail."
