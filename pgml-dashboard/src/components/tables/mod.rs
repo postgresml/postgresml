@@ -3,3 +3,6 @@
 
 // src/components/tables/large
 pub mod large;
+
+// src/components/tables/small
+pub mod small;

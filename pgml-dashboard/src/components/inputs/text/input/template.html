@@ -1,0 +1,25 @@
+<div class="mb-3" data-controller="inputs-text-input">
+  <% if let Some(label) = label { %>
+    <label class="form-label" for="<%= id %>"><%+ label %></label>
+  <% } %>
+
+  <div class="d-flex align-items-center">
+    <input
+      id="<%= id %>"
+      type="<%= type_ %>"
+      name="<%= name %>"
+      class="form-control"
+      placeholder="<%= placeholder %>"
+      data-action="<%= input_actions %>"
+      autocomplete="<%= autocomplete %>"
+    >
+
+    <% if let Some(icon) = icon { %>
+      <span
+        class="material-symbols-outlined"
+        data-action="<%= icon_actions %>">
+        <%= icon %>
+      </span>
+    <% } %>
+  </div>
+</div>

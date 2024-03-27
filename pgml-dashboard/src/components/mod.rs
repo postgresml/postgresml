@@ -39,6 +39,9 @@ pub use dropdown::Dropdown;
 pub mod github_icon;
 pub use github_icon::GithubIcon;
 
+// src/components/headings
+pub mod headings;
+
 // src/components/inputs
 pub mod inputs;
 

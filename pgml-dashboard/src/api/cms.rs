@@ -14,7 +14,7 @@ use yaml_rust::YamlLoader;
 use crate::{
     components::{cms::index_link::IndexLink, layouts::marketing::base::Theme, layouts::marketing::Base},
     guards::Cluster,
-    responses::{Response, ResponseOk, Template},
+    responses::{Error, Response, ResponseOk, Template},
     templates::docs::*,
     utils::{config, markdown::SearchResult},
 };
@@ -882,6 +882,14 @@ async fn careers_landing_page(cluster: &Cluster) -> Result<ResponseOk, crate::re
     Ok(ResponseOk(layout.render(page)))
 }
 
+#[get("/demo")]
+async fn demo() -> Result<Response, Error> {
+    let layout = Base::new("Demos", None).theme(Theme::Marketing);
+
+    let page = crate::components::pages::demo::Demo::new();
+    Ok(Response::ok(layout.render(page)))
+}
+
 pub fn routes() -> Vec<Route> {
     routes![
         blog_landing_page,
@@ -896,7 +904,8 @@ pub fn routes() -> Vec<Route> {
         get_docs_asset,
         get_user_guides,
         search,
-        search_blog
+        search_blog,
+        demo,
     ]
 }
 
