@@ -64,6 +64,10 @@ impl StimulusAction {
         self.action = Some(action);
         self
     }
+
+    pub fn new_click() -> Self {
+        Self::new().action(StimulusEvents::Click)
+    }
 }
 
 impl fmt::Display for StimulusAction {
@@ -118,5 +122,28 @@ impl FromStr for StimulusAction {
             }
             _ => Err(()),
         }
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct StimulusActions {
+    actions: Vec<StimulusAction>,
+}
+
+impl StimulusActions {
+    pub fn push(&mut self, action: StimulusAction) {
+        self.actions.push(action);
+    }
+}
+
+impl Render for StimulusActions {
+    fn render(&self, b: &mut Buffer) -> Result<(), sailfish::RenderError> {
+        let actions = self
+            .actions
+            .iter()
+            .map(|action| action.to_string())
+            .collect::<Vec<String>>();
+        let actions = actions.join(" ");
+        actions.render(b)
     }
 }

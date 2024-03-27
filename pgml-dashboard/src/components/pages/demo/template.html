@@ -1,0 +1,46 @@
+<% use crate::components::tables::small::*; %>
+<% use crate::components::headings::Green; %>
+<% use crate::components::inputs::text::EditableHeader; %>
+<% use crate::components::inputs::Select; %>
+<% use crate::components::Dropdown; %>
+<% use crate::components::inputs::text::{Input, Search}; %>
+
+<div class="mb-3 px-5">
+  <%+ Table::new(&["Model", "Pricing"], &[
+    Row::new(&[
+      "intfloat/e5-small".into(),
+      "$0.50/M tokens".into(),
+    ]).into()
+  ]) %>
+</div>
+
+<div class="mb-3 px-5">
+  <%+ Green::new("Unify RAG") %>
+  <p>Vector & Relational Database + Embedding generation</p>
+</div>
+
+<div class="mb-3 px-5">
+  <%+ EditableHeader::default() %>
+</div>
+
+<div class="mb-3 px-5">
+  <%+ Select::default() %>
+</div>
+
+<div class="mb-3 px-5">
+  <%+ Dropdown::default() %>
+</div>
+
+
+<div class="mb-3 px-5">
+  <%+ Input::new()
+    .label("Model selector".into())
+    .icon("search")
+    .placeholder("Enter model")
+    .name("model_selector")
+    .type_("text") %>
+</div>
+
+<div class="mb-3 px-5">
+  <%+ Search::new() %>
+</div>
