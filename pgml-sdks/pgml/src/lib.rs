@@ -4,11 +4,12 @@
 //!
 //! With this SDK, you can seamlessly manage various database tables related to documents, text chunks, text splitters, LLM (Language Model) models, and embeddings. By leveraging the SDK's capabilities, you can efficiently index LLM embeddings using PgVector for fast and accurate queries.
 
+use anyhow::Context;
 use once_cell::sync::Lazy;
 use parking_lot::RwLock;
 use sqlx::{postgres::PgPoolOptions, PgPool};
-use std::collections::HashMap;
 use std::env;
+use std::{collections::HashMap, time::Duration};
 use tokio::runtime::{Builder, Runtime};
 use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
@@ -67,13 +68,60 @@ async fn get_or_initialize_pool(database_url: &Option<String>) -> anyhow::Result
     if let Some(pool) = pools.get(&url) {
         Ok(pool.clone())
     } else {
-        let timeout = std::env::var("PGML_CHECKOUT_TIMEOUT")
-            .unwrap_or_else(|_| "5000".to_string())
-            .parse::<u64>()
-            .expect("Error parsing PGML_CHECKOUT_TIMEOUT, expected an integer");
+        let acquire_timeout = std::env::var("PGML_CHECKOUT_TIMEOUT")
+            .ok()
+            .map(|v| v.parse::<u64>())
+            .transpose()
+            .context("Error parsing PGML_CHECKOUT_TIMEOUT, expected an integer")?
+            .map(anyhow::Ok)
+            .unwrap_or_else(|| {
+                Ok(std::env::var("PGML_POOL_ACQUIRE_TIMEOUT")
+                    .ok()
+                    .map(|v| v.parse::<u64>())
+                    .transpose()
+                    .context("Error parsing PGML_POOL_ACQUIRE_TIMEOUT, expected an integer")?
+                    .unwrap_or(30000))
+            })?;
+        let acquire_timeout = Duration::from_millis(acquire_timeout);
+
+        let max_lifetime = std::env::var("PGML_POOL_MAX_LIFETIME")
+            .ok()
+            .map(|v| {
+                anyhow::Ok(Duration::from_millis(v.parse::<u64>().context(
+                    "Error parsing PGML_POOL_MAX_LIFETIME, expected an integer",
+                )?))
+            })
+            .transpose()?;
+
+        let idle_timeout = std::env::var("PGML_POOL_IDLE_TIMEOUT")
+            .ok()
+            .map(|v| {
+                anyhow::Ok(Duration::from_millis(v.parse::<u64>().context(
+                    "Error parsing PGML_POOL_IDLE_TIMEOUT, expected an integer",
+                )?))
+            })
+            .transpose()?;
+
+        let max_connections = std::env::var("PGML_POOL_MAX_CONNECTIONS")
+            .ok()
+            .map(|v| v.parse::<u32>())
+            .transpose()
+            .context("Error parsing PGML_POOL_MAX_CONNECTIONS, expected an integer")?
+            .unwrap_or(10);
+
+        let min_connections = std::env::var("PGML_POOL_MIN_CONNECTIONS")
+            .ok()
+            .map(|v| v.parse::<u32>())
+            .transpose()
+            .context("Error parsing PGML_POOL_MIN_CONNECTIONS, expected an integer")?
+            .unwrap_or(0);
 
         let pool = PgPoolOptions::new()
-            .acquire_timeout(std::time::Duration::from_millis(timeout))
+            .max_connections(max_connections)
+            .min_connections(min_connections)
+            .acquire_timeout(acquire_timeout)
+            .max_lifetime(max_lifetime)
+            .idle_timeout(idle_timeout)
             .connect_lazy(&url)?;
 
         pools.insert(url.to_string(), pool.clone());
