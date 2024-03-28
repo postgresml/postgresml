@@ -9,6 +9,7 @@ use crate::components::StaticNavLink;
 pub enum DropdownValue {
     Icon(Component),
     Text(Component),
+    None,
 }
 
 impl Default for DropdownValue {
@@ -18,13 +19,55 @@ impl Default for DropdownValue {
 }
 
 #[derive(TemplateOnce, Default)]
+#[template(path = "dropdown/dropdown_items.html")]
+pub struct DropdownItems {
+    items: Vec<Component>,
+}
+
+impl DropdownItems {
+    pub fn new(items: Vec<Component>) -> Self {
+        DropdownItems { items }
+    }
+}
+
+component!(DropdownItems);
+
+#[derive(TemplateOnce, Default)]
+#[template(path = "dropdown/dropdown_frame.html")]
+pub struct DropdownFrame {
+    src: Option<String>,
+    id: String,
+    content: Component,
+}
+
+impl DropdownFrame {
+    pub fn rendered(id: impl ToString, content: Component) -> Self {
+        DropdownFrame {
+            src: None,
+            id: id.to_string(),
+            content,
+        }
+    }
+
+    pub fn new(id: impl ToString, src: impl ToString) -> Self {
+        DropdownFrame {
+            src: Some(src.to_string()),
+            id: id.to_string(),
+            content: "".into(),
+        }
+    }
+}
+
+component!(DropdownFrame);
+
+#[derive(TemplateOnce, Default)]
 #[template(path = "dropdown/template.html")]
 pub struct Dropdown {
     /// The currently selected value.
     value: DropdownValue,
 
     /// The list of dropdown items to render.
-    items: Vec<Component>,
+    items: Component,
 
     /// Position of the dropdown menu.
     offset: String,
@@ -39,17 +82,27 @@ pub struct Dropdown {
 
     /// target to control value
     value_target: StimulusTarget,
+
+    /// If the dropdown should be shown
+    show: String,
 }
 
 impl Dropdown {
     pub fn new() -> Self {
         Dropdown {
-            items: Vec::new(),
+            items: DropdownItems::default().into(),
             value: DropdownValue::Text("Dropdown".to_owned().into()),
             offset: "0, 10".to_owned(),
             offset_collapsed: "68, -44".to_owned(),
             menu_position: "".to_owned(),
             ..Default::default()
+        }
+    }
+
+    pub fn new_no_button() -> Self {
+        Dropdown {
+            value: DropdownValue::None,
+            ..Self::new()
         }
     }
 
@@ -70,7 +123,7 @@ impl Dropdown {
         }
 
         Dropdown {
-            items,
+            items: DropdownItems::new(items).into(),
             value: DropdownValue::Text(value.into()),
             offset: "0, 10".to_owned(),
             offset_collapsed: "68, -44".to_owned(),
@@ -80,7 +133,13 @@ impl Dropdown {
     }
 
     pub fn items(mut self, items: Vec<Component>) -> Self {
-        self.items = items;
+        self.items = DropdownItems::new(items).into();
+        self
+    }
+
+    pub fn frame(mut self, id: impl ToString, src: impl ToString) -> Self {
+        self.items = DropdownFrame::new(id, src).into();
+
         self
     }
 
@@ -126,6 +185,11 @@ impl Dropdown {
 
     pub fn value_target(mut self, value_target: StimulusTarget) -> Self {
         self.value_target = value_target;
+        self
+    }
+
+    pub fn show(mut self) -> Self {
+        self.show = "show".into();
         self
     }
 }

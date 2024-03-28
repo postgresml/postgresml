@@ -5,6 +5,9 @@
 pub mod accordian;
 pub use accordian::Accordian;
 
+// src/components/badges
+pub mod badges;
+
 // src/components/breadcrumbs
 pub mod breadcrumbs;
 pub use breadcrumbs::Breadcrumbs;

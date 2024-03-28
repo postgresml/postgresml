@@ -2,17 +2,17 @@ use pgml_components::component;
 use sailfish::TemplateOnce;
 
 #[derive(TemplateOnce, Default)]
-#[template(path = "headings/green/template.html")]
-pub struct Green {
+#[template(path = "headings/blue/template.html")]
+pub struct Blue {
     value: String,
 }
 
-impl Green {
-    pub fn new(value: impl ToString) -> Green {
-        Green {
+impl Blue {
+    pub fn new(value: impl ToString) -> Blue {
+        Blue {
             value: value.to_string(),
         }
     }
 }
 
-component!(Green);
+component!(Blue);

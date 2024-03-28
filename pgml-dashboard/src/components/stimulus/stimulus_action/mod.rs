@@ -9,6 +9,10 @@ pub enum StimulusEvents {
     Submit,
     Input,
     Toggle,
+    FocusOut,
+    FocusIn,
+    KeyDown,
+    KeyUp,
 }
 
 impl fmt::Display for StimulusEvents {
@@ -19,6 +23,10 @@ impl fmt::Display for StimulusEvents {
             StimulusEvents::Submit => write!(f, "submit"),
             StimulusEvents::Input => write!(f, "input"),
             StimulusEvents::Toggle => write!(f, "toggle"),
+            StimulusEvents::FocusOut => write!(f, "focusout"),
+            StimulusEvents::FocusIn => write!(f, "focusin"),
+            StimulusEvents::KeyDown => write!(f, "keydown"),
+            StimulusEvents::KeyUp => write!(f, "keyup"),
         }
     }
 }
@@ -33,6 +41,10 @@ impl FromStr for StimulusEvents {
             "submit" => Ok(StimulusEvents::Submit),
             "input" => Ok(StimulusEvents::Input),
             "toggle" => Ok(StimulusEvents::Toggle),
+            "focusout" => Ok(StimulusEvents::FocusOut),
+            "focusin" => Ok(StimulusEvents::FocusIn),
+            "keydown" => Ok(StimulusEvents::KeyDown),
+            "keyup" => Ok(StimulusEvents::KeyUp),
             _ => Err(()),
         }
     }

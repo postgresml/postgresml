@@ -95,7 +95,7 @@
 }
 
 @mixin dropdown-menu($primary-color: null) {
-    padding: 20px 0px 40px 0px;
+    padding: 20px 0px 20px 0px;
     overflow-y: auto;
 
     @if ($primary-color) {

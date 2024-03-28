@@ -2,6 +2,8 @@
 // There is no need to edit it manually.
 
 @import "../../src/components/accordian/accordian.scss";
+@import "../../src/components/badges/large/label/label.scss";
+@import "../../src/components/badges/small/label/label.scss";
 @import "../../src/components/breadcrumbs/breadcrumbs.scss";
 @import "../../src/components/cards/blog/article_preview/article_preview.scss";
 @import "../../src/components/cards/newsletter_subscribe/newsletter_subscribe.scss";
@@ -10,13 +12,14 @@
 @import "../../src/components/cms/index_link/index_link.scss";
 @import "../../src/components/dropdown/dropdown.scss";
 @import "../../src/components/github_icon/github_icon.scss";
+@import "../../src/components/headings/blue/blue.scss";
 @import "../../src/components/headings/green/green.scss";
 @import "../../src/components/inputs/range_group/range_group.scss";
 @import "../../src/components/inputs/select/select.scss";
 @import "../../src/components/inputs/switch/switch.scss";
 @import "../../src/components/inputs/text/editable_header/editable_header.scss";
 @import "../../src/components/inputs/text/input/input.scss";
-@import "../../src/components/inputs/text/search/search.scss";
+@import "../../src/components/inputs/text/search/search/search.scss";
 @import "../../src/components/layouts/docs/docs.scss";
 @import "../../src/components/layouts/marketing/base/base.scss";
 @import "../../src/components/left_nav_menu/left_nav_menu.scss";

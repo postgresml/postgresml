@@ -882,12 +882,32 @@ async fn careers_landing_page(cluster: &Cluster) -> Result<ResponseOk, crate::re
     Ok(ResponseOk(layout.render(page)))
 }
 
-#[get("/demo")]
-async fn demo() -> Result<Response, Error> {
-    let layout = Base::new("Demos", None).theme(Theme::Marketing);
+#[get("/components-library-demo?<search>")]
+async fn demo(search: Option<String>) -> Result<Response, Error> {
+    #[cfg(not(debug_assertions))]
+    return Ok(Response::not_found());
 
-    let page = crate::components::pages::demo::Demo::new();
-    Ok(Response::ok(layout.render(page)))
+    #[cfg(debug_assertions)]
+    {
+        use crate::components::dropdown::{DropdownFrame, DropdownItems};
+        use crate::components::inputs::text::search::SearchOption;
+        if let Some(search) = search {
+            let candidates = vec!["hello", "world", "foo", "bar"]
+                .into_iter()
+                .filter(|c| c.starts_with(&search))
+                .map(|c| SearchOption::new(c.into()).into())
+                .collect::<Vec<pgml_components::Component>>();
+
+            Ok(Response::ok(
+                DropdownFrame::rendered("model-search", DropdownItems::new(candidates).into()).render_once()?,
+            ))
+        } else {
+            let layout = Base::new("Demos", None).theme(Theme::Marketing);
+
+            let page = crate::components::pages::demo::Demo::new();
+            Ok(Response::ok(layout.render(page)))
+        }
+    }
 }
 
 pub fn routes() -> Vec<Route> {

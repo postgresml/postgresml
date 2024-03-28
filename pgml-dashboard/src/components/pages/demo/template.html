@@ -1,15 +1,15 @@
 <% use crate::components::tables::small::*; %>
-<% use crate::components::headings::Green; %>
+<% use crate::components::headings::{Green, Blue}; %>
 <% use crate::components::inputs::text::EditableHeader; %>
-<% use crate::components::inputs::Select; %>
-<% use crate::components::Dropdown; %>
-<% use crate::components::inputs::text::{Input, Search}; %>
+<% use crate::components::inputs::text::{Input, search::{Search, search::SearchOptions}}; %>
+<% use crate::components::badges::{small, large::{self, label::LabelCloseOptions}}; %>
+<% use crate::components::stimulus::StimulusAction; %>
 
 <div class="mb-3 px-5">
   <%+ Table::new(&["Model", "Pricing"], &[
     Row::new(&[
       "intfloat/e5-small".into(),
-      "$0.50/M tokens".into(),
+      "5ms/embedding".into(),
     ]).into()
   ]) %>
 </div>
@@ -20,27 +20,48 @@
 </div>
 
 <div class="mb-3 px-5">
+  <%+ Blue::new("Dedicated database") %>
+  <p>Vector & Relational Database + Embedding generation</p>
+</div>
+
+<div class="mb-3 px-5">
   <%+ EditableHeader::default() %>
 </div>
 
 <div class="mb-3 px-5">
-  <%+ Select::default() %>
-</div>
-
-<div class="mb-3 px-5">
-  <%+ Dropdown::default() %>
-</div>
-
-
-<div class="mb-3 px-5">
   <%+ Input::new()
-    .label("Model selector".into())
-    .icon("search")
-    .placeholder("Enter model")
-    .name("model_selector")
+    .label("What is your name?".into())
+    .icon("person")
+    .placeholder("Enter your name")
+    .name("name")
     .type_("text") %>
 </div>
 
 <div class="mb-3 px-5">
-  <%+ Search::new() %>
+  <%+ Search::new(SearchOptions {
+    name: "Model search".into(),
+    placeholder: "Search for a model".into(),
+    search_url: "/components-library-demo?search=".into(),
+    id: "model-search".into(),
+  }) %>
+</div>
+
+<div class="row gx-3 gy-4 px-5 mb-5">
+  <div class="col-2"><%+ small::Label::check_circle("Supported") %></div>
+  <div class="col-2"><%+ small::Label::cancel("Not supported") %></div>
+  <div class="col-2"><%+ small::Label::outbound("Optimized") %></div>
+  <div class="col-2"><%+ small::Label::download_for_offline("Load model") %></div>
+  <div class="col-2"><%+ small::Label::forward_circle("Loading") %></div>
+</div>
+
+<div class="row gx-3 gy-4 px-5">
+  <div class="col-2">
+    <%+ large::Label::new("Mixtral/7B") %>
+  </div>
+  <div class="col-2">
+    <%+ large::Label::new("5ms/embedding").active().close_options(LabelCloseOptions {
+      action: StimulusAction::new(),
+      url: "#".into()
+    }) %>
+  </div>
 </div>

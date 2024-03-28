@@ -11,4 +11,3 @@ pub use input::Input;
 
 // src/components/inputs/text/search
 pub mod search;
-pub use search::Search;

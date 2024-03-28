@@ -1,8 +1,6 @@
-h6[data-controller="headings-green"] {
+span[data-controller="headings-green"] {
     background: linear-gradient(225deg, #4FD 0%, #05C168 100%);
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    font-weight: #{$font-weight-normal};
-    font-size: 18px;
 }
