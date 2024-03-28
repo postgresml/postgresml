@@ -885,7 +885,10 @@ async fn careers_landing_page(cluster: &Cluster) -> Result<ResponseOk, crate::re
 #[get("/components-library-demo?<search>")]
 async fn demo(search: Option<String>) -> Result<Response, Error> {
     #[cfg(not(debug_assertions))]
-    return Ok(Response::not_found());
+    {
+        let _search = search;
+        return Ok(Response::not_found());
+    }
 
     #[cfg(debug_assertions)]
     {
