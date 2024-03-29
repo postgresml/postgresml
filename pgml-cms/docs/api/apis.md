@@ -11,7 +11,7 @@ We also provide Client SDKs that implement the best practices on top of the SQL 
 ## SQL Extension
 
 PostgreSQL is designed to be _**extensible**_. This has created a rich open-source ecosystem of additional functionality built around the core project. Some [extensions](https://www.postgresql.org/docs/current/contrib.html) are include in the base Postgres distribution, but others are also available via the [PostgreSQL Extension Network](https://pgxn.org/).\
-
+\
 There are 2 foundational extensions included in a PostgresML deployment that provide functionality inside the database through SQL APIs.
 
 * **pgml** - provides Machine Learning and Artificial Intelligence APIs with access to more than 50 ML algorithms to train classification, clustering and regression models on your own data, or you can perform dozens of tasks with thousands of models downloaded from HuggingFace.

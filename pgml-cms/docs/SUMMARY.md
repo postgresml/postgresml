@@ -16,6 +16,7 @@
 * [SQL Extension](api/sql-extension/README.md)
   * [pgml.deploy()](api/sql-extension/pgml.deploy.md)
   * [pgml.embed()](api/sql-extension/pgml.embed.md)
+  * [pgml.chunk()](api/sql-extension/pgml.chunk.md)
   * [pgml.generate()](api/sql-extension/pgml.generate.md)
   * [pgml.predict()](api/sql-extension/pgml.predict/README.md)
     * [Batch Predictions](api/sql-extension/pgml.predict/batch-predictions.md)
