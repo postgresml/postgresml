@@ -1,0 +1,21 @@
+<%
+  let active_class = if timed { "pagination-item-timed-active" } else { "pagination-item-active" };
+  let clickable_class = if timed { "" } else { "pagination-item-container-clickable" };
+%>
+
+<div 
+  data-controller="pagination" 
+  data-action="paginateNext@window->pagination#changePagination paginatePause@window->pagination#pause paginateResume@window->pagination#resume" 
+  data-pagination-index-value="<%- default_index%>"
+  data-pagination-active-class-value="<%- active_class %>"
+>
+  <div class="pagination-container w-100 mt-4 pt-3">
+    <% if count > 1 {
+      for i in 0..count { %>
+    <div class="pagination-item-container <%- clickable_class %>" data-pagination-target="paginationItem">
+      <div class="pagination-item" data-action="click->pagination#change" data-pagination-index-param="<%- i %>"></div>
+    </div>
+    <% } 
+      } %>
+  </div>
+</div>

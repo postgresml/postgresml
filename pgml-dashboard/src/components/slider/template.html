@@ -1,0 +1,23 @@
+<% 
+  use crate::components::Pagination;
+%>
+
+<div data-controller="slider">
+  <div class="overflow-hidden w-100 d-none d-xl-block" data-action="pagination:change->slider#nextFromPagination pagination:connected->slider#changePaginationInit" style="position: relative">
+    <div class="d-flex flex-row w-100 item-container" data-slider-target="container" data-action="wheel->slider#scrollCheck">
+      <% for (index, item) in cards.clone().into_iter().enumerate() {%>
+        <div class="d-flex align-items-stretch disabled item-container" data-action="click->slider#next" data-slider-target="item" data-slider-index-param="<%- index %>">
+        <%+ item %>
+        </div>
+      <% } %>
+    </div>
+
+    <%+ Pagination::new(cards.clone().len()).default_index(1) %>
+  </div>
+
+  <div class="d-flex d-xl-none flex-column gap-2">
+    <% for item in cards {%>
+        <%+ item %>
+    <% } %>
+  </div>
+</div>

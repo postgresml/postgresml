@@ -4,45 +4,4 @@ div[data-controller="carousel"] {
     transition-property: margin-left;
     transition-duration: 700ms;
   }
-  
-  .carousel-indicator {
-    display: flex;
-    gap: 11px;
-    justify-content: center;
-    align-items: center;
-  }
-
-  .timer-container {
-    width: 1rem;
-    height: 1rem;
-    background-color: #{$gray-700};
-    border-radius: 1rem;
-    transition: width 0.25s;
-  }
-  
-  .timer-active {
-    .timer {
-      background-color: #00E0FF;
-      animation: TimerGrow 5000ms;
-    }
-  }
-  
-  .timer {
-    width: 1rem;
-    height: 1rem;
-    border-radius: 1rem;
-    background-color: #{$gray-700};
-    animation-fill-mode: forwards;
-  }
-
-  @keyframes TimerGrow {
-    from {width: 1rem;}
-    to {width: 4rem;}
-  }
-
-  .timer-pause {
-    .timer {
-      animation-play-state: paused !important;
-    }
-  }
 }

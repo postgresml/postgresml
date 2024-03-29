@@ -16,9 +16,9 @@
           </{}>
           "#,
           if notification.link.is_some() { format!(r#"a href="{}" data-turbo="false" "#, notification.link.clone().unwrap()) } else { "div".to_string() },
-          if notification.link.is_some() { "btn btn-tertiary p-0" } else { "" },
+          if notification.link.is_some() { "btn btn-tertiary p-0 goto-arrow-hover-trigger" } else { "" },
           notification.message,
-          if notification.link.is_some() { r#"<span class="material-symbols-outlined more-info position-relative goto-shift-animation" style="top: 2px;">arrow_forward</span>"# } else { "" },
+          if notification.link.is_some() { r#"<span class="material-symbols-outlined more-info position-relative goto-arrow-shift-animation" style="top: 2px;">arrow_forward</span>"# } else { "" },
           if notification.link.is_some() { "a" } else { "div" },
         ); %>
         
