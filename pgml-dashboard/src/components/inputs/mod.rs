@@ -5,6 +5,10 @@
 pub mod range_group;
 pub use range_group::RangeGroup;
 
+// src/components/inputs/range_group_v_2
+pub mod range_group_v_2;
+pub use range_group_v_2::RangeGroupV2;
+
 // src/components/inputs/select
 pub mod select;
 pub use select::Select;

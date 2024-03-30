@@ -4,6 +4,7 @@
 <% use crate::components::inputs::text::{Input, search::{Search, search::SearchOptions}}; %>
 <% use crate::components::badges::{small, large::{self, label::LabelCloseOptions}}; %>
 <% use crate::components::stimulus::StimulusAction; %>
+<% use crate::components::inputs::RangeGroupV2; %>
 
 <div class="mb-3 px-5">
   <%+ Table::new(&["Model", "Pricing"], &[
@@ -64,4 +65,8 @@
       url: "#".into()
     }) %>
   </div>
+</div>
+
+<div class="m-3">
+  <%+ RangeGroupV2::new().min("40").max("16000").value("40").cost_per_unit("0.20").unit("GB") %>
 </div>
