@@ -62,7 +62,7 @@ impl Select {
     /// # Arguments
     ///
     /// * `options` - A list of options to pass in.
-    pub fn options_with_value(mut self, options: &[self::Option]) -> Self {
+    pub fn options_with_input_value(mut self, options: &[self::Option]) -> Self {
         let first_option = options
             .first()
             .with_context(|| "select has no options passed in")
