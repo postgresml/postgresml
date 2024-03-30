@@ -5,6 +5,7 @@
 <% use crate::components::badges::{small, large::{self, label::LabelCloseOptions}}; %>
 <% use crate::components::stimulus::StimulusAction; %>
 <% use crate::components::inputs::RangeGroupV2; %>
+<% use crate::components::inputs::select::{Select, Option}; %>
 
 <div class="mb-3 px-5">
   <%+ Table::new(&["Model", "Pricing"], &[
@@ -69,4 +70,25 @@
 
 <div class="m-3">
   <%+ RangeGroupV2::new().min("40").max("16000").value("40").cost_per_unit("0.20").unit("GB") %>
+</div>
+
+<div class="my-3 pb-3">
+  <div class="row">
+    <div class="col-6">
+      <%+ Select::new()
+          .options_with_value(&[
+            Option::with_value("Hello", "1"),
+            Option::with_value("World", "2"),
+          ])
+      %> 
+    </div>
+    <div class="col-6">
+      <%+ Select::new()
+          .options(vec![
+            "hello",
+            "world",
+          ])
+      %> 
+    </div>
+  </div>
 </div>
