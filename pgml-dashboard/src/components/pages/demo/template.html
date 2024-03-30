@@ -77,8 +77,8 @@
     <div class="col-6">
       <%+ Select::new()
           .options_with_value(&[
-            Option::with_value("Hello", "1"),
-            Option::with_value("World", "2"),
+            Option::with_input_value("Hello", "1"),
+            Option::with_input_value("World", "2"),
           ])
       %> 
     </div>

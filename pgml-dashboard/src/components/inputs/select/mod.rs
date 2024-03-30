@@ -175,7 +175,7 @@ impl Option {
     /// * `value` - The value to display.
     /// * `input_value` - The value to pass into the `<input>` element.
     ///
-    pub fn with_value(value: impl ToString, input_value: impl ToString) -> Self {
+    pub fn with_input_value(value: impl ToString, input_value: impl ToString) -> Self {
         Self {
             value: value.to_string(),
             input_value: input_value.to_string(),
