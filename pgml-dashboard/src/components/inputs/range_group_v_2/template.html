@@ -21,11 +21,12 @@
           value="<%= value %>"
         >
         <span class="inputs-range-group-v-2-unit">
-          GB
+          <%= unit %>
         </span>
       </div>
     </div>
 
+    <% if !cost_per_unit.is_empty() { %>
     <div class="col-md-6 col-12">
       <div class="d-flex justify-content-between bg-black align-items-center h-100">
         <span>
@@ -37,5 +38,6 @@
         </span>
       </div>
     </div>
+    <% } %>
   </div>
 </div>
