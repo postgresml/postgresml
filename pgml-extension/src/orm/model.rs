@@ -158,9 +158,21 @@ impl Model {
     }
 
     #[allow(clippy::too_many_arguments)]
-    pub fn tune(project: &Project, snapshot: &mut Snapshot, hyperparams: &JsonB) -> Model {
+    pub fn finetune(project: &Project, snapshot: &mut Snapshot, hyperparams: &JsonB) -> Model {
         let mut model: Option<Model> = None;
-        let dataset = snapshot.text_dataset();
+
+        let dataset_args = JsonB(json!(hyperparams.0.get("dataset_args").unwrap()));
+
+        // let dataset = snapshot.text_classification_dataset(dataset_args);
+        let dataset = if project.task == Task::text_classification {
+            TextDatasetType::TextClassification(snapshot.text_classification_dataset(dataset_args))
+        } else if project.task == Task::text_pair_classification {
+            TextDatasetType::TextPairClassification(snapshot.text_pair_classification_dataset(dataset_args))
+        } else if project.task == Task::conversation {
+            TextDatasetType::Conversation(snapshot.conversation_dataset(dataset_args))
+        } else {
+            panic!("Unsupported task for finetuning")
+        };
 
         // Create the model record.
         Spi::connect(|mut client| {
@@ -179,7 +191,7 @@ impl Model {
                                            (PgBuiltInOids::TEXTOID.oid(), None::<Option<Search>>.into_datum()),
                                            (PgBuiltInOids::JSONBOID.oid(), JsonB(serde_json::from_str("{}").unwrap()).into_datum()),
                                            (PgBuiltInOids::JSONBOID.oid(), JsonB(serde_json::from_str("{}").unwrap()).into_datum()),
-                                           (PgBuiltInOids::INT8OID.oid(), (dataset.num_features as i64).into_datum()),
+                                           (PgBuiltInOids::INT8OID.oid(), (dataset.num_features() as i64).into_datum()),
                                        ]),
             ).unwrap().first();
             if !result.is_empty() {
@@ -211,10 +223,49 @@ impl Model {
         let path = std::path::PathBuf::from(format!("/tmp/postgresml/models/{id}"));
 
         info!("Tuning {}", model);
-        let metrics = match transformers::tune(&project.task, dataset, &model.hyperparams, &path) {
-            Ok(metrics) => metrics,
-            Err(e) => error!("{e}"),
+        let metrics: HashMap<String, f64>;
+        match dataset {
+            TextDatasetType::TextClassification(dataset) => {
+                metrics = match transformers::finetune_text_classification(
+                    &project.task,
+                    dataset,
+                    &model.hyperparams,
+                    &path,
+                    project.id,
+                    model.id,
+                ) {
+                    Ok(metrics) => metrics,
+                    Err(e) => error!("{e}"),
+                };
+            }
+            TextDatasetType::TextPairClassification(dataset) => {
+                metrics = match transformers::finetune_text_pair_classification(
+                    &project.task,
+                    dataset,
+                    &model.hyperparams,
+                    &path,
+                    project.id,
+                    model.id,
+                ) {
+                    Ok(metrics) => metrics,
+                    Err(e) => error!("{e}"),
+                };
+            }
+            TextDatasetType::Conversation(dataset) => {
+                metrics = match transformers::finetune_conversation(
+                    &project.task,
+                    dataset,
+                    &model.hyperparams,
+                    &path,
+                    project.id,
+                    model.id,
+                ) {
+                    Ok(metrics) => metrics,
+                    Err(e) => error!("{e}"),
+                };
+            }
         };
+
         model.metrics = Some(JsonB(json!(metrics)));
         info!("Metrics: {:?}", &metrics);
 
@@ -235,24 +286,32 @@ impl Model {
         .unwrap();
 
         // Save the bindings.
-        for entry in std::fs::read_dir(&path).unwrap() {
-            let path = entry.unwrap().path();
-            let bytes = std::fs::read(&path).unwrap();
-            for (i, chunk) in bytes.chunks(100_000_000).enumerate() {
-                Spi::get_one_with_args::<i64>(
-                    "INSERT INTO pgml.files (model_id, path, part, data) VALUES($1, $2, $3, $4) RETURNING id",
-                    vec![
-                        (PgBuiltInOids::INT8OID.oid(), model.id.into_datum()),
-                        (
-                            PgBuiltInOids::TEXTOID.oid(),
-                            path.file_name().unwrap().to_str().into_datum(),
-                        ),
-                        (PgBuiltInOids::INT8OID.oid(), (i as i64).into_datum()),
-                        (PgBuiltInOids::BYTEAOID.oid(), chunk.into_datum()),
-                    ],
-                )
-                .unwrap();
+        if path.is_dir() {
+            for entry in std::fs::read_dir(&path).unwrap() {
+                let path = entry.unwrap().path();
+
+                if path.is_file() {
+                    let bytes = std::fs::read(&path).unwrap();
+
+                    for (i, chunk) in bytes.chunks(100_000_000).enumerate() {
+                        Spi::get_one_with_args::<i64>(
+                            "INSERT INTO pgml.files (model_id, path, part, data) VALUES($1, $2, $3, $4) RETURNING id",
+                            vec![
+                                (PgBuiltInOids::INT8OID.oid(), model.id.into_datum()),
+                                (
+                                    PgBuiltInOids::TEXTOID.oid(),
+                                    path.file_name().unwrap().to_str().into_datum(),
+                                ),
+                                (PgBuiltInOids::INT8OID.oid(), (i as i64).into_datum()),
+                                (PgBuiltInOids::BYTEAOID.oid(), chunk.into_datum()),
+                            ],
+                        )
+                        .unwrap();
+                    }
+                }
             }
+        } else {
+            error!("Model checkpoint folder does not exist!")
         }
 
         Spi::run_with_args(
@@ -266,6 +325,7 @@ impl Model {
             ]),
         )
         .unwrap();
+
         model
     }
 

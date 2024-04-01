@@ -12,7 +12,7 @@ description: Announcing our sponsorship of the Postgres Conference in San Jose A
 
 Cassandra Stumer
 
-March 20, 2023
+March 20, 2024
 
 Hey database aficionados, mark your calendars because something big is coming your way! We're thrilled to announce that we will be sponsoring the[ 2024 Postgres Conference](https://postgresconf.org/conferences/2024) – the marquee PostgreSQL conference event for North America.&#x20;
 

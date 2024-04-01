@@ -20,7 +20,7 @@ This is not only a performance benefit, but also a usability improvement for cli
 
 ## Benchmark
 
-
+\\
 
 <figure><img src="../../.gitbook/assets/pgcat_prepared_throughput.svg" alt=""><figcaption></figcaption></figure>
 
