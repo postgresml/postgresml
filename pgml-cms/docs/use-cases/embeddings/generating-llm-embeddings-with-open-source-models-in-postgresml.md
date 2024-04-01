@@ -198,7 +198,7 @@ For comparison, it would cost about $299 to use OpenAI's cheapest embedding mode
 | GPU       | 17ms    | $72  | 6 hours   |
 | OpenAI    | 300ms   | $299 | millennia |
 
-
+\\
 
 You can also find embedding models that outperform OpenAI's `text-embedding-ada-002` model across many different tests on the [leaderboard](https://huggingface.co/spaces/mteb/leaderboard). It's always best to do your own benchmarking with your data, models, and hardware to find the best fit for your use case.
 

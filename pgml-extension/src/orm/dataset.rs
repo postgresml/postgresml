@@ -68,12 +68,28 @@ impl Dataset {
     }
 }
 
-#[derive(Debug)]
-pub struct TextDataset {
-    pub x_train: Vec<String>,
-    pub y_train: Vec<String>,
-    pub x_test: Vec<String>,
-    pub y_test: Vec<String>,
+pub enum TextDatasetType {
+    TextClassification(TextClassificationDataset),
+    TextPairClassification(TextPairClassificationDataset),
+    Conversation(ConversationDataset),
+}
+
+impl TextDatasetType {
+    pub fn num_features(&self) -> usize {
+        match self {
+            TextDatasetType::TextClassification(dataset) => dataset.num_features,
+            TextDatasetType::TextPairClassification(dataset) => dataset.num_features,
+            TextDatasetType::Conversation(dataset) => dataset.num_features,
+        }
+    }
+}
+
+// TextClassificationDataset
+pub struct TextClassificationDataset {
+    pub text_train: Vec<String>,
+    pub class_train: Vec<String>,
+    pub text_test: Vec<String>,
+    pub class_test: Vec<String>,
     pub num_features: usize,
     pub num_labels: usize,
     pub num_rows: usize,
@@ -82,16 +98,63 @@ pub struct TextDataset {
     pub num_distinct_labels: usize,
 }
 
-impl Display for TextDataset {
+impl Display for TextClassificationDataset {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(
             f,
-            "TextDataset {{ num_features: {}, num_labels: {}, num_distinct_labels: {}, num_rows: {}, num_train_rows: {}, num_test_rows: {} }}",
-            self.num_features, self.num_labels, self.num_distinct_labels, self.num_rows, self.num_train_rows, self.num_test_rows,
+            "TextClassificationDataset {{ num_distinct_labels: {}, num_rows: {}, num_train_rows: {}, num_test_rows: {} }}",
+            self.num_distinct_labels, self.num_rows, self.num_train_rows, self.num_test_rows,
         )
     }
 }
 
+pub struct TextPairClassificationDataset {
+    pub text1_train: Vec<String>,
+    pub text2_train: Vec<String>,
+    pub class_train: Vec<String>,
+    pub text1_test: Vec<String>,
+    pub text2_test: Vec<String>,
+    pub class_test: Vec<String>,
+    pub num_features: usize,
+    pub num_labels: usize,
+    pub num_rows: usize,
+    pub num_train_rows: usize,
+    pub num_test_rows: usize,
+    pub num_distinct_labels: usize,
+}
+
+impl Display for TextPairClassificationDataset {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
+        write!(
+            f,
+            "TextPairClassificationDataset {{ num_distinct_labels: {}, num_rows: {}, num_train_rows: {}, num_test_rows: {} }}",
+            self.num_distinct_labels, self.num_rows, self.num_train_rows, self.num_test_rows,
+        )
+    }
+}
+
+pub struct ConversationDataset {
+    pub system_train: Vec<String>,
+    pub user_train: Vec<String>,
+    pub assistant_train: Vec<String>,
+    pub system_test: Vec<String>,
+    pub user_test: Vec<String>,
+    pub assistant_test: Vec<String>,
+    pub num_features: usize,
+    pub num_rows: usize,
+    pub num_train_rows: usize,
+    pub num_test_rows: usize,
+}
+
+impl Display for ConversationDataset {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
+        write!(
+            f,
+            "ConversationDataset {{ num_rows: {}, num_train_rows: {}, num_test_rows: {} }}",
+            self.num_rows, self.num_train_rows, self.num_test_rows,
+        )
+    }
+}
 fn drop_table_if_exists(table_name: &str) {
     // Avoid the existence for DROP TABLE IF EXISTS warning by checking the schema for the table first
     let table_count = Spi::get_one_with_args::<i64>(

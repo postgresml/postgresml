@@ -3,9 +3,36 @@ use std::fmt::Debug;
 use anyhow::{anyhow, Result};
 #[allow(unused_imports)] // used for test macros
 use pgrx::*;
-use pyo3::{PyResult, Python};
+use pyo3::{pyfunction, PyResult, Python};
 
 use crate::orm::*;
+
+#[pyfunction]
+fn r_insert_logs(project_id: i64, model_id: i64, logs: String) -> PyResult<String> {
+    let id_value = Spi::get_one_with_args::<i64>(
+        "INSERT INTO pgml.logs (project_id, model_id, logs) VALUES ($1, $2, $3::JSONB) RETURNING id;",
+        vec![
+            (PgBuiltInOids::INT8OID.oid(), project_id.into_datum()),
+            (PgBuiltInOids::INT8OID.oid(), model_id.into_datum()),
+            (PgBuiltInOids::TEXTOID.oid(), logs.into_datum()),
+        ],
+    )
+    .unwrap()
+    .unwrap();
+    Ok(format!("Inserted logs with id: {}", id_value))
+}
+
+#[pyfunction]
+fn r_log(level: String, message: String) -> PyResult<String> {
+    match level.as_str() {
+        "info" => info!("{}", message),
+        "warning" => warning!("{}", message),
+        "debug" => debug1!("{}", message),
+        "error" => error!("{}", message),
+        _ => info!("{}", message),
+    };
+    Ok(message)
+}
 
 #[cfg(feature = "python")]
 #[macro_export]
@@ -16,11 +43,11 @@ macro_rules! create_pymodule {
                 pyo3::Python::with_gil(|py| -> anyhow::Result<pyo3::Py<pyo3::types::PyModule>> {
                     use $crate::bindings::TracebackError;
                     let src = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), $pyfile));
-                    Ok(
-                        pyo3::types::PyModule::from_code(py, src, "transformers.py", "__main__")
-                            .format_traceback(py)?
-                            .into(),
-                    )
+                    let module = pyo3::types::PyModule::from_code(py, src, "transformers.py", "__main__")
+                        .format_traceback(py)?;
+                    module.add_function(wrap_pyfunction!($crate::bindings::r_insert_logs, module)?)?;
+                    module.add_function(wrap_pyfunction!($crate::bindings::r_log, module)?)?;
+                    Ok(module.into())
                 })
             });
     };

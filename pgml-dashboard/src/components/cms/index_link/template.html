@@ -1,5 +1,9 @@
+<% 
+    let turbo_action_level_1 = r#"data-action="click->navigation-left-nav-docs#onNavigateManageLevel1" "#;
+    let turbo_action_high_levels = r#"data-action="click->navigation-left-nav-docs#onNavigateManageHighLevels" "#; 
+%>
 
-<div class="nav flex-column" role="tablist" aria-orientation="vertical" data-controller="cms-index-link">
+<div class="nav flex-column cms-level-<%- level %>" role="tablist" aria-orientation="vertical" data-controller="cms-index-link" data-level="<%- level %>">
     <%
     let color = if active {
     "purple"
@@ -11,14 +15,14 @@
     %>
     <% if level == 1 {%>
     <div class="d-flex flex-row gap-2 align-items-center">
-        <div class="menu-item flex-grow-1">
-            <a class='d-block p-2 <% if active {%><%- String::from("active") %><% } %>' href="<%- href %>">
+        <div class="menu-item flex-grow-1" data-navigation-left-nav-docs-target="level1Container">
+            <a data-turbo-is-visitable class='d-block p-2 <% if active {%><%- String::from("active") %><% } %>' href="<%- href %>" <%- turbo_action_level_1 %> data-navigation-left-nav-docs-target="level1Link">
                 <span class="text-wrap"><%- title %></span>
             </a>
         </div>
     </div>
     <% } else {%>
-    <a class="nav-link ps-1 text-break <%- color %>" href="<%- href %>"><%- title %></a>
+    <a data-turbo-is-visitable class="nav-link ps-1 text-break <%- color %>" href="<%- href %>" <%- turbo_action_high_levels %> data-navigation-left-nav-docs-target="highLevels"><%- title %></a>
     <% } %>
 
     <% } else {
@@ -37,22 +41,22 @@
 
     <% if level == 1 {%>
     <div class="menu-item flex-grow-1 d-flex flex-row align-items-center">
-        <div class='w-100 d-flex flex-row gap-2 align-items-start <% if active || open {%><%- String::from("active") %><% } %> justify-content-between'>
-            <a class='d-block p-2' href="<%- href %>">
+        <div class='w-100 d-flex flex-row gap-2 align-items-start <% if active || open {%><%- String::from("active") %><% } %> justify-content-between doc-left-nav-level1-link-container' data-navigation-left-nav-docs-target="level1Container">
+            <a data-turbo-is-visitable class='d-block p-2' href="<%- href %>" <%- turbo_action_level_1 %> data-navigation-left-nav-docs-target="level1Link">
                 <span class="text-wrap"><%- title %></span>
             </a>
             <div class="pt-2">
-                <span class="material-symbols-outlined rotate-on-aria-expanded text-white" data-bs-toggle="collapse" href="#doc-<%= id %>" role="button" aria-expanded="<%- aria %>" aria-controls="doc-<%= id %>">expand_more</span>
+                <span class="material-symbols-outlined rotate-on-aria-expanded text-white" href="#doc-<%= id %>" role="button" aria-expanded="<%- aria %>" aria-controls="doc-<%= id %>" data-action="click->navigation-left-nav-docs#expand">expand_more</span>
             </div>
         </div>
     </div>
     <% } else {%>
     <span class="ps-1 py-0 d-flex justify-content-between align-items-start text-break" >
-        <a class="nav-link px-0 text-break <%- color %>" href="<%- href %>">
+        <a data-turbo-is-visitable class="nav-link px-0 text-break <%- color %>" href="<%- href %>" <%- turbo_action_high_levels %> data-navigation-left-nav-docs-target="highLevels">
             <span class="text-wrap"><%- title %></span>
         </a>
         <div class="pt-2">
-            <span class="material-symbols-outlined rotate-on-aria-expanded" data-bs-toggle="collapse" href="#doc-<%= id %>" role="button" aria-expanded="<%- aria %>" aria-controls="doc-<%= id %>">expand_more</span>
+            <span class="material-symbols-outlined rotate-on-aria-expanded"  href="#doc-<%= id %>" role="button" aria-expanded="<%- aria %>" aria-controls="doc-<%= id %>" data-action="click->navigation-left-nav-docs#expand">expand_more</span>
         </div>
     </span>
     <% } %>

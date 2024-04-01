@@ -816,7 +816,7 @@ fn tune(
     project_name: &str,
     task: default!(Option<&str>, "NULL"),
     relation_name: default!(Option<&str>, "NULL"),
-    y_column_name: default!(Option<&str>, "NULL"),
+    _y_column_name: default!(Option<&str>, "NULL"),
     model_name: default!(Option<&str>, "NULL"),
     hyperparams: default!(JsonB, "'{}'"),
     test_size: default!(f32, 0.25),
@@ -874,9 +874,7 @@ fn tune(
 
             let snapshot = Snapshot::create(
                 relation_name,
-                Some(vec![y_column_name
-                    .expect("You must pass a `y_column_name` when you pass a `relation_name`")
-                    .to_string()]),
+                None,
                 test_size,
                 test_sampling,
                 materialize_snapshot,
@@ -898,13 +896,14 @@ fn tune(
     // algorithm will be transformers, stash the model_name in a hyperparam for v1 compatibility.
     let mut hyperparams = hyperparams.0.as_object().unwrap().clone();
     hyperparams.insert(String::from("model_name"), json!(model_name));
+    hyperparams.insert(String::from("project_name"), json!(project_name));
     let hyperparams = JsonB(json!(hyperparams));
 
     // # Default repeatable random state when possible
     // let algorithm = Model.algorithm_from_name_and_task(algorithm, task);
     // if "random_state" in algorithm().get_params() and "random_state" not in hyperparams:
     //     hyperparams["random_state"] = 0
-    let model = Model::tune(&project, &mut snapshot, &hyperparams);
+    let model = Model::finetune(&project, &mut snapshot, &hyperparams);
     let new_metrics: &serde_json::Value = &model.metrics.unwrap().0;
     let new_metrics = new_metrics.as_object().unwrap();
 
@@ -928,18 +927,19 @@ fn tune(
         Some(true) | None => {
             if let Ok(Some(deployed_metrics)) = deployed_metrics {
                 let deployed_metrics = deployed_metrics.0.as_object().unwrap();
-                if project.task.value_is_better(
-                    deployed_metrics
-                        .get(&project.task.default_target_metric())
-                        .unwrap()
-                        .as_f64()
-                        .unwrap(),
-                    new_metrics
-                        .get(&project.task.default_target_metric())
-                        .unwrap()
-                        .as_f64()
-                        .unwrap(),
-                ) {
+
+                let deployed_value = deployed_metrics
+                    .get(&project.task.default_target_metric())
+                    .and_then(|value| value.as_f64())
+                    .unwrap_or_default(); // Default to 0.0 if the key is not present or conversion fails
+
+                // Get the value for the default target metric from new_metrics or provide a default value
+                let new_value = new_metrics
+                    .get(&project.task.default_target_metric())
+                    .and_then(|value| value.as_f64())
+                    .unwrap_or_default(); // Default to 0.0 if the key is not present or conversion fails
+
+                if project.task.value_is_better(deployed_value, new_value) {
                     deploy = false;
                 }
             }
