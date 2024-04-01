@@ -7,8 +7,9 @@
 <% use crate::components::inputs::RangeGroupV2; %>
 <% use crate::components::inputs::select::{Select, Option}; %>
 <% use crate::components::inputs::{SwitchV2, Radio}; %>
+<% use crate::components::cards::Rgb; %>
 
-<div class="container">
+<div class="container" data-controller="pages-demo">
   <div class="py-5">
     <%+ Table::new(&["Model", "Performance", "Cost"], &[
       Row::new(&[
@@ -91,22 +92,26 @@
   </div>
 
   <div class="py-5">
-    <div class="row">
-      <div class="col-6">
-        <%+ Select::new()
-            .options_with_input_value(&[
-              Option::with_input_value("Hello", "1"),
-              Option::with_input_value("World", "2"),
-            ])
-        %> 
-      </div>
-      <div class="col-6">
-        <%+ Select::new()
-            .options(vec![
-              "hello",
-              "world",
-            ])
-        %> 
+    <div class="card">
+      <div class="card-body">
+        <div class="row">
+          <div class="col-6">
+            <%+ Select::new()
+                .options_with_input_value(&[
+                  Option::with_input_value("Hello", "1"),
+                  Option::with_input_value("World", "2"),
+                ])
+            %> 
+          </div>
+          <div class="col-6">
+            <%+ Select::new()
+                .options(vec![
+                  "hello",
+                  "world",
+                ])
+            %> 
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -123,6 +128,32 @@
     <div class="card">
       <div class="card-body">
         <%+ Radio::default() %>
+      </div>
+    </div>
+  </div>
+
+  <div class="py-5">
+    <div class="card">
+      <div class="card-body">
+        <div class="row">
+          <div class="col">
+            <div
+              data-action="click->pages-demo#selectRgb"
+              data-pages-demo-target="rgb"
+            >
+              <%+ Rgb::default().active() %>
+            </div>
+          </div>
+
+          <div class="col" id="rgb-link">
+            <div
+              data-action="click->pages-demo#selectRgb"
+              data-pages-demo-target="rgb"
+            >
+              <%+ Rgb::default() %>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
