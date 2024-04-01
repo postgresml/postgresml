@@ -2,7 +2,7 @@
 use crate::components::dropdown::Dropdown;
 use crate::components::stimulus::stimulus_target::StimulusTarget;
 %>
-<div data-controller="inputs-select" data-initial="<%- value.clone() %>">
+<div data-controller="inputs-select" data-initial="<%- input_value.clone() %>">
 
   <% let mut dropdown = Dropdown::new()
       .items(options)
