@@ -17,5 +17,9 @@ pub use select::Select;
 pub mod switch;
 pub use switch::Switch;
 
+// src/components/inputs/switch_v_2
+pub mod switch_v_2;
+pub use switch_v_2::SwitchV2;
+
 // src/components/inputs/text
 pub mod text;
