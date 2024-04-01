@@ -40,7 +40,7 @@ impl Select {
     pub fn options<S: ToString>(mut self, values: Vec<S>) -> Self {
         let mut options = Vec::new();
         self.value = values.first().unwrap().to_string();
-        self.input_value = self.value.clone();
+        self.input_value = values.first().unwrap().to_string();
 
         for value in values {
             let item = Option::new(
