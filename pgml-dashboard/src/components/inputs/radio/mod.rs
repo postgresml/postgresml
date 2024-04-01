@@ -47,6 +47,7 @@ impl RadioOption {
 pub struct Radio {
     options: Vec<RadioOption>,
     name: String,
+    vertical: bool,
 }
 
 impl Default for Radio {
@@ -75,7 +76,13 @@ impl Radio {
         Radio {
             name: name.to_string(),
             options,
+            vertical: false,
         }
+    }
+
+    pub fn vertical(mut self) -> Self {
+        self.vertical = true;
+        self
     }
 }
 

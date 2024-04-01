@@ -1,5 +1,12 @@
+<% let vertical = if vertical {
+  "col-12"
+} else {
+  "col"
+};
+%>
+
 <div data-controller="inputs-radio">
-  <div class="row">
+  <div class="row gy-4 gx-3">
     <% for option in options {
       let (active, checked, aria_pressed) = if option.checked {
         ("active", "checked", "true")
@@ -8,7 +15,7 @@
       };
 
     %>
-     <div class="col">
+     <div class="<%= vertical %>">
       <div
         class="inputs-radio-form-check <%= active %>"
         role="button"
