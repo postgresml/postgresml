@@ -81,6 +81,7 @@ impl Select {
     /// Set the value displayed on the dropdown button.
     pub fn value(mut self, value: &str) -> Self {
         self.value = value.to_owned();
+        self.input_value = value.to_owned();
         self
     }
 
