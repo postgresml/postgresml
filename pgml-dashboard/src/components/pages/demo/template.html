@@ -6,102 +6,124 @@
 <% use crate::components::stimulus::StimulusAction; %>
 <% use crate::components::inputs::RangeGroupV2; %>
 <% use crate::components::inputs::select::{Select, Option}; %>
-<% use crate::components::inputs::{Switch, SwitchV2, Radio}; %>
+<% use crate::components::inputs::{SwitchV2, Radio}; %>
 
-<div class="mb-3 px-5">
-  <%+ Table::new(&["Model", "Pricing"], &[
-    Row::new(&[
-      "intfloat/e5-small".into(),
-      "5ms/embedding".into(),
-    ]).into()
-  ]) %>
-</div>
-
-<div class="mb-3 px-5">
-  <%+ Green::new("Unify RAG") %>
-  <p>Vector & Relational Database + Embedding generation</p>
-</div>
-
-<div class="mb-3 px-5">
-  <%+ Blue::new("Dedicated database") %>
-  <p>Vector & Relational Database + Embedding generation</p>
-</div>
-
-<div class="mb-3 px-5">
-  <%+ EditableHeader::default() %>
-</div>
-
-<div class="mb-3 px-5">
-  <%+ Input::new()
-    .label("What is your name?".into())
-    .icon("person")
-    .placeholder("Enter your name")
-    .name("name")
-    .type_("text") %>
-</div>
-
-<div class="mb-3 px-5">
-  <%+ Search::new(SearchOptions {
-    name: "Model search".into(),
-    placeholder: "Search for a model".into(),
-    search_url: "/components-library-demo?search=".into(),
-    id: "model-search".into(),
-  }) %>
-</div>
-
-<div class="row gx-3 gy-4 px-5 mb-5">
-  <div class="col-2"><%+ small::Label::check_circle("Supported") %></div>
-  <div class="col-2"><%+ small::Label::cancel("Not supported") %></div>
-  <div class="col-2"><%+ small::Label::outbound("Optimized") %></div>
-  <div class="col-2"><%+ small::Label::download_for_offline("Load model") %></div>
-  <div class="col-2"><%+ small::Label::forward_circle("Loading") %></div>
-</div>
-
-<div class="row gx-3 gy-4 px-5">
-  <div class="col-2">
-    <%+ large::Label::new("Mixtral/7B") %>
+<div class="container">
+  <div class="py-5">
+    <%+ Table::new(&["Model", "Performance", "Cost"], &[
+      Row::new(&[
+        "intfloat/e5-small".into(),
+        "5ms/embedding".into(),
+        "$0.0000000001/embedding".into(),
+      ]).into(),
+      Row::new(&[
+        "intfloat/e5-large".into(),
+        "10ms/embedding".into(),
+        "$0.0000000002/embedding".into(),
+      ]).into(),
+    ]) %>
   </div>
-  <div class="col-2">
-    <%+ large::Label::new("5ms/embedding").active().close_options(LabelCloseOptions {
-      action: StimulusAction::new(),
-      url: "#".into()
+
+  <div class="py-5">
+    <%+ Green::new("Unify RAG") %>
+    <p>Vector & Relational Database + Embedding generation</p>
+  </div>
+
+  <div class="py-5">
+    <%+ Blue::new("Dedicated database") %>
+    <p>LLMs for life/p>
+  </div>
+
+  <div class="py-5">
+    <%+ EditableHeader::default() %>
+  </div>
+
+  <div class="py-5">
+    <%+ Input::new()
+      .label("What is your name?".into())
+      .icon("person")
+      .placeholder("Enter your name")
+      .name("name")
+      .type_("text") %>
+  </div>
+
+  <div class="py-5">
+    <%+ Search::new(SearchOptions {
+      name: "Model search".into(),
+      placeholder: "Search for a model".into(),
+      search_url: "/components-library-demo?search=".into(),
+      id: "model-search".into(),
     }) %>
   </div>
-</div>
 
-<div class="m-3">
-  <%+ RangeGroupV2::new().min("40").max("16000").value("40").cost_per_unit("0.20").unit("GB") %>
-</div>
+  <div class="d-flex gap-2 py-5">
+    <div><%+ small::Label::check_circle("Supported") %></div>
+    <div><%+ small::Label::cancel("Not supported") %></div>
+    <div><%+ small::Label::outbound("Optimized") %></div>
+    <div><%+ small::Label::download_for_offline("Load model") %></div>
+    <div><%+ small::Label::forward_circle("Loading") %></div>
+  </div>
 
-<div class="my-3 pb-3">
-  <div class="row">
-    <div class="col-6">
-      <%+ Select::new()
-          .options_with_input_value(&[
-            Option::with_input_value("Hello", "1"),
-            Option::with_input_value("World", "2"),
-          ])
-      %> 
+  <div class="d-flex gap-2 py-5">
+    <div>
+      <%+ large::Label::new("Mixtral/7B") %>
     </div>
-    <div class="col-6">
-      <%+ Select::new()
-          .options(vec![
-            "hello",
-            "world",
-          ])
-      %> 
+    <div>
+      <%+ large::Label::new("5ms/embedding").active().close_options(LabelCloseOptions {
+        action: StimulusAction::new(),
+        url: "#".into()
+      }) %>
     </div>
   </div>
-</div>
 
-<div class="m-3">
-  <%+ Switch::default() %>
-</div>
+  <div class="py-5">
+    <div class="card">
+      <div class="card-body">
+        <%+ RangeGroupV2::new()
+          .min("40")
+          .max("16000")
+          .value("40")
+          .cost_per_unit("0.20")
+          .unit("GB")
+        %>
+      </div>
+    </div>
+  </div>
 
-<div class="py-5">
-  <%+ SwitchV2::default() %>
-</div>
+  <div class="py-5">
+    <div class="row">
+      <div class="col-6">
+        <%+ Select::new()
+            .options_with_input_value(&[
+              Option::with_input_value("Hello", "1"),
+              Option::with_input_value("World", "2"),
+            ])
+        %> 
+      </div>
+      <div class="col-6">
+        <%+ Select::new()
+            .options(vec![
+              "hello",
+              "world",
+            ])
+        %> 
+      </div>
+    </div>
+  </div>
 
-<div class="py-5 px-3">
-  <%+ Radio::default() %>
+  <div class="py-5">
+    <div class="card">
+      <div class="card-body">
+        <%+ SwitchV2::default() %>
+      </div>
+    </div>
+  </div>
+
+  <div class="py-5">
+    <div class="card">
+      <div class="card-body">
+        <%+ Radio::default() %>
+      </div>
+    </div>
+  </div>
 </div>

@@ -15,14 +15,11 @@ pub struct RadioOption {
 
 impl RadioOption {
     pub fn new(label: Component, value: impl ToString) -> Self {
-        let mut actions = StimulusActions::default();
-        actions.push(StimulusAction::new_click().controller("inputs-radio").method("onClick"));
-
         RadioOption {
             label: label,
             value: value.to_string(),
             checked: false,
-            actions,
+            actions: StimulusActions::default(),
             id: random_string(16),
         }
     }

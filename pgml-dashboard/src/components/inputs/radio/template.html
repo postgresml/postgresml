@@ -17,7 +17,7 @@
     %>
      <div class="<%= vertical %>">
       <div
-        class="inputs-radio-form-check <%= active %>"
+        class="inputs-radio-form-check <%= active %> h-100 d-flex align-items-center"
         role="button"
         data-action="click->inputs-radio#onClick"
         data-inputs-radio-target="button"
@@ -31,6 +31,7 @@
             id="<%= option.id %>"
             checked="<%= checked %>"
             value="<%= option.value %>"
+            data-action="<%= option.actions %>"
           >
           <label class="form-check-label" for="<%= option.id %>">
             <%+ option.label %>

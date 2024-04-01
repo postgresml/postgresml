@@ -7,20 +7,20 @@
     max="<%= max %>"
     step="<%= step %>"
     value="<%= value %>"
-    data-action="input->inputs-range-group-v-2#onRangeChange <%= actions %>"
+    data-action="input->inputs-range-group-v-2#onRangeInput <%= actions %>"
     data-inputs-range-group-v-2-target="range"
   >
-  <div class="row">
+  <div class="row gy-3">
     <div class="col-md-6 col-12">
       <div class="d-flex align-items-center">
         <input
           type="text"
           class="form-control"
-          data-action="keyup->inputs-range-group-v-2#onInputChange <%= actions %>"
+          data-action="input->inputs-range-group-v-2#onInputInput <%= actions %>"
           data-inputs-range-group-v-2-target="input"
           value="<%= value %>"
         >
-        <span class="inputs-range-group-v-2-unit">
+        <span class="inputs-range-group-v-2-unit fw-semibold">
           <%= unit %>
         </span>
       </div>
@@ -28,7 +28,7 @@
 
     <% if !cost_per_unit.is_empty() { %>
     <div class="col-md-6 col-12">
-      <div class="d-flex justify-content-between bg-black align-items-center h-100">
+      <div class="d-flex justify-content-between bg-black align-items-center h-100 rounded-2 px-3" style="min-height: 60px;">
         <span>
           Per <%= unit %>
         </span>
