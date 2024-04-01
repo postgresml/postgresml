@@ -3,18 +3,10 @@ div[data-controller="inputs-switch-v-2"] {
         cursor: pointer;
         background: #{$gray-700};
 
-        svg {
-            stroke: #{$bg-white};
-        }
-
         &.active {
             background: #{$bg-white};
             border-radius: 8px;
             color: #{$neon-tint-100};
-
-            svg {
-                stroke: #{$neon-tint-100};
-            }
         }
     }
 

@@ -63,6 +63,13 @@ impl Default for Radio {
 }
 
 impl Radio {
+    /// New radio input.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - Name of the radio input.
+    /// * `options` - List of radio options.
+    ///
     pub fn new(name: &str, options: &[RadioOption]) -> Radio {
         let mut options = options.to_vec();
         let has_checked = options.iter().any(|option| option.checked);
@@ -80,6 +87,7 @@ impl Radio {
         }
     }
 
+    /// Display options vertically instead of horizontally.
     pub fn vertical(mut self) -> Self {
         self.vertical = true;
         self

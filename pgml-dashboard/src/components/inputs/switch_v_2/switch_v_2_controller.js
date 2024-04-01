@@ -2,7 +2,6 @@ import { Controller } from "@hotwired/stimulus";
 
 export default class extends Controller {
   static targets = ["button"];
-  static outlets = [];
 
   onClick(e) {
     this.buttonTargets.forEach((target) => {
