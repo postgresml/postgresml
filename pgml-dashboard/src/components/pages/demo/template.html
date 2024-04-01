@@ -6,7 +6,7 @@
 <% use crate::components::stimulus::StimulusAction; %>
 <% use crate::components::inputs::RangeGroupV2; %>
 <% use crate::components::inputs::select::{Select, Option}; %>
-<% use crate::components::inputs::{Switch, SwitchV2}; %>
+<% use crate::components::inputs::{Switch, SwitchV2, Radio}; %>
 
 <div class="mb-3 px-5">
   <%+ Table::new(&["Model", "Pricing"], &[
@@ -100,4 +100,8 @@
 
 <div class="py-5">
   <%+ SwitchV2::default() %>
+</div>
+
+<div class="py-5 px-3">
+  <%+ Radio::default() %>
 </div>
