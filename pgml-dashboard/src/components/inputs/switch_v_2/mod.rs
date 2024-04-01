@@ -66,7 +66,7 @@ impl Default for SwitchV2 {
     fn default() -> Self {
         SwitchV2::new(&[
             SwitchOption::new("CPU").icon("memory"),
-            SwitchOption::new("GPU").icon("developer_board"),
+            SwitchOption::new("GPU").icon("mode_fan"),
         ])
     }
 }
