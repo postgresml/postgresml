@@ -14,6 +14,7 @@ pub struct Input {
     icon_actions: StimulusActions,
     input_actions: StimulusActions,
     autocomplete: bool,
+    value: String,
 }
 
 impl Input {
@@ -34,6 +35,7 @@ impl Input {
             icon_actions,
             input_actions: StimulusActions::default(),
             autocomplete: false,
+            value: "".to_string(),
         }
     }
 
@@ -74,6 +76,11 @@ impl Input {
 
     pub fn input_action(mut self, action: StimulusAction) -> Self {
         self.input_actions.push(action);
+        self
+    }
+
+    pub fn value(mut self, value: impl ToString) -> Self {
+        self.value = value.to_string();
         self
     }
 }
