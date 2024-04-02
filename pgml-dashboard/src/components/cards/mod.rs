@@ -14,3 +14,7 @@ pub use newsletter_subscribe::NewsletterSubscribe;
 // src/components/cards/rgb
 pub mod rgb;
 pub use rgb::Rgb;
+
+// src/components/cards/secondary
+pub mod secondary;
+pub use secondary::Secondary;
