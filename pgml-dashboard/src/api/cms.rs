@@ -14,7 +14,7 @@ use yaml_rust::YamlLoader;
 use crate::{
     components::{cms::index_link::IndexLink, layouts::marketing::base::Theme, layouts::marketing::Base},
     guards::Cluster,
-    responses::{Response, ResponseOk, Template},
+    responses::{Error, Response, ResponseOk, Template},
     templates::docs::*,
     utils::{config, markdown::SearchResult},
 };
@@ -882,6 +882,37 @@ async fn careers_landing_page(cluster: &Cluster) -> Result<ResponseOk, crate::re
     Ok(ResponseOk(layout.render(page)))
 }
 
+#[get("/components-library-demo?<search>")]
+async fn demo(search: Option<String>) -> Result<Response, Error> {
+    #[cfg(not(debug_assertions))]
+    {
+        let _search = search;
+        return Ok(Response::not_found());
+    }
+
+    #[cfg(debug_assertions)]
+    {
+        use crate::components::dropdown::{DropdownFrame, DropdownItems};
+        use crate::components::inputs::text::search::SearchOption;
+        if let Some(search) = search {
+            let candidates = vec!["hello", "world", "foo", "bar"]
+                .into_iter()
+                .filter(|c| c.starts_with(&search))
+                .map(|c| SearchOption::new(c.into()).into())
+                .collect::<Vec<pgml_components::Component>>();
+
+            Ok(Response::ok(
+                DropdownFrame::rendered("model-search", DropdownItems::new(candidates).into()).render_once()?,
+            ))
+        } else {
+            let layout = Base::new("Demos", None).theme(Theme::Marketing);
+
+            let page = crate::components::pages::demo::Demo::new();
+            Ok(Response::ok(layout.render(page)))
+        }
+    }
+}
+
 pub fn routes() -> Vec<Route> {
     routes![
         blog_landing_page,
@@ -896,7 +927,8 @@ pub fn routes() -> Vec<Route> {
         get_docs_asset,
         get_user_guides,
         search,
-        search_blog
+        search_blog,
+        demo,
     ]
 }
 

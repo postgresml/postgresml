@@ -3,7 +3,7 @@
 
 use sailfish::TemplateOnce;
 
-#[derive(Default, Clone, TemplateOnce)]
+#[derive(Default, Clone, TemplateOnce, Debug)]
 #[template(path = "components/component.html")]
 pub struct Component {
     pub value: String,

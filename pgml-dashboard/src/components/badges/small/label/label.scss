@@ -1,0 +1,12 @@
+span[data-controller="badges-small-label"] {
+    span {
+        font-size: 12px;
+        font-weight: #{$font-weight-normal};
+    }
+
+    background: #{$gray-800};
+    padding: 4px 8px;
+    border-radius: 4px;
+
+    text-transform: uppercase;
+}

@@ -1,0 +1,11 @@
+span[data-controller="badges-large-label"] {
+    padding: 8px;
+    background: #{$gray-500};
+    font-weight: #{$font-weight-medium};
+    border: 1px solid #{$neon-tint-100};
+
+    &.active {
+        background: #{$neon-tint-100};
+        border: 1px solid #{$neon-tint-600};
+    }
+}
