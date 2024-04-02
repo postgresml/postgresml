@@ -42,7 +42,7 @@ impl Search {
                 .input_action(
                     StimulusAction::new()
                         .controller("inputs-text-search-search")
-                        .method("search")
+                        .method("searchDebounced")
                         .action(StimulusEvents::KeyUp),
                 ),
             search_url: options.search_url,

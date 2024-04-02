@@ -23,7 +23,7 @@ impl SwitchOption {
         actions.push(
             StimulusAction::new_click()
                 .controller("inputs-switch-v-2")
-                .method("onClick"),
+                .method("selectSwitchOption"),
         );
 
         SwitchOption {
