@@ -13,6 +13,7 @@ pub struct RangeGroupV2 {
     value: String,
     unit: String,
     cost_per_unit: String,
+    cost_frequency: String,
 
     actions: StimulusActions,
 }
@@ -20,6 +21,12 @@ pub struct RangeGroupV2 {
 impl RangeGroupV2 {
     pub fn new() -> RangeGroupV2 {
         Self::default()
+            .min("40")
+            .max("16000")
+            .unit("GB")
+            .cost_per_unit("0.20")
+            .value("40")
+            .cost_frequency("h")
     }
 
     pub fn name(mut self, name: impl ToString) -> Self {
@@ -54,6 +61,11 @@ impl RangeGroupV2 {
 
     pub fn cost_per_unit(mut self, cost_per_unit: impl ToString) -> Self {
         self.cost_per_unit = cost_per_unit.to_string();
+        self
+    }
+
+    pub fn cost_frequency(mut self, cost_frequency: impl ToString) -> Self {
+        self.cost_frequency = cost_frequency.to_string();
         self
     }
 
