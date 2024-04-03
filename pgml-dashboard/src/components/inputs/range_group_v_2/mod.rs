@@ -12,6 +12,7 @@ pub struct RangeGroupV2 {
     step: String,
     value: String,
     unit: String,
+    input_unit: String,
     cost_per_unit: String,
     cost_frequency: String,
 
@@ -56,6 +57,12 @@ impl RangeGroupV2 {
 
     pub fn unit(mut self, unit: impl ToString) -> Self {
         self.unit = unit.to_string();
+        self.input_unit = unit.to_string();
+        self
+    }
+
+    pub fn input_unit(mut self, input_unit: impl ToString) -> Self {
+        self.input_unit = input_unit.to_string();
         self
     }
 
