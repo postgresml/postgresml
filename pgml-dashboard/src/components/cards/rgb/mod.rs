@@ -1,11 +1,15 @@
 use pgml_components::{component, Component};
 use sailfish::TemplateOnce;
 
+use crate::components::stimulus::StimulusAction;
+use crate::types::CustomOption;
+
 #[derive(TemplateOnce)]
 #[template(path = "cards/rgb/template.html")]
 pub struct Rgb {
     value: Component,
     link: Option<String>,
+    link_action: CustomOption<StimulusAction>,
     controller_classes: Vec<String>,
     card_classes: Vec<String>,
     body_classes: Vec<String>,
@@ -22,6 +26,7 @@ impl Rgb {
         Rgb {
             value,
             link: None,
+            link_action: CustomOption::default(),
             controller_classes: vec![],
             card_classes: vec![],
             body_classes: vec![],
@@ -36,6 +41,11 @@ impl Rgb {
 
     pub fn link(mut self, link: &str) -> Self {
         self.link = Some(link.to_string());
+        self
+    }
+
+    pub fn link_action(mut self, action: StimulusAction) -> Self {
+        self.link_action = action.into();
         self
     }
 

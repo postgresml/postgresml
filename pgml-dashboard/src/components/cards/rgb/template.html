@@ -8,7 +8,7 @@
     <div class="card-body <%= body_classes %>">
       <%+ value %>
       <% if let Some(link) = link { %>
-        <a href="<%= link %>" class="stretched-link"></a>
+        <a href="<%= link %>" class="stretched-link" data-action="<%= link_action %>"></a>
       <% } %>
     </div>
   </div>
