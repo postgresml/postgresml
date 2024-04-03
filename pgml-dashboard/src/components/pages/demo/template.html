@@ -7,7 +7,7 @@
 <% use crate::components::inputs::RangeGroupV2; %>
 <% use crate::components::inputs::select::{Select, Option}; %>
 <% use crate::components::inputs::{SwitchV2, Radio}; %>
-<% use crate::components::cards::{Rgb, Secondary}; %>
+<% use crate::components::cards::{Rgb, Secondary, Primary}; %>
 
 <div class="container" data-controller="pages-demo">
   <div class="py-5">
@@ -140,6 +140,14 @@
         <%+ Radio::default() %>
       </div>
     </div>
+  </div>
+
+  <div class="py-5">
+    <%+ Primary::new(Select::new()
+      .options_with_input_value(&[
+        Option::with_input_value("Hello", "1"),
+        Option::with_input_value("World", "2"),
+      ]).into()) %>
   </div>
 
   <div class="py-5">
