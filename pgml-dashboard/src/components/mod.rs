@@ -5,6 +5,9 @@
 pub mod accordian;
 pub use accordian::Accordian;
 
+// src/components/badges
+pub mod badges;
+
 // src/components/breadcrumbs
 pub mod breadcrumbs;
 pub use breadcrumbs::Breadcrumbs;
@@ -41,6 +44,10 @@ pub use github_icon::GithubIcon;
 
 // src/components/icons
 pub mod icons;
+
+// src/components/headings
+pub mod headings;
+
 
 // src/components/inputs
 pub mod inputs;

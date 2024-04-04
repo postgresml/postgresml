@@ -10,3 +10,7 @@ pub mod marketing;
 // src/components/cards/newsletter_subscribe
 pub mod newsletter_subscribe;
 pub use newsletter_subscribe::NewsletterSubscribe;
+
+// src/components/cards/rgb
+pub mod rgb;
+pub use rgb::Rgb;

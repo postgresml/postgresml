@@ -7,6 +7,14 @@ export default class extends Controller {
     this.setValue(e.target.innerHTML);
   }
 
+  // Choose value from dropdown option data-value attribute.
+  // This separates the display value from the value passed to the input element.
+  chooseValue(e) {
+    this.inputTarget.value = e.currentTarget.dataset.value;
+    this.valueTarget.innerHTML = e.currentTarget.innerHTML;
+    this.inputTarget.dispatchEvent(new Event("change"));
+  }
+
   resetSelect() {
     this.setValue(this.element.dataset.initial);
   }

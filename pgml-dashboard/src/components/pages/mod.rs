@@ -10,5 +10,9 @@ pub mod blog;
 // src/components/pages/careers
 pub mod careers;
 
+// src/components/pages/demo
+pub mod demo;
+pub use demo::Demo;
+
 // src/components/pages/docs
 pub mod docs;

@@ -1,0 +1,14 @@
+<table class="<%= classes %>" data-controller="tables-small-table">
+  <thead>
+    <tr>
+      <% for header in headers { %>
+      <th><%= header %></th>
+      <% } %>
+    </tr>
+  </thead>
+  <tbody>
+    <% for row in rows { %>
+      <%+ row %>
+    <% } %>
+  </tbody>
+</table>

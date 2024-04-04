@@ -1,0 +1,11 @@
+<% let active = if active { "main-gradient-border-card-1 active" } else { "" }; %>
+<div data-controller="cards-rgb">
+  <div class="card <%= active %>">
+    <div class="card-body">
+      <%+ value %>
+      <% if let Some(link) = link { %>
+        <a href="<%= link %>" class="stretched-link"></a>
+      <% } %>
+    </div>
+  </div>
+</div>

@@ -1,6 +1,7 @@
 use crate::components::stimulus::stimulus_action::{StimulusAction, StimulusEvents};
 use crate::components::stimulus::stimulus_target::StimulusTarget;
 use crate::types::CustomOption;
+use anyhow::Context;
 use pgml_components::component;
 use pgml_components::Component;
 use sailfish::TemplateOnce;
@@ -10,6 +11,7 @@ use sailfish::TemplateOnce;
 pub struct Select {
     options: Vec<Component>,
     value: String,
+    input_value: String,
     offset: String,
     collapsable: bool,
     offset_collapsed: String,
@@ -25,6 +27,7 @@ impl Select {
         Select {
             options: Vec::new(),
             value: "Select".to_owned(),
+            input_value: "Select".to_owned(),
             offset: "0, 10".to_owned(),
             offset_collapsed: "68, -44".to_owned(),
             menu_position: "".to_owned(),
@@ -37,6 +40,7 @@ impl Select {
     pub fn options<S: ToString>(mut self, values: Vec<S>) -> Self {
         let mut options = Vec::new();
         self.value = values.first().unwrap().to_string();
+        self.input_value = values.first().unwrap().to_string();
 
         for value in values {
             let item = Option::new(
@@ -53,8 +57,37 @@ impl Select {
         self
     }
 
+    /// Pass in options directly with `value` and `input_value` possibly.
+    ///
+    /// # Arguments
+    ///
+    /// * `options` - A list of options to pass in.
+    pub fn options_with_input_value(mut self, options: &[self::Option]) -> Self {
+        let first_option = options
+            .first()
+            .with_context(|| "select has no options passed in")
+            .unwrap();
+        self.value = first_option.value.clone();
+        self.input_value = first_option.input_value.clone();
+
+        let mut items = Vec::new();
+        for option in options {
+            items.push(option.clone().into());
+        }
+        self.options = items;
+        self
+    }
+
+    /// Set the value displayed on the dropdown button.
     pub fn value(mut self, value: &str) -> Self {
         self.value = value.to_owned();
+        self.input_value = value.to_owned();
+        self
+    }
+
+    /// The the value of the `<input>` element.
+    pub fn input_value(mut self, value: &str) -> Self {
+        self.input_value = value.to_owned();
         self
     }
 
@@ -109,16 +142,49 @@ impl Select {
     }
 }
 
-#[derive(TemplateOnce)]
+#[derive(TemplateOnce, Clone)]
 #[template(path = "inputs/select/option.html")]
 pub struct Option {
     value: String,
     action: StimulusAction,
+    input_value: String,
 }
 
 impl Option {
     pub fn new(value: String, action: StimulusAction) -> Self {
-        Option { value, action }
+        Self {
+            value: value.clone(),
+            action,
+            input_value: value,
+        }
+    }
+
+    pub fn input_value(mut self, value: String) -> Self {
+        self.input_value = value;
+        self
+    }
+
+    /// Separate the display value of the option from the value passed
+    /// into the `<input>` element.
+    ///
+    /// This is useful when used inside a form. Input values are typically
+    /// easily serializable to a backend type, e.g. an integer or a short string,
+    /// while the display values are more human-readable.
+    ///
+    /// # Arguments
+    ///
+    /// * `value` - The value to display.
+    /// * `input_value` - The value to pass into the `<input>` element.
+    ///
+    pub fn with_input_value(value: impl ToString, input_value: impl ToString) -> Self {
+        Self {
+            value: value.to_string(),
+            input_value: input_value.to_string(),
+            action: StimulusAction::new()
+                .controller("inputs-select")
+                .method("chooseValue")
+                .action(StimulusEvents::Click),
+        }
     }
 }
 
