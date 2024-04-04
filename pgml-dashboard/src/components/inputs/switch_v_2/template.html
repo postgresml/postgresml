@@ -16,9 +16,9 @@
         data-action="<%= option.actions %>"
         >
           <% if let Some(ref link) = option.link { %>
-          <a href="<%= link %>" class="d-none" data-inputs-switch-v-2-target="link"></a>
+          <a href="<%= link %>" class="d-none"></a>
           <% } %>
-        
+
           <% if let Some(icon) = option.icon { %>
           <span class="material-symbols-outlined">
             <%= icon %>

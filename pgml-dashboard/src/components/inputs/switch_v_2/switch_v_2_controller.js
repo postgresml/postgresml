@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus";
 
 export default class extends Controller {
-  static targets = ["button", "link"];
+  static targets = ["button"];
 
   selectSwitchOption(e) {
     this.buttonTargets.forEach((target) => {
@@ -12,8 +12,10 @@ export default class extends Controller {
     e.currentTarget.classList.add("active");
     e.currentTarget.ariaPressed = true;
 
-    if (this.hasLinkTarget) {
-      this.linkTarget.click()
+    const link = e.currentTarget.querySelector("a");
+
+    if (link) {
+      link.click();
     }
   }
 }
