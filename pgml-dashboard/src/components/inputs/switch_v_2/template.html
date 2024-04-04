@@ -15,9 +15,10 @@
         data-inputs-switch-v-2-target="button"
         data-action="<%= option.actions %>"
         >
-        <% if let Some(ref link) = option.link { %>
-        <a href="<%= link %>" class="stretched-link">
-        <% } %>
+          <% if let Some(ref link) = option.link { %>
+          <a href="<%= link %>" class="d-none" data-inputs-switch-v-2-target="link"></a>
+          <% } %>
+        
           <% if let Some(icon) = option.icon { %>
           <span class="material-symbols-outlined">
             <%= icon %>
@@ -26,9 +27,6 @@
             <img src="<%= svg.display().to_string() %>" alt="icon" aria-hidden="true">
           <% } %>
           <span><%= option.value %></span>
-        <% if let Some(ref _link) = option.link { %>
-        </a>
-        <% } %>
       </div>
     </div>
     <% } %>
