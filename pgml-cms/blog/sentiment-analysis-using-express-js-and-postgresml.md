@@ -8,7 +8,7 @@ description: >-
 
 <div align="left">
 
-<figure><img src=".gitbook/assets/daniel.jpg" alt="" width="125"><figcaption><p>Daniel Illenberger</p></figcaption></figure>
+<figure><img src=".gitbook/assets/daniel.jpg" alt="Author" width="125"><figcaption><p>Daniel Illenberger</p></figcaption></figure>
 
 </div>
 
