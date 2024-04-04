@@ -16,7 +16,8 @@ div[data-controller="cards-marketing-slider"] {
 
         &.disabled {
             transform: scale(0.9);
-            background: #{$gray-800};
+            background: #{$gray-800} !important;
+            min-height: 492px;
         }
     }
     @include media-breakpoint-down(sm) {
@@ -35,20 +36,22 @@ div[data-controller="cards-marketing-slider"] {
     }
 }
 
-
-
 .disabled {
-    .card {
-        transform: scale(0.9);
-        background: #{$gray-800} !important;
-        min-height: 492px;
-
-        .card-body, .title {
-            color: #{$gray-300};
-        }
-        
-        .link {
-            display: none;
-        }
-    }        
+    div[data-controller="cards-marketing-slider"] {
+        .card {
+            transform: scale(0.9);
+            background: #{$gray-800} !important;
+            min-height: 492px;
+    
+            .card-body, .title {
+                color: #{$gray-300};
+            }
+            
+            .link {
+                visibility: hidden;
+            }
+        }         
+    }
 }
+
+

@@ -3,6 +3,10 @@ import { Controller } from "@hotwired/stimulus";
 export default class extends Controller {
   static targets = ["carousel", "carouselTimer", "template"];
 
+  static values = {
+    identifier: Number
+  }
+
   initialize() {
     this.paused = false;
     this.runtime = 0;
@@ -32,13 +36,13 @@ export default class extends Controller {
 
   Pause() {
     this.paused = true;
-    let pause = new CustomEvent("paginatePause", {});
+    let pause = new CustomEvent("paginatePause", {detail: {identifier: this.identifierValue}});
     window.dispatchEvent(pause);
   }
 
   Resume() {
     this.paused = false;
-    let resume = new CustomEvent("paginateResume", {});
+    let resume = new CustomEvent("paginateResume", {detail: {identifier: this.identifierValue}});
     window.dispatchEvent(resume);
   }
 
@@ -64,7 +68,7 @@ export default class extends Controller {
 
   changePagination(current, next) {
     let event = new CustomEvent("paginateNext", {
-      detail: { current: current, next: next },
+      detail: { current: current, next: next, identifier: this.identifierValue },
     });
     window.dispatchEvent(event);
   }

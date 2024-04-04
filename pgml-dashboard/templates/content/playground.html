@@ -256,18 +256,18 @@ use crate::components::Slider;
       SliderCard::new()
         .title("New card")
         .image("/dashboard/static/images/illustrations/gravity.png")
-        .bullets(vec!["bullet1".to_owned(), "bullet2".to_owned(), "bullet3".to_owned()]),
+        .bullets(vec!["bullet1".to_owned(), "bullet2".to_owned(), "bullet3".to_owned()]).into(),
 
         SliderCard::new()
         .title("New card")
         .image("/dashboard/static/images/illustrations/gravity.png")
-        .bullets(vec!["bullet1".to_owned(), "bullet2".to_owned(), "bullet3".to_owned()]),
+        .bullets(vec!["bullet1".to_owned(), "bullet2".to_owned(), "bullet3".to_owned()]).into(),
 
         SliderCard::new()
         .title("New card")
         .image("/dashboard/static/images/illustrations/gravity.png")
-        .bullets(vec!["bullet1 ldfjkh alkjhdf lakjshdf lkja ".to_owned(), "bullet2as kfjhga  jgs jfg sjgdf jsg dfsg dfjhg".to_owned(), "bullet3 ajkshdfdhf kshd fkhs dkfh skh dfkhs kdfh skh dfksh dfkhs kjdjhf ksh dfkh skdfh ksh dfkhsdfk h".to_owned()])
+        .bullets(vec!["bullet1 ldfjkh alkjhdf ladfkh skdfh ksh dfkhsdfk h".to_owned().into()
+        ]).into()
       ])
-
   )%>
 </div>

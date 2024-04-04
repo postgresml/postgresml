@@ -4,3 +4,7 @@
 // src/components/cards/marketing/slider
 pub mod slider;
 pub use slider::Slider;
+
+// src/components/cards/marketing/twitter_testimonial
+pub mod twitter_testimonial;
+pub use twitter_testimonial::TwitterTestimonial;

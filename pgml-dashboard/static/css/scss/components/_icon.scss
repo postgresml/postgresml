@@ -2,7 +2,12 @@
     border-radius: #{$border-radius};
     width: 44px; 
     height: 44px;
-    padding: 8px; 
+    padding: 8px;
+
+    &-red {
+        @extend .icon;
+        background: $gradient-red;
+    }
 
     &-pink {
         @extend .icon;

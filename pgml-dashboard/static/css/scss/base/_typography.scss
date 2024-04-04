@@ -111,6 +111,10 @@ h6, .h6 {
     color: #{$gray-100} !important;
 }
 
+.text-purple {
+    color: #{$purple} !important;
+}
+
 @mixin text-gradient($gradient) {
     background: #{$gradient};
     -webkit-background-clip: text;

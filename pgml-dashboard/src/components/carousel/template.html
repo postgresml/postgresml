@@ -1,9 +1,12 @@
 <%
   use crate::components::Pagination;
   let items_len = items.len();
+  use rand::Rng;
+  let mut rng = rand::thread_rng();
+  let identifier = rng.gen::<u16>();
 %>
 
-<div data-controller="carousel">
+<div data-controller="carousel" data-carousel-identifier-value="<%- identifier %>">
   <% for item in &items {%>
   <template data-carousel-target="template">
     <div class="item-1 w-100 d-inline-block carousel-item">
@@ -24,5 +27,5 @@
     </div>
   </div>
 
-  <%+ Pagination::new(3).default_index(items_len).timed() %>
+  <%+ Pagination::new(items_len, identifier).default_index(items_len).timed() %>
 </div>

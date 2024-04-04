@@ -7,14 +7,16 @@ pub struct Pagination {
     count: usize,
     default_index: usize,
     timed: bool,
+    identifier: u16,
 }
 
 impl Pagination {
-    pub fn new(count: usize) -> Pagination {
+    pub fn new(count: usize, identifier: u16) -> Pagination {
         Pagination {
             count,
             default_index: 0,
             timed: false,
+            identifier: identifier,
         }
     }
 

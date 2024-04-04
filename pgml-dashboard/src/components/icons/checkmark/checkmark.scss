@@ -1,4 +1,4 @@
-div[data-controller="icon-checkmark"] {
+div[data-controller="icons-checkmark"] {
   .active {
     .first {
       stop-color: #3EDCFF;
@@ -29,7 +29,7 @@ div[data-controller="icon-checkmark"] {
 
 
 .disabled {
-  div[data-controller="icon-checkmark"] {
+  div[data-controller="icons-checkmark"] {
     stop {
       &.first {
         stop-color: #{$gray-500};

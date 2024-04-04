@@ -3,7 +3,7 @@
 %>
 <div data-controller="cards-marketing-slider">
   <div class="card <%- state %>">
-    <div class="card-body d-flex flex-column p-0">
+    <div class="card-body d-flex flex-column p-0 w-100">
       <img class="img-fluid" src="<%- image %>" alt="feature image">
       <div class="d-flex gap-3 flex-column h-100">
         <h5 class="title"><%- title %></h5>
@@ -14,7 +14,9 @@
             </div>
           <% } %>
         </ul>
-        <a class="link mt-auto btn btn-tertiary goto-arrow-hover-trigger" href="<%- link %>">Learn More <span class="material-symbols-outlined goto-arrow-shift-animation">arrow_forward</span></a>
+        <% if link.len() > 0 {%>
+        <a class="link mt-auto btn btn-tertiary goto-arrow-hover-trigger p-0" href="<%- link %>">Learn More <span class="material-symbols-outlined goto-arrow-shift-animation">arrow_forward</span></a>
+        <% } %>
       </div>
     </div>
   </div>

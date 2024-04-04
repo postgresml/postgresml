@@ -4,3 +4,7 @@
 // src/components/icons/checkmark
 pub mod checkmark;
 pub use checkmark::Checkmark;
+
+// src/components/icons/twitter
+pub mod twitter;
+pub use twitter::Twitter;
