@@ -3,6 +3,10 @@ import { Controller } from "@hotwired/stimulus";
 export default class extends Controller {
   static targets = ["carousel", "carouselTimer", "template"];
 
+  static values = {
+    identifier: Number,
+  };
+
   initialize() {
     this.paused = false;
     this.runtime = 0;
@@ -30,27 +34,20 @@ export default class extends Controller {
     }
   }
 
-  changeIndicator(current, next) {
-    let timers = this.carouselTimerTargets;
-    let currentTimer = timers[current];
-    let nextTimer = timers[next];
-
-    if (currentTimer) {
-      currentTimer.classList.remove("timer-active");
-      currentTimer.style.width = "1rem";
-    }
-    if (nextTimer) {
-      nextTimer.style.width = "4rem";
-      nextTimer.classList.add("timer-active");
-    }
-  }
-
   Pause() {
     this.paused = true;
+    let pause = new CustomEvent("paginatePause", {
+      detail: { identifier: this.identifierValue },
+    });
+    window.dispatchEvent(pause);
   }
 
   Resume() {
     this.paused = false;
+    let resume = new CustomEvent("paginateResume", {
+      detail: { identifier: this.identifierValue },
+    });
+    window.dispatchEvent(resume);
   }
 
   cycle() {
@@ -58,22 +55,11 @@ export default class extends Controller {
       // maintain paused state through entire loop
       let paused = this.paused;
 
-      let activeTimer = document.getElementsByClassName("timer-active")[0];
-      if (paused) {
-        if (activeTimer) {
-          activeTimer.classList.add("timer-pause");
-        }
-      } else {
-        if (activeTimer && activeTimer.classList.contains("timer-pause")) {
-          activeTimer.classList.remove("timer-pause");
-        }
-      }
-
       if (!paused && this.runtime % 5 == 0) {
         let currentIndex = this.times % this.templateTargets.length;
         let nextIndex = (this.times + 1) % this.templateTargets.length;
 
-        this.changeIndicator(currentIndex, nextIndex);
+        this.changePagination(currentIndex, nextIndex);
         this.changeFeatured(this.templateTargets[nextIndex]);
         this.times++;
       }
@@ -82,6 +68,17 @@ export default class extends Controller {
         this.runtime++;
       }
     }, 1000);
+  }
+
+  changePagination(current, next) {
+    let event = new CustomEvent("paginateNext", {
+      detail: {
+        current: current,
+        next: next,
+        identifier: this.identifierValue,
+      },
+    });
+    window.dispatchEvent(event);
   }
 
   disconnect() {

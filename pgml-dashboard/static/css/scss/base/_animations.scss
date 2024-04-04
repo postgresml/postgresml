@@ -82,8 +82,15 @@
   }
 }
 
-.goto-shift-animation {
-  left: 0rem;
+
+.goto-arrow-hover-trigger:hover {
+  .goto-arrow-shift-animation {
+    left: 0.5rem;
+  }
+}
+
+.goto-arrow-shift-animation {
+  left: 0px;
   position: relative;
   transition: left 0.3s;
 }

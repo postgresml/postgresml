@@ -4,7 +4,7 @@ use sailfish::TemplateOnce;
 use crate::components::stimulus::stimulus_action::{StimulusAction, StimulusActions};
 use crate::utils::random_string;
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct RadioOption {
     pub label: Component,
     pub value: String,

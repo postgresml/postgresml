@@ -1,0 +1,42 @@
+div[data-controller="icons-checkmark"] {
+  .active {
+    .first {
+      stop-color: #3EDCFF;
+    }
+    .second {
+      stop-color: #3E9AFF;
+    }
+  }
+
+  .inactive {
+    .first {
+      stop-color: #{$gray-100};
+    }
+    .second {
+      stop-color: #{$gray-100};
+    }
+  }
+
+  .disabled {
+    .first {
+      stop-color: #{$gray-500};
+    }
+    .second {
+      stop-color: #{$gray-500};
+    }
+  }
+}
+
+
+.disabled {
+  div[data-controller="icons-checkmark"] {
+    stop {
+      &.first {
+        stop-color: #{$gray-500};
+      }
+      &.second {
+        stop-color: #{$gray-500};
+      }
+    }
+  }
+}

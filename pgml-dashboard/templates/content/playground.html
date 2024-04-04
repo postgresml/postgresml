@@ -8,6 +8,9 @@ use crate::components::stimulus::stimulus_action::StimulusAction;
 // use crate::components::stimulus::stimulus_action::StimulusEvents;
 use crate::components::inputs::select::Select;
 use crate::components::inputs::switch::{Switch, State};
+use crate::components::cards::marketing::Slider as SliderCard;
+use crate::components::icons::Checkmark;
+use crate::components::Slider;
 %>
 
 <div class="min-height: 100vh;" data-controller="playground">
@@ -17,6 +20,14 @@ use crate::components::inputs::switch::{Switch, State};
   <h3 class="h3">icons</h3>
   <div class="mb-5">
     <%+ GithubIcon::new() %>
+  </div>
+  <div>
+    <div class="disabled">
+      <%+ Checkmark::new().active() %>
+    </div>
+    <%+ Checkmark::new().disabled() %>
+    <%+ Checkmark::new().inactive() %>
+    <%+ Checkmark::new().twitter() %>
   </div>
   <div class="mb-3">
     <%+ ProfileIcon %>
@@ -237,4 +248,26 @@ use crate::components::inputs::switch::{Switch, State};
   <%+ Select::new()
       .options(vec!["option_pg1".to_owned(), "option2".to_owned(), "option3".to_owned()])
       .name("selectName") %>
+</div>
+
+<div style="margin-bottom: 14rem;">
+  <%+ Slider::new().cards(
+      Vec::from([
+      SliderCard::new()
+        .title("New card")
+        .image("/dashboard/static/images/illustrations/gravity.png")
+        .bullets(vec!["bullet1".to_owned(), "bullet2".to_owned(), "bullet3".to_owned()]).into(),
+
+        SliderCard::new()
+        .title("New card")
+        .image("/dashboard/static/images/illustrations/gravity.png")
+        .bullets(vec!["bullet1".to_owned(), "bullet2".to_owned(), "bullet3".to_owned()]).into(),
+
+        SliderCard::new()
+        .title("New card")
+        .image("/dashboard/static/images/illustrations/gravity.png")
+        .bullets(vec!["bullet1 ldfjkh alkjhdf ladfkh skdfh ksh dfkhsdfk h".to_owned().into()
+        ]).into()
+      ])
+  )%>
 </div>

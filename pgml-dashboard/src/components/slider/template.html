@@ -1,0 +1,20 @@
+<% 
+  use crate::components::Pagination;
+  use rand::Rng;
+  let mut rng = rand::thread_rng();
+  let identifier = rng.gen::<u16>();
+%>
+
+<div data-controller="slider" data-slider-index-value="<%- default_index%>" data-slider-identifier-value="<%- identifier %>">
+  <div class="overflow-hidden w-100" data-action="pagination:change->slider#nextFromPagination pagination:connected->slider#changePaginationInit" style="position: relative">
+    <div class="d-flex flex-row w-100 item-container" data-slider-target="container" data-action="wheel->slider#scrollCheck touchmove->slider#swipeMove touchstart->slider#startSwipe touchend->slider#endSwipe">
+      <% for (index, item) in cards.clone().into_iter().enumerate() {%>
+        <div class="d-flex disabled item-container" data-action="click->slider#next" data-slider-target="item" data-slider-index-param="<%- index %>">
+        <%+ item %>
+        </div>
+      <% } %>
+    </div>
+
+    <%+ Pagination::new(cards.clone().len(), identifier) %>
+  </div>
+</div>
