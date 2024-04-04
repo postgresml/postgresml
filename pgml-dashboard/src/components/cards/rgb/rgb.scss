@@ -1,0 +1,6 @@
+div[data-controller="cards-rgb"] {
+    .card {
+        --bs-card-bg: transparent;
+        --bs-card-border-color: #{$gray-700};
+    }
+}

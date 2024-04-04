@@ -1,0 +1,8 @@
+<% if let Some(src) = src { %>
+<turbo-frame src="<%= src %>" id="<%= id %>">
+</turbo-frame>
+<% } else { %>
+<turbo-frame id="<%= id %>">
+  <%+ content %>
+</turbo-frame>
+<% } %>

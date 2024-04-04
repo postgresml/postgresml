@@ -1,4 +1,8 @@
-
-<li class="menu-item d-flex align-items-center" data-for="<%= value %>">
-  <button type="button" class="dropdown-item" data-action="<%- action %>"><%= value %></button>
+<li class="menu-item d-flex align-items-center" data-for="<%= input_value %>">
+  <button
+    type="button"
+    class="dropdown-item"
+    data-action="<%- action %>"
+    data-value="<%= input_value %>"
+  ><%= value %></button>
 </li>

@@ -1,0 +1,28 @@
+div[data-controller="inputs-switch-v-2"] {
+    .inputs-switch-v-2-choice {
+        cursor: pointer;
+        background: #{$gray-700};
+
+        &.active {
+            background: #{$bg-white};
+            border-radius: 8px;
+            color: #{$neon-tint-100};
+        }
+    }
+
+    .col {
+        &:first-of-type {
+            .inputs-switch-v-2-choice {
+                border-top-left-radius: 8px;
+                border-bottom-left-radius: 8px;
+            }
+        }
+
+        &:last-of-type {
+            .inputs-switch-v-2-choice {
+                border-top-right-radius: 8px;
+                border-bottom-right-radius: 8px;
+            }
+        }
+    }
+}

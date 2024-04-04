@@ -41,10 +41,8 @@
   </div>
   <% } %>
 
-  <ul class="dropdown-menu overflow-auto <%= menu_position %>">
-    <% for item in items { %>
-        <%+ item %>
-    <% } %>
+  <ul class="dropdown-menu overflow-auto <%= menu_position %> <%= show %>">
+    <%+ items %>
   </ul>
 </div>
 <!-- /Dropdown component -->

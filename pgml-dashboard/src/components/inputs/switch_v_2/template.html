@@ -1,0 +1,30 @@
+<div data-controller="inputs-switch-v-2">
+  <div class="row gy-0 gx-0">
+    <% for option in options {
+      let (active, aria_pressed) = if option.active {
+        ("active", "true")
+      } else {
+        ("", "false")
+      };
+    %>
+    <div class="col">
+      <div
+        class="d-flex justify-content-center align-items-center inputs-switch-v-2-choice py-2 gap-1 <%= active %>"
+        role="button"
+        aria-pressed="<%= aria_pressed %>"
+        data-inputs-switch-v-2-target="button"
+        data-action="<%= option.actions %>"
+        >
+        <% if let Some(icon) = option.icon { %>
+        <span class="material-symbols-outlined">
+          <%= icon %>
+        </span>
+        <% } else if let Some(svg) = option.svg { %>
+          <img src="<%= svg.display().to_string() %>" alt="icon" aria-hidden="true">
+        <% } %>
+        <span><%= option.value %></span>
+      </div>
+    </div>
+    <% } %>
+  </div>
+</div>
