@@ -42,9 +42,6 @@ pub use dropdown::Dropdown;
 pub mod github_icon;
 pub use github_icon::GithubIcon;
 
-// src/components/global
-pub mod global;
-
 // src/components/headings
 pub mod headings;
 
