@@ -52,6 +52,11 @@ impl SwitchOption {
         self
     }
 
+    pub fn set_active(mut self, active: bool) -> Self {
+        self.active = active;
+        self
+    }
+
     pub fn action(mut self, action: StimulusAction) -> Self {
         self.actions.push(action);
         self
