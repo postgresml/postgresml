@@ -1,4 +1,3 @@
-use crate::components::cards::marketing::Slider as SliderCard;
 use pgml_components::component;
 use sailfish::TemplateOnce;
 use pgml_components::Component;
