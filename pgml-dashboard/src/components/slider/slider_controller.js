@@ -5,7 +5,7 @@ export default class extends Controller {
 
   static values = {
     index: Number,
-    identifier: Number
+    identifier: Number,
   };
 
   connect() {
@@ -22,7 +22,10 @@ export default class extends Controller {
   scrollCheck(e) {
     let dx = e.deltaX;
     this.now = new Date();
-    if (this.lastTimeScroll === undefined || this.now - this.lastTimeScroll >= 400) {
+    if (
+      this.lastTimeScroll === undefined ||
+      this.now - this.lastTimeScroll >= 400
+    ) {
       this.lastTimeScroll = new Date();
       if (dx > 6 && this.active < this.itemTargets.length - 1) {
         this.shift(this.active + 1);
@@ -98,7 +101,11 @@ export default class extends Controller {
 
   changePagination(current, next) {
     let event = new CustomEvent("paginateNext", {
-      detail: { current: current, next: next, identifier: this.identifierValue},
+      detail: {
+        current: current,
+        next: next,
+        identifier: this.identifierValue,
+      },
     });
     window.dispatchEvent(event);
   }

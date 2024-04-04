@@ -1,12 +1,12 @@
-use sailfish::TemplateOnce;
 use pgml_components::component;
+use sailfish::TemplateOnce;
 
 #[derive(TemplateOnce, Default, Clone)]
 #[template(path = "cards/marketing/twitter_testimonial/template.html")]
 pub struct TwitterTestimonial {
     statement: String,
     image: String,
-    name: String, 
+    name: String,
     handle: String,
     verified: bool,
 }

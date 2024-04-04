@@ -1,21 +1,23 @@
-import { Controller } from '@hotwired/stimulus'
+import { Controller } from "@hotwired/stimulus";
 
 export default class extends Controller {
-  static targets = ["paginationItem"]
+  static targets = ["paginationItem"];
 
   static values = {
     index: Number,
     activeClass: String,
-    identifier: Number
-  }
+    identifier: Number,
+  };
 
   connect() {
-    this.dispatch("connected", {detail: {identifier: this.identifierValue}})
+    this.dispatch("connected", {
+      detail: { identifier: this.identifierValue },
+    });
   }
 
   changePagination(e) {
-    if( e.detail.identifier == this.identifierValue ){
-      this.shift(e.detail.current, e.detail.next)
+    if (e.detail.identifier == this.identifierValue) {
+      this.shift(e.detail.current, e.detail.next);
     }
   }
 
@@ -36,19 +38,23 @@ export default class extends Controller {
 
   change(e) {
     this.dispatch("change", {
-      detail: {index: e.params.index, identifier: this.identifierValue}
+      detail: { index: e.params.index, identifier: this.identifierValue },
     });
   }
 
   pause(e) {
-    if( e.detail.identifier == this.identifierValue ){
-      document.getElementsByClassName(this.activeClassValue)[0].classList.add("pagination-timer-pause")
+    if (e.detail.identifier == this.identifierValue) {
+      document
+        .getElementsByClassName(this.activeClassValue)[0]
+        .classList.add("pagination-timer-pause");
     }
   }
 
   resume(e) {
-    if( e.detail.identifier == this.identifierValue ){
-      document.getElementsByClassName(this.activeClassValue)[0].classList.remove("pagination-timer-pause")
+    if (e.detail.identifier == this.identifierValue) {
+      document
+        .getElementsByClassName(this.activeClassValue)[0]
+        .classList.remove("pagination-timer-pause");
     }
   }
 }

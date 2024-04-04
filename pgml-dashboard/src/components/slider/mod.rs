@@ -1,6 +1,6 @@
 use pgml_components::component;
-use sailfish::TemplateOnce;
 use pgml_components::Component;
+use sailfish::TemplateOnce;
 
 #[derive(TemplateOnce, Default)]
 #[template(path = "slider/template.html")]
@@ -11,7 +11,7 @@ pub struct Slider {
 
 impl Slider {
     pub fn new() -> Slider {
-        Slider { 
+        Slider {
             cards: Vec::new(),
             default_index: 0,
         }

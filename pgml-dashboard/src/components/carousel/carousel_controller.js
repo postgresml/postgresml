@@ -4,8 +4,8 @@ export default class extends Controller {
   static targets = ["carousel", "carouselTimer", "template"];
 
   static values = {
-    identifier: Number
-  }
+    identifier: Number,
+  };
 
   initialize() {
     this.paused = false;
@@ -36,13 +36,17 @@ export default class extends Controller {
 
   Pause() {
     this.paused = true;
-    let pause = new CustomEvent("paginatePause", {detail: {identifier: this.identifierValue}});
+    let pause = new CustomEvent("paginatePause", {
+      detail: { identifier: this.identifierValue },
+    });
     window.dispatchEvent(pause);
   }
 
   Resume() {
     this.paused = false;
-    let resume = new CustomEvent("paginateResume", {detail: {identifier: this.identifierValue}});
+    let resume = new CustomEvent("paginateResume", {
+      detail: { identifier: this.identifierValue },
+    });
     window.dispatchEvent(resume);
   }
 
@@ -68,7 +72,11 @@ export default class extends Controller {
 
   changePagination(current, next) {
     let event = new CustomEvent("paginateNext", {
-      detail: { current: current, next: next, identifier: this.identifierValue },
+      detail: {
+        current: current,
+        next: next,
+        identifier: this.identifierValue,
+      },
     });
     window.dispatchEvent(event);
   }
