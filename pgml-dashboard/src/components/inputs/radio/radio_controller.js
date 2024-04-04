@@ -12,6 +12,10 @@ export default class extends Controller {
 
     e.currentTarget.classList.add("active");
     e.currentTarget.ariaPressed = true;
-    e.currentTarget.querySelector("input").checked = true;
+
+    const input = e.currentTarget.querySelector("input");
+
+    input.checked = true;
+    input.dispatchEvent(new Event("change"));
   }
 }
