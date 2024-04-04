@@ -39,6 +39,15 @@ impl Rgb {
         self
     }
 
+    pub fn is_active(mut self, active: bool) -> Self {
+        if active {
+            self.card_classes.push("active".into());
+            self.card_classes.push("main-gradient-border-card-1".into());
+        }
+
+        self
+    }
+
     pub fn link(mut self, link: &str) -> Self {
         self.link = Some(link.to_string());
         self
