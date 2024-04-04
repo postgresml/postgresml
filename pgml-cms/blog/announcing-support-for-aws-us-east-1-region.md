@@ -1,8 +1,8 @@
 ---
-description: >-
-  We added aws us east 1 to our list of support aws regions.
 featured: false
-tags: [product]
+tags:
+  - product
+description: We added aws us east 1 to our list of support aws regions.
 ---
 
 # Announcing Support for AWS us-east-1 Region
@@ -27,7 +27,11 @@ To demonstrate the impact of moving the data closer to your application, we've c
 
 <figure><img src=".gitbook/assets/image (8).png" alt=""><figcaption></figcaption></figure>
 
+\\
+
 <figure><img src=".gitbook/assets/image (9).png" alt=""><figcaption></figcaption></figure>
+
+\\
 
 ## Using the New Region
 
