@@ -1,0 +1,44 @@
+<% let vertical = if vertical {
+  "col-12"
+} else {
+  "col"
+};
+%>
+
+<div data-controller="inputs-radio">
+  <div class="row gy-4 gx-3">
+    <% for option in options {
+      let (active, checked, aria_pressed) = if option.checked {
+        ("active", "checked", "true")
+      } else {
+        ("", "", "false")
+      };
+
+    %>
+     <div class="<%= vertical %>">
+      <div
+        class="inputs-radio-form-check <%= active %> h-100 d-flex align-items-center"
+        role="button"
+        data-action="click->inputs-radio#onClick"
+        data-inputs-radio-target="button"
+        aria-pressed="<%= aria_pressed %>"
+      >
+        <div class="form-check">
+          <input
+            class="form-check-input"
+            type="radio"
+            name="<%= name %>"
+            id="<%= option.id %>"
+            checked="<%= checked %>"
+            value="<%= option.value %>"
+            data-action="<%= option.actions %>"
+          >
+          <label class="form-check-label" for="<%= option.id %>">
+            <%+ option.label %>
+          </label>
+        </div>
+      </div>
+    </div>
+    <% } %>
+  </div>
+</div>

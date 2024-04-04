@@ -102,8 +102,7 @@
     min-width: 25vw;
 }
 
-@mixin gradient-border-card($primary-color, $gradient, $on_hover_only: false) {
-    $border: 2px;
+@mixin gradient-border-card($primary-color, $gradient, $on_hover_only: false, $border: 2px) {
     backdrop-filter: none;
 
     background: $primary-color;
@@ -142,6 +141,10 @@
 
 .main-gradient-border-card {
     @include gradient-border-card($gray-600, $gradient-main);
+}
+
+.main-gradient-border-card-1 {
+    @include gradient-border-card($gray-600, $gradient-main, false, 1px);
 }
 
 .red-gradient-border-card {

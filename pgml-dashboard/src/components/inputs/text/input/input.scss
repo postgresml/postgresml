@@ -1,0 +1,15 @@
+div[data-controller="inputs-text-input"] {
+    span.material-symbols-outlined {
+        margin-left: -40px;
+        color: #{$slate-shade-100};
+    }
+
+    input.form-control {
+        padding-right: 52px;
+        width: 100%;
+    }
+
+    label.form-label {
+        font-weight: #{$font-weight-normal};
+    }
+}

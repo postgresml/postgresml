@@ -1,0 +1,12 @@
+div[data-controller="inputs-radio"] {
+    .inputs-radio-form-check {
+        padding: 16px 20px;
+        border: 1px solid #{$bg-white};
+        border-radius: 8px;
+
+        &.active {
+            border: 2px solid #{$neon-tint-100};
+            padding: 16px 20px;
+        }
+    }
+}

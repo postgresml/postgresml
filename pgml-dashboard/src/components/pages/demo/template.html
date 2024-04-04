@@ -1,0 +1,160 @@
+<% use crate::components::tables::small::*; %>
+<% use crate::components::headings::{Green, Blue}; %>
+<% use crate::components::inputs::text::EditableHeader; %>
+<% use crate::components::inputs::text::{Input, search::{Search, search::SearchOptions}}; %>
+<% use crate::components::badges::{small, large::{self, label::LabelCloseOptions}}; %>
+<% use crate::components::stimulus::StimulusAction; %>
+<% use crate::components::inputs::RangeGroupV2; %>
+<% use crate::components::inputs::select::{Select, Option}; %>
+<% use crate::components::inputs::{SwitchV2, Radio}; %>
+<% use crate::components::cards::Rgb; %>
+
+<div class="container" data-controller="pages-demo">
+  <div class="py-5">
+    <%+ Table::new(&["Model", "Performance", "Cost"], &[
+      Row::new(&[
+        "intfloat/e5-small".into(),
+        "5ms/embedding".into(),
+        "$0.0000000001/embedding".into(),
+      ]).into(),
+      Row::new(&[
+        "intfloat/e5-large".into(),
+        "10ms/embedding".into(),
+        "$0.0000000002/embedding".into(),
+      ]).into(),
+    ]) %>
+  </div>
+
+  <div class="py-5">
+    <%+ Green::new("Unify RAG") %>
+    <p>Vector & Relational Database + Embedding generation</p>
+  </div>
+
+  <div class="py-5">
+    <%+ Blue::new("Dedicated database") %>
+    <p>LLMs for life/p>
+  </div>
+
+  <div class="py-5">
+    <%+ EditableHeader::default() %>
+  </div>
+
+  <div class="py-5">
+    <%+ Input::new()
+      .label("What is your name?".into())
+      .icon("person")
+      .placeholder("Enter your name")
+      .name("name")
+      .type_("text") %>
+  </div>
+
+  <div class="py-5">
+    <%+ Search::new(SearchOptions {
+      name: "Model search".into(),
+      placeholder: "Search for a model".into(),
+      search_url: "/components-library-demo?search=".into(),
+      id: "model-search".into(),
+    }) %>
+  </div>
+
+  <div class="d-flex gap-2 py-5">
+    <div><%+ small::Label::check_circle("Supported") %></div>
+    <div><%+ small::Label::cancel("Not supported") %></div>
+    <div><%+ small::Label::outbound("Optimized") %></div>
+    <div><%+ small::Label::download_for_offline("Load model") %></div>
+    <div><%+ small::Label::forward_circle("Loading") %></div>
+  </div>
+
+  <div class="d-flex gap-2 py-5">
+    <div>
+      <%+ large::Label::new("Mixtral/7B") %>
+    </div>
+    <div>
+      <%+ large::Label::new("5ms/embedding").active().close_options(LabelCloseOptions {
+        action: StimulusAction::new(),
+        url: "#".into()
+      }) %>
+    </div>
+  </div>
+
+  <div class="py-5">
+    <div class="card">
+      <div class="card-body">
+        <%+ RangeGroupV2::new()
+          .min("40")
+          .max("16000")
+          .value("40")
+          .cost_per_unit("0.20")
+          .unit("GB")
+        %>
+      </div>
+    </div>
+  </div>
+
+  <div class="py-5">
+    <div class="card">
+      <div class="card-body">
+        <div class="row">
+          <div class="col-6">
+            <%+ Select::new()
+                .options_with_input_value(&[
+                  Option::with_input_value("Hello", "1"),
+                  Option::with_input_value("World", "2"),
+                ])
+            %> 
+          </div>
+          <div class="col-6">
+            <%+ Select::new()
+                .options(vec![
+                  "hello",
+                  "world",
+                ])
+            %> 
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="py-5">
+    <div class="card">
+      <div class="card-body">
+        <%+ SwitchV2::default() %>
+      </div>
+    </div>
+  </div>
+
+  <div class="py-5">
+    <div class="card">
+      <div class="card-body">
+        <%+ Radio::default() %>
+      </div>
+    </div>
+  </div>
+
+  <div class="py-5">
+    <div class="card">
+      <div class="card-body">
+        <div class="row">
+          <div class="col">
+            <div
+              data-action="click->pages-demo#selectRgb"
+              data-pages-demo-target="rgb"
+            >
+              <%+ Rgb::default().active() %>
+            </div>
+          </div>
+
+          <div class="col" id="rgb-link">
+            <div
+              data-action="click->pages-demo#selectRgb"
+              data-pages-demo-target="rgb"
+            >
+              <%+ Rgb::default() %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

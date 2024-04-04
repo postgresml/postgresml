@@ -1,0 +1,12 @@
+<% use crate::components::badges::large::label::LabelCloseOptions; %>
+
+<span data-controller="badges-large-label" class="d-inline-flex gap-2 align-items-center rounded-2 <%= active %>">
+  <span><%= value %></span>
+  <% if let Some(LabelCloseOptions { action, url }) = close_options { %>
+  <a href="<%= url %>" data-action="<%= action %>" class="d-inline-flex align-items-center">
+    <span class="material-symbols-outlined text-white">
+      close
+    </span>
+  </a>
+  <% } %>
+</span>

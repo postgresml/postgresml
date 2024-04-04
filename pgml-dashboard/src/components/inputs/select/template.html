@@ -2,7 +2,7 @@
 use crate::components::dropdown::Dropdown;
 use crate::components::stimulus::stimulus_target::StimulusTarget;
 %>
-<div data-controller="inputs-select" data-initial="<%- value.clone() %>">
+<div data-controller="inputs-select" data-initial="<%- input_value.clone() %>">
 
   <% let mut dropdown = Dropdown::new()
       .items(options)
@@ -29,5 +29,5 @@ use crate::components::stimulus::stimulus_target::StimulusTarget;
 
   <%+ dropdown %>
       
-  <input type="hidden" name="<%= name %>" value="<%= value %>" data-inputs-select-target="input" <%- value_target %> data-action="<%- action %> reset->inputs-select#resetSelect" />
+  <input type="hidden" name="<%= name %>" value="<%= input_value %>" data-inputs-select-target="input" <%- value_target %> data-action="<%- action %> reset->inputs-select#resetSelect" />
 </div>
