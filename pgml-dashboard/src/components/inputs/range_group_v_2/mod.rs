@@ -2,6 +2,7 @@ use pgml_components::component;
 use sailfish::TemplateOnce;
 
 use crate::components::stimulus::{stimulus_action::StimulusActions, StimulusAction};
+use std::collections::BTreeSet;
 
 #[derive(TemplateOnce, Default)]
 #[template(path = "inputs/range_group_v_2/template.html")]
@@ -13,6 +14,7 @@ pub struct RangeGroupV2 {
     value: String,
     unit: String,
     input_unit: String,
+    input_classes: BTreeSet<String>,
     cost_per_unit: String,
     cost_frequency: String,
 
@@ -21,13 +23,16 @@ pub struct RangeGroupV2 {
 
 impl RangeGroupV2 {
     pub fn new() -> RangeGroupV2 {
-        Self::default()
-            .min("40")
-            .max("16000")
-            .unit("GB")
-            .cost_per_unit("0.20")
-            .value("40")
-            .cost_frequency("h")
+        Self {
+            input_classes: BTreeSet::from_iter(vec!["form-control".to_string()].into_iter()),
+            ..Default::default()
+        }
+        .min("40")
+        .max("16000")
+        .unit("GB")
+        .cost_per_unit("0.20")
+        .value("40")
+        .cost_frequency("h")
     }
 
     pub fn name(mut self, name: impl ToString) -> Self {
@@ -58,12 +63,20 @@ impl RangeGroupV2 {
     pub fn unit(mut self, unit: impl ToString) -> Self {
         self.unit = unit.to_string();
         self.input_unit = unit.to_string();
-        self
+
+        if !self.input_unit.is_empty() {
+            self.input_classes
+                .insert("inputs-range-group-v-2-with-unit".to_string());
+        } else {
+            self.input_classes.remove("inputs-range-group-v-2-with-unit");
+        }
+
+        self.with_input_classes()
     }
 
     pub fn input_unit(mut self, input_unit: impl ToString) -> Self {
         self.input_unit = input_unit.to_string();
-        self
+        self.with_input_classes()
     }
 
     pub fn cost_per_unit(mut self, cost_per_unit: impl ToString) -> Self {
@@ -78,6 +91,17 @@ impl RangeGroupV2 {
 
     pub fn action(mut self, action: StimulusAction) -> Self {
         self.actions.push(action);
+        self
+    }
+
+    fn with_input_classes(mut self) -> Self {
+        if !self.input_unit.is_empty() {
+            self.input_classes
+                .insert("inputs-range-group-v-2-with-unit".to_string());
+        } else {
+            self.input_classes.remove("inputs-range-group-v-2-with-unit");
+        }
+
         self
     }
 }

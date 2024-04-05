@@ -1,3 +1,9 @@
+ <%
+  use itertools::Itertools;
+
+  let input_classes = input_classes.into_iter().join(" ");
+%>
+
  <div data-controller="inputs-range-group-v-2">
    <input
     class="form-range z-1 overlay-offset mb-3" 
@@ -15,11 +21,12 @@
       <div class="d-flex align-items-center">
         <input
           type="text"
-          class="form-control"
+          class="<%= input_classes %>"
           data-action="input->inputs-range-group-v-2#onInputInput focusin->inputs-range-group-v-2#onInputFocusIn blur->inputs-range-group-v-2#onInputBlur <%= actions %>"
           data-inputs-range-group-v-2-target="input"
           value="<%= value %>"
         >
+        <% if !input_unit.is_empty() { %>
         <span
           class="inputs-range-group-v-2-unit fw-semibold"
           data-inputs-range-group-v-2-target="unit"
@@ -27,6 +34,7 @@
         >
           <%= input_unit %>
         </span>
+        <% } %>
       </div>
     </div>
 

@@ -5,13 +5,15 @@ div[data-controller="inputs-range-group-v-2"] {
   }
 
   input[type="text"] {
-    padding-right: 0;
-    border-right: 0;
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
+    &.inputs-range-group-v-2-with-unit {
+        padding-right: 0;
+        border-right: 0;
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+    }
   }
 
-  .inputs-range-group-v-2-unit {
+  span.inputs-range-group-v-2-unit {
     color: #{$gray-400};
     background: #{$input-bg};
     height: 100%;
