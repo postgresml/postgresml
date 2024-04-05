@@ -22,7 +22,7 @@ pub static PGML_HF_TRUST_WHITELIST: Lazy<(&'static str, GucSetting<Option<&'stat
     )
 });
 pub static PGML_OMP_NUM_THREADS: Lazy<(&'static str, GucSetting<i32>)> =
-    Lazy::new(|| ("pgml.omp_num_threads", GucSetting::<i32>::new(-1)));
+    Lazy::new(|| ("pgml.omp_num_threads", GucSetting::<i32>::new(0)));
 
 pub fn initialize_server_params() {
     GucRegistry::define_string_guc(
@@ -62,7 +62,7 @@ pub fn initialize_server_params() {
         "Specifies the number of threads used by default of underlying OpenMP library. Only positive integers are valid",
         "",
         &PGML_OMP_NUM_THREADS.1,
-        -1,
+        0,
         i32::max_value(),
         GucContext::Backend,
         GucFlags::default(),
