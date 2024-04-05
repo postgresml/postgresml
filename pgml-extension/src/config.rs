@@ -1,26 +1,28 @@
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 use pgrx::{GucContext, GucFlags, GucRegistry, GucSetting};
 use std::ffi::CStr;
 
 #[cfg(any(test, feature = "pg_test"))]
 use pgrx::{pg_schema, pg_test};
 
-lazy_static! {
-    pub static ref PGML_VENV: (&'static str, GucSetting<Option<&'static CStr>>) =
-        ("pgml.venv", GucSetting::<Option<&'static CStr>>::new(None));
-    pub static ref PGML_HF_WHITELIST: (&'static str, GucSetting<Option<&'static CStr>>) = (
+pub static PGML_VENV: Lazy<(&'static str, GucSetting<Option<&'static CStr>>)> =
+    Lazy::new(|| ("pgml.venv", GucSetting::<Option<&'static CStr>>::new(None)));
+pub static PGML_HF_WHITELIST: Lazy<(&'static str, GucSetting<Option<&'static CStr>>)> = Lazy::new(|| {
+    (
         "pgml.huggingface_whitelist",
         GucSetting::<Option<&'static CStr>>::new(None),
-    );
-    pub static ref PGML_HF_TRUST_REMOTE_CODE: (&'static str, GucSetting<bool>) =
-        ("pgml.huggingface_trust_remote_code", GucSetting::<bool>::new(false));
-    pub static ref PGML_HF_TRUST_WHITELIST: (&'static str, GucSetting<Option<&'static CStr>>) = (
+    )
+});
+pub static PGML_HF_TRUST_REMOTE_CODE: Lazy<(&'static str, GucSetting<bool>)> =
+    Lazy::new(|| ("pgml.huggingface_trust_remote_code", GucSetting::<bool>::new(false)));
+pub static PGML_HF_TRUST_WHITELIST: Lazy<(&'static str, GucSetting<Option<&'static CStr>>)> = Lazy::new(|| {
+    (
         "pgml.huggingface_trust_remote_code_whitelist",
         GucSetting::<Option<&'static CStr>>::new(None),
-    );
-    pub static ref PGML_OMP_NUM_THREADS: (&'static str, GucSetting<i32>) =
-        ("pgml.omp_num_threads", GucSetting::<i32>::new(-1));
-}
+    )
+});
+pub static PGML_OMP_NUM_THREADS: Lazy<(&'static str, GucSetting<i32>)> =
+    Lazy::new(|| ("pgml.omp_num_threads", GucSetting::<i32>::new(-1)));
 
 pub fn initialize_server_params() {
     GucRegistry::define_string_guc(
