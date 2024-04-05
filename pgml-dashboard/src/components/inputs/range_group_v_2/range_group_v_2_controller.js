@@ -15,11 +15,15 @@ export default class extends Controller {
   }
 
   onInputFocusIn(e) {
-    this.unitTarget.classList.add("focused");
+    if (this.hasUnitTarget) {
+      this.unitTarget.classList.add("focused");
+    }
   }
 
   onInputBlur(e) {
-    this.unitTarget.classList.remove("focused");
+    if (this.hasUnitTarget) {
+      this.unitTarget.classList.remove("focused");
+    }
   }
 
   onUnitClick(e) {
