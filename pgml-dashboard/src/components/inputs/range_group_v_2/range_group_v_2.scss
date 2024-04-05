@@ -5,11 +5,31 @@ div[data-controller="inputs-range-group-v-2"] {
   }
 
   input[type="text"] {
-    padding-right: 30px;
+    padding-right: 0;
+    border-right: 0;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
   }
 
   .inputs-range-group-v-2-unit {
-    margin-left: -33px;
     color: #{$gray-400};
+    background: #{$input-bg};
+    height: 100%;
+    padding: #{$input-padding-y} #{$input-padding-x};
+    border: #{$input-border-width} solid #{$input-border-color};
+
+    border-top-right-radius: var(--bs-border-radius);
+    border-bottom-right-radius: var(--bs-border-radius);
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-left: 0;
+    transition: #{$input-transition};
+
+    &.focused {
+        background: #{$input-focus-bg};
+        box-shadow: #{$input-focus-box-shadow};
+        border-color: #{$input-focus-border-color};
+        border-width: #{$input-border-width};
+    }
   }
 }

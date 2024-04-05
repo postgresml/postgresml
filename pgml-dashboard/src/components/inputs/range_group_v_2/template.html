@@ -16,11 +16,15 @@
         <input
           type="text"
           class="form-control"
-          data-action="input->inputs-range-group-v-2#onInputInput <%= actions %>"
+          data-action="input->inputs-range-group-v-2#onInputInput focusin->inputs-range-group-v-2#onInputFocusIn blur->inputs-range-group-v-2#onInputBlur <%= actions %>"
           data-inputs-range-group-v-2-target="input"
           value="<%= value %>"
         >
-        <span class="inputs-range-group-v-2-unit fw-semibold">
+        <span
+          class="inputs-range-group-v-2-unit fw-semibold"
+          data-inputs-range-group-v-2-target="unit"
+          data-action="click->inputs-range-group-v-2#onUnitClick"
+        >
           <%= input_unit %>
         </span>
       </div>
