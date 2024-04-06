@@ -79,7 +79,6 @@ mod tests {
         let value = "meta-llama/Llama-2-7b";
         set_config(name, value).unwrap();
         assert_eq!(PGML_HF_WHITELIST.get().unwrap().to_str().unwrap(), value);
-        //assert_eq!((&*PGML_HF_WHITELIST).get().unwrap().to_str().unwrap(), value);
     }
 
     #[pg_test]
