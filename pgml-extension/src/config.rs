@@ -1,67 +1,58 @@
-use once_cell::sync::Lazy;
 use pgrx::{GucContext, GucFlags, GucRegistry, GucSetting};
 use std::ffi::CStr;
 
 #[cfg(any(test, feature = "pg_test"))]
 use pgrx::{pg_schema, pg_test};
 
-pub static PGML_VENV: Lazy<(&'static str, GucSetting<Option<&'static CStr>>)> =
-    Lazy::new(|| ("pgml.venv", GucSetting::<Option<&'static CStr>>::new(None)));
-pub static PGML_HF_WHITELIST: Lazy<(&'static str, GucSetting<Option<&'static CStr>>)> = Lazy::new(|| {
-    (
-        "pgml.huggingface_whitelist",
-        GucSetting::<Option<&'static CStr>>::new(None),
-    )
-});
-pub static PGML_HF_TRUST_REMOTE_CODE: Lazy<(&'static str, GucSetting<bool>)> =
-    Lazy::new(|| ("pgml.huggingface_trust_remote_code", GucSetting::<bool>::new(false)));
-pub static PGML_HF_TRUST_WHITELIST: Lazy<(&'static str, GucSetting<Option<&'static CStr>>)> = Lazy::new(|| {
-    (
-        "pgml.huggingface_trust_remote_code_whitelist",
-        GucSetting::<Option<&'static CStr>>::new(None),
-    )
-});
-pub static PGML_OMP_NUM_THREADS: Lazy<(&'static str, GucSetting<i32>)> =
-    Lazy::new(|| ("pgml.omp_num_threads", GucSetting::<i32>::new(0)));
+pub static PGML_VENV: GucSetting<Option<&'static CStr>> = GucSetting::<Option<&'static CStr>>::new(None);
+pub static PGML_HF_WHITELIST: GucSetting<Option<&'static CStr>> = GucSetting::<Option<&'static CStr>>::new(None);
+pub static PGML_HF_TRUST_REMOTE_CODE: GucSetting<bool> = GucSetting::<bool>::new(false);
+pub static PGML_HF_TRUST_REMOTE_CODE_WHITELIST: GucSetting<Option<&'static CStr>> =
+    GucSetting::<Option<&'static CStr>>::new(None);
+pub static PGML_OMP_NUM_THREADS: GucSetting<i32> = GucSetting::<i32>::new(0);
 
 pub fn initialize_server_params() {
     GucRegistry::define_string_guc(
-        PGML_VENV.0,
+        "pgml.venv",
         "Python's virtual environment path",
         "",
-        &PGML_VENV.1,
+        &PGML_VENV,
         GucContext::Userset,
         GucFlags::default(),
     );
+
     GucRegistry::define_string_guc(
-        PGML_HF_WHITELIST.0,
+        "pgml.huggingface_whitelist",
         "Models allowed to be downloaded from huggingface",
         "",
-        &PGML_HF_WHITELIST.1,
+        &PGML_HF_WHITELIST,
         GucContext::Userset,
         GucFlags::default(),
     );
+
     GucRegistry::define_bool_guc(
-        PGML_HF_TRUST_REMOTE_CODE.0,
+        "pgml.huggingface_trust_remote_code",
         "Whether model can execute remote codes",
         "",
-        &PGML_HF_TRUST_REMOTE_CODE.1,
+        &PGML_HF_TRUST_REMOTE_CODE,
         GucContext::Userset,
         GucFlags::default(),
     );
+
     GucRegistry::define_string_guc(
-        PGML_HF_TRUST_WHITELIST.0,
+        "pgml.huggingface_trust_remote_code_whitelist",
         "Models allowed to execute remote codes when pgml.hugging_face_trust_remote_code = 'on'",
         "",
-        &PGML_HF_TRUST_WHITELIST.1,
+        &PGML_HF_TRUST_REMOTE_CODE_WHITELIST,
         GucContext::Userset,
         GucFlags::default(),
     );
+
     GucRegistry::define_int_guc(
-        PGML_OMP_NUM_THREADS.0,
+        "pgml.omp_num_threads",
         "Specifies the number of threads used by default of underlying OpenMP library. Only positive integers are valid",
         "",
-        &PGML_OMP_NUM_THREADS.1,
+        &PGML_OMP_NUM_THREADS,
         0,
         i32::max_value(),
         GucContext::Backend,
@@ -87,7 +78,8 @@ mod tests {
         let name = "pgml.huggingface_whitelist";
         let value = "meta-llama/Llama-2-7b";
         set_config(name, value).unwrap();
-        assert_eq!(PGML_HF_WHITELIST.1.get().unwrap().to_string_lossy(), value);
+        assert_eq!(PGML_HF_WHITELIST.get().unwrap().to_str().unwrap(), value);
+        //assert_eq!((&*PGML_HF_WHITELIST).get().unwrap().to_str().unwrap(), value);
     }
 
     #[pg_test]

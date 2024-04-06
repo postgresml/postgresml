@@ -21,7 +21,7 @@ pub fn activate_venv(venv: &str) -> Result<bool> {
 }
 
 pub fn activate() -> Result<bool> {
-    match PGML_VENV.1.get() {
+    match PGML_VENV.get() {
         Some(venv) => activate_venv(&venv.to_string_lossy()),
         None => Ok(false),
     }

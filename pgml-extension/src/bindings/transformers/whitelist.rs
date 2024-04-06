@@ -5,7 +5,7 @@ use pgrx::{pg_schema, pg_test};
 use serde_json::Value;
 use std::ffi::CStr;
 
-use crate::config::{PGML_HF_TRUST_REMOTE_CODE, PGML_HF_TRUST_WHITELIST, PGML_HF_WHITELIST};
+use crate::config::{PGML_HF_TRUST_REMOTE_CODE, PGML_HF_TRUST_REMOTE_CODE_WHITELIST, PGML_HF_WHITELIST};
 
 /// Verify that the model in the task JSON is allowed based on the huggingface whitelists.
 pub fn verify_task(task: &Value) -> Result<(), Error> {
@@ -13,21 +13,21 @@ pub fn verify_task(task: &Value) -> Result<(), Error> {
         Some(model) => model.to_string(),
         None => return Ok(()),
     };
-    let whitelisted_models = config_csv_list(&PGML_HF_WHITELIST.1);
+    let whitelisted_models = config_csv_list(&PGML_HF_WHITELIST);
 
     let model_is_allowed = whitelisted_models.is_empty() || whitelisted_models.contains(&task_model);
     if !model_is_allowed {
         bail!(
             "model {} is not whitelisted. Consider adding to {} in postgresql.conf",
             task_model,
-            PGML_HF_WHITELIST.0
+            "pgml.huggingface_whitelist"
         );
     }
 
     let task_trust = get_trust_remote_code(task);
-    let trust_remote_code = PGML_HF_TRUST_REMOTE_CODE.1.get();
+    let trust_remote_code = PGML_HF_TRUST_REMOTE_CODE.get();
 
-    let trusted_models = config_csv_list(&PGML_HF_TRUST_WHITELIST.1);
+    let trusted_models = config_csv_list(&PGML_HF_TRUST_REMOTE_CODE_WHITELIST);
 
     let model_is_trusted = trusted_models.is_empty() || trusted_models.contains(&task_model);
 
@@ -36,9 +36,9 @@ pub fn verify_task(task: &Value) -> Result<(), Error> {
         bail!(
             "model {} is not trusted to run remote code. Consider setting {} = 'true' or adding {} to {}",
             task_model,
-            PGML_HF_TRUST_REMOTE_CODE.0,
+            "pgml.huggingface_trust_remote_code",
             task_model,
-            PGML_HF_TRUST_WHITELIST.0
+            "pgml.huggingface_trust_remote_code_whitelist",
         );
     }
 
@@ -129,7 +129,7 @@ mod tests {
     #[pg_test]
     fn test_empty_whitelist() {
         let model = "Salesforce/xgen-7b-8k-inst";
-        set_config(PGML_HF_WHITELIST.0, "").unwrap();
+        set_config("pgml.huggingface_whitelist", "").unwrap();
         let task_json = format!(json_template!(), model, false);
         let task: Value = serde_json::from_str(&task_json).unwrap();
         assert!(verify_task(&task).is_ok());
@@ -138,12 +138,12 @@ mod tests {
     #[pg_test]
     fn test_nonempty_whitelist() {
         let model = "Salesforce/xgen-7b-8k-inst";
-        set_config(PGML_HF_WHITELIST.0, model).unwrap();
+        set_config("pgml.huggingface_whitelist", model).unwrap();
         let task_json = format!(json_template!(), model, false);
         let task: Value = serde_json::from_str(&task_json).unwrap();
         assert!(verify_task(&task).is_ok());
 
-        set_config(PGML_HF_WHITELIST.0, "other_model").unwrap();
+        set_config("pgml.huggingface_whitelist", "other_model").unwrap();
         let task_json = format!(json_template!(), model, false);
         let task: Value = serde_json::from_str(&task_json).unwrap();
         assert!(verify_task(&task).is_err());
@@ -152,8 +152,8 @@ mod tests {
     #[pg_test]
     fn test_trusted_model() {
         let model = "Salesforce/xgen-7b-8k-inst";
-        set_config(PGML_HF_WHITELIST.0, model).unwrap();
-        set_config(PGML_HF_TRUST_WHITELIST.0, model).unwrap();
+        set_config("pgml.huggingface_whitelist", model).unwrap();
+        set_config("pgml.huggingface_trust_remote_code_whitelist", model).unwrap();
 
         let task_json = format!(json_template!(), model, false);
         let task: Value = serde_json::from_str(&task_json).unwrap();
@@ -163,7 +163,7 @@ mod tests {
         let task: Value = serde_json::from_str(&task_json).unwrap();
         assert!(verify_task(&task).is_err());
 
-        set_config(PGML_HF_TRUST_REMOTE_CODE.0, "true").unwrap();
+        set_config("pgml.huggingface_trust_remote_code", "true").unwrap();
         let task_json = format!(json_template!(), model, false);
         let task: Value = serde_json::from_str(&task_json).unwrap();
         assert!(verify_task(&task).is_ok());
@@ -176,8 +176,8 @@ mod tests {
     #[pg_test]
     fn test_untrusted_model() {
         let model = "Salesforce/xgen-7b-8k-inst";
-        set_config(PGML_HF_WHITELIST.0, model).unwrap();
-        set_config(PGML_HF_TRUST_WHITELIST.0, "other_model").unwrap();
+        set_config("pgml.huggingface_whitelist", model).unwrap();
+        set_config("pgml.huggingface_trust_remote_code_whitelist", "other_model").unwrap();
 
         let task_json = format!(json_template!(), model, false);
         let task: Value = serde_json::from_str(&task_json).unwrap();
@@ -187,7 +187,7 @@ mod tests {
         let task: Value = serde_json::from_str(&task_json).unwrap();
         assert!(verify_task(&task).is_err());
 
-        set_config(PGML_HF_TRUST_REMOTE_CODE.0, "true").unwrap();
+        set_config("pgml.huggingface_trust_remote_code", "true").unwrap();
         let task_json = format!(json_template!(), model, false);
         let task: Value = serde_json::from_str(&task_json).unwrap();
         assert!(verify_task(&task).is_ok());

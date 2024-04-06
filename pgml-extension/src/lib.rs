@@ -29,7 +29,7 @@ extern "C" {
 #[pg_guard]
 pub extern "C" fn _PG_init() {
     config::initialize_server_params();
-    let omp_num_threads = config::PGML_OMP_NUM_THREADS.1.get();
+    let omp_num_threads = config::PGML_OMP_NUM_THREADS.get();
     if omp_num_threads > 0 {
         unsafe {
             omp_set_num_threads(omp_num_threads);
