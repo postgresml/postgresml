@@ -15,14 +15,18 @@
         data-inputs-switch-v-2-target="button"
         data-action="<%= option.actions %>"
         >
-        <% if let Some(icon) = option.icon { %>
-        <span class="material-symbols-outlined">
-          <%= icon %>
-        </span>
-        <% } else if let Some(svg) = option.svg { %>
-          <img src="<%= svg.display().to_string() %>" alt="icon" aria-hidden="true">
-        <% } %>
-        <span><%= option.value %></span>
+          <% if let Some(ref link) = option.link { %>
+          <a href="<%= link %>" class="d-none"></a>
+          <% } %>
+
+          <% if let Some(icon) = option.icon { %>
+          <span class="material-symbols-outlined">
+            <%= icon %>
+          </span>
+          <% } else if let Some(svg) = option.svg { %>
+            <img src="<%= svg.display().to_string() %>" alt="icon" aria-hidden="true">
+          <% } %>
+          <span><%= option.value %></span>
       </div>
     </div>
     <% } %>

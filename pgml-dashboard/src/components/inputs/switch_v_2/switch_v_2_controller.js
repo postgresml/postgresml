@@ -11,5 +11,11 @@ export default class extends Controller {
 
     e.currentTarget.classList.add("active");
     e.currentTarget.ariaPressed = true;
+
+    const link = e.currentTarget.querySelector("a");
+
+    if (link) {
+      link.click();
+    }
   }
 }

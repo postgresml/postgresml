@@ -12,6 +12,10 @@
       placeholder="<%= placeholder %>"
       data-action="<%= input_actions %>"
       autocomplete="<%= autocomplete %>"
+      value="<%= value %>"
+      <% if required { %>
+      required
+      <% } %>
     >
 
     <% if let Some(icon) = icon { %>

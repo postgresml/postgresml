@@ -1,5 +1,5 @@
 <% use crate::components::tables::small::*; %>
-<% use crate::components::headings::{Green, Blue}; %>
+<% use crate::components::headings::{Green, Blue, Gray}; %>
 <% use crate::components::inputs::text::EditableHeader; %>
 <% use crate::components::inputs::text::{Input, search::{Search, search::SearchOptions}}; %>
 <% use crate::components::badges::{small, large::{self, label::LabelCloseOptions}}; %>
@@ -7,7 +7,7 @@
 <% use crate::components::inputs::RangeGroupV2; %>
 <% use crate::components::inputs::select::{Select, Option}; %>
 <% use crate::components::inputs::{SwitchV2, Radio}; %>
-<% use crate::components::cards::Rgb; %>
+<% use crate::components::cards::{Rgb, Secondary, Primary}; %>
 
 <div class="container" data-controller="pages-demo">
   <div class="py-5">
@@ -33,6 +33,16 @@
   <div class="py-5">
     <%+ Blue::new("Dedicated database") %>
     <p>LLMs for life/p>
+  </div>
+
+  <div class="py-5">
+    <span class="text-uppercase fw-semibold">
+      <%+ Gray::new("Engine type") %>    
+    </span>
+  </div>
+
+  <div class="py-5">
+    <%+ Secondary::default() %>
   </div>
 
   <div class="py-5">
@@ -86,6 +96,7 @@
           .value("40")
           .cost_per_unit("0.20")
           .unit("GB")
+          .input_unit("GB")
         %>
       </div>
     </div>
@@ -130,6 +141,14 @@
         <%+ Radio::default() %>
       </div>
     </div>
+  </div>
+
+  <div class="py-5">
+    <%+ Primary::new(Select::new()
+      .options_with_input_value(&[
+        Option::with_input_value("Hello", "1"),
+        Option::with_input_value("World", "2"),
+      ]).into()) %>
   </div>
 
   <div class="py-5">
