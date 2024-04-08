@@ -36,12 +36,6 @@ impl Search {
                 .input_action(
                     StimulusAction::new()
                         .controller("inputs-text-search-search")
-                        .method("endSearch")
-                        .action(StimulusEvents::FocusOut),
-                )
-                .input_action(
-                    StimulusAction::new()
-                        .controller("inputs-text-search-search")
                         .method("searchDebounced")
                         .action(StimulusEvents::KeyUp),
                 ),
@@ -57,6 +51,14 @@ impl Search {
     pub fn with_input(mut self, input: Input) -> Self {
         self.input = input;
         self
+    }
+
+    /// Close the dropdown whenever you want.
+    /// Modify the action to change the event from the default onClick.
+    pub fn end_search_action() -> StimulusAction {
+        StimulusAction::new_click()
+            .controller("inputs-text-search-search")
+            .method("endSearch")
     }
 }
 
