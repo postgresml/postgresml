@@ -64,13 +64,6 @@ impl RangeGroupV2 {
         self.unit = unit.to_string();
         self.input_unit = unit.to_string();
 
-        if !self.input_unit.is_empty() {
-            self.input_classes
-                .insert("inputs-range-group-v-2-with-unit".to_string());
-        } else {
-            self.input_classes.remove("inputs-range-group-v-2-with-unit");
-        }
-
         self.with_input_classes()
     }
 
