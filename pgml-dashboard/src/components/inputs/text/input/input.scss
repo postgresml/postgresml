@@ -1,7 +1,13 @@
 div[data-controller="inputs-text-input"] {
+    --bs-danger: #{$peach-shade-100};
+
     span.material-symbols-outlined {
         margin-left: -40px;
         color: #{$slate-shade-100};
+
+        &.is-invalid {
+            color: var(--bs-danger);
+        }
     }
 
     input.form-control {
@@ -11,5 +17,11 @@ div[data-controller="inputs-text-input"] {
 
     label.form-label {
         font-weight: #{$font-weight-normal};
+    }
+
+    p {
+        small {
+            color: var(--bs-danger);
+        }
     }
 }

@@ -16,6 +16,7 @@ pub struct Input {
     autocomplete: bool,
     value: String,
     required: bool,
+    error: Option<String>,
 }
 
 impl Input {
@@ -38,6 +39,7 @@ impl Input {
             autocomplete: false,
             value: "".to_string(),
             required: false,
+            error: None,
         }
     }
 
@@ -88,6 +90,11 @@ impl Input {
 
     pub fn required(mut self) -> Self {
         self.required = true;
+        self
+    }
+
+    pub fn error(mut self, error: Option<impl ToString>) -> Self {
+        self.error = error.map(|e| e.to_string());
         self
     }
 }

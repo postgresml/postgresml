@@ -59,6 +59,16 @@
   </div>
 
   <div class="py-5">
+    <%+ Input::new()
+      .label("What is your name?".into())
+      .icon("person")
+      .placeholder("Enter your name")
+      .name("name")
+      .type_("text")
+      .error(Some("Your name is not valid.")) %>
+  </div>
+
+  <div class="py-5">
     <%+ Search::new(SearchOptions {
       name: "Model search".into(),
       placeholder: "Search for a model".into(),
