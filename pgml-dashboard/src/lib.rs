@@ -770,6 +770,7 @@ pub fn routes() -> Vec<Route> {
         dashboard,
         notebook_reorder,
         remove_banner,
+        playground
     ]
 }
 

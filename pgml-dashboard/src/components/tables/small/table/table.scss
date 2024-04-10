@@ -21,6 +21,10 @@ table.table.table-sm {
     tr {
         font-weight: #{$font-weight-semibold};
         font-size: 16px;
+
+        &:hover {
+            --bs-table-hover-bg: transparent;
+        }
     }
   }
 

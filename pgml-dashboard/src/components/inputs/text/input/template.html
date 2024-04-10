@@ -1,3 +1,9 @@
+<% let (input_classes, icon_classes) = if error.is_some() {
+  ("form-control is-invalid", "material-symbols-outlined is-invalid")
+} else {
+  ("form-control", "material-symbols-outlined")
+};
+%>
 <div data-controller="inputs-text-input">
   <% if let Some(label) = label { %>
     <label class="form-label" for="<%= id %>"><%+ label %></label>
@@ -8,18 +14,27 @@
       id="<%= id %>"
       type="<%= type_ %>"
       name="<%= name %>"
-      class="form-control"
+      class="<%= input_classes %>"
       placeholder="<%= placeholder %>"
       data-action="<%= input_actions %>"
       autocomplete="<%= autocomplete %>"
+      value="<%= value %>"
+      <% if required { %>
+      required
+      <% } %>
     >
 
     <% if let Some(icon) = icon { %>
       <span
-        class="material-symbols-outlined"
+        class="<%= icon_classes %>"
         data-action="<%= icon_actions %>">
         <%= icon %>
       </span>
     <% } %>
   </div>
+  <% if let Some(error) = error { %>
+  <p class="mt-2 mb-0">
+    <small><%= error %></small>
+  </p>
+  <% } %>
 </div>

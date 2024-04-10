@@ -14,6 +14,9 @@ pub struct Input {
     icon_actions: StimulusActions,
     input_actions: StimulusActions,
     autocomplete: bool,
+    value: String,
+    required: bool,
+    error: Option<String>,
 }
 
 impl Input {
@@ -34,6 +37,9 @@ impl Input {
             icon_actions,
             input_actions: StimulusActions::default(),
             autocomplete: false,
+            value: "".to_string(),
+            required: false,
+            error: None,
         }
     }
 
@@ -74,6 +80,21 @@ impl Input {
 
     pub fn input_action(mut self, action: StimulusAction) -> Self {
         self.input_actions.push(action);
+        self
+    }
+
+    pub fn value(mut self, value: impl ToString) -> Self {
+        self.value = value.to_string();
+        self
+    }
+
+    pub fn required(mut self) -> Self {
+        self.required = true;
+        self
+    }
+
+    pub fn error(mut self, error: Option<impl ToString>) -> Self {
+        self.error = error.map(|e| e.to_string());
         self
     }
 }

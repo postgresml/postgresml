@@ -1,13 +1,13 @@
 # Table of contents
 
 * [Home](README.md)
-* [Introducing the OpenAI Switch Kit: Move from closed to open-source AI in minutes](introducing-the-openai-switch-kit-move-from-closed-to-open-source-ai-in-minutes.md)
-* [Speeding up vector recall 5x with HNSW](speeding-up-vector-recall-5x-with-hnsw.md)
-* [How-to Improve Search Results with Machine Learning](how-to-improve-search-results-with-machine-learning.md)
 * [Meet us at the 2024 Postgres Conference!](meet-us-at-the-2024-postgres-conference.md)
 * [The 1.0 SDK is Here](the-1.0-sdk-is-here.md)
 * [Using PostgresML with Django and embedding search](using-postgresml-with-django-and-embedding-search.md)
 * [PostgresML is going multicloud](postgresml-is-going-multicloud.md)
+* [Introducing the OpenAI Switch Kit: Move from closed to open-source AI in minutes](introducing-the-openai-switch-kit-move-from-closed-to-open-source-ai-in-minutes.md)
+* [Speeding up vector recall 5x with HNSW](speeding-up-vector-recall-5x-with-hnsw.md)
+* [How-to Improve Search Results with Machine Learning](how-to-improve-search-results-with-machine-learning.md)
 * [pgml-chat: A command-line tool for deploying low-latency knowledge-based chatbots](pgml-chat-a-command-line-tool-for-deploying-low-latency-knowledge-based-chatbots-part-i.md)
 * [Announcing Support for AWS us-east-1 Region](announcing-support-for-aws-us-east-1-region.md)
 * [LLM based pipelines with PostgresML and dbt (data build tool)](llm-based-pipelines-with-postgresml-and-dbt-data-build-tool.md)
@@ -30,3 +30,4 @@
 * [Postgres Full Text Search is Awesome!](postgres-full-text-search-is-awesome.md)
 * [Oxidizing Machine Learning](oxidizing-machine-learning.md)
 * [Data is Living and Relational](data-is-living-and-relational.md)
+* [Sentiment Analysis using Express JS and PostgresML](sentiment-analysis-using-express-js-and-postgresml.md)

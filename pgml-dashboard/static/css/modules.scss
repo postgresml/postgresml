@@ -6,13 +6,20 @@
 @import "../../src/components/badges/small/label/label.scss";
 @import "../../src/components/breadcrumbs/breadcrumbs.scss";
 @import "../../src/components/cards/blog/article_preview/article_preview.scss";
+@import "../../src/components/cards/marketing/slider/slider.scss";
+@import "../../src/components/cards/marketing/twitter_testimonial/twitter_testimonial.scss";
 @import "../../src/components/cards/newsletter_subscribe/newsletter_subscribe.scss";
+@import "../../src/components/cards/primary/primary.scss";
 @import "../../src/components/cards/rgb/rgb.scss";
+@import "../../src/components/cards/secondary/secondary.scss";
 @import "../../src/components/carousel/carousel.scss";
 @import "../../src/components/chatbot/chatbot.scss";
 @import "../../src/components/cms/index_link/index_link.scss";
 @import "../../src/components/dropdown/dropdown.scss";
 @import "../../src/components/github_icon/github_icon.scss";
+@import "../../src/components/headings/gray/gray.scss";
+@import "../../src/components/icons/checkmark/checkmark.scss";
+@import "../../src/components/icons/twitter/twitter.scss";
 @import "../../src/components/inputs/radio/radio.scss";
 @import "../../src/components/inputs/range_group/range_group.scss";
 @import "../../src/components/inputs/range_group_v_2/range_group_v_2.scss";
@@ -47,6 +54,7 @@
 @import "../../src/components/pages/careers/landing_page/landing_page.scss";
 @import "../../src/components/pages/docs/article/article.scss";
 @import "../../src/components/pages/docs/landing_page/landing_page.scss";
+@import "../../src/components/pagination/pagination.scss";
 @import "../../src/components/postgres_logo/postgres_logo.scss";
 @import "../../src/components/search/button/button.scss";
 @import "../../src/components/sections/common_resources/common_resources.scss";
@@ -55,6 +63,7 @@
 @import "../../src/components/sections/have_questions/have_questions.scss";
 @import "../../src/components/sections/related_articles/related_articles.scss";
 @import "../../src/components/sections/split/split.scss";
+@import "../../src/components/slider/slider.scss";
 @import "../../src/components/star/star.scss";
 @import "../../src/components/static_nav/static_nav.scss";
 @import "../../src/components/tables/large/row/row.scss";

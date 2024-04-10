@@ -80,6 +80,14 @@ impl StimulusAction {
     pub fn new_click() -> Self {
         Self::new().action(StimulusEvents::Click)
     }
+
+    pub fn new_change() -> Self {
+        Self::new().action(StimulusEvents::Change)
+    }
+
+    pub fn new_input() -> Self {
+        Self::new().action(StimulusEvents::Input)
+    }
 }
 
 impl fmt::Display for StimulusAction {

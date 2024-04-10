@@ -1,9 +1,9 @@
 ---
+image: .gitbook/assets/blog_image_generating_llm_embeddings.png
+features: true
 description: >-
   How to use the pgml.embed(...) function to generate embeddings with free and
   open source models in your own database.
-image: ".gitbook/assets/blog_image_generating_llm_embeddings.png"
-features: true
 ---
 
 # Generating LLM embeddings with open source models in PostgresML
@@ -18,14 +18,14 @@ Montana Low
 
 April 21, 2023
 
-PostgresML makes it easy to generate embeddings from text in your database using a large selection of state-of-the-art models with one simple call to `pgml.embed(model_name, text)`. Prove the results in this series to your own satisfaction, for free, by signing up for a GPU accelerated database.
+PostgresML makes it easy to generate embeddings from text in your database using a large selection of state-of-the-art models with one simple call to **`pgml.embed`**`(model_name, text)`. Prove the results in this series to your own satisfaction, for free, by signing up for a GPU accelerated database.
 
 This article is the first in a multipart series that will show you how to build a post-modern semantic search and recommendation engine, including personalization, using open source models.
 
-1. [Generating LLM Embeddings with HuggingFace models](generating-llm-embeddings-with-open-source-models-in-postgresml.md)
-2. [Tuning vector recall with pgvector](tuning-vector-recall-while-generating-query-embeddings-in-the-database.md)
-3. [Personalizing embedding results with application data](personalize-embedding-results-with-application-data-in-your-database.md)
-4. [Optimizing semantic results with an XGBoost ranking model](/docs/use-cases/improve-search-results-with-machine-learning)
+1. Generating LLM Embeddings with HuggingFace models
+2. Tuning vector recall with pgvector
+3. Personalizing embedding results with application data
+4. Optimizing semantic results with an XGBoost ranking model - coming soon!
 
 ## Introduction
 
@@ -215,6 +215,8 @@ For comparison, it would cost about $299 to use OpenAI's cheapest embedding mode
 | CPU       | 30ms    | $24  | 3 hours   |
 | GPU       | 17ms    | $72  | 6 hours   |
 | OpenAI    | 300ms   | $299 | millennia |
+
+\\
 
 You can also find embedding models that outperform OpenAI's `text-embedding-ada-002` model across many different tests on the [leaderboard](https://huggingface.co/spaces/mteb/leaderboard). It's always best to do your own benchmarking with your data, models, and hardware to find the best fit for your use case.
 

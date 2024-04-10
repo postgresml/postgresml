@@ -65,17 +65,10 @@ div[data-controller="pages-careers-landing-page"] {
         .card-eyebrow {
             color:  #{$gray-100}
         }
-
-        .goto-arrow {
-            left: 0rem;
-        }
         &:hover {
             background: #{$gray-700};
             .card-eyebrow {
                 @include text-gradient($gradient-green);
-            }
-            .goto-arrow {
-                left: 0.5rem;
             }
         }
 

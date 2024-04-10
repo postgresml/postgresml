@@ -5,6 +5,10 @@
 pub mod blue;
 pub use blue::Blue;
 
+// src/components/headings/gray
+pub mod gray;
+pub use gray::Gray;
+
 // src/components/headings/green
 pub mod green;
 pub use green::Green;

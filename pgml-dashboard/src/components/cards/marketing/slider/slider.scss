@@ -1,0 +1,57 @@
+div[data-controller="cards-marketing-slider"] {
+    .card {
+        display: flex;
+        max-width: 440px;
+        padding: 38px 24px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 24px;
+        border-radius: 20px;
+        transition: transform 0.3s;
+
+        width: 440px;
+        height: 100%;
+        min-height: 550px;
+        background: #{$gray-700};
+
+        &.disabled {
+            transform: scale(0.9);
+            background: #{$gray-800} !important;
+            min-height: 492px;
+        }
+    }
+    @include media-breakpoint-down(sm) {
+        .card, .card.disabled {
+            width: 100%;
+        }
+    }
+
+    .card-body {
+        gap: 24px;
+    }
+
+    .link {
+        display: flex;
+        width: fit-content;
+    }
+}
+
+.disabled {
+    div[data-controller="cards-marketing-slider"] {
+        .card {
+            transform: scale(0.9);
+            background: #{$gray-800} !important;
+            min-height: 492px;
+    
+            .card-body, .title {
+                color: #{$gray-300};
+            }
+            
+            .link {
+                visibility: hidden;
+            }
+        }         
+    }
+}
+
+

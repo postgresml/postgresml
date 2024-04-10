@@ -45,6 +45,9 @@ pub use github_icon::GithubIcon;
 // src/components/headings
 pub mod headings;
 
+// src/components/icons
+pub mod icons;
+
 // src/components/inputs
 pub mod inputs;
 
@@ -82,6 +85,10 @@ pub mod notifications;
 // src/components/pages
 pub mod pages;
 
+// src/components/pagination
+pub mod pagination;
+pub use pagination::Pagination;
+
 // src/components/postgres_logo
 pub mod postgres_logo;
 pub use postgres_logo::PostgresLogo;
@@ -95,6 +102,10 @@ pub mod search;
 
 // src/components/sections
 pub mod sections;
+
+// src/components/slider
+pub mod slider;
+pub use slider::Slider;
 
 // src/components/star
 pub mod star;

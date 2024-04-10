@@ -1,0 +1,6 @@
+div[data-controller="cards-primary"] {
+    border-radius: #{$card-border-radius};
+    padding: #{$card-spacer-y} #{$card-spacer-x};
+    box-shadow: #{$card-box-shadow};
+    background-color: #{$gray-800};
+}

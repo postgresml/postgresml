@@ -1,11 +1,6 @@
 div[data-controller="notifications-marketing-feature-banner"] {
     .btn-tertiary {
         border: 0px;
-        &:hover {
-            .more-info {
-                left: 0.5rem;
-            }
-        }
     }
     .feature1 {
         background-color: #{$slate-shade-100};

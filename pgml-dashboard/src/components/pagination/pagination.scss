@@ -1,0 +1,59 @@
+div[data-controller="pagination"] {
+
+    .pagination-container {
+        display: flex;
+        gap: 11px;
+        justify-content: center;
+        align-items: center;
+      }
+
+    .pagination-item-container {
+        width: 1rem;
+        height: 1rem;
+        background-color: #{$gray-700};
+        border-radius: 1rem;
+        transition: width 0.25s;
+    }
+
+    .pagination-item-container-clickable:not(.pagination-item-active) {
+        cursor: pointer;
+        &:hover {
+            .pagination-item {
+                background-color: #{$gray-600};
+            }
+        }
+    }
+
+    .pagination-item-active {
+        .pagination-item {
+            background-color: #00E0FF;
+            width: 100%;
+        }
+    }
+
+    .pagination-item-timed-active {
+        .pagination-item {
+            background-color: #00E0FF;
+            animation: IndicatorGrow 4500ms;
+            animation-fill-mode: forwards;
+        }
+    }
+    
+    @keyframes IndicatorGrow {
+        0% {width: 1rem;}
+        100% {width: 4rem;}
+    }
+
+    .pagination-item {
+        width: 1rem;
+        height: 1rem;
+        border-radius: 1rem;
+        background-color: #{$gray-700};
+    }
+
+    .pagination-timer-pause {
+        .pagination-item {
+          animation-play-state: paused !important;
+        }
+      }
+}

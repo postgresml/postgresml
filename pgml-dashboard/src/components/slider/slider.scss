@@ -1,0 +1,16 @@
+div[data-controller="slider"] {
+    .item-container {
+        transition: 0.3s;
+    }
+
+    .item-container.disabled {
+        opacity: 70%;
+
+        &:hover {
+            @include media-breakpoint-up(xl) {
+                cursor: pointer;
+                opacity: 100%;
+            }
+        }
+    }
+}

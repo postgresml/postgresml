@@ -47,6 +47,8 @@ Both Projects integrate several dozen machine learning algorithms, including the
 | Full Text Search  | -       | ✅          |
 | Geospatial Search | -       | ✅          |
 
+\\
+
 Both MindsDB and PostgresML support many classical machine learning algorithms to do classification and regression. They are both able to load ~~the latest LLMs~~ some models from Hugging Face, supported by underlying implementations in libtorch. I had to cross that out after exploring all the caveats in the MindsDB implementations. PostgresML supports the models released immediately as long as underlying dependencies are met. MindsDB has to release an update to support any new models, and their current model support is extremely limited. New algorithms, tasks, and models are constantly released, so it's worth checking the documentation for the latest list.
 
 Another difference is that PostgresML also supports embedding models, and closely integrates them with vector search inside the database, which is well beyond the scope of MindsDB, since it's not a database at all. PostgresML has direct access to all the functionality provided by other Postgres extensions, like vector indexes from [pgvector](https://github.com/pgvector/pgvector) to perform efficient KNN & ANN vector recall, or [PostGIS](http://postgis.net/) for geospatial information as well as built in full text search. Multiple algorithms and extensions can be combined in compound queries to build state-of-the-art systems, like search and recommendations or fraud detection that generate an end to end result with a single query, something that might take a dozen different machine learning models and microservices in a more traditional architecture.
@@ -68,8 +70,7 @@ The architectural implementations for these projects is significantly different.
 | On Premise    | ✅             | ✅          |
 | Web UI        | ✅             | ✅          |
 
-\
-
+\\
 
 The difference in architecture leads to different tradeoffs and challenges. There are already hundreds of ways to get data into and out of a Postgres database, from just about every other service, language and platform that makes PostgresML highly compatible with other application workflows. On the other hand, the MindsDB Python service accepts connections from specifically supported clients like `psql` and provides a pseudo-SQL interface to the functionality. The service will parse incoming MindsDB commands that look similar to SQL (but are not), for tasks like configuring database connections, or doing actual machine learning. These commands typically have what looks like a sub-select, that will actually fetch data over the wire from configured databases for Machine Learning training and inference.
 
@@ -296,6 +297,8 @@ PostgresML is the clear winner in terms of performance. It seems to me that it c
 | text-classification     | cardiffnlp/twitter-roberta-base-sentiment | 741     | 165            | 45             |
 | translation\_en\_to\_es | t5-base                                   | 1573    | 1148           | 294            |
 | summarization           | sshleifer/distilbart-cnn-12-6             | 4289    | 3450           | 479            |
+
+\\
 
 There is a general trend, the larger and slower the model is, the more work is spent inside libtorch, the less the performance of the rest matters, but for interactive models and use cases there is a significant difference. We've tried to cover the most generous use case we could between these two. If we were to compare XGBoost or other classical algorithms, that can have sub millisecond prediction times in PostgresML, the 20ms Python service overhead of MindsDB just to parse the incoming query would be hundreds of times slower.
 

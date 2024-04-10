@@ -29,11 +29,11 @@
             <% for position in positions {%>
             <div class="col-xxl-4 col-md-6 col-12">
               <div class="card generic-card h-100">
-                <a class="card-body d-flex flex-column" href="<%- position.href %>">
+                <a class="card-body d-flex flex-column goto-arrow-hover-trigger" href="<%- position.href %>">
                   <div class="card-eyebrow eyebrow-text mb-2"><%- position.tag.unwrap_or_else(|| String::new()).to_uppercase() %></div>
                   <h4><%- position.title%></h4>
                   <p class="text-white-300"><%- position.description.unwrap_or_else(|| String::new()) %></p>
-                  <span class="material-symbols-outlined goto-arrow goto-shift-animation mt-auto ms-auto text-white">arrow_forward</span>
+                  <span class="material-symbols-outlined goto-arrow-shift-animation mt-auto ms-auto text-white">arrow_forward</span>
                 </a>
               </div>
             </div>
@@ -41,10 +41,10 @@
   
             <div class="col">
               <div class="card generic-card card-generic-job-position h-100">
-                <a class="card-body d-flex flex-column" href="/careers/apply/generic-position">
+                <a class="card-body d-flex flex-column goto-arrow-hover-trigger" href="/careers/apply/generic-position">
                   <h4>Don't see an exact fit?</h4>
                   <p class="text-white-300">We still want to hear from you if you’re passionate about contributing to PostgresML. Contact us.</p>
-                  <span class="material-symbols-outlined goto-arrow goto-shift-animation mt-auto ms-auto text-white">arrow_forward</span>
+                  <span class="material-symbols-outlined goto-arrow-shift-animation mt-auto ms-auto text-white">arrow_forward</span>
                 </a>
               </div>
             </div>

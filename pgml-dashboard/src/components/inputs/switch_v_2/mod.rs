@@ -15,6 +15,7 @@ pub struct SwitchOption {
     pub value: String,
     pub active: bool,
     pub actions: StimulusActions,
+    pub link: Option<String>,
 }
 
 impl SwitchOption {
@@ -32,6 +33,7 @@ impl SwitchOption {
             value: value.to_string(),
             active: false,
             actions,
+            link: None,
         }
     }
 
@@ -50,8 +52,18 @@ impl SwitchOption {
         self
     }
 
+    pub fn set_active(mut self, active: bool) -> Self {
+        self.active = active;
+        self
+    }
+
     pub fn action(mut self, action: StimulusAction) -> Self {
         self.actions.push(action);
+        self
+    }
+
+    pub fn link(mut self, link: impl ToString) -> Self {
+        self.link = Some(link.to_string());
         self
     }
 }

@@ -1,0 +1,6 @@
+div[data-controller="cards-secondary"] {
+    .card {
+        --bs-card-bg: transparent;
+        --bs-card-border-color: #{$neon-tint-100};
+    }
+}
