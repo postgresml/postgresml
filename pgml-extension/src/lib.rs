@@ -21,20 +21,10 @@ pg_module_magic!();
 
 extension_sql_file!("../sql/schema.sql", name = "schema");
 
-extern "C" {
-    fn omp_set_num_threads(num_threads: i32);
-}
-
 #[cfg(not(feature = "use_as_lib"))]
 #[pg_guard]
 pub extern "C" fn _PG_init() {
     config::initialize_server_params();
-    let omp_num_threads = config::PGML_OMP_NUM_THREADS.get();
-    if omp_num_threads > 0 {
-        unsafe {
-            omp_set_num_threads(omp_num_threads);
-        }
-    }
     bindings::python::activate().expect("Error setting python venv");
     orm::project::init();
 }

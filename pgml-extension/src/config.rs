@@ -9,7 +9,11 @@ pub static PGML_HF_WHITELIST: GucSetting<Option<&'static CStr>> = GucSetting::<O
 pub static PGML_HF_TRUST_REMOTE_CODE: GucSetting<bool> = GucSetting::<bool>::new(false);
 pub static PGML_HF_TRUST_REMOTE_CODE_WHITELIST: GucSetting<Option<&'static CStr>> =
     GucSetting::<Option<&'static CStr>>::new(None);
-pub static PGML_OMP_NUM_THREADS: GucSetting<i32> = GucSetting::<i32>::new(0);
+pub static PGML_OMP_NUM_THREADS: GucSetting<i32> = GucSetting::<i32>::new(1);
+
+extern "C" {
+    fn omp_set_num_threads(num_threads: i32);
+}
 
 pub fn initialize_server_params() {
     GucRegistry::define_string_guc(
@@ -53,11 +57,16 @@ pub fn initialize_server_params() {
         "Specifies the number of threads used by default of underlying OpenMP library. Only positive integers are valid",
         "",
         &PGML_OMP_NUM_THREADS,
-        0,
+        1,
         i32::max_value(),
         GucContext::Backend,
         GucFlags::default(),
     );
+
+    let omp_num_threads = PGML_OMP_NUM_THREADS.get();
+    unsafe {
+        omp_set_num_threads(omp_num_threads);
+    }
 }
 
 #[cfg(any(test, feature = "pg_test"))]
