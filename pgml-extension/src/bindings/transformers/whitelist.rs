@@ -17,11 +17,7 @@ pub fn verify_task(task: &Value) -> Result<(), Error> {
 
     let model_is_allowed = whitelisted_models.is_empty() || whitelisted_models.contains(&task_model);
     if !model_is_allowed {
-        bail!(
-            "model {} is not whitelisted. Consider adding to {} in postgresql.conf",
-            task_model,
-            "pgml.huggingface_whitelist"
-        );
+        bail!("model {task_model} is not whitelisted. Consider adding to `pgml.huggingface_whitelist` in postgresql.conf");
     }
 
     let task_trust = get_trust_remote_code(task);
