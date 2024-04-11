@@ -6,7 +6,7 @@
 <% use crate::components::stimulus::StimulusAction; %>
 <% use crate::components::inputs::RangeGroupV2; %>
 <% use crate::components::inputs::select::{Select, Option}; %>
-<% use crate::components::inputs::{SwitchV2, Radio}; %>
+<% use crate::components::inputs::{SwitchV2, Radio, Checkbox}; %>
 <% use crate::components::cards::{Rgb, Secondary, Primary}; %>
 
 <div class="container" data-controller="pages-demo">
@@ -183,6 +183,21 @@
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="py-5 mb-5">
+    <div class="card mb-3">
+      <div class="card-body">
+        <div class="d-flex">
+          <%+ Checkbox::new("Inline checkbox", "inline") %>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-body">
+        <%+ Checkbox::new("Take full width checkbox", "block") %>
       </div>
     </div>
   </div>
