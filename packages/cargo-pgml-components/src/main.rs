@@ -89,7 +89,14 @@ enum Commands {
 #[derive(Subcommand, Debug)]
 enum AddCommands {
     /// Add a new component.
-    Component { name: String },
+    Component {
+        /// Name of the new component.
+        name: String,
+
+        /// Generate only the HTML template. Don't generate SCSS and JavaScript.
+        #[arg(short, long, default_value = "false")]
+        template_only: bool,
+    },
 }
 
 #[derive(Subcommand, Debug)]
@@ -114,9 +121,14 @@ fn main() {
                     lock,
                 } => bundle(config, minify, debug, lock),
                 Commands::Add(command) => match command {
-                    AddCommands::Component { name } => {
-                        crate::frontend::components::add(&Path::new(&name), pgml_commands.overwrite)
-                    }
+                    AddCommands::Component {
+                        name,
+                        template_only,
+                    } => crate::frontend::components::add(
+                        &Path::new(&name),
+                        pgml_commands.overwrite,
+                        template_only,
+                    ),
                 },
                 Commands::LocalDev(command) => match command {
                     LocalDevCommands::Check {} => local_dev::setup(),

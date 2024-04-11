@@ -1,0 +1,17 @@
+div[data-controller="inputs-checkbox"] {
+    .form-check-label {
+        padding-left: 8px;
+        user-select: none; // Annoying to constantly highlight the text when clicking too fast.
+    }
+
+    .form-check-input {
+        &:not(:checked) {
+            border-color: #{$neon-tint-100};
+        }
+
+        &:hover {
+            cursor: pointer;
+        }
+    }
+}
+

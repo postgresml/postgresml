@@ -3,15 +3,11 @@ use pgml_components::component;
 
 #[derive(TemplateOnce, Default)]
 #[template(path = "<%= component.path() %>/template.html")]
-pub struct <%= component.rust_name() %> {
-    value: String,
-}
+pub struct <%= component.rust_name() %> {}
 
 impl <%= component.rust_name() %> {
     pub fn new() -> <%= component.rust_name() %> {
-        <%= component.rust_name() %> {
-            value: String::from("<%= component.full_path() %>"),
-        }
+        <%= component.rust_name() %> {}
     }
 }
 

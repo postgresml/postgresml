@@ -4,7 +4,7 @@
   use crate::components::sections::Split;
   use crate::components::PostgresLogo;
 
-  let eyebrow_formated = r#"<span class="text-white-300">APPLY NOW</span>"#;
+  let eyebrow_formatted = r#"<span class="text-white-300 text-uppercase">Apply now</span>"#;
 
   let path = format!("/careers/apply/{}",job_title.replace(" ", "-").to_lowercase());
 
@@ -105,8 +105,7 @@
 
 <%+ 
   Split::new()
-    .eyebrow(Component::from(eyebrow_formated))
-    .title(Component::from(job_title))
+    .greeting(Component::from(eyebrow_formatted), Component::from(job_title))
     .display_area(Component::from(display_area))
     .with_navbar()
 %>
