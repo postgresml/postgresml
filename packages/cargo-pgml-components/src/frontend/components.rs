@@ -86,7 +86,7 @@ impl From<&Path> for Component {
 }
 
 /// Add a new component.
-pub fn add(path: &Path, overwrite: bool) {
+pub fn add(path: &Path, overwrite: bool, template_only: bool) {
     if let Some(_extension) = path.extension() {
         error("component name should not contain an extension");
         exit(1);
@@ -154,17 +154,21 @@ pub fn add(path: &Path, overwrite: bool) {
     unwrap_or_exit!(write_to_file(&html_path, &html));
     info(&format!("written {}", html_path.display()));
 
-    let stimulus_path = path.join(&component.controller_path());
-    unwrap_or_exit!(write_to_file(&stimulus_path, &stimulus));
-    info(&format!("written {}", stimulus_path.display()));
+    if !template_only {
+        let stimulus_path = path.join(&component.controller_path());
+        unwrap_or_exit!(write_to_file(&stimulus_path, &stimulus));
+        info(&format!("written {}", stimulus_path.display()));
+    }
 
     let rust_path = path.join("mod.rs");
     unwrap_or_exit!(write_to_file(&rust_path, &rust));
     info(&format!("written {}", rust_path.display()));
 
-    let scss_path = path.join(&format!("{}.scss", component.name()));
-    unwrap_or_exit!(write_to_file(&scss_path, &scss));
-    info(&format!("written {}", scss_path.display()));
+    if !template_only {
+        let scss_path = path.join(&format!("{}.scss", component.name()));
+        unwrap_or_exit!(write_to_file(&scss_path, &scss));
+        info(&format!("written {}", scss_path.display()));
+    }
 
     update_modules();
 }
