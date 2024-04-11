@@ -24,6 +24,7 @@ extension_sql_file!("../sql/schema.sql", name = "schema");
 #[cfg(not(feature = "use_as_lib"))]
 #[pg_guard]
 pub extern "C" fn _PG_init() {
+    config::initialize_server_params();
     bindings::python::activate().expect("Error setting python venv");
     orm::project::init();
 }
@@ -53,7 +54,7 @@ pub mod pg_test {
 
     pub fn postgresql_conf_options() -> Vec<&'static str> {
         // return any postgresql.conf settings that are required for your tests
-        let mut options = vec!["shared_preload_libraries = 'pgml'"];
+        let mut options = vec!["shared_preload_libraries = 'pgml'", "pgml.omp_num_threads = '1'"];
         if let Some(venv) = option_env!("PGML_VENV") {
             let option = format!("pgml.venv = '{venv}'");
             options.push(Box::leak(option.into_boxed_str()));
