@@ -1,42 +1,23 @@
-<% 
-  use pgml_components::Component;
-
-  let greeting = format!(r#"
-  <div class="py-5 text-center text-lg-start greeting">
-    <h6 class="h6 text-uppercase mb-0">
-      <small class="eyebrow-text">
-        {}
-      </small>
-    </h6>
-    <h2 class="display-1 fw-bold" style="text-transform: capitalize">
-      {}
-    </h2>
-  </div>
-  "#, 
-  eyebrow.render_once().unwrap(), 
-  title.render_once().unwrap());
-%>
-
-<div data-controller="sections-split" class="">
+<div data-controller="sections-split">
   <div class="row h-100 gx-0">
     <!-- left -->
     <div class="col-6 d-none d-lg-block">
-      <div class="d-flex flex-column signup-left" style="height: 100%;">
+      <div class="d-flex flex-column sections-split-left" style="height: 100%;">
         <div class="d-flex flex-column position-sticky justify-content-center left-center<% if with_navbar {%>-navbar<% } %>">
-          <%+ Component::from(greeting.clone()) %>
+          <%+ greeting_area.clone() %>
         </div>
       </div>
     </div>
 
     <!-- right -->
     <div class="col-12 col-lg-6 ">
-      <div class="d-flex flex-column align-items-center justify-content-center signup-right pt-lg-5 pt-0 pb-5 px-3 right-center<% if with_navbar {%>-navbar<% } %>">
+      <div class="d-flex flex-column align-items-center justify-content-center sections-split-right pt-lg-5 pt-0 pb-5 px-3 right-center<% if with_navbar {%>-navbar<% } %>">
         <div class="glow-1"></div>
         <div class="glow-2"></div>
         <div class="glow-3"></div>
         <div class="glow-4"></div>
         <div class="glow-5"></div>
-        <div class="d-flex d-lg-none"><%+ Component::from(greeting) %></div>
+        <div class="d-flex d-lg-none"><%+ greeting_area %></div>
         
         <%+ display_area %>
       </div>

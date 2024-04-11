@@ -7,11 +7,11 @@ div[data-controller="sections-split"] {
         }
     }
 
-    .signup-left {
+    .sections-split-left {
         background: #{$gray-700};
     }
     
-    .signup-right {
+    .sections-split-right {
         position: relative;
         background-color: #{$gray-800};
         overflow: hidden;
