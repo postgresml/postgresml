@@ -1,6 +1,6 @@
 [package]
 name = "pgml"
-version = "1.0.1"
+version = "1.0.2"
 edition = "2021"
 authors = ["PosgresML <team@postgresml.org>"]
 homepage = "https://postgresml.org/"
