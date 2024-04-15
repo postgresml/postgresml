@@ -41,6 +41,7 @@ jobs:
             python3.9 python3.9-dev \
             python3.10 python3.10-dev \
             python3.11 python3.11-dev \
+            python3.12 python3.12-dev \
             python3-pip \
             git
           pip install maturin
@@ -50,13 +51,13 @@ jobs:
         env:
           MATURIN_PYPI_TOKEN: ${{ secrets.TEST_PYPI_API_TOKEN }}
           PYTHON_STUB_FILE: "python/pgml/pgml.pyi"
-        run: maturin publish -r testpypi -i python3.7 -i python3.8 -i python3.9 -i python3.10 -i python3.11 --skip-existing -F python
+        run: maturin publish -r testpypi -i python3.7 -i python3.8 -i python3.9 -i python3.10 -i python3.11 -i python3.12 --skip-existing -F python
       - name: Build and deploy wheels to PyPI
         if: github.event.inputs.deploy_to_pypi == 'true'
         env:
           MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
           PYTHON_STUB_FILE: "python/pgml/pgml.pyi"
-        run: maturin publish -i python3.7 -i python3.8 -i python3.9 -i python3.10 -i python3.11 --skip-existing -F python
+        run: maturin publish -i python3.7 -i python3.8 -i python3.9 -i python3.10 -i python3.11 -i python3.12 --skip-existing -F python
 
   deploy-python-sdk-mac:
     runs-on: macos-latest
@@ -80,25 +81,26 @@ jobs:
           brew install python@3.9
           brew install python@3.10
           brew install python@3.11
+          brew install python@3.12
           pip3 install maturin
       - name: Build and deploy wheels to TestPyPI
         if: github.event.inputs.deploy_to_pypi == 'false'
         env:
           MATURIN_PYPI_TOKEN: ${{ secrets.TEST_PYPI_API_TOKEN }}
           PYTHON_STUB_FILE: "python/pgml/pgml.pyi"
-        run: maturin publish -r testpypi -i python3.8 -i python3.9 -i python3.10 -i python3.11 --skip-existing -F python
+        run: maturin publish -r testpypi -i python3.8 -i python3.9 -i python3.10 -i python3.11 -i python3.12 --skip-existing -F python
       - name: Build and deploy wheels to PyPI
         if: github.event.inputs.deploy_to_pypi == 'true'
         env:
           MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
           PYTHON_STUB_FILE: "python/pgml/pgml.pyi"
-        run: maturin publish -i python3.8 -i python3.9 -i python3.10 -i python3.11 --skip-existing -F python
+        run: maturin publish -i python3.8 -i python3.9 -i python3.10 -i python3.11 -i python3.12 --skip-existing -F python
 
   deploy-python-sdk-windows:
     runs-on: windows-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
     defaults:
       run:
         working-directory: pgml-sdks\pgml
@@ -124,10 +126,10 @@ jobs:
         env:
           MATURIN_PYPI_TOKEN: ${{ secrets.TEST_PYPI_API_TOKEN }}
           PYTHON_STUB_FILE: "python/pgml/pgml.pyi"
-        run: maturin publish -r testpypi -i python3.8 -i python3.9 -i python3.10 -i python3.11 --skip-existing -F python
+        run: maturin publish -r testpypi -i python3.8 -i python3.9 -i python3.10 -i python3.11 -i python3.12 --skip-existing -F python
       - name: Build and deploy wheels to PyPI
         if: github.event.inputs.deploy_to_pypi == 'true'
         env:
           MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
           PYTHON_STUB_FILE: "python/pgml/pgml.pyi"
-        run: maturin publish -i python3.8 -i python3.9 -i python3.10 -i python3.11 --skip-existing -F python
+        run: maturin publish -i python3.8 -i python3.9 -i python3.10 -i python3.11 -i python3.12 --skip-existing -F python
