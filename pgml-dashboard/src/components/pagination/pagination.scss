@@ -1,4 +1,5 @@
 div[data-controller="pagination"] {
+   $active-color: #00E0FF;
 
     .pagination-container {
         display: flex;
@@ -15,6 +16,26 @@ div[data-controller="pagination"] {
         transition: width 0.25s;
     }
 
+    .pagination-item-container-animation {
+        animation: IndicatorGrow 0.3s;
+        animation-fill-mode: forwards;
+
+        .pagination-item {
+            background-color: $active-color;
+            width: 100%;
+        }
+    }
+
+    .pagination-item-container-animation-reverse {
+        animation: IndicatorShrink 0.3s;
+        animation-fill-mode: forwards;
+
+        .pagination-item {
+            background-color: #{$gray-700};
+            width: 100%;
+        }
+    }
+
     .pagination-item-container-clickable:not(.pagination-item-active) {
         cursor: pointer;
         &:hover {
@@ -26,14 +47,14 @@ div[data-controller="pagination"] {
 
     .pagination-item-active {
         .pagination-item {
-            background-color: #00E0FF;
+            background-color: $active-color;
             width: 100%;
         }
     }
 
     .pagination-item-timed-active {
         .pagination-item {
-            background-color: #00E0FF;
+            background-color: $active-color;
             animation: IndicatorGrow 4500ms;
             animation-fill-mode: forwards;
         }
@@ -42,6 +63,11 @@ div[data-controller="pagination"] {
     @keyframes IndicatorGrow {
         0% {width: 1rem;}
         100% {width: 4rem;}
+    }
+
+    @keyframes IndicatorShrink {
+        0% {width: 4rem;}
+        100% {width: 1rem;}
     }
 
     .pagination-item {

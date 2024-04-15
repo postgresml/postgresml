@@ -11,11 +11,27 @@ use crate::components::inputs::switch::{Switch, State};
 use crate::components::cards::marketing::Slider as SliderCard;
 use crate::components::icons::Checkmark;
 use crate::components::Slider;
+use crate::components::pagination::Pagination;
 %>
 
 <div class="min-height: 100vh;" data-controller="playground">
   <h1 class="h1">Playground</h1>
   <p>This is a space to display components.</p>
+
+  <div style="margin-bottom: 14rem;">
+    <%+ Pagination::new(3, 1)
+    .active_index(0)
+    .not_clickable() %>
+
+    <%+ Pagination::new(3, 1)
+    .active_index(1)
+    .not_clickable() %>
+
+    <%+ Pagination::new(3, 1)
+    .active_index(2)
+    .not_clickable() %>
+  
+  </div>
 
   <h3 class="h3">icons</h3>
   <div class="mb-5">
@@ -271,3 +287,4 @@ use crate::components::Slider;
       ])
   )%>
 </div>
+
