@@ -123,12 +123,9 @@ impl IntoTableNameAndSchema for String {
     }
 }
 
-/// A wrapper around `std::pin::Pin<Box<dyn Stream<Item = anyhow::Result<Json>> + Send>>`
+/// A wrapper around `BoxStream<'static, anyhow::Result<Json>>`
 #[derive(alias_manual)]
-pub struct GeneralJsonAsyncIterator(
-    // pub std::pin::Pin<Box<dyn Stream<Item = anyhow::Result<Json>> + Send>>,
-    pub BoxStream<'static, anyhow::Result<Json>>,
-);
+pub struct GeneralJsonAsyncIterator(pub BoxStream<'static, anyhow::Result<Json>>);
 
 impl Stream for GeneralJsonAsyncIterator {
     type Item = anyhow::Result<Json>;
