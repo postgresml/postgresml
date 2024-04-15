@@ -161,6 +161,7 @@ impl TransformerPipeline {
                     Ok(Some((std::mem::take(&mut res[0]), transaction)))
                 }
             } else {
+                transaction.commit().await?;
                 Ok(None)
             }
         });
