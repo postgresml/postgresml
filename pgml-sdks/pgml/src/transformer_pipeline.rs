@@ -1,12 +1,6 @@
 use anyhow::Context;
-use futures::Stream;
 use rust_bridge::{alias, alias_methods};
-use sqlx::{postgres::PgRow, Row};
-use sqlx::{Postgres, Transaction};
-use std::collections::VecDeque;
-use std::future::Future;
-use std::pin::Pin;
-use std::task::Poll;
+use sqlx::Row;
 use tracing::instrument;
 
 /// Provides access to builtin database methods
@@ -21,99 +15,6 @@ use crate::{get_or_initialize_pool, types::Json};
 
 #[cfg(feature = "python")]
 use crate::types::{GeneralJsonAsyncIteratorPython, JsonPython};
-
-#[allow(clippy::type_complexity)]
-struct TransformerStream {
-    transaction: Option<Transaction<'static, Postgres>>,
-    future: Option<Pin<Box<dyn Future<Output = Result<Vec<PgRow>, sqlx::Error>> + Send + 'static>>>,
-    commit: Option<Pin<Box<dyn Future<Output = Result<(), sqlx::Error>> + Send + 'static>>>,
-    done: bool,
-    query: String,
-    db_batch_size: i32,
-    results: VecDeque<PgRow>,
-}
-
-impl std::fmt::Debug for TransformerStream {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("TransformerStream").finish()
-    }
-}
-
-impl TransformerStream {
-    fn new(transaction: Transaction<'static, Postgres>, db_batch_size: i32) -> Self {
-        let query = format!("FETCH {} FROM c", db_batch_size);
-        Self {
-            transaction: Some(transaction),
-            future: None,
-            commit: None,
-            done: false,
-            query,
-            db_batch_size,
-            results: VecDeque::new(),
-        }
-    }
-}
-
-impl Stream for TransformerStream {
-    type Item = anyhow::Result<Json>;
-
-    fn poll_next(
-        mut self: Pin<&mut Self>,
-        cx: &mut std::task::Context<'_>,
-    ) -> Poll<Option<Self::Item>> {
-        if self.done {
-            if let Some(c) = self.commit.as_mut() {
-                if c.as_mut().poll(cx).is_ready() {
-                    self.commit = None;
-                }
-            }
-        } else {
-            if self.future.is_none() {
-                unsafe {
-                    let s = self.as_mut().get_unchecked_mut();
-                    let s: *mut Self = s;
-                    let s = Box::leak(Box::from_raw(s));
-                    s.future = Some(Box::pin(
-                        sqlx::query(&s.query).fetch_all(&mut **s.transaction.as_mut().unwrap()),
-                    ));
-                }
-            }
-
-            if let Poll::Ready(o) = self.as_mut().future.as_mut().unwrap().as_mut().poll(cx) {
-                let rows = o?;
-                if rows.len() < self.db_batch_size as usize {
-                    self.done = true;
-                    unsafe {
-                        let s = self.as_mut().get_unchecked_mut();
-                        let transaction = std::mem::take(&mut s.transaction).unwrap();
-                        s.commit = Some(Box::pin(transaction.commit()));
-                    }
-                } else {
-                    unsafe {
-                        let s = self.as_mut().get_unchecked_mut();
-                        let s: *mut Self = s;
-                        let s = Box::leak(Box::from_raw(s));
-                        s.future = Some(Box::pin(
-                            sqlx::query(&s.query).fetch_all(&mut **s.transaction.as_mut().unwrap()),
-                        ));
-                    }
-                }
-                for r in rows.into_iter() {
-                    self.results.push_back(r)
-                }
-            }
-        }
-
-        if !self.results.is_empty() {
-            let r = self.results.pop_front().unwrap();
-            Poll::Ready(Some(Ok(r.get::<Json, _>(0))))
-        } else if self.done {
-            Poll::Ready(None)
-        } else {
-            Poll::Pending
-        }
-    }
-}
 
 #[alias_methods(new, transform, transform_stream)]
 impl TransformerPipeline {
@@ -200,7 +101,7 @@ impl TransformerPipeline {
     ) -> anyhow::Result<GeneralJsonAsyncIterator> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
         let args = args.unwrap_or_default();
-        let batch_size = batch_size.unwrap_or(10);
+        let batch_size = batch_size.unwrap_or(1);
 
         let mut transaction = pool.begin().await?;
         // We set the task in the new constructor so we can unwrap here
@@ -234,10 +135,37 @@ impl TransformerPipeline {
             .await?;
         }
 
-        Ok(GeneralJsonAsyncIterator(Box::pin(TransformerStream::new(
-            transaction,
-            batch_size,
-        ))))
+        let s = futures::stream::try_unfold(transaction, move |mut transaction| async move {
+            let query = format!("FETCH {} FROM c", batch_size);
+            let mut res: Vec<Json> = sqlx::query_scalar(&query)
+                .fetch_all(&mut *transaction)
+                .await?;
+            if !res.is_empty() {
+                if batch_size > 1 {
+                    let res: Vec<String> = res
+                        .into_iter()
+                        .map(|v| {
+                            v.0.as_array()
+                                .context("internal SDK error - cannot parse db value as array. Please post a new github issue")
+                                .map(|v| {
+                                    v[0].as_str()
+                                        .context(
+                                            "internal SDK error - cannot parse db value as string. Please post a new github issue",
+                                        )
+                                        .map(|v| v.to_owned())
+                                })
+                        })
+                        .collect::<anyhow::Result<anyhow::Result<Vec<String>>>>()??;
+                    Ok(Some((serde_json::json!(res).into(), transaction)))
+                } else {
+                    Ok(Some((std::mem::take(&mut res[0]), transaction)))
+                }
+            } else {
+                transaction.commit().await?;
+                Ok(None)
+            }
+        });
+        Ok(GeneralJsonAsyncIterator(Box::pin(s)))
     }
 }
 
@@ -305,7 +233,7 @@ mod tests {
                 serde_json::json!("AI is going to").into(),
                 Some(
                     serde_json::json!({
-                        "max_new_tokens": 10
+                        "max_new_tokens": 30
                     })
                     .into(),
                 ),
