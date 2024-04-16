@@ -1,0 +1,5 @@
+comment = 'pgml_columnar:  Created by pgrx'
+default_version = '@CARGO_VERSION@'
+module_pathname = '$libdir/pgml_columnar'
+relocatable = false
+superuser = true
