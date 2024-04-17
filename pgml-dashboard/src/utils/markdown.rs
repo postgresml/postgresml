@@ -210,6 +210,8 @@ impl<'a> From<&str> for CodeFence<'a> {
             "rust"
         } else if options.starts_with("json") {
             "json"
+        } else if options.starts_with("html") {
+            "html"
         } else {
             "code"
         };

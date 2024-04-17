@@ -5,6 +5,7 @@ import { python } from "@codemirror/lang-python";
 import { javascript } from "@codemirror/lang-javascript";
 import { rust } from "@codemirror/lang-rust";
 import { json } from "@codemirror/lang-json";
+import { html } from "@codemirror/lang-html";
 import { EditorView, ViewPlugin, Decoration } from "@codemirror/view";
 import { RangeSetBuilder, Facet } from "@codemirror/state";
 import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
@@ -84,6 +85,8 @@ const language = (element) => {
       return rust;
     case "json":
       return json;
+    case "html":
+      return html;
     default:
       return null;
   }

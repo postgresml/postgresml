@@ -29,3 +29,4 @@ description: recent blog posts
 * [oxidizing-machine-learning.md](oxidizing-machine-learning.md "mention")
 * [broken-reference](broken-reference/ "mention")
 * [data-is-living-and-relational.md](data-is-living-and-relational.md "mention")
+* [componentizing-rust](componentizing-rust.md "mention")

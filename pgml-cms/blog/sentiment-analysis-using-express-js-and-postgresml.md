@@ -2,6 +2,7 @@
 description: >-
   An example application for an easy and scalable way to get started with
   machine learning in Express
+tags: [Product]
 ---
 
 # Sentiment Analysis using Express JS and PostgresML
