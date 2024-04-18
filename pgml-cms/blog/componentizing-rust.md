@@ -15,7 +15,7 @@ Daniel Illenberger
 
 Apr 16, 2024
 
-As a young physics student, I vividly remember my intro to programming with C course. A key concept my instructor Jack tried to impart on me was, do not repeat yourself.  The importance of this was lost on me with small one off projects, copy past was fast and if it worked it worked.  It was not until I began coding professionally that I really took the advice to heart.  
+As a young physics student, I vividly remember my intro to programming with C course. A key concept my instructor Jack tried to impart on me was, do not repeat yourself.  Small one off school projects did not highlight the wisdom in this advice.  I did what was fast, usually copy and paste.  It was not until I began coding professionally that I really understood what he was getting at.   
 
 In theory we write simple pieces of code that can accomplish great things when combined.  In practice, especially in web development, original code can be faster in the moment and prevent the need for distilling out the common thread of functionality.  The lure is strong, but as coders of complex systems we must show restraint, else our projects become unmanageable and inconsistent. It is important to establish a practice of componentizing early on or we will be destined to a world of chaos. 
 
@@ -40,11 +40,11 @@ Using templates to make components is the goto technique for web developers crea
 
 Lets add Sailfish templates to this app. In the cargo.toml file add `sailfish = "0.8.0" # 0.8.1 has breaking changes` under dependencies. 
 
-Tell sailfish where to find templates by adding a sailfish.toml file in the main directory, in it add `template_dirs = ["src/components"]`
+Lets keep all our components in a single folder called components.  We are going to make two components, fist a layout component that will be the common pieces of all the pages on our site, that being the head, body, any global nav, footer, ect... We will also make a page component that goes into our layout.  We can make many pages like about, contact, home, but for now we will just have one called page.  
 
-Next we make a folder named components and in it make a new folder named layout.  This will be the base of our app that we can fill with other components. 
+Tell sailfish where to find templates by adding a sailfish.toml file in the main directory, in it add `template_dirs = ["src/components"]`
 		
-Each component will require a mod.rs and a template.html, lets make those now.  In layout/mod.rs place the following code. 
+Each component will require a mod.rs and a template.html, lets make those now.  Add the following: 
 
 !!! code_block title="components/layout/mods.rs"
 ```rust 
@@ -72,7 +72,7 @@ impl Layout {
 ```
 !!!
 
-We will also need some html, create the following.
+This layout takes one item, page.  It then renders the template.html file with the page variable available.  The template.html file will need the following:
 
 !!! code_block title="components/layout/template.html"
 ```html
@@ -94,7 +94,7 @@ We will also need some html, create the following.
 ```
 !!!
 
-Now lets make a second component called page.  This will also need a mod and template file:
+As you can see this template has all the global items, and we can change page to whatever we need.  Now lets make a second component called page.  This will also need a mod and template file:
 
 !!! code_block title="components/page/mod.rs"
 ```rust
@@ -172,6 +172,13 @@ Now we we have two components, a layout and a page.  We want our page to display
 
 !!! code_block title="main.rs"
 ```rust
+pub mod components;
+
+use crate::components::layout::Layout;
+use crate::components::page::Page;
+
+...
+
 #[get("/")]
 fn index() -> ResponseOk {
 
@@ -180,6 +187,8 @@ fn index() -> ResponseOk {
 
     ResponseOk(layout.render_once().unwrap())
 }
+
+...
 ```
 !!!
 
@@ -187,7 +196,7 @@ If we visit the "/" endpoint of our site we will see
 
 `Hello from page`
 
-This is excellent, now we do not have to repeat ourselves when it comes to the head and body object of our html, we simply pass different pages to our layout.  For example, we can pass in a home page, about page, or contact page and never need to include the layout boiler plate in any of them.  We can add customization to our layout, like a custom head in the layout struct if needed. 
+This is excellent, now we don't have to repeat ourselves when it comes to the head and body object of our html, we simply pass different pages to our layout.
 
 ## Use of stimulus
 This is a good start but any sufficiently complex site will eventually need JS. 
@@ -249,7 +258,7 @@ export default class extends Controller {
 ```
 !!!
 
-in page/template.html have the following 
+lets change our page template to the following:
 
 !!! code_block title="components/page/template.html"
 ```html
@@ -260,17 +269,16 @@ in page/template.html have the following
 ```
 !!!
 
-if you restart your server and navigate to the home page we will see "Page controller is connected" in the console when the controller connects.  When we click our button we will see "Hello from page greeting" appear in the message area.
+if you restart your server and navigate to the home page we will see "Page controller is connected" in the console when the controller connects.  When we click the button we will see "Hello from page greeting" appear in the message area.
 
 Of course we can simplify and keep all the JS and css in the component file if we use a bundler.  We have an open source tool that will do this for us [here](https://github.com/postgresml/postgresml/tree/master/packages/cargo-pgml-components)
-
 
 ## Inter-component communication
 This is great, but we are not done yet.  To pull the most value from your code you will need to make these components communicate with each other after initial render.  It is easy to imagine an input element that needs to control external components, for example a copy button that informs the user it has copied content by flashing a toast.  The toast and the button should not be the same element since you may want to us the toast for other messages.  Also, we would not want to include multiple toast elements on the same page, so, we need our copy button to trigger a toast message. The correct solution per [stimulus](https://stimulus.hotwired.dev/reference/controllers#cross-controller-coordination-with-events) is to use events.
 
 ### Child to parent communication
 
-Lets create a copy button that displays a message on our page. Create a new component and name it copy. In the new file create the following: 
+Lets create a copy button component that displays a message on our page. Create a new component and name it copy. In the new file create the following: 
 
 !!! code_block title="components/copy/mod.rs"
 ```rust
@@ -304,7 +312,7 @@ impl Copy {
 ```
 !!!
 
-Now make a template file with the following: 
+and the html: 
 
 !!! code_block title="components/copy/mod.rs"
 ```html
@@ -397,7 +405,7 @@ confirmEvent() {
 ```
 !!!
 
-in your copy component add `data-action="page:messageUpdated@window->copy#messageUpdated"` to the outer most div.
+in your copy component template add `data-action="page:messageUpdated@window->copy#messageUpdated"` to the outer most div.
 
 and add a method in our copy controller called messageUpdated like so: 
 
