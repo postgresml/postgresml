@@ -961,6 +961,7 @@ impl UploadedFile {
 pub struct User {
     pub id: i64,
     pub email: String,
+    pub profile_picture: Option<String>,
 }
 
 impl Default for User {
@@ -968,6 +969,7 @@ impl Default for User {
         User {
             id: -1,
             email: "".to_string(),
+            profile_picture: None,
         }
     }
 }

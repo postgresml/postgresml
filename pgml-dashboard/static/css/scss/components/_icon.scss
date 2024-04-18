@@ -115,13 +115,13 @@
             color: #{$neon-tint-100};
         }
 
-        svg {
+        svg,img {
             border-color: #{$neon-tint-100};
         }
 
     }
 
-    svg {
+    svg,img {
         border: 2px solid #{$gray-700};
         background-color: #{$gray-500};
     }
