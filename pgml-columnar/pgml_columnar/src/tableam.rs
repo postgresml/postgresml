@@ -8,7 +8,8 @@ use pgrx::pg_sys::{
     TableScanDescData, TransactionId, TupleTableSlot, TupleTableSlotOps, VacuumParams, IndexBuildCallback, IndexInfo,
     ValidateIndexState, ForkNumber, SampleScanState, InvalidTransactionId, HeapTupleData, MinimalTupleData, HeapScanDesc, palloc, pfree, TTS_FLAG_EMPTY,
 };
-use pgrx::{prelude::*, Internal};
+use pgrx::item_pointer_set_all;
+use pgrx::{prelude::*, Internal, PgMemoryContexts, PgBox};
 use std::alloc;
 
 static TABLE_AM_ROUTINE: TableAmRoutine = TableAmRoutine {
@@ -119,14 +120,6 @@ unsafe extern "C" fn table_ops_clear(slot: *mut TupleTableSlot) {
 
 unsafe extern "C" fn table_ops_getsomeattrs(slot: *mut TupleTableSlot, natts: i32) {
     println!("table_ops_getsomeattrs");
-    println!("num attrs: {}", natts);
-    println!("size of datum: {}", std::mem::size_of((*slot).tts_values));
-    let tuple_desc = (*slot).tts_tupleDescriptor;
-    println!("tuple desc: {:?}", tuple_desc);
-    (*slot).tts_values =  0 as *mut Datum;
-    (*slot).tts_isnull = 1 as *mut bool;
-    println!("Done with table_ops_getsomeattrs");
-
 }
 
 unsafe extern "C" fn table_ops_getsysattr(slot: *mut TupleTableSlot, attnum: i32, isnull: *mut bool) -> Datum {
@@ -162,9 +155,7 @@ unsafe extern "C" fn table_ops_copy_minimal_tuple(slot: *mut TupleTableSlot) -> 
 unsafe extern "C" fn slots_callback(
     relation: Relation
 ) -> *const TupleTableSlotOps {
-    println!("slots_callback");
-
-    &TUPLE_TABLE_SLOT_OPS
+    unsafe { &pg_sys::TTSOpsVirtual }
 }
 
 #[repr(C)]
@@ -181,30 +172,26 @@ unsafe extern "C" fn scan_begin(
     parallel_scan: ParallelTableScanDesc,
     flags: u32,
 ) -> *mut TableScanDescData {
-    println!("scan_begin, nkeys: {}, flags: {}, key: {:?}, relation: {:?}\n, snapshot: {:?}", nkeys, flags, key, *relation, *snapshot);
-    let scan = unsafe {
-        let ptr = palloc(std::mem::size_of::<PgmlColumnarScan>()) as *mut PgmlColumnarScan;
-        ptr
-    };
+    println!("scan_begin, nkeys: {}, flags: {}", nkeys, flags);
 
-    (*scan).rs_base.rs_rd = relation;
-    (*scan).rs_base.rs_snapshot = snapshot;
-    (*scan).rs_base.rs_nkeys = nkeys;
-    (*scan).rs_base.rs_key = key;
-    (*scan).rs_base.rs_flags = flags;
-    (*scan).rs_base.rs_parallel = parallel_scan;
-    (*scan).rows = 25;
+    PgMemoryContexts::CurrentMemoryContext.switch_to(|_context| {
+        let mut scan = PgBox::<PgmlColumnarScan>::alloc0();
 
-    scan as *mut TableScanDescData
+        (*scan).rs_base.rs_rd = relation;
+        (*scan).rs_base.rs_snapshot = snapshot;
+        (*scan).rs_base.rs_nkeys = nkeys;
+        (*scan).rs_base.rs_key = key;
+        (*scan).rs_base.rs_flags = flags;
+        (*scan).rs_base.rs_parallel = parallel_scan;
+        (*scan).rows = 25;
+
+        scan.into_pg() as *mut TableScanDescData
+    })
 }
 
 unsafe extern "C" fn scan_end(scan: *mut TableScanDescData) {
     let scan = scan as *mut PgmlColumnarScan;
     println!("rows: {}", (*scan).rows);
-
-    unsafe {
-        pfree(scan as *mut std::ffi::c_void);
-    }
     println!("scan_end");
 }
 
@@ -224,27 +211,32 @@ unsafe extern "C" fn scan_getnextslot(
     direction: ScanDirection,
     slot: *mut TupleTableSlot,
 ) -> bool {
+    println!("scan_getnextslot");
+
     let scan = sscan as *mut PgmlColumnarScan;
     let rows = (*scan).rows;
 
-    let datum = Datum::from(12345);
+    let datum = (*slot).tts_values.add(0);
+    let isnull = (*slot).tts_isnull.add(0);
 
-    // std::mem::replace(&mut *(*slot).tts_values, datum);
+    *datum = Datum::from(12345 as i64);
+    *isnull = false;
 
-    println!("scan_getnextslot, rows: {}, slot: {:?}", (*scan).rows, *slot);
-    // let datum = (*(*slot).tts_values);
-    (*slot).tts_nvalid = 0;
-    (*slot).tts_flags &= !TTS_FLAG_EMPTY as u16;
+    let datum = (*slot).tts_values.add(1);
+    let isnull = (*slot).tts_isnull.add(1);
 
-    // println!("value: {}", datum.value());
+    *datum = String::from("sdfsdfs").into_datum().unwrap();
+    *isnull = false;
 
-    println!("scan_getnextslot, rows: {}, slot: {:?}", (*scan).rows, *slot);
+    let rows = (*scan).rows;
+
 
     if rows < 1 {
-        println!("Done");
+        // (*slot).tts_flags = 1 << 4;
         false
     } else {
-        println!("Not done");
+        (*slot).tts_flags = 1 << 1;
+        pg_sys::ExecStoreVirtualTuple(slot);
         (*scan).rows -= 1;
         true
     }
@@ -296,19 +288,20 @@ unsafe extern "C" fn index_delete_tuples(
 unsafe extern "C" fn index_fetch_begin(
     relation: Relation
 ) -> *mut IndexFetchTableData {
-    debug_method!("index_fetch_begin");
+    println!("index_fetch_begin");
+    std::ptr::null_mut()
 }
 
 unsafe extern "C" fn index_fetch_reset(
     data: *mut IndexFetchTableData
 ) {
-    debug_method!("index_fetch_reset");
+    println!("index_fetch_reset");
 }
 
 unsafe extern "C" fn index_fetch_end(
     data: *mut IndexFetchTableData
 ) {
-    debug_method!("index_fetch_end");
+    println!("index_fetch_end");
 }
 
 unsafe extern "C" fn index_fetch_tuple(
@@ -319,7 +312,8 @@ unsafe extern "C" fn index_fetch_tuple(
     call_again: *mut bool,
     all_dead: *mut bool,
 ) -> bool {
-    debug_method!("index_fetch_tuple");
+    println!("index_fetch_tuple");
+    false
 }
 
 unsafe extern "C" fn tuple_fetch_row_version(
@@ -522,7 +516,8 @@ unsafe extern "C" fn index_build_range_scan(
     callback_state: *mut std::ffi::c_void,
     scan: TableScanDesc,
 ) -> f64 {
-    debug_method!("index_build_range_scan");
+    println!("index_build_range_scan");
+    0.0
 }
 
 unsafe extern "C" fn index_validate_scan(
