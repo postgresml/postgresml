@@ -10,9 +10,6 @@ use pyo3::prelude::*;
 use sqlx::{Acquire, Executor};
 use std::io::Write;
 
-use tokio::fs::File;
-use tokio::io::AsyncWriteExt;
-
 /// PostgresML CLI: configure your PostgresML deployments & create connections to remote data sources.
 #[cfg(feature = "python")]
 #[derive(Parser, Debug, Clone)]
@@ -103,11 +100,9 @@ enum Subcommands {
 
     /// Connect your database to PostgresML via dblink.
     Remote {
+        /// DATABASE_URL.
         #[arg(long, short)]
         database_url: Option<String>,
-
-        #[arg(long, short)]
-        pgcat_config_file: Option<String>,
     },
 }
 
@@ -225,11 +220,8 @@ async fn cli_internal() -> anyhow::Result<()> {
             .await?;
         }
 
-        Subcommands::Remote {
-            database_url,
-            pgcat_config_file,
-        } => {
-            remote(database_url, pgcat_config_file).await?;
+        Subcommands::Remote { database_url } => {
+            remote(database_url).await?;
         }
     };
 
@@ -345,12 +337,7 @@ async fn connect(
     Ok(())
 }
 
-async fn remote(
-    database_url: Option<String>,
-    pgcat_config_file: Option<String>,
-) -> anyhow::Result<()> {
-    use pgcat_config::{Config, Database, Server, ServerRole, User};
-
+async fn remote(database_url: Option<String>) -> anyhow::Result<()> {
     let database_url = user_input!(database_url, "PostgresML DATABASE_URL");
     let database_url = url::Url::parse(&database_url)?;
     let user = database_url.username();
@@ -388,35 +375,6 @@ async fn remote(
         .replace("{db_name}", "postgresml")
         .replace("{database_name}", &database)
         .replace("{port}", &port);
-
-    let mut pgcat_config = Config::default();
-    let mut pgcat_database = Database::default();
-    let mut pgcat_user = User::default();
-    let mut pgcat_server = Server::default();
-    pgcat_user.password = password.to_owned();
-    pgcat_database.database_name = database.clone();
-
-    pgcat_database.users.clear();
-    pgcat_database.users.insert(user.into(), pgcat_user);
-    let servers_entry = pgcat_database.shards.get_mut("0").unwrap();
-
-    servers_entry.servers.clear();
-
-    pgcat_server.host = host.to_owned();
-    pgcat_server.port = port.parse().unwrap();
-    pgcat_server.role = ServerRole::Primary;
-
-    servers_entry
-        .servers
-        .insert("postgresml".into(), pgcat_server);
-
-    pgcat_config.databases.clear();
-    pgcat_config.databases.insert(database, pgcat_database);
-
-    File::create(pgcat_config_file.unwrap_or("pgcat.toml".to_string()))
-        .await?
-        .write_all(toml::to_string(&pgcat_config)?.as_bytes())
-        .await?;
 
     println!("{}", syntax_highlight(&sql));
     Ok(())
