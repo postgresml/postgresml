@@ -8,8 +8,13 @@
 architecture=$(arch)
 name=$(uname)
 url="https://static.postgresml.org/packages/pgcat"
-version="${PGCAT_VERSION:-2.0.0-alpha16}"
+version="$PGCAT_VERSION"
 bin_name="pgcat2-$version.bin"
+
+if [[ -z "$version" ]]; then
+	echo "PGCAT_VERSION environment variable is not set"
+	exit 1
+fi
 
 if [[ "$architecture" == "aarch64" && "$name" == "Linux" ]]; then
 	url="${url}/arm64/$bin_name"
