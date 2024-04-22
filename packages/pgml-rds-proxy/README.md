@@ -3,9 +3,7 @@
 A pgcat-based PostgreSQL proxy that allows to use PostgresML functions on managed PostgreSQL databases that may not have Internet access, like AWS RDS.
 
 <p align="center">
-
-![Diagram](./diagram.png)
-
+  <img src="diagram.png" alt="Diagram" />
 </p>
 
 ## Getting started
