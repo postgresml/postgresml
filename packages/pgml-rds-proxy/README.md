@@ -2,11 +2,11 @@
 
 A pgcat-based PostgreSQL proxy that allows to use PostgresML functions on managed PostgreSQL databases that may not have Internet access, like AWS RDS.
 
-<center>
+<p align="center">
 
 ![Diagram](./diagram.png)
 
-</center>
+</p>
 
 ## Getting started
 
