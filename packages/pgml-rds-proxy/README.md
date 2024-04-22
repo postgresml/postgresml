@@ -2,6 +2,8 @@
 
 A pgcat-based PostgreSQL proxy that allows to use PostgresML functions on managed PostgreSQL databases that may not have Internet access, like AWS RDS.
 
+![Diagram](./diagram.png)
+
 ## Getting started
 
 A Docker image is provided and is the easiest way to get started. To run the image, you can simply:
