@@ -20,7 +20,7 @@ The example above starts the proxy process on port 6432, so for your security gr
 
 ### Configure FDW
 
-We'll be using the Foreign Data Wrapper extension to connect fromn your RDS database to PostgresML, forwarding the connection through the proxy. If you're running the proxy on EC2, take note of the private IP
+We'll be using the Foreign Data Wrapper extension to connect from your RDS database to PostgresML, forwarding the connection through the proxy. If you're running the proxy on EC2, take note of the private IP
 or DNS entry of the instance.
 
 Before proceeding, make sure you have the following extensions installed into your RDS database:
@@ -48,7 +48,7 @@ Replace the value for `host`  with the private IP or DNS entry of the EC2 instan
 
 #### User mapping
 
-PostgresML and the proxy requires authentication. For each user that will use the connection, create a user mappping, like so:
+PostgresML and the proxy requires authentication. For each user that will use the connection, create a user mapping, like so:
 
 ```postgresql
 CREATE USER MAPPING
