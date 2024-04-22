@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# pgml-rds-proxy docker entrypoint
+# Download the right version of pgcat for the architecture.
 #
 # Author: PostgresML <team@postgresml.org>
 # License: MIT
@@ -8,11 +8,13 @@
 architecture=$(arch)
 name=$(uname)
 url="https://static.postgresml.org/packages/pgcat"
+version="${PGCAT_VERSION:-2.0.0-alpha16}"
+bin_name="pgcat2-$version.bin"
 
 if [[ "$architecture" == "aarch64" && "$name" == "Linux" ]]; then
-	url="${url}/arm64/pgcat"
+	url="${url}/arm64/$bin_name"
 elif [[ "$architecture" == "x86_64" && "$name" == "Linux" ]]; then
-	url="${url}/amd64/pgcat"
+	url="${url}/amd64/$bin_name"
 else
 	echo "Unsupported platform: ${name} ${architecture}"
 	exit 1
