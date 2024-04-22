@@ -8,9 +8,9 @@ A Docker image is provided and is the easiest way to get started. To run the ima
 
 ```bash
 docker run \
-	-e DATABASE_URL=postgres://pg:ml@sql.cloud.postgresml.org:38042/pgml \
-	-p 6432:6432 \
-	ghcr.io/postgresml/pgml-rds-proxy:latest
+    -e DATABASE_URL=postgres://pg:ml@sql.cloud.postgresml.org:38042/pgml \
+    -p 6432:6432 \
+    ghcr.io/postgresml/pgml-rds-proxy:latest
 ```
 
 **Note:** Replace the `DATABASE_URL` above with the `DATABASE_URL` of your own PostgresML database.
@@ -38,9 +38,9 @@ To create a foreign data wrapper connection, take your PostgresML host and port 
 CREATE SERVER postgresml
 FOREIGN DATA WRAPPER postgres_fdw
 OPTIONS (
-	host '127.0.0.1',
-	port '6432',
-	dbname 'pgml'
+    host '127.0.0.1',
+    port '6432',
+    dbname 'pgml'
 );
 ```
 
@@ -55,8 +55,8 @@ CREATE USER MAPPING
 FOR CURRENT_USER
 SERVER postgresml
 OPTIONS (
-	user 'pg',
-	password 'ml'
+    user 'pg',
+    password 'ml'
 );
 ```
 
@@ -68,11 +68,11 @@ To test the connection, you can use `dblink`:
 
 ```
 SELECT
-	*
+    *
 FROM
-	dblink(
-		'postgresml',
-		'SELECT * FROM pgml.embed(''intfloat/e5-small'', ''embed this text'') AS embedding'
+    dblink(
+        'postgresml',
+        'SELECT * FROM pgml.embed(''intfloat/e5-small'', ''embed this text'') AS embedding'
 ) AS t1(embedding real[386]);
 ```
 
