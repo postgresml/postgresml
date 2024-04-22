@@ -3,9 +3,6 @@ name: Build and release pgml-rds-proxy Docker image
 on:
   workflow_dispatch:
 jobs:
-  #
-  # PostgresML Docker image.
-  #
   publish-proxy-docker-image:
     strategy:
       matrix:
