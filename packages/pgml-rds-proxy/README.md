@@ -67,7 +67,13 @@ Replace the values for `user` and `password` with the values from your PostgresM
 To test the connection, you can use `dblink`:
 
 ```
-SELECT * FROM dblink('postgresml', 'SELECT * FROM pgml.embed(''intfloat/e5-small'', ''embed this text'') AS embedding') AS t1(embedding real[386]);
+SELECT
+	*
+FROM
+	dblink(
+		'postgresml',
+		'SELECT * FROM pgml.embed(''intfloat/e5-small'', ''embed this text'') AS embedding'
+) AS t1(embedding real[386]);
 ```
 
 If everything is configured correctly, you should see an array of 386 floating points, your first embedding generated using PostgresML on AWS RDS. Both dblink and the proxy makes efficient use of connections, so queries will be executed as fast as the network connection allows.
