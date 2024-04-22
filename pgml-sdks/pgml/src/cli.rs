@@ -10,7 +10,7 @@ use pyo3::prelude::*;
 use sqlx::{Acquire, Executor};
 use std::io::Write;
 
-/// PostgresML CLI
+/// PostgresML CLI: configure your PostgresML deployments & create connections to remote data sources.
 #[cfg(feature = "python")]
 #[derive(Parser, Debug, Clone)]
 #[command(author, version, about, long_about = None, name = "pgml", bin_name = "pgml")]
@@ -95,6 +95,13 @@ enum Subcommands {
 
         /// DATABASE_URL for your PostgresML database.
         #[arg(long)]
+        database_url: Option<String>,
+    },
+
+    /// Connect your database to PostgresML via dblink.
+    Remote {
+        /// DATABASE_URL.
+        #[arg(long, short)]
         database_url: Option<String>,
     },
 }
@@ -212,6 +219,10 @@ async fn cli_internal() -> anyhow::Result<()> {
             )
             .await?;
         }
+
+        Subcommands::Remote { database_url } => {
+            remote(database_url).await?;
+        }
     };
 
     Ok(())
@@ -323,6 +334,49 @@ async fn connect(
         };
     }
 
+    Ok(())
+}
+
+async fn remote(database_url: Option<String>) -> anyhow::Result<()> {
+    let database_url = user_input!(database_url, "PostgresML DATABASE_URL");
+    let database_url = url::Url::parse(&database_url)?;
+    let user = database_url.username();
+    if user.is_empty() {
+        anyhow::bail!("user not found in DATABASE_URL");
+    }
+
+    let password = database_url.password();
+    let password = if password.is_none() {
+        anyhow::bail!("password not found in DATABASE_URL");
+    } else {
+        password.unwrap()
+    };
+
+    let host = database_url.host_str();
+    let host = if host.is_none() {
+        anyhow::bail!("host not found in DATABASE_URL");
+    } else {
+        host.unwrap()
+    };
+
+    let port = database_url.port();
+    let port = if port.is_none() {
+        "6432".to_string()
+    } else {
+        port.unwrap().to_string()
+    };
+
+    let database = database_url.path().replace("/", "");
+
+    let sql = include_str!("sql/remote.sql")
+        .replace("{user}", user)
+        .replace("{password}", password)
+        .replace("{host}", host)
+        .replace("{db_name}", "postgresml")
+        .replace("{database_name}", &database)
+        .replace("{port}", &port);
+
+    println!("{}", syntax_highlight(&sql));
     Ok(())
 }
 
