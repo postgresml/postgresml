@@ -3,17 +3,39 @@ import { Controller } from "@hotwired/stimulus";
 export default class extends Controller {
   static targets = ["level1Container", "level1Link", "highLevels"];
 
-  // After page update we reset scroll position of nave back to where it was
+  // After page update we reset scroll position of nav back to where it
+  // was and ensure left nave and window location match.
+  // Stimulus connect runs on every page load regardless of the element
+  // being permanent or not.
   connect() {
     let nav = document.getElementsByClassName("doc-leftnav");
     if (nav.length > 0) {
       let position = nav[0].getAttribute("data-scroll");
       nav[0].scrollTop = position;
     }
+
+    this.setNavToLocation();
   }
 
-  // trubo-frame permanent breakes bootstrap data attribute collapse for aria
-  // so we manually controll collapse
+  // The active tags should always be set the current page location
+  setNavToLocation() {
+    const tag = "a[href='" + window.location.pathname + "']";
+
+    let link = this.element.querySelectorAll(tag);
+    if (link.length > 0) {
+      if (
+        link[0].getAttribute("data-navigation-left-nav-docs-target") ==
+        "highLevels"
+      ) {
+        this.setHighLevelLeftNav(link[0]);
+      } else {
+        this.setLevel1LeftNav(link[0]);
+      }
+    }
+  }
+
+  // turbo-frame-permanent breaks bootstrap data attribute collapse for aria
+  // so we manually control collapse
   expand(e) {
     let aria = e.currentTarget.getAttribute("aria-expanded");
     let id = e.currentTarget.getAttribute("aria-controls");
@@ -30,34 +52,45 @@ export default class extends Controller {
     }
   }
 
-  // Activly manage nav state for level 1 links
-  onNavigateManageLevel1(e) {
+  // Actively manage nav state for high level links.
+  setHighLevelLeftNav(element) {
     this.removeAllActive();
 
-    let container = e.currentTarget.closest("div");
-    container.classList.add("active");
-
-    e.currentTarget.classList.add("active");
-
-    this.preventScrollOnNav();
-  }
-
-  // Activly manage nav state for high level links
-  onNavigateManageHighLevels(e) {
-    this.removeAllActive();
-
-    let container = e.currentTarget.closest('div[data-level="1"]');
+    let container = element.closest('div[data-level="1"]');
     let menu = container.querySelector(".menu-item");
     let link = menu.querySelector(".doc-left-nav-level1-link-container");
 
     link.classList.add("active");
+    element.classList.add("purple");
+    this.preventScrollOnNav();
+  }
 
-    e.currentTarget.classList.add("purple");
+  // Actively manage nav state for level 1 links
+  setLevel1LeftNav(element) {
+    console.log("setLevel1LeftNav");
+    this.removeAllActive();
+
+    let container = element.closest("div");
+    container.classList.add("active");
+
+    element.classList.add("active");
 
     this.preventScrollOnNav();
   }
 
-  // trubo-frame permanent scrolles nav to top on navigation so we capture the scrroll position prior
+  // Actions to take when nav link is clicked
+  // currently just gets the scroll position before state change
+  onNavigateManageLevel1() {
+    this.preventScrollOnNav();
+  }
+
+  // Actions to take when nav link is clicked
+  // currently just gets the scroll position before state change
+  onNavigateManageHighLevels() {
+    this.preventScrollOnNav();
+  }
+
+  // turbo-frame permanent scrolls nav to top on navigation so we capture the scroll position prior
   // to updating the page so after we can set the scroll position back to where it was
   preventScrollOnNav() {
     let nav = document.getElementsByClassName("doc-leftnav");
