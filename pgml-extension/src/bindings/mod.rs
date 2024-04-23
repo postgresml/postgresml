@@ -8,7 +8,7 @@ use pyo3::{pyfunction, PyResult, Python};
 use crate::orm::*;
 
 #[pyfunction]
-fn r_insert_logs(project_id: i64, model_id: i64, logs: String) -> PyResult<String> {
+pub fn r_insert_logs(project_id: i64, model_id: i64, logs: String) -> PyResult<String> {
     let id_value = Spi::get_one_with_args::<i64>(
         "INSERT INTO pgml.logs (project_id, model_id, logs) VALUES ($1, $2, $3::JSONB) RETURNING id;",
         vec![
@@ -23,7 +23,7 @@ fn r_insert_logs(project_id: i64, model_id: i64, logs: String) -> PyResult<Strin
 }
 
 #[pyfunction]
-fn r_log(level: String, message: String) -> PyResult<String> {
+pub fn r_log(level: String, message: String) -> PyResult<String> {
     match level.as_str() {
         "info" => info!("{}", message),
         "warning" => warning!("{}", message),
