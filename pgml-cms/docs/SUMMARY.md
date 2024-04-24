@@ -6,9 +6,11 @@
 * [Getting Started](introduction/getting-started/README.md)
   * [Create your database](introduction/getting-started/create-your-database.md)
   * [Connect your app](introduction/getting-started/connect-your-app.md)
-  * [Import your data](introduction/getting-started/import-your-data/README.md)
-    * [CSV](introduction/getting-started/import-your-data/csv.md)
-    * [Foreign Data Wrapper](introduction/getting-started/import-your-data/foreign-data-wrapper.md)
+* [Import your data](introduction/getting-started/import-your-data/README.md)
+  * [Logical replication](introduction/getting-started/import-your-data/logical-replication/README.md)
+  * [Foreign Data Wrappers](introduction/getting-started/import-your-data/foreign-data-wrappers.md)
+  * [Move data with COPY](introduction/getting-started/import-your-data/copy.md)
+  * [Migrate with pg_dump](introduction/getting-started/import-your-data/pg-dump.md)
 
 ## API
 
@@ -51,7 +53,7 @@
 ## Product
 
 * [Cloud Database](product/cloud-database/README.md)
-  * [Serverless databases](product/cloud-database/serverless-databases.md)
+  * [Serverless](product/cloud-database/serverless.md)
   * [Dedicated](product/cloud-database/dedicated.md)
   * [Enterprise](product/cloud-database/plans.md)
 * [Vector Database](product/vector-database.md)
@@ -79,7 +81,7 @@
 ## Resources
 
 * [FAQs](resources/faqs.md)
-* [Data Storage & Retrieval](resources/data-storage-and-retrieval/README.md)
+* [Data Storage & Retrieval](resources/data-storage-and-retrieval/tabular-data.md)
   * [Tabular data](resources/data-storage-and-retrieval/tabular-data.md)
   * [Documents](resources/data-storage-and-retrieval/documents.md)
   * [Partitioning](resources/data-storage-and-retrieval/partitioning.md)

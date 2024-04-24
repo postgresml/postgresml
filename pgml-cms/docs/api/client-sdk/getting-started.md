@@ -18,7 +18,7 @@ pip install pgml
 
 ## Example
 
-Once the SDK is installed, you an use the following example to get started.
+Once the SDK is installed, you can use the following example to get started.
 
 ### Create a collection
 
@@ -85,7 +85,7 @@ await collection.add_pipeline(pipeline)
 {% endtab %}
 {% endtabs %}
 
-#### Explanation:
+#### Explanation
 
 * The code constructs a pipeline called `"sample_pipeline"` and adds it to the collection we Initialized above. This pipeline automatically generates chunks and embeddings for the `text` key for every upserted document.
 

@@ -29,6 +29,7 @@ const editorTheme = {
 
   ".cm-content": {
     caretColor: cursor,
+    paddingBottom: '1rem',
   },
 
   ".cm-cursor, .cm-dropCursor": { borderLeftColor: cursor },
