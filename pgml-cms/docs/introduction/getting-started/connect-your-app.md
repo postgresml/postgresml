@@ -4,7 +4,7 @@ description: PostgresML is compatible with all standard PostgreSQL clients
 
 # Connect your app
 
-You can connect to your PostgresML database from any PostgresSQL-compatible client. PostgresML can serve in the traditional role of an application database, along with it's extended role as an MLOps platform, to make it easy to build and maintain AI applications together with your application data.
+You can connect to your PostgresML database from any PostgreSQL-compatible client. PostgresML can serve in the traditional role of an application database, along with it's extended role as an MLOps platform, to make it easy to build and maintain AI applications together with your application data.
 
 ## Client SDK
 

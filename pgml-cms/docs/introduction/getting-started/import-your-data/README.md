@@ -31,4 +31,4 @@ FDWs are useful when data access is infrequent and not latency-sensitive. For ma
 
 ## [Migrate with pg_dump](pg-dump)
 
-_pg_dump_ is a command-line PostgreSQL utility to migrate databases from one server to another. Databases of almost any size can be migrated with _pgdump_ quickly and safely.
+_pg_dump_ is a command-line PostgreSQL utility to migrate databases from one server to another. Databases of almost any size can be migrated with _pg_dump_ quickly and safely.
