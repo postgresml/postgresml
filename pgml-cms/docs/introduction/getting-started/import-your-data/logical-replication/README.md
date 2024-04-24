@@ -41,7 +41,7 @@ Logical replication works like a pub/sub system: your primary database decides w
 
 #### Create a publication
 
-A publication is aset of tables that your primary database would like to share with your PostgresML database. To create a publication, connect to your primary database as a superuser and create the publication for your tables of choice:
+A publication is a set of tables that your primary database would like to share with your PostgresML database. To create a publication, connect to your primary database as a superuser and create the publication for your tables of choice:
 
 ```postgresql
 CREATE PUBLICATION postgresml
