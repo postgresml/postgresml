@@ -77,19 +77,21 @@ Now that we have a list of tables we want to replicate, we need to make sure tho
 You can get the schema for your tables either by using a PostgreSQL client like pgAdmin or, more easily, by using _pg_dump_ and then importing it into PostgresML using _psql_:
 
 {% tabs %}
-{% tab title="Dumping the schema" %}
+{% tab title="Export the schema" %}
 
 ```bash
 pg_dump \
 	postgres://user:password@yyour-production-db.amazonaws.com:5432/prodution_db \
 	--schema-only \
+	--no-owner \
+	--no-privileges \
 	-t users \
 	-t blog_posts \
 > schema.sql
 ```
 
 {% endtab %}
-{% tab title="Importing the schema" %}
+{% tab title="Import the schema" %}
 
 ```bash
 psql \

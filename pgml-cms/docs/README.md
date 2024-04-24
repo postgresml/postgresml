@@ -28,7 +28,7 @@ These capabilities are primarily provided by two open-source software projects, 
 
 <figure><img src=".gitbook/assets/architecture.png" alt="PostgresML architectural diagram"><figcaption></figcaption></figure>
 
-## SDK
+## Client SDK
 
 The PostgresML team also provides [native language SDKs](https://github.com/postgresml/postgresml/tree/master/pgml-sdks/pgml) which implement best practices for common ML & AI applications. The JavaScript and Python SDKs are generated from the a core Rust library, which provides a uniform API, correctness and efficiency across all environments.
 

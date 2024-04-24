@@ -6,13 +6,13 @@ Just like any PostgreSQL database, PostgresML can be configured as the primary a
 
 ## Primary database
 
-If you're intention is to use PostgresML as your primary database, your job here is done. You can use the connection credentials provided and start building your application on top of in-database AI right away.
+If your intention is to use PostgresML as your primary database, your job here is done. You can use the connection credentials provided and start building your application on top of in-database AI right away.
 
 ## [Logical replica](logical-replication/)
 
 If your primary database is hosted elsewhere, for example AWS RDS, or Azure Postgres, you can get your data replicated to PostgresML in real time using logical replication. 
 
-<figure><img src="../../../.gitbook/assets/logical_replication_1.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/logical_replication_1.png" alt="Logical replication"><figcaption></figcaption></figure>
 
 Having access to your data immediately is very useful to
 accelerate your machine learning use cases and removes the need for moving data multiple times between microservices. Latency-sensitive applications should consider using this approach.
@@ -21,6 +21,14 @@ accelerate your machine learning use cases and removes the need for moving data 
 
 Foreign data wrappers are a set of PostgreSQL extensions that allow making direct connections from inside the database directly to other databases, even if they aren't running on Postgres. For example, Postgres has foreign data wrappers for MySQL, S3, Snowflake and many others.
 
-<figure><img src="../../../.gitbook/assets/fdw_1.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/fdw_1.png" alt="Foreign data wrappers"><figcaption></figcaption></figure>
 
 FDWs are useful when data access is infrequent and not latency-sensitive. For many use cases, like offline batch workloads and not very busy websites, this approach is suitable and easy to get started with.
+
+## [Move data with COPY](copy)
+
+`COPY` is a powerful PostgreSQL command to import data from a file format like CSV. Most data stores out there support exporting data using the CSV format, so moving data from your data source to PostgresML can almost always be done this way.
+
+## [Migrate with pg_dump](pg-dump)
+
+_pg_dump_ is a command-line PostgreSQL utility to migrate databases from one server to another. Databases of almost any size can be migrated with _pgdump_ quickly and safely.

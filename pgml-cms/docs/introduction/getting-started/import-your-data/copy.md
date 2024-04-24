@@ -1,4 +1,4 @@
-# COPY
+# Move data with COPY
 
 Data that changes infrequently can be easily imported into PostgresML (and any other Postgres database) using `COPY`. All you have to do is export your data as a file, create a table in Postgres to store it, and import it using the command line (or your IDE of choice).
 

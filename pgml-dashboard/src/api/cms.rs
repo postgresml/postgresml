@@ -423,7 +423,7 @@ impl Collection {
         // Docs gets a home link added to the index
         match self.name.as_str() {
             "Docs" => {
-                index.push(IndexLink::new("Docs Home", indent_level).href("/docs"));
+                index.push(IndexLink::new("Documentation", indent_level).href("/docs"));
             }
             _ => {}
         }

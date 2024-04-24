@@ -514,20 +514,20 @@ pub fn get_toc<'a>(root: &'a AstNode<'a>) -> anyhow::Result<Vec<TocLink>> {
                     }
                 };
 
-                println!("child: {:?}", sibling);
-
                 let text = if let NodeValue::Text(text) = &sibling.data.borrow().value {
                     Some(text.clone())
                 } else if let NodeValue::Link(_link) = &sibling.data.borrow().value {
-                    if let Some(child) = sibling.first_child() {
-                        if let NodeValue::Text(text) = &child.data.borrow().value {
-                                Some(text.clone())
-                        } else {
-                            None
-                        }
-                    } else {
-                        None
-                    }
+                    let text = sibling.children()
+                        .into_iter()
+                        .map(|child| {
+                            if let NodeValue::Text(text) = &child.data.borrow().value {
+                                text.clone()
+                            } else {
+                                "".to_string()
+                            }
+                        })
+                        .join("");
+                    Some(text)
                 } else {
                     None
                 };

@@ -1,15 +1,16 @@
 # Table of contents
 
-## Introduction
+## Getting started
 
 * [Overview](README.md)
 * [Getting Started](introduction/getting-started/README.md)
   * [Create your database](introduction/getting-started/create-your-database.md)
   * [Connect your app](introduction/getting-started/connect-your-app.md)
-  * [Import your data](introduction/getting-started/import-your-data/README.md)
-    * [Logical replication](introduction/getting-started/import-your-data/logical-replication/README.md)
-    * [Foreign Data Wrappers](introduction/getting-started/import-your-data/foreign-data-wrappers.md)
-    * [COPY](introduction/getting-started/import-your-data/copy.md)
+* [Import your data](introduction/getting-started/import-your-data/README.md)
+  * [Logical replication](introduction/getting-started/import-your-data/logical-replication/README.md)
+  * [Foreign Data Wrappers](introduction/getting-started/import-your-data/foreign-data-wrappers.md)
+  * [Move data with COPY](introduction/getting-started/import-your-data/copy.md)
+  * [Migrate with pg_dump](introduction/getting-started/import-your-data/pg-dump.md)
 
 ## API
 
@@ -39,7 +40,7 @@
     * [Translation](api/sql-extension/pgml.transform/translation.md)
     * [Zero-shot Classification](api/sql-extension/pgml.transform/zero-shot-classification.md)
   * [pgml.tune()](api/sql-extension/pgml.tune.md)
-* [SDK](api/client-sdk/README.md)
+* [Client SDK](api/client-sdk/README.md)
   * [Overview](api/client-sdk/getting-started.md)
   * [Collections](api/client-sdk/collections.md)
   * [Pipelines](api/client-sdk/pipelines.md)

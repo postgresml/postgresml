@@ -1,4 +1,4 @@
-# Client SDKs
+# Client SDK
 
 ### Key Features
 

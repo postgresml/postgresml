@@ -4,15 +4,15 @@ description: PostgresML is compatible with all standard PostgreSQL clients
 
 # Connect your app
 
-You can connect to your database from any PostgresSQL-compatible client. PostgresML is intended to serve in the traditional role of an application database, along with it's extended role as an MLOps platform to make it easy to build and maintain AI applications together with your application data.
+You can connect to your PostgresML database from any PostgresSQL-compatible client. PostgresML can serve in the traditional role of an application database, along with it's extended role as an MLOps platform, to make it easy to build and maintain AI applications together with your application data.
 
-## SDK
+## Client SDK
 
-We provide a client SDK for JavaScript, Python and Rust. The SDK manages connections to the Postgres database and makes it easy to construct efficient queries for AI use cases, like managing a document collection for RAG, or building a chatbot. All of the ML & AI still happenening inside the database, with centralized operations, hardware and dependency management.
-
-The SDK are under rapid development to add new features and use cases, but we release non breaking changes with minor version updates in accordance with SemVer. It's easy to install into your existing application.
+We provide a client SDK for JavaScript, Python and Rust. The SDK manages connections to the database, and makes it easy to construct efficient queries for AI use cases, like managing RAG document collections, or building chatbots. All of the ML & AI still happens inside the database, with centralized operations, hardware and dependency management.
 
 ### Installation
+
+The SDK is available from npm and PyPI:
 
 {% tabs %}
 {% tab title="JavaScript" %}
@@ -31,6 +31,8 @@ pip install pgml
 Our SDK comes with zero additional dependencies. The core of the SDK is written in Rust, and we provide language bindings and native packaging & distribution.
 
 ### Test the connection
+
+Once you have installed our SDK into your environment, you can test connectivity to our cloud with just a few lines of code:
 
 {% tabs %}
 {% tab title="JavaScript" %}
@@ -82,9 +84,9 @@ async def main():
 {% endtab %}
 {% endtabs %}
 
-## Native language bindings
+## Native PostgreSQL libraries
 
-Using the SDK is optional. If you're comfortable with writing SQL, you can connect directly to the database using your favorite bindings or ORM:
+Using the SDK is completely optional. If you're comfortable with writing SQL, you can connect directly to the database using your favorite PostgreSQL client library or ORM:
 
 * C++: [libpqxx](https://www.tutorialspoint.com/postgresql/postgresql\_c\_cpp.htm)
 * C#: [Npgsql](https://github.com/npgsql/npgsql),[Dapper](https://github.com/DapperLib/Dapper), or [Entity Framework Core](https://github.com/dotnet/efcore)
