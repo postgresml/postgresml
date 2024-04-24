@@ -513,15 +513,34 @@ pub fn get_toc<'a>(root: &'a AstNode<'a>) -> anyhow::Result<Vec<TocLink>> {
                         return Ok(false);
                     }
                 };
-                if let NodeValue::Text(text) = &sibling.data.borrow().value {
-                    let index = match header_count.get(text) {
+
+                println!("child: {:?}", sibling);
+
+                let text = if let NodeValue::Text(text) = &sibling.data.borrow().value {
+                    Some(text.clone())
+                } else if let NodeValue::Link(_link) = &sibling.data.borrow().value {
+                    if let Some(child) = sibling.first_child() {
+                        if let NodeValue::Text(text) = &child.data.borrow().value {
+                                Some(text.clone())
+                        } else {
+                            None
+                        }
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                };
+
+                if let Some(text) = text {
+                    let index = match header_count.get(&text) {
                         Some(index) => index + 1,
                         _ => 0,
                     };
 
                     header_count.insert(text.clone(), index);
 
-                    links.push(TocLink::new(text, index).level(header.level));
+                    links.push(TocLink::new(&text, index).level(header.level));
                     return Ok(false);
                 }
             }

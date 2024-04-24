@@ -351,7 +351,7 @@ pub struct Collection {
 
 impl Collection {
     pub fn new(name: &str, hide_root: bool, redirects: HashMap<&'static str, &'static str>) -> Collection {
-        info!("Loading collection: {name}");
+        debug!("Loading collection: {name}");
         let name = name.to_owned();
         let slug = name.to_lowercase();
         let root_dir = config::cms_dir().join(&slug);

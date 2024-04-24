@@ -29,6 +29,6 @@ Click on **Get Started** under the plan of your choice.
 
 ## Your database credentials  <a href="#create-a-new-account" id="create-a-new-account"></a>
 
-We'll automatically provision an initial set of database credentials and provide you with the connection string. You can connect to your database if you have `psql` installed on your machine, or any other PostgreSQL client.
+We'll automatically provision a set of database credentials and provide you with the `DATABASE_URL` connection string. You can connect to your database with `psql`, or any other PostgreSQL client library, or application.
 
 <figure><img src="../../.gitbook/assets/Screenshot from 2023-11-27 23-21-36.png" alt=""><figcaption></figcaption></figure>
