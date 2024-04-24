@@ -52,7 +52,7 @@
 
 ## Product
 
-* [AI Database](product/cloud-database/README.md)
+* [Cloud Database](product/cloud-database/README.md)
   * [Serverless databases](product/cloud-database/serverless-databases.md)
   * [Dedicated](product/cloud-database/dedicated.md)
   * [Enterprise](product/cloud-database/plans.md)

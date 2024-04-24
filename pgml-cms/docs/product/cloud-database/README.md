@@ -1,4 +1,4 @@
-# AI database
+# Cloud database
 
 PostgresML cloud databases can be deployed using three (3) configurations: serverless, dedicated and enterprise. Each has its advantages and are tailored for companies of all sizes.
 
