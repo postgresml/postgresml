@@ -10,7 +10,7 @@ A PostgresML deployment consists of multiple components working in concert to pr
 * PgCat pooler to provide secure access and model load balancing across thousands of clients
 * A web application to manage deployed models and share experiments and analysis in SQL notebooks
 
-<figure class="m-3"><img src="../../.gitbook/assets/architecture.png" alt=""><figcaption></figcaption></figure>
+<figure class="m-3"><img src="../../.gitbook/assets/architecture.png" alt="PostgresML architecture"><figcaption></figcaption></figure>
 
 By building PostgresML on top of a mature database, we get reliable backups for model inputs and proven scalability without reinventing the wheel, so that we can focus on providing access to the latest developments in open source machine learning and artificial intelligence.
 
