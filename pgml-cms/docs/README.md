@@ -4,38 +4,50 @@ description: The key concepts that make up PostgresML.
 
 # Overview
 
-PostgresML is a complete MLOps platform built on PostgreSQL.
+PostgresML is a complete MLOps platform built on PostgreSQL. Our operating principle is:
 
-> _Move the models to the database, rather than continuously moving the data to the models._
+> _Move the models to the database, rather than constantly moving the data to the models._
 
-The data for ML & AI systems is inherently larger and more dynamic than the models. It's more efficient, manageable and reliable to move the models to the database, rather than continuously moving the data to the models. PostgresML allows you to take advantage of the fundamental relationship between data and models, by extending the database with the following capabilities and goals:
+The data for ML & AI systems is inherently larger and more dynamic than the models. It's more efficient, manageable and reliable to move the models to the database, rather than continuously moving data to the models.
 
-* **Model Serving** - _**GPU accelerated**_ inference engine for interactive applications, with no additional networking latency or reliability costs.
-* **Model Store** - Download _**open-source**_ models including state of the art LLMs from HuggingFace, and track changes in performance between versions.
-* **Model Training** - Train models with _**your application data**_ using more than 50 algorithms for regression, classification or clustering tasks. Fine tune pre-trained models like LLaMA and BERT to improve performance.
-* **Feature Store** - _**Scalable**_ access to model inputs, including vector, text, categorical, and numeric data. Vector database, text search, knowledge graph and application data all in one _**low-latency**_ system.
+## AI engine
 
-<figure><img src=".gitbook/assets/ml_system.svg" alt="Machine Learning Infrastructure (2.0) by a16z"><figcaption><p>PostgresML handles all of the functions typically performed by a cacophony of services, <a href="https://a16z.com/emerging-architectures-for-modern-data-infrastructure/">described by a16z</a></p></figcaption></figure>
+PostgresML allows you to take advantage of the fundamental relationship between data and models, by extending the database with the following capabilities:
 
-These capabilities are primarily provided by two open-source software projects, that may be used independently, but are designed to be used with the rest of the Postgres ecosystem, including trusted extensions like pgvector and pg\_partman.
+* **Model Serving** - GPU accelerated inference engine for interactive applications, with no additional networking latency or reliability costs
+* **Model Store** - Access to open-source models including state of the art LLMs from HuggingFace, and track changes in performance between versions
+* **Model Training** - Train models with your application data using more than 50 algorithms for regression, classification or clustering tasks; fine tune pre-trained models like LLaMA and BERT to improve performance
+* **Feature Store** - Scalable access to model inputs, including vector, text, categorical, and numeric data: vector database, text search, knowledge graph and application data all in one low-latency system
 
-* **pgml** is an open source extension for PostgreSQL. It adds support for GPUs and the latest ML & AI algorithms _**inside**_ the database with a SQL API and no additional infrastructure, networking latency, or reliability costs.
-* **PgCat** is an open source proxy pooler for PostgreSQL. It abstracts the scalability and reliability concerns of managing a distributed cluster of Postgres databases. Client applications connect only to the proxy, which handles load balancing and failover, _**outside**_ of any single database.
+<figure><img src=".gitbook/assets/ml_system.svg" alt="Machine Learning Infrastructure (2.0) by a16z"><figcaption class="mt-2"><p>PostgresML handles all of the functions <a href="https://a16z.com/emerging-architectures-for-modern-data-infrastructure/">described by a16z</a></p></figcaption></figure>
 
-<figure><img src=".gitbook/assets/architecture.png" alt="PostgresML architectural diagram" width="275"><figcaption><p>A PostgresML deployment at scale</p></figcaption></figure>
+These capabilities are primarily provided by two open-source software projects, that may be used independently, but are designed to be used with the rest of the Postgres ecosystem:
 
-In addition, PostgresML provides [native language SDKs](https://github.com/postgresml/postgresml/tree/master/pgml-sdks/pgml) to implement best practices for common ML & AI applications. The JavaScript and Python SDKs are generated from the core Rust SDK, to provide the same API, correctness and efficiency across all application runtimes.
+* **pgml** - an open source extension for PostgreSQL. It adds support for GPUs and the latest ML & AI algorithms _inside_ the database with a SQL API and no additional infrastructure, networking latency, or reliability costs
+* **PgCat** - an open source pooler for PostgreSQL. It abstracts the scalability and reliability concerns of managing a distributed cluster of Postgres databases. Client applications connect only to the pooler, which handles load balancing, sharding, and failover, outside of any single database server.
 
-SDK clients can perform advanced machine learning tasks in a single SQL request, without having to transfer additional data, models, hardware or dependencies to the client application. For example:
+<figure><img src=".gitbook/assets/architecture.png" alt="PostgresML architectural diagram"><figcaption></figcaption></figure>
 
-* Chat with streaming response support from the latest LLMs
-* Search with both keywords and embedding vectors
-* Text Generation with RAG in a single request
-* Translate text between hundreds of language pairs
-* Summarization to distil complex documents
-* Forecasting timeseries data for key metrics with complex metadata
-* Fraud and anomaly detection with application data
+## SDK
 
-Our goal is to provide access to Open Source AI for everyone. PostgresML is under continuous development to keep up with the rapidly evolving use cases for ML & AI, and we release non breaking changes with minor version updates in accordance with SemVer. We welcome contributions to our [open source code and documentation](https://github.com/postgresml).
+The PostgresML team also provides [native language SDKs](https://github.com/postgresml/postgresml/tree/master/pgml-sdks/pgml) which implement best practices for common ML & AI applications. The JavaScript and Python SDKs are generated from the a core Rust library, which provides a uniform API, correctness and efficiency across all environments.
 
-We can host your AI database in our cloud, or you can run our Docker image locally with PostgreSQL, pgml, pgvector and NVIDIA drivers included.
+While using the SDK is completely optional, SDK clients can perform advanced machine learning tasks in a single SQL request, without having to transfer additional data, models, hardware or dependencies to the client application.
+
+Use cases include:
+
+* Chat with streaming responses from state-of-the-art open source LLMs
+* Semantic search with keywords and embeddings
+* RAG in a single request without using any third-party services
+* Text translation between hundreds of languages
+* Text summarization to distill complex documents
+* Forecasting timeseries data for key metrics with and metadata
+* Anomaly detection using application data
+
+## Our mission
+
+PostgresML strives to provide access to open source AI for everyone. We are continuously developping PostgresML to keep up with the rapidly evolving use cases for ML & AI, but we remain committed to never breaking user facing APIs. We welcome contributions to our [open source code and documentation](https://github.com/postgresml) from the community.
+
+## Managed cloud
+
+While our extension and pooler are open source, we also offer a managed cloud database service for production deployments of PostgresML. You can [sign up](https://postgresml.org/signup) for an account and get a free Serverless database in seconds.
