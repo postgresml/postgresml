@@ -53,7 +53,7 @@
 ## Product
 
 * [Cloud Database](product/cloud-database/README.md)
-  * [Serverless databases](product/cloud-database/serverless-databases.md)
+  * [Serverless](product/cloud-database/serverless.md)
   * [Dedicated](product/cloud-database/dedicated.md)
   * [Enterprise](product/cloud-database/plans.md)
 * [Vector Database](product/vector-database.md)
