@@ -67,7 +67,6 @@ export default class extends Controller {
 
   // Actively manage nav state for level 1 links
   setLevel1LeftNav(element) {
-    console.log("setLevel1LeftNav");
     this.removeAllActive();
 
     let container = element.closest("div");
