@@ -4,7 +4,7 @@ _pg_dump_ is a command-line PostgreSQL tool that can move data between PostgreSQ
 
 ## Getting started
 
-If your database is reasonably small (10 GB or less), you can just run _pg_dump_ in one comand:
+If your database is reasonably small (10 GB or less), you can just run _pg_dump_ in one command:
 
 {% tabs %}
 {% tab title="pg_dump" %}
