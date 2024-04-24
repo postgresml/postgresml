@@ -1,5 +1,6 @@
 use syn::{parse_macro_input, DeriveInput, ItemImpl};
 
+mod c;
 mod common;
 mod javascript;
 mod python;
@@ -11,9 +12,11 @@ pub fn alias(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 
     let parsed = parse_macro_input!(input as DeriveInput);
     let python_tokens = python::generate_python_alias(parsed.clone());
+    let c_tokens = c::generate_c_alias(parsed.clone());
     let javascript_tokens = javascript::generate_javascript_alias(parsed);
 
     output.extend(python_tokens);
+    output.extend(c_tokens);
     output.extend(javascript_tokens);
     output
 }
@@ -29,9 +32,11 @@ pub fn alias_methods(
 
     let parsed: ItemImpl = syn::parse(input).unwrap();
     let python_tokens = python::generate_python_methods(parsed.clone(), &attribute_args);
+    let c_tokens = c::generate_c_methods(parsed.clone(), &attribute_args);
     let javascript_tokens = javascript::generate_javascript_methods(parsed, &attribute_args);
 
     output.extend(python_tokens);
+    output.extend(c_tokens);
     output.extend(javascript_tokens);
     output
 }

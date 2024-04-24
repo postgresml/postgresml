@@ -52,7 +52,8 @@ pub(crate) struct ModelDatabaseData {
 }
 
 /// A model used for embedding, inference, etc...
-#[derive(alias, Debug, Clone)]
+// #[derive(alias, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct Model {
     pub(crate) name: String,
     pub(crate) runtime: ModelRuntime,
@@ -66,7 +67,7 @@ impl Default for Model {
     }
 }
 
-#[alias_methods(new, transform)]
+// #[alias_methods(new, transform)]
 impl Model {
     /// Creates a new [Model]
     pub fn new(name: Option<String>, source: Option<String>, parameters: Option<Json>) -> Self {

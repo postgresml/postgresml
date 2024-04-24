@@ -14,7 +14,8 @@ use crate::{
 use crate::types::{GeneralJsonAsyncIteratorPython, GeneralJsonIteratorPython, JsonPython};
 
 /// A drop in replacement for OpenAI
-#[derive(alias, Debug, Clone)]
+// #[derive(alias, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct OpenSourceAI {
     database_url: Option<String>,
 }
@@ -162,13 +163,13 @@ impl Iterator for AsyncToSyncJsonIterator {
     }
 }
 
-#[alias_methods(
-    new,
-    chat_completions_create,
-    chat_completions_create_async,
-    chat_completions_create_stream,
-    chat_completions_create_stream_async
-)]
+// #[alias_methods(
+//     new,
+//     chat_completions_create,
+//     chat_completions_create_async,
+//     chat_completions_create_stream,
+//     chat_completions_create_stream_async
+// )]
 impl OpenSourceAI {
     /// Creates a new [OpenSourceAI]
     ///

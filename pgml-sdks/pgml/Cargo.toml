@@ -13,6 +13,9 @@ keywords = ["postgres", "machine learning", "vector databases", "embeddings"]
 name = "pgml"
 crate-type = ["lib", "cdylib"]
 
+[rust-analyzer.checkOnSave]
+extraArgs = ["--target-dir", "/path/to/proect/target/check"]
+
 [dependencies]
 rust_bridge = {path = "../rust-bridge/rust-bridge", version = "0.1.0"}
 sqlx = { version = "0.7.3", features = [ "runtime-tokio-rustls", "postgres", "json", "time", "uuid"] }
@@ -50,3 +53,4 @@ once_cell = "1.19.0"
 default = []
 python = ["dep:pyo3", "dep:pyo3-asyncio"]
 javascript = ["dep:neon"]
+c = []

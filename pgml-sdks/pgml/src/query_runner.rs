@@ -17,22 +17,23 @@ enum BindValue {
     Json(Json),
 }
 
-#[derive(alias, Clone, Debug)]
+// #[derive(alias, Clone, Debug)]
+#[derive(Clone, Debug)]
 pub struct QueryRunner {
     query: String,
     bind_values: Vec<BindValue>,
     database_url: Option<String>,
 }
 
-#[alias_methods(
-    fetch_all,
-    execute,
-    bind_string,
-    bind_int,
-    bind_float,
-    bind_bool,
-    bind_json
-)]
+// #[alias_methods(
+//     fetch_all,
+//     execute,
+//     bind_string,
+//     bind_int,
+//     bind_float,
+//     bind_bool,
+//     bind_json
+// )]
 impl QueryRunner {
     pub fn new(query: &str, database_url: Option<String>) -> Self {
         Self {
