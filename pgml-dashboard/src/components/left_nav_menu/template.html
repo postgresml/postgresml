@@ -4,7 +4,7 @@
         <% if !link.hide_for_lg_screens { %>
         <li class="menu-item leftnav-collapse-affect expanded <% if link.disabled { %>disabled<% } %>" >
             <a
-            data-left-nav-menu-target="<%- link.name.to_lowercase() %>"
+            data-left-nav-menu-target="link"
             class="d-flex align-items-center justify-content-start gap-2 <% if link.disabled  { %> disabled <% } %> <% if link.active { %> active <% } %>"
             href="<%= link.href %>"
             >

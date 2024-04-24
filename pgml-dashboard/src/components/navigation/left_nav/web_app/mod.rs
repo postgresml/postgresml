@@ -8,6 +8,7 @@ pub struct WebApp {
     pub upper_nav: StaticNav,
     pub lower_nav: StaticNav,
     pub dropdown_nav: StaticNav,
+    pub id: Option<String>,
 }
 
 impl WebApp {
@@ -16,7 +17,13 @@ impl WebApp {
             upper_nav,
             lower_nav,
             dropdown_nav,
+            id: None
         }
+    }
+
+    pub fn id(mut self, id: &str) -> WebApp {
+        self.id = Some(id.to_string());
+        self
     }
 }
 

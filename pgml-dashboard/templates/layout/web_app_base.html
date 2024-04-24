@@ -27,7 +27,7 @@
                     <%+ WebAppNavbar::new(left_nav_links, account_management_nav) %>
 
                     <div class="d-flex">
-                        <%+ WebAppLeftNav::new( upper_left_nav, lower_left_nav, dropdown_nav ) %>
+                        <%+ WebAppLeftNav::new( upper_left_nav.clone(), lower_left_nav, dropdown_nav ).id(&upper_left_nav.unique_id()) %>
     
                         <div class="clear-from-under-navbar flex-grow-1 min-vw-0">
                             <div class="px-4 px-sm-5 py-3" style="position: absolute">

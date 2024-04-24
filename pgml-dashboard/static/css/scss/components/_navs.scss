@@ -184,7 +184,7 @@
         }
     }
     
-    &:active, &:focus, &:target, .active {
+    &:active:not(.disabled), &:focus:not(.disabled), &:target:not(.disabled), .active:not(.disabled) {
         background-color: #{$neon-tint-100};
         color: #{$gray-100};
         border-radius: calc($border-radius / 2);
