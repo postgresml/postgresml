@@ -7,14 +7,13 @@ use std::{
 use syn::{visit::Visit, DeriveInput, ItemImpl, Type};
 
 use crate::{
-    common::{AttributeArgs, GetImplMethod},
+    common::{AttributeArgs, GetImplMethod, SupportedLanguage},
     types::{OutputType, SupportedType},
 };
 
 pub fn generate_c_alias(parsed: DeriveInput) -> proc_macro::TokenStream {
     let name_ident = format_ident!("{}C", parsed.ident);
     let wrapped_type_ident = parsed.ident;
-    let wrapped_type_name = wrapped_type_ident.to_string();
 
     let expanded = quote! {
         #[repr(C)]
@@ -31,6 +30,15 @@ pub fn generate_c_alias(parsed: DeriveInput) -> proc_macro::TokenStream {
                         wrapped: Box::into_raw(Box::new(self))
                     }
                 ))
+            }
+        }
+
+        #[cfg(feature = "c")]
+        unsafe impl rust_bridge::c::CustomInto<#wrapped_type_ident> for *mut #name_ident {
+            unsafe fn custom_into(self) -> #wrapped_type_ident {
+                let c = Box::leak(Box::from_raw(self));
+                let s = Box::leak(Box::from_raw(c.wrapped));
+                s.clone()
             }
         }
 
@@ -71,7 +79,7 @@ pub fn generate_c_methods(
         match &item {
             syn::ImplItem::Fn(f) => {
                 let method_name = f.sig.ident.to_string();
-                if !attribute_args.args.contains(&method_name) {
+                if !attribute_args.should_alias_method(&method_name, SupportedLanguage::C) {
                     continue;
                 }
             }
@@ -164,6 +172,8 @@ pub fn generate_c_methods(
             }
         };
 
+        eprintln!("\n\n{}\n\n", method);
+
         methods.push(method);
     }
 
@@ -189,22 +199,35 @@ fn get_method_arguments(
     let mut c_argument_prep = Vec::new();
     let mut rust_function_arguments = Vec::new();
 
-    if let Some(_receiver) = &method.receiver {
+    if let Some(receiver) = &method.receiver {
         c_function_arguments.push(format!("s: *mut {name_ident}"));
-        c_argument_prep.push(format!(
-            "let s: &mut {wrapped_type_ident} = s.custom_into();"
-        ));
+        if receiver.to_string().contains('&') {
+            c_argument_prep.push(format!(
+                "let s: &mut {wrapped_type_ident} = s.custom_into();"
+            ));
+        } else {
+            c_argument_prep.push(format!("let s: {wrapped_type_ident} = s.custom_into();"));
+        }
         rust_function_arguments.push("s".to_string());
     }
 
     for (argument_name, argument_type) in &method.method_arguments {
+        let argument_name_without_mut = argument_name.replacen("mut", "", 1);
         let (
             go_function_arguments_,
             go_arguments_prep_,
             c_function_arguments_,
+            c_function_argument_types,
             c_argument_prep_,
             rust_function_arguments_,
-        ) = get_c_types(argument_name, argument_type);
+        ) = get_c_types(&argument_name_without_mut, argument_type);
+
+        let c_function_arguments_ = c_function_arguments_
+            .into_iter()
+            .zip(c_function_argument_types)
+            .map(|(argument_name, argument_type)| format!("{argument_name}: {argument_type}"))
+            .collect::<Vec<String>>()
+            .join(",");
 
         go_function_arguments.push(go_function_arguments_);
         go_arguments_prep.push(go_arguments_prep_);
@@ -233,7 +256,7 @@ fn get_method_arguments(
 fn get_c_types(
     argument_name: &str,
     ty: &SupportedType,
-) -> (String, String, String, String, String) {
+) -> (String, String, Vec<String>, Vec<String>, String, String) {
     let t = ty.to_language_string(&None);
     let c_to_rust = format!("let {argument_name}: {t} = {argument_name}.custom_into();");
     match ty {
@@ -242,6 +265,7 @@ fn get_c_types(
                 go_function_arguments,
                 go_argument_prep,
                 c_function_arguments,
+                c_function_argument_types,
                 c_argument_prep,
                 rust_function_arguments,
             ) = get_c_types(argument_name, &r.ty);
@@ -249,6 +273,7 @@ fn get_c_types(
                 "".to_string(),
                 "".to_string(),
                 c_function_arguments,
+                c_function_argument_types,
                 c_to_rust,
                 argument_name.to_string(),
             )
@@ -256,7 +281,8 @@ fn get_c_types(
         SupportedType::str | SupportedType::String => (
             "".to_string(),
             "".to_string(),
-            format!("{argument_name}: *mut std::ffi::c_char"),
+            vec![format!("{argument_name}")],
+            vec!["*mut std::ffi::c_char".to_string()],
             c_to_rust,
             argument_name.to_string(),
         ),
@@ -265,14 +291,21 @@ fn get_c_types(
                 go_function_arguments,
                 go_argument_prep,
                 mut c_function_arguments,
+                mut c_function_argument_types,
                 c_argument_prep,
                 rust_function_arguments,
             ) = get_c_types(argument_name, &r);
+
+            let v = c_function_argument_types.last_mut().unwrap();
+            if !v.starts_with('*') {
+                *v = format!("*mut {v}");
+            }
 
             (
                 "".to_string(),
                 "".to_string(),
                 c_function_arguments,
+                c_function_argument_types,
                 c_to_rust,
                 argument_name.to_string(),
             )
@@ -280,7 +313,8 @@ fn get_c_types(
         SupportedType::bool => (
             "".to_string(),
             "".to_string(),
-            "bool".to_string(),
+            vec![format!("{argument_name}")],
+            vec!["bool".to_string()],
             "".to_string(),
             argument_name.to_string(),
         ),
@@ -289,12 +323,15 @@ fn get_c_types(
                 go_function_arguments,
                 go_argument_prep,
                 mut c_function_arguments,
+                mut c_function_argument_types,
                 mut c_argument_prep,
                 rust_function_arguments,
             ) = get_c_types(argument_name, v);
 
-            let mut c_function_arguments = c_function_arguments.replacen("*mut", "*mut *mut", 1);
-            c_function_arguments.push_str(", v_size: std::ffi::c_ulong");
+            let v = c_function_argument_types.last_mut().unwrap();
+            *v = v.replacen("*mut", "*mut *mut", 1);
+            c_function_arguments.push("v_size".to_string());
+            c_function_argument_types.push("std::ffi::c_ulong".to_string());
             c_argument_prep = "let v_size: usize = v_size as usize;".to_string();
             let c_to_rust =
                 format!("{c_argument_prep}\nlet {argument_name}: {t} = {argument_name}.custom_into_vec(v_size);");
@@ -303,6 +340,7 @@ fn get_c_types(
                 "".to_string(),
                 "".to_string(),
                 c_function_arguments,
+                c_function_argument_types,
                 c_to_rust,
                 argument_name.to_string(),
             )
@@ -313,74 +351,46 @@ fn get_c_types(
         SupportedType::i64 => (
             "".to_string(),
             "".to_string(),
-            format!("{argument_name}: std::ffi::c_longlong"),
+            vec![format!("{argument_name}")],
+            vec!["std::ffi::c_long".to_string()],
             format!("let {argument_name}: {t} = {argument_name} as {t};"),
             argument_name.to_string(),
         ),
         SupportedType::u64 => (
             "".to_string(),
             "".to_string(),
-            format!("{argument_name}: std::ffi::c_ulonglong"),
+            vec![format!("{argument_name}")],
+            vec!["std::ffi::c_ulong".to_string()],
             format!("let {argument_name}: {t} = {argument_name} as {t};"),
             argument_name.to_string(),
         ),
         SupportedType::i32 => (
             "".to_string(),
             "".to_string(),
-            format!("{argument_name}: std::ffi::c_long"),
+            vec![format!("{argument_name}")],
+            vec!["std::ffi::c_int".to_string()],
             format!("let {argument_name}: {t} = {argument_name} as {t};"),
             argument_name.to_string(),
         ),
         SupportedType::f64 => (
             "".to_string(),
             "".to_string(),
-            format!("{argument_name}: std::ffi::c_double"),
+            vec![format!("{argument_name}")],
+            vec!["std::ffi::c_double".to_string()],
             format!("let {argument_name}: {t} = {argument_name} as {t};"),
             argument_name.to_string(),
         ),
         SupportedType::CustomType(s) => (
             "".to_string(),
             "".to_string(),
-            format!("{argument_name}: *mut {s}C"),
+            vec![format!("{argument_name}")],
+            vec![format!("*mut {s}C")],
             c_to_rust,
             argument_name.to_string(),
         ),
         _ => todo!(),
     }
 }
-
-// fn get_c_types(argument_name: &str, ty: &SupportedType) -> (String, Option<String>) {
-//     match ty {
-//         SupportedType::Reference(r) => get_c_types(&r.ty),
-//         SupportedType::str | SupportedType::String => ("*mut std::ffi::c_char".to_string(), None),
-//         SupportedType::bool => ("bool".to_string(), None),
-//         SupportedType::Vec(v) => {
-//             let mut v = get_c_types(v);
-//             if !v.0.contains('*') {
-//                 v.0 = format!("*mut {}", v.0);
-//             }
-//             if v.1.is_some() {
-//                 panic!("Vec<Vec<_>> not supported in c");
-//             }
-//             (v.0, Some("std::ffi::c_ulong".to_string()))
-//         }
-//         SupportedType::HashMap(_) => panic!("HashMap arguments not supported in c"),
-//         SupportedType::Option(r) => {
-//             let mut t = get_c_types(r);
-//             if !t.0.contains('*') {
-//                 t.0 = format!("*mut {}", t.0);
-//             }
-//             t
-//         }
-//         SupportedType::Tuple(_) => panic!("Tuple arguments not supported in c"),
-//         SupportedType::S => unreachable!(),
-//         SupportedType::i64 => ("std::ffi::c_longlong".to_string(), None),
-//         SupportedType::u64 => ("std::ffi::c_ulonglong".to_string(), None),
-//         SupportedType::i32 => ("std::ffi::c_long".to_string(), None),
-//         SupportedType::f64 => ("std::ffi::c_double".to_string(), None),
-//         SupportedType::CustomType(s) => (format!("*mut {s}"), None),
-//     }
-// }
 
 fn rust_type_to_c_type(
     wrapped_type_ident: &Ident,

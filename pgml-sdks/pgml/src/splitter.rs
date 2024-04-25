@@ -11,6 +11,9 @@ use crate::{
 #[cfg(feature = "python")]
 use crate::types::JsonPython;
 
+#[cfg(feature = "c")]
+use crate::languages::c::JsonC;
+
 #[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub(crate) struct SplitterDatabaseData {
@@ -19,8 +22,7 @@ pub(crate) struct SplitterDatabaseData {
 }
 
 /// A text splitter
-// #[derive(alias, Debug, Clone)]
-#[derive(Debug, Clone)]
+#[derive(alias, Debug, Clone)]
 pub struct Splitter {
     pub(crate) name: String,
     pub(crate) parameters: Json,
@@ -33,7 +35,7 @@ impl Default for Splitter {
     }
 }
 
-// #[alias_methods(new)]
+#[alias_methods(new)]
 impl Splitter {
     /// Creates a new [Splitter]
     ///

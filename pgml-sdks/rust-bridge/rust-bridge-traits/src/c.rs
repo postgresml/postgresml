@@ -9,7 +9,6 @@ pub unsafe trait CustomIntoVec<T> {
     unsafe fn custom_into_vec(self, size: usize) -> Vec<T>;
 }
 
-// unsafe impl<T1, T2: CustomInto<T1>> CustomIntoVec<T1> for *mut T2 {
 unsafe impl<T1, T2> CustomIntoVec<T1> for *mut *mut T2
 where
     *mut T2: CustomInto<T1>,
@@ -40,6 +39,18 @@ unsafe impl CustomInto<String> for *mut std::ffi::c_char {
 unsafe impl CustomInto<*mut std::ffi::c_char> for String {
     unsafe fn custom_into(self) -> *mut std::ffi::c_char {
         std::ffi::CString::new(self).unwrap().into_raw()
+    }
+}
+
+unsafe impl CustomInto<i32> for *mut std::ffi::c_int {
+    unsafe fn custom_into(self) -> i32 {
+        *self
+    }
+}
+
+unsafe impl CustomInto<f64> for *mut std::ffi::c_double {
+    unsafe fn custom_into(self) -> f64 {
+        *self
     }
 }
 

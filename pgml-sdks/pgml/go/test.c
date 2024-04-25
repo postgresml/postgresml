@@ -33,5 +33,13 @@ int main() {
     printf("Result %u -> %s\n", i, results[i]);
   }
 
+  // Test the TransformerPipeline
+  TransformerPipelineC * t_pipeline = TransformerPipelineC_new("text-generation", "TheBloke/zephyr-7B-beta-GPTQ", "{\"revision\": \"main\"}", "postgres://pg:ml@sql.cloud.postgresml.org:38042/pgml");
+  GeneralJsonAsyncIteratorC * t_pipeline_iter = TransformerPipelineC_transform_stream(t_pipeline, "\"AI is going to\"", "{\"max_new_tokens\": 100}", NULL);
+  while (!GeneralJsonAsyncIteratorC_done(t_pipeline_iter)) {
+    char * res = GeneralJsonAsyncIteratorC_next(t_pipeline_iter);
+    printf("Token -> %s\n", res);
+  }
+
   return 0;
 }

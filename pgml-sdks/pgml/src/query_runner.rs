@@ -8,6 +8,9 @@ use crate::{get_or_initialize_pool, types::Json};
 #[cfg(feature = "python")]
 use crate::types::JsonPython;
 
+#[cfg(feature = "c")]
+use crate::languages::c::JsonC;
+
 #[derive(Clone, Debug)]
 enum BindValue {
     String(String),
@@ -17,23 +20,22 @@ enum BindValue {
     Json(Json),
 }
 
-// #[derive(alias, Clone, Debug)]
-#[derive(Clone, Debug)]
+#[derive(alias, Clone, Debug)]
 pub struct QueryRunner {
     query: String,
     bind_values: Vec<BindValue>,
     database_url: Option<String>,
 }
 
-// #[alias_methods(
-//     fetch_all,
-//     execute,
-//     bind_string,
-//     bind_int,
-//     bind_float,
-//     bind_bool,
-//     bind_json
-// )]
+#[alias_methods(
+    fetch_all,
+    execute,
+    bind_string,
+    bind_int,
+    bind_float,
+    bind_bool,
+    bind_json
+)]
 impl QueryRunner {
     pub fn new(query: &str, database_url: Option<String>) -> Self {
         Self {

@@ -3,7 +3,7 @@ use std::fs::OpenOptions;
 use std::io::{Read, Write};
 use syn::{visit::Visit, DeriveInput, ItemImpl, Type};
 
-use crate::common::{AttributeArgs, GetImplMethod};
+use crate::common::{AttributeArgs, GetImplMethod, SupportedLanguage};
 use crate::types::{OutputType, SupportedType};
 
 pub fn generate_javascript_alias(parsed: DeriveInput) -> proc_macro::TokenStream {
@@ -112,7 +112,8 @@ pub fn generate_javascript_methods(
         match &item {
             syn::ImplItem::Fn(f) => {
                 let method_name = f.sig.ident.to_string();
-                if !attribute_args.args.contains(&method_name) {
+                if !attribute_args.should_alias_method(&method_name, SupportedLanguage::JavaScript)
+                {
                     continue;
                 }
             }

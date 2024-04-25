@@ -4,8 +4,7 @@ use sqlx::Row;
 use tracing::instrument;
 
 /// Provides access to builtin database methods
-// #[derive(alias, Debug, Clone)]
-#[derive(Debug, Clone)]
+#[derive(alias, Debug, Clone)]
 pub struct TransformerPipeline {
     task: Json,
     database_url: Option<String>,
@@ -17,7 +16,10 @@ use crate::{get_or_initialize_pool, types::Json};
 #[cfg(feature = "python")]
 use crate::types::{GeneralJsonAsyncIteratorPython, JsonPython};
 
-// #[alias_methods(new, transform, transform_stream)]
+#[cfg(feature = "c")]
+use crate::{languages::c::GeneralJsonAsyncIteratorC, languages::c::JsonC};
+
+#[alias_methods(new, transform, transform_stream)]
 impl TransformerPipeline {
     /// Creates a new [TransformerPipeline]
     ///

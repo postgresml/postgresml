@@ -3,8 +3,7 @@ use sqlx::Row;
 use tracing::instrument;
 
 /// Provides access to builtin database methods
-// #[derive(alias, Debug, Clone)]
-#[derive(Debug, Clone)]
+#[derive(alias, Debug, Clone)]
 pub struct Builtins {
     database_url: Option<String>,
 }
@@ -14,7 +13,10 @@ use crate::{get_or_initialize_pool, query_runner::QueryRunner, types::Json};
 #[cfg(feature = "python")]
 use crate::{query_runner::QueryRunnerPython, types::JsonPython};
 
-// #[alias_methods(new, query, transform)]
+#[cfg(feature = "c")]
+use crate::{languages::c::JsonC, query_runner::QueryRunnerC};
+
+#[alias_methods(new, query, transform)]
 impl Builtins {
     pub fn new(database_url: Option<String>) -> Self {
         Self { database_url }

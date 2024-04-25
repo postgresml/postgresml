@@ -11,6 +11,9 @@ use crate::{
 #[cfg(feature = "python")]
 use crate::types::JsonPython;
 
+#[cfg(feature = "c")]
+use crate::languages::c::JsonC;
+
 /// A few notes on the following enums:
 /// - Sqlx does provide type derivation for enums, but it's not very good
 /// - Queries using these enums require a number of additional queries to get their oids and
@@ -52,8 +55,7 @@ pub(crate) struct ModelDatabaseData {
 }
 
 /// A model used for embedding, inference, etc...
-// #[derive(alias, Debug, Clone)]
-#[derive(Debug, Clone)]
+#[derive(alias, Debug, Clone)]
 pub struct Model {
     pub(crate) name: String,
     pub(crate) runtime: ModelRuntime,
@@ -67,7 +69,7 @@ impl Default for Model {
     }
 }
 
-// #[alias_methods(new, transform)]
+#[alias_methods(new, transform)]
 impl Model {
     /// Creates a new [Model]
     pub fn new(name: Option<String>, source: Option<String>, parameters: Option<Json>) -> Self {

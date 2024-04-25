@@ -1,29 +1,130 @@
-use proc_macro2::Ident;
+use proc_macro2::{Group, Ident};
 use quote::{format_ident, ToTokens};
 use syn::{
-    parse::Parser,
+    parenthesized,
+    parse::{Parse, Parser},
     punctuated::Punctuated,
+    token,
     visit::{self, Visit},
-    ImplItemFn, ReturnType, Token, Visibility,
+    Expr, ExprAssign, ImplItemFn, Lit, ReturnType, Token, Visibility,
 };
 
 use crate::types::{GetOutputType, GetSupportedType, OutputType, SupportedType};
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum SupportedLanguage {
+    C,
+    Python,
+    JavaScript,
+}
+
+impl From<&str> for SupportedLanguage {
+    fn from(value: &str) -> Self {
+        match value {
+            "C" => SupportedLanguage::C,
+            "Python" => SupportedLanguage::Python,
+            "JavaScript" => SupportedLanguage::JavaScript,
+            _ => panic!("Cannot convert {value} to SupportedLanguage"),
+        }
+    }
+}
+
 pub struct AttributeArgs {
-    pub args: Vec<String>,
+    pub args: Vec<Item>,
+}
+
+#[derive(Debug, Clone)]
+struct Item {
+    method: String,
+    language_exceptions: Vec<SupportedLanguage>,
+}
+
+#[derive(Debug)]
+enum AdditionalAttribute {
+    Skip(SupportedLanguage),
+}
+
+impl From<&ExprAssign> for AdditionalAttribute {
+    fn from(value: &ExprAssign) -> Self {
+        let a_ty = match &*value.left {
+            Expr::Path(p) => p.into_token_stream().to_string(),
+            _ => panic!(
+                r#"Getting left value - Expected additional attributes to look something like: #[alias_methods(new(skip = "c"))]"#
+            ),
+        };
+        match a_ty.as_str() {
+            "skip" => {
+                let skip_method = match &*value.right {
+                    Expr::Lit(l) => match &l.lit {
+                        Lit::Str(l) => l.value().as_str().into(),
+                        _ => {
+                            panic!(
+                                r#"Getting Lit value - Expected additional attributes to look something like: #[alias_methods(new(skip = "c"))]"#
+                            )
+                        }
+                    },
+                    _ => panic!(
+                        r#"Getting Lit - Expected additional attributes to look something like: #[alias_methods(new(skip = "c"))]"#
+                    ),
+                };
+                AdditionalAttribute::Skip(skip_method)
+            }
+            _ => panic!("Currently only skip additional attributes are supported"),
+        }
+    }
+}
+
+impl Parse for Item {
+    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        let method: Ident = input.parse()?;
+        let lookahead = input.lookahead1();
+        if !lookahead.peek(token::Paren) {
+            Ok(Self {
+                method: method.to_string(),
+                language_exceptions: Vec::new(),
+            })
+        } else {
+            let group: Group = input.parse()?;
+            let group_parser = Punctuated::<ExprAssign, Token![,]>::parse_terminated;
+            let parsed_group = group_parser
+                .parse(group.stream().into())
+                .expect("Error parsing attributes for custom_methods macro");
+            let a_atts: Vec<AdditionalAttribute> = parsed_group
+                .into_pairs()
+                .map(|p| p.value().into())
+                .collect();
+            // Update this part as needed
+            let mut language_exceptions = Vec::new();
+            for att in a_atts {
+                match att {
+                    AdditionalAttribute::Skip(a) => language_exceptions.push(a),
+                }
+            }
+            Ok(Self {
+                method: method.to_string(),
+                language_exceptions,
+            })
+        }
+    }
 }
 
 impl AttributeArgs {
     pub fn new(attributes: proc_macro::TokenStream) -> Self {
-        let attribute_parser = Punctuated::<Ident, Token![,]>::parse_terminated;
+        let attribute_parser = Punctuated::<Item, Token![,]>::parse_terminated;
         let parsed_attributes = attribute_parser
             .parse(attributes)
             .expect("Error parsing attributes for custom_methods macro");
-        let args: Vec<String> = parsed_attributes
+        let args: Vec<Item> = parsed_attributes
             .into_pairs()
-            .map(|p| p.value().to_string())
+            .map(|p| p.value().clone())
             .collect();
         Self { args }
+    }
+
+    pub fn should_alias_method(&self, method_name: &str, language: SupportedLanguage) -> bool {
+        self.args
+            .iter()
+            .any(|item| item.method == method_name && !item.language_exceptions.contains(&language))
     }
 }
 
