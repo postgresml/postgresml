@@ -3,7 +3,7 @@
 ## Introduction
 
 * [Overview](README.md)
-* [Getting Started](introduction/getting-started/README.md)
+* [Getting started](introduction/getting-started/README.md)
   * [Create your database](introduction/getting-started/create-your-database.md)
   * [Connect your app](introduction/getting-started/connect-your-app.md)
 * [Import your data](introduction/getting-started/import-your-data/README.md)
@@ -52,12 +52,12 @@
 
 ## Product
 
-* [Cloud Database](product/cloud-database/README.md)
+* [Cloud database](product/cloud-database/README.md)
   * [Serverless](product/cloud-database/serverless.md)
   * [Dedicated](product/cloud-database/dedicated.md)
   * [Enterprise](product/cloud-database/plans.md)
-* [Vector Database](product/vector-database.md)
-* [PgCat Proxy](product/pgcat/README.md)
+* [Vector database](product/vector-database.md)
+* [PgCat pooler](product/pgcat/README.md)
   * [Features](product/pgcat/features.md)
   * [Installation](product/pgcat/installation.md)
   * [Configuration](product/pgcat/configuration.md)
