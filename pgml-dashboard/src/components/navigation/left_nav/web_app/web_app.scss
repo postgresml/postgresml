@@ -1,5 +1,5 @@
 .leftnav-container {
-    position: sticky; 
+    position: fixed; 
     top: $navbar-height; 
     height: calc( 100vh - $navbar-height );
     background-color: var(--webapp-nav-bg);
@@ -7,6 +7,7 @@
     max-width: $left-nav-w;
     padding-top: 0px;
     z-index: $zindex-fixed;
+    box-shadow: 4px 0px 4px 0px rgba(0, 0, 0, 0.30);
 
     @include media-breakpoint-down(lg) {
         display: none;
@@ -16,6 +17,7 @@
 .leftnav {
     @extend .navbar;
     max-width: 260px;
+    min-width: $left-nav-w-collapsed;
 
     border: none;
     align-items: start;
@@ -91,5 +93,11 @@ div[data-controller="navigation-left-nav-web-app"] {
     to {
         margin-left: calc($left-nav-w - 9rem);
         margin-right: 0px;
+    }
+}
+
+.menu-item {
+    button, a {
+        padding: 8px 24px 8px 12px;
     }
 }
