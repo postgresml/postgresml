@@ -6,17 +6,17 @@ description: The key concepts that make up PostgresML.
 
 PostgresML is a complete MLOps platform built on PostgreSQL. Our operating principle is:
 
-> _Move the models to the database, rather than constantly moving the data to the models._
+> _Move models to the database, rather than constantly moving data to the models._
 
-The data for ML & AI systems is inherently larger and more dynamic than the models. It's more efficient, manageable and reliable to move the models to the database, rather than continuously moving data to the models.
+Data for ML & AI systems is inherently larger and more dynamic than the models. It's more efficient, manageable and reliable to move models to the database, rather than continuously moving data to the models.
 
 ## AI engine
 
 PostgresML allows you to take advantage of the fundamental relationship between data and models, by extending the database with the following capabilities:
 
 * **Model Serving** - GPU accelerated inference engine for interactive applications, with no additional networking latency or reliability costs
-* **Model Store** - Access to open-source models including state of the art LLMs from HuggingFace, and track changes in performance between versions
-* **Model Training** - Train models with your application data using more than 50 algorithms for regression, classification or clustering tasks; fine tune pre-trained models like LLaMA and BERT to improve performance
+* **Model Store** - Access to open-source models including state of the art LLMs from Hugging Face, and track changes in performance between versions
+* **Model Training** - Train models with your application data using more than 50 algorithms for regression, classification or clustering tasks; fine tune pre-trained models like Llama and BERT to improve performance
 * **Feature Store** - Scalable access to model inputs, including vector, text, categorical, and numeric data: vector database, text search, knowledge graph and application data all in one low-latency system
 
 <figure><img src=".gitbook/assets/ml_system.svg" alt="Machine Learning Infrastructure (2.0) by a16z"><figcaption class="mt-2"><p>PostgresML handles all of the functions <a href="https://a16z.com/emerging-architectures-for-modern-data-infrastructure/">described by a16z</a></p></figcaption></figure>
@@ -34,14 +34,14 @@ The PostgresML team also provides [native language SDKs](https://github.com/post
 
 While using the SDK is completely optional, SDK clients can perform advanced machine learning tasks in a single SQL request, without having to transfer additional data, models, hardware or dependencies to the client application.
 
-Use cases include:
+Some of the use cases include:
 
 * Chat with streaming responses from state-of-the-art open source LLMs
 * Semantic search with keywords and embeddings
 * RAG in a single request without using any third-party services
 * Text translation between hundreds of languages
 * Text summarization to distill complex documents
-* Forecasting timeseries data for key metrics with and metadata
+* Forecasting time series data for key metrics with and metadata
 * Anomaly detection using application data
 
 ## Our mission
