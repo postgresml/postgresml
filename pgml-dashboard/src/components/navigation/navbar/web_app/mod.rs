@@ -9,14 +9,16 @@ pub struct WebApp {
     pub standalone_dashboard: bool,
     pub links: Vec<StaticNavLink>,
     pub account_management_nav: StaticNav,
+    pub deployment_controls: StaticNav,
 }
 
 impl WebApp {
-    pub fn new(links: Vec<StaticNavLink>, account_management_nav: StaticNav) -> WebApp {
+    pub fn new(links: Vec<StaticNavLink>, deployment_controls: StaticNav) -> WebApp {
         WebApp {
             standalone_dashboard: config::standalone_dashboard(),
             links,
-            account_management_nav,
+            account_management_nav: StaticNav::default(),
+            deployment_controls,
         }
     }
 }

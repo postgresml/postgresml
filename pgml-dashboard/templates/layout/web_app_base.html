@@ -24,7 +24,7 @@
         <main>
             <div class="container-fluid p-0 min-vh-lg-100">
                 <div class="row gx-0 min-vh-lg-100 gy-0">
-                    <%+ WebAppNavbar::new(left_nav_links, account_management_nav) %>
+                    <%+ WebAppNavbar::new(left_nav_links, dropdown_nav.clone()) %>
 
                     <div class="d-flex">
                         <%+ WebAppLeftNav::new( upper_left_nav.clone(), lower_left_nav, dropdown_nav ).id(&upper_left_nav.unique_id()) %>

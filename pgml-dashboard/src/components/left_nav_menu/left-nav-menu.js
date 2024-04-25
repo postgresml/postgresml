@@ -17,16 +17,16 @@ export default class extends Controller {
     document.addEventListener("turbo:load", this.callback);
   }
 
+  // Find link element in the left nav that matches the current window 
+  // location and set to active
   setLeftNavToLocation() {
     this.removeAllActive();
 
-    let tag = "a[href='" + window.location.pathname + "']";
-    console.log("tag: " + tag)
-    let elements = this.element.querySelectorAll(tag);
+    let tag = "a[href='" + window.location.pathname + window.location.search + "']";
+    let element = this.element.querySelector(tag);
     
-    if (elements.length > 0) {
-      console.log("found element " + elements[0].href)
-      elements[0].classList.add("active");
+    if (element) {
+      element.classList.add("active");
     }
   }
 
@@ -37,6 +37,7 @@ export default class extends Controller {
     }
   }
 
+  // Remove event listener when controller is disconnected
   disconnect() {
     document.removeEventListener("turbo:load", this.callback);
   }

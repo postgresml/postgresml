@@ -45,4 +45,24 @@
             }
         }
     }
+
+    .deployment_controls {
+        min-width: 300px;
+    }
+
+    .sub-menu-dropdown {
+        background-color: #{$gray-800};
+    }
+
+    .top-nav-controls {
+        &:not(.collapsed) {
+            .mobile-left-nav-controls {
+                background-color: #{$neon-tint-100};
+            }
+        }
+
+        .mobile-left-nav-controls {
+            background-color: #{$gray-700};
+        }
+    }
 }
