@@ -162,7 +162,7 @@
     font-weight: 400;
 
     .material-symbols-outlined {
-        color: #{$neon-shade-300};
+        color: #{$slate-shade-300};
     }
 
     button, a {
@@ -180,7 +180,7 @@
             @include semibold_by_shadow($gray-100)
         }
         span.material-symbols-outlined {
-            @include bold_by_shadow($neon-shade-300)
+            @include bold_by_shadow($slate-shade-300)
         }
     }
     
