@@ -48,10 +48,12 @@ In-database machine learning represents a strategic shift to leverage data more 
 
 ## How PostgresML fits in
 We built PostgresML after a series of hard lessons learned building (and re-building) and then scaling the machine learning platform at Instacart during one of the companies’ highest-ever growth periods. At the end of the day, nothing worked better than building it all on a trusted, 35-year-old RDBMS. That’s why I’m confident that in-database machine learning is the future of real-world AI applications.
+
 PostgresML brings AI & ML capabilities directly into a PostgreSQL database. It allows users to train, deploy, and predict using models inside the database. It’s all the benefits of in-database machine learning, packaged in a few easy to access ways. You can use our open-source extension or our hosted cloud. You can get started quickly with SDKs in Python and JavaScript, or you can get complete AI & ML capabilities with just a few SQL calls. That means generating embeddings, performing vector operations, using transformers for NLP – all directly where your data resides.   Real-world applications range from predicting customer behaviors to automating financial forecasts.
 
-<figure><img src=".gitbook/assets/machine-learning-platform.png"><figcaption>Original diagram credit to a16z.com</figcaption></figure>
+<figure><img src=".gitbook/assets/landscape.png"></figure>
 
 ## Conclusion
 The practical benefits of in-database machine learning are many, and we built PostgresML to deliver those benefits in the simplest way. By running LLMs and other predictive models inside the database, PostgresML enhances the agility and performance of software engineering teams. For developers, this means less context switching and greater ease of use, as they can manage data and model training in the environment they are already familiar with. Users benefit from reduced latency and improved accuracy in their predictive models. Organizations benefit from more performant applications, but also from the flexibility of a platform that can be easily updated with the latest models once a week rather than once a year.
+
 Feel free to give PostgresML a try and let us know what you think. We’re open source, and welcome contributions from the community, especially when it comes to the rapidly evolving ML/AI landscape.
