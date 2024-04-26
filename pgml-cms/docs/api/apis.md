@@ -1,28 +1,47 @@
-# Overview
+---
+description: Overview of the PostgresML SQL API and SDK.
+---
 
-## Introduction
+# API overview
 
-PostgresML adds extensions to the PostgreSQL database, as well as providing separate Client SDKs in JavaScript and Python that leverage the database to implement common ML & AI use cases.
+PostgresML is a PostgreSQL extension which adds SQL functions to the database where it's installed. The functions work with modern machine learning algorithms and latest open source LLMs while maintaining a stable API signature. They can be used by any application that connects to the database.
 
-The extensions provide all of the ML & AI functionality via SQL APIs, like training and inference. They are designed to be used directly for all ML practitioners who implement dozens of different use cases on their own machine learning models.
+In addition to the SQL API, we built and maintain a client SDK for JavaScript, Python and Rust. The SDK uses the same extension functionality to implement common ML & AI use cases, like retrieval-augmented generation (RAG), chatbots, and semantic & hybrid search engines.
 
-We also provide Client SDKs that implement the best practices on top of the SQL APIs, to ease adoption and implement common application use cases in applications, like chatbots or search engines.
+Using the SDK is optional, and you can implement the same functionality with standard SQL queries. If you feel more comfortable using a programming language, the SDK can help you to get started quickly.
 
-## SQL Extension
+## [SQL extension](sql-extension/)
 
-PostgreSQL is designed to be _**extensible**_. This has created a rich open-source ecosystem of additional functionality built around the core project. Some [extensions](https://www.postgresql.org/docs/current/contrib.html) are include in the base Postgres distribution, but others are also available via the [PostgreSQL Extension Network](https://pgxn.org/).\
-There are 2 foundational extensions included in a PostgresML deployment that provide functionality inside the database through SQL APIs.
+The PostgreSQL extension provides all of the ML & AI functionality, like training models and inference, via SQL functions. The functions are designed for ML practitioners to use dozens of ML algorithms to train models, and run real time inference, on live application data. Additionally, the extension provides access to the latest Hugging Face transformers for a wide range of NLP tasks.
 
-* **pgml** - provides Machine Learning and Artificial Intelligence APIs with access to more than 50 ML algorithms to train classification, clustering and regression models on your own data, or you can perform dozens of tasks with thousands of models downloaded from HuggingFace.
-* **pgvector** - provides indexing and search functionality on vectors, in addition to the traditional application database storage, including JSON and plain text, provided by PostgreSQL.
+### Functions 
 
-Learn more about developing with the [sql-extension](sql-extension/ "mention")
+The following functions are implemented and maintained by the PostgresML extension:
 
-## Client SDK
+| Function name    | Usage                                                                                                                                                                                        |
+|------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [pgml.embed()](sql-extension/pgml.embed)     | Generate embeddings inside the database using open source embedding models from Hugging Face.                                                                                                |
+| [pgml.transform()](sql-extension/pgml.transform/) | Download and run latest Hugging Face transformer models, like Llama, Mixtral, and many more to perform various NLP tasks like text generation, summarization, sentiment analysis and more. |
+| [pgml.train()](sql-extension/pgml.train/)     | Train a machine learning model on data from a Postgres table or view. Supports XGBoost, LightGBM, Catboost and all Scikit-learn algorithms.       |
+| [pgml.deploy()](sql-extension/pgml.deploy)    | Deploy a version of the model created with pgml.train(). |
+| [pgml.predict()](sql-extension/pgml.predict/) | Perform real time inference using a model trained with pgml.train() on live application data. |
+| [pgml.tune()](sql-extension/pgml.tune) | Run LoRA fine tuning on an open source model from Hugging Face using data from a Postgres table or view. |
 
-PostgresML provides a client SDK that streamlines ML & AI use cases in both JavaScript and Python. With this SDK, you can seamlessly manage various database tables related to documents, text chunks, text splitters, LLM (Language Model) models, and embeddings. By leveraging the SDK's capabilities, you can efficiently index LLM embeddings using pgvector with HNSW for fast and accurate queries.
+Together with standard database functionality provided PostgreSQL, these functions allow to create and manage the entire lifestyle of a machine learning application.
 
-The SDK delegates all work to the extension running in the database, which minimizes software and hardware dependencies that need to be maintained at the application layer, as well as securing data and models inside the data center. Our SDK minimizes data transfer to maximize performance, efficiency, security and reliability.
+## [Client SDK](client-sdk/)
 
-Learn more about developing with the [client-sdk](client-sdk/ "mention")
+The client SDK implements best practices and common use cases, using the PostgresML SQL functions and standard PostgreSQL features. The SDK core is written in Rust, which manages creating and running queries, connection pooling, and error handling.
 
+For each additional language we support (current JavaScript and Python), we create and publish language-native bindings. This architecture ensures all programming languages we support have identical APIs and similar performance when interacting with PostgresML.
+
+### Use cases
+
+The SDK currently implements the following use cases:
+
+| Use case | Description |
+|----------|---------|
+| [Collections](client-sdk/collections) | Manage documents, embeddings, full text and vector search indexes, and more, using one simple interface. |
+| [Pipelines](client-sdk/pipelines) | Easily build complex queries to interact with collections using a programmable interface. |
+| [Vector search](client-sdk/search) | Implement semantic search using in-database generated embeddings and ANN vector indexes. |
+| [Document search](client-sdk/document-search) | Implement hybrid full text search using in-database generated embeddings and PostgreSQL tsvector indexes. |

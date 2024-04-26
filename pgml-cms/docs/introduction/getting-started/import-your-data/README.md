@@ -1,3 +1,7 @@
+---
+description: Import your data into PostgresML using one of many supported methods.
+---
+
 # Import your data
 
 AI needs data, whether it's generating text with LLMs, creating embeddings, or training regression or classification models on customer data.
@@ -12,7 +16,7 @@ If your intention is to use PostgresML as your primary database, your job here i
 
 If your primary database is hosted elsewhere, for example AWS RDS, or Azure Postgres, you can get your data replicated to PostgresML in real time using logical replication. 
 
-<figure><img src="../../../.gitbook/assets/logical_replication_1.png" alt="Logical replication"><figcaption></figcaption></figure>
+<figure class="my-3 py-3"><img src="../../../.gitbook/assets/logical_replication_1.png" alt="Logical replication" width="80%"><figcaption></figcaption></figure>
 
 Having access to your data immediately is very useful to
 accelerate your machine learning use cases and removes the need for moving data multiple times between microservices. Latency-sensitive applications should consider using this approach.
@@ -21,7 +25,7 @@ accelerate your machine learning use cases and removes the need for moving data 
 
 Foreign data wrappers are a set of PostgreSQL extensions that allow making direct connections from inside the database directly to other databases, even if they aren't running on Postgres. For example, Postgres has foreign data wrappers for MySQL, S3, Snowflake and many others.
 
-<figure><img src="../../../.gitbook/assets/fdw_1.png" alt="Foreign data wrappers"><figcaption></figcaption></figure>
+<figure class="my-3 py-3"><img src="../../../.gitbook/assets/fdw_1.png" alt="Foreign data wrappers" width="80%"><figcaption></figcaption></figure>
 
 FDWs are useful when data access is infrequent and not latency-sensitive. For many use cases, like offline batch workloads and not very busy websites, this approach is suitable and easy to get started with.
 

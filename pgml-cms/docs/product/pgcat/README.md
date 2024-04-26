@@ -1,5 +1,5 @@
 ---
-description: Nextgen PostgreSQL Pooler
+description: PgCat, the PostgreSQL connection pooler and proxy with support for sharding, load balancing, failover, and many more features.
 ---
 
 # PgCat pooler

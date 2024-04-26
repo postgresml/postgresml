@@ -1,3 +1,7 @@
+---
+description: PgCat installation instructions from source, Aptitude repository and using Docker.
+---
+
 # PgCat installation
 
 If you're using our [cloud](https://postgresml.org/signup), you're already using PgCat. All databases are using the latest and greatest PgCat version, with automatic updates and monitoring. You can connect directly with your PostgreSQL client libraries and applications, and PgCat will take care of the rest.

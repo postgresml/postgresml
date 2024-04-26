@@ -517,7 +517,8 @@ pub fn get_toc<'a>(root: &'a AstNode<'a>) -> anyhow::Result<Vec<TocLink>> {
                 let text = if let NodeValue::Text(text) = &sibling.data.borrow().value {
                     Some(text.clone())
                 } else if let NodeValue::Link(_link) = &sibling.data.borrow().value {
-                    let text = sibling.children()
+                    let text = sibling
+                        .children()
                         .into_iter()
                         .map(|child| {
                             if let NodeValue::Text(text) = &child.data.borrow().value {
@@ -1378,6 +1379,10 @@ impl SiteSearch {
         let documents: Vec<Document> = documents
             .into_iter()
             .filter(|f| {
+                if f.ignore() {
+                    return false;
+                }
+
                 !EXCLUDED_DOCUMENT_PATHS
                     .iter()
                     .any(|p| f.path == config::cms_dir().join(p))

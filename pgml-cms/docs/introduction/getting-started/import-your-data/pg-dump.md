@@ -1,3 +1,7 @@
+---
+description: Migrate your PostgreSQL database to PostgresML using pg_dump.
+---
+
 # Migrate with pg_dump
 
 _pg_dump_ is a command-line PostgreSQL tool that can move data between PostgreSQL databases. If you're planning a migration from your database to PostgresML, _pg_dump_ is a good tool to get you going quickly.

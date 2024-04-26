@@ -1,3 +1,7 @@
+---
+description: PgCat features like sharding, load balancing and failover.
+---
+
 # PgCat features
 
 PgCat has many features currently in various stages of readiness and development. Most of its features are used in production and at scale.

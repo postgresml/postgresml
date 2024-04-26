@@ -41,7 +41,6 @@
     * [Zero-shot Classification](api/sql-extension/pgml.transform/zero-shot-classification.md)
   * [pgml.tune()](api/sql-extension/pgml.tune.md)
 * [Client SDK](api/client-sdk/README.md)
-  * [Overview](api/client-sdk/getting-started.md)
   * [Collections](api/client-sdk/collections.md)
   * [Pipelines](api/client-sdk/pipelines.md)
   * [Vector Search](api/client-sdk/search.md)
