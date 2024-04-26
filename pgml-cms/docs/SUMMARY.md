@@ -15,7 +15,7 @@
 ## API
 
 * [Overview](api/apis.md)
-* [SQL Extension](api/sql-extension/README.md)
+* [SQL extension](api/sql-extension/README.md)
   * [pgml.deploy()](api/sql-extension/pgml.deploy.md)
   * [pgml.embed()](api/sql-extension/pgml.embed.md)
   * [pgml.chunk()](api/sql-extension/pgml.chunk.md)
@@ -85,7 +85,7 @@
   * [Documents](resources/data-storage-and-retrieval/documents.md)
   * [Partitioning](resources/data-storage-and-retrieval/partitioning.md)
   * [LLM based pipelines with PostgresML and dbt (data build tool)](resources/data-storage-and-retrieval/llm-based-pipelines-with-postgresml-and-dbt-data-build-tool.md)
-* [Benchmarks](resources/benchmarks/README.md)
+* [Benchmarks](resources/benchmarks/postgresml-is-8-40x-faster-than-python-http-microservices.md)
   * [PostgresML is 8-40x faster than Python HTTP microservices](resources/benchmarks/postgresml-is-8-40x-faster-than-python-http-microservices.md)
   * [Scaling to 1 Million Requests per Second](resources/benchmarks/million-requests-per-second.md)
   * [MindsDB vs PostgresML](resources/benchmarks/mindsdb-vs-postgresml.md)
