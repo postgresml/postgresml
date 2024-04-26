@@ -158,7 +158,6 @@ LIMIT 1;
 
 {% tab title="BLAS" %}
 
-
 ```rust
 #[pg_extern(immutable, strict, parallel_safe)]
 fn dot_product_blas(vector: Vec<f32>, other: Vec<f32>) -> f32 {

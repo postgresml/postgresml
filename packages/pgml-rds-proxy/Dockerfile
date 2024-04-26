@@ -1,5 +1,5 @@
 FROM ubuntu:22.04
-ENV PGCAT_VERSION=2.0.0-alpha18
+ENV PGCAT_VERSION=2.0.0-alpha19
 RUN apt update && \
 	apt install -y curl postgresql-client-common postgresql-client-14 && \
 	apt clean
