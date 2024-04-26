@@ -12,7 +12,6 @@ Setting up & maintaining logical replication requires a few steps, but once you'
 
 First things first, make sure your primary database is configured to support logical replication. To do so, make sure the following settings are set:
 
-
 | Setting                 | Value          |
 |-------------------------|----------------|
 | `wal_level`             | `logical`      |
@@ -49,7 +48,6 @@ FOR TABLE your_list_of_tables;
 ```
 
 where `your_list_of_tables` are the tables you'd like to replicate. For example, if you have two tables, _users_ and _blog_posts_, you can create a publication for those two tables using this command:
-
 
 {% tabs %}
 {% tab title="SQL" %}

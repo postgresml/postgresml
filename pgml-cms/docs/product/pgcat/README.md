@@ -22,7 +22,6 @@ description: Nextgen PostgreSQL Pooler
 	</div>
 </div>
 
-
 PgCat, like PostgresML, is free and open source, distributed under the MIT license. It's currently running in our [cloud](https://postgresml.org/signup), powering both Serverless and Dedicated databases.
 
 ## [Features](features)

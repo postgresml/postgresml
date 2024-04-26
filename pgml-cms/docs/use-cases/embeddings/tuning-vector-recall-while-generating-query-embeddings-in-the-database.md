@@ -1,7 +1,6 @@
 # Tuning vector recall while generating query embeddings in the database
 
 
-
 PostgresML makes it easy to generate embeddings using open source models and perform complex queries with vector indexes unlike any other database. The full expressive power of SQL as a query language is available to seamlessly combine semantic, geospatial, and full text search, along with filtering, boosting, aggregation, and ML reranking in low latency use cases. You can do all of this faster, simpler and with higher quality compared to applications built on disjoint APIs like OpenAI + Pinecone. Prove the results in this series to your own satisfaction, for free, by signing up for a GPU accelerated database.
 
 ## Introduction
@@ -14,7 +13,6 @@ This article is the second in a multipart series that will show you how to build
 4. Optimizing semantic results with an XGBoost ranking model - coming soon!
 
 The previous article discussed how to generate embeddings that perform better than OpenAI's `text-embedding-ada-002` and save them in a table with a vector index. In this article, we'll show you how to query those embeddings effectively.
-
 
 
 _Embeddings show us the relationships between rows in the database, using natural language._

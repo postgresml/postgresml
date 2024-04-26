@@ -13,6 +13,4 @@ SELECT * FROM pgml.train_join(
 );
 ```
 
-
-
 You can read more in [scikit-learn](https://scikit-learn.org/stable/modules/classes.html#module-sklearn.multioutput) documentation.

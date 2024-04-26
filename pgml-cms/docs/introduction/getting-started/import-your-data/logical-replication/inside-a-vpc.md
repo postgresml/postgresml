@@ -5,7 +5,6 @@ and we also provide an nginx-based Docker image than can be used without any add
 
 <figure><img src="../../../../.gitbook/assets/vpc_1.png" alt=""><figcaption></figcaption></figure>
 
-
 ## PostgresML IPs by region
 
 | Region                  | List of IP addresses |

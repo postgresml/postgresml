@@ -41,14 +41,12 @@ ALTER TABLE
 {% endtab %}
 {% endtabs %}
 
-
 #### Generating embeddings
 
 At first, the column is empty. To generate embeddings, we can use the PostgresML [pgml.embed()](/docs/api/sql-extension/pgml.embed) function and generate an embedding of another column in the same (or different) table. This is where machine learning inside the database really shines:
 
 {% tabs %}
 {% tab title="SQL" %}
-
 
 ```sql
 UPDATE
@@ -61,7 +59,6 @@ SET embedding = pgml.embed(
 
 {% endtab %}
 {% tab title="Output" %}
-
 
 ```
 UPDATE 5000
@@ -133,7 +130,6 @@ LIMIT 3;
 {% endtab %}
 {% tab title="Output" %}
 
-
 ```
                 address                 
 ----------------------------------------
@@ -180,7 +176,6 @@ SELECT round(sqrt(5000000)) AS lists;
 
 {% endtab %}
 {% endtabs %}
-
 
 #### Creating an IVFFlat index
 
@@ -261,7 +256,6 @@ REINDEX
 {% endtab %}
 {% endtabs %}
 
-
 As of this writing, _pgvector_ doesn't provide monitoring tools for index degradation. The user should monitor recall from their vector search operations, and if it starts dropping, run a reindex.
 
 ### HNSW
@@ -291,7 +285,6 @@ CREATE INDEX
 
 {% endtab %}
 {% endtabs %}
-
 
 #### Maintaining an HNSW index
 
