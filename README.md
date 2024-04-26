@@ -30,7 +30,6 @@
     </a>
 </p>
 
-
 # Table of contents
 - [Introduction](#introduction)
 - [Installation](#installation)
@@ -87,8 +86,6 @@ SELECT pgml.transform(
 ]
 ```
 
-
-
 **Sentiment Analysis**
 *SQL query*
 
@@ -116,7 +113,6 @@ SELECT pgml.transform(
 - [8 - 40X faster inference than HTTP based model serving](https://postgresml.org/blog/postgresml-is-8x-faster-than-python-http-microservices)
 - [Millions of transactions per second](https://postgresml.org/blog/scaling-postgresml-to-one-million-requests-per-second)
 - [Horizontal scalability](https://github.com/postgresml/pgcat)
-
 
 **Training a classification model**
 
@@ -241,7 +237,6 @@ SELECT pgml.transform(
 ]
 ```
 The default <a href="https://huggingface.co/distilbert-base-uncased-finetuned-sst-2-english" target="_blank">model</a> used for text classification is a fine-tuned version of DistilBERT-base-uncased that has been specifically optimized for the Stanford Sentiment Treebank dataset (sst2).
-
 
 *Using specific model*
 
@@ -681,7 +676,6 @@ SELECT pgml.transform(
 Sampling methods involve selecting the next word or sequence of words at random from the set of possible candidates, weighted by their probabilities according to the language model. This can result in more diverse and creative text, as well as avoiding repetitive patterns. In its most basic form, sampling means randomly picking the next word $w_t$ according to its conditional probability distribution: 
 $$ w_t \approx P(w_t|w_{1:t-1})$$
 
-
 However, the randomness of the sampling method can also result in less coherent or inconsistent text, depending on the quality of the model and the chosen sampling parameters such as temperature, top-k, or top-p. Therefore, choosing an appropriate sampling method and parameters is crucial for achieving the desired balance between creativity and coherence in generated text.
 
 You can pass `do_sample = True` in the arguments to use sampling methods. It is recommended to alter `temperature` or `top_p` but not both.
@@ -821,7 +815,6 @@ SELECT * from tweet_embeddings limit 2;
 |"QT @user In the original draft of the 7th book, Remus Lupin survived the Battle of Hogwarts. #HappyBirthdayRemusLupin"|{-0.1567948312,-0.3149209619,0.2163394839,..}|
 |"Ben Smith / Smith (concussion) remains out of the lineup Thursday, Curtis #NHL #SJ"|{-0.0701668188,-0.012231146,0.1304316372,.. }|
 
-
 ## Step 2: Indexing your embeddings using different algorithms
 After you've created embeddings for your data, you need to index them using one or more indexing algorithms. There are several different types of indexing algorithms available, including B-trees, k-nearest neighbors (KNN), and approximate nearest neighbors (ANN). The specific type of indexing algorithm you choose will depend on your use case and performance requirements. For example, B-trees are a good choice for range queries, while KNN and ANN algorithms are more efficient for similarity searches.
 
@@ -860,7 +853,6 @@ SELECT * FROM items, query ORDER BY items.embedding <-> query.embedding LIMIT 5;
 |5 RT's if you want the next episode of twilight princess tomorrow|
 |Jurassic Park is BACK! New Trailer for the 4th Movie, Jurassic World -|
 
-
 <!-- ## Sentence Similarity
 Sentence Similarity involves determining the degree of similarity between two texts. To accomplish this, Sentence similarity models convert the input texts into vectors (embeddings) that encapsulate semantic information, and then measure the proximity (or similarity) between the vectors. This task is especially beneficial for tasks such as information retrieval and clustering/grouping.
 ![sentence similarity](pgml-cms/docs/images/sentence-similarity.png)
@@ -868,7 +860,6 @@ Sentence Similarity involves determining the degree of similarity between two te
 <!-- ## Conversational -->
 <!-- # Regression
 # Classification -->
-
 
 # LLM Fine-tuning 
 
@@ -1036,7 +1027,6 @@ Fine-tuning a language model requires careful consideration of training paramete
 * hub_token: Your Hugging Face API token to push the fine-tuned model to the Hugging Face Model Hub. Replace "YOUR_HUB_TOKEN" with the actual token.
 * push_to_hub: A boolean flag indicating whether to push the model to the Hugging Face Model Hub after fine-tuning.
 
-
 #### 5.3 Monitoring
 During training, metrics like loss, gradient norm will be printed as info and also logged in pgml.logs table. Below is a snapshot of such output.
 
@@ -1151,7 +1141,6 @@ Here is an example pgml.transform call for real-time predictions on the newly mi
 Time: 175.264 ms
 ```
 
-
 **Batch predictions**
 
 ```sql
@@ -1246,7 +1235,6 @@ SELECT pgml.tune(
 ```
 
 By following these steps, you can effectively restart training from a previously trained model, allowing for further refinement and adaptation of the model based on new requirements or insights. Adjust parameters as needed for your specific use case and dataset.
-
 
 ## 8. Hugging Face Hub vs. PostgresML as Model Repository
 We utilize the Hugging Face Hub as the primary repository for fine-tuning Large Language Models (LLMs). Leveraging the HF hub offers several advantages:

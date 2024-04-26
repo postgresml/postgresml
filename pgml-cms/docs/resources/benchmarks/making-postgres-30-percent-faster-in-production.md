@@ -20,8 +20,6 @@ This is not only a performance benefit, but also a usability improvement for cli
 
 ## Benchmark
 
-\\
-
 <figure><img src="../../.gitbook/assets/pgcat_prepared_throughput.svg" alt=""><figcaption></figcaption></figure>
 
 The benchmark was conducted using `pgbench` with 1, 10, 100 and 1000 clients sending millions of queries to PgCat, which itself was running on a different EC2 machine alongside the database. This is a simple setup often used in production. Another configuration sees a pooler use its own machine, which of course increases latency but improves on availability. The clients were on another EC2 machine to simulate the latency experienced in typical web apps deployed in Kubernetes, ECS, EC2 and others.

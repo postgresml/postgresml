@@ -115,7 +115,6 @@ CREATE EXTENSION pgml;
 That's it, PostgresML is ready. You can validate the installation by running:
 
 
-
 {% tabs %}
 {% tab title="SQL" %}
 ```sql
@@ -213,7 +212,6 @@ cargo watch --exec run
 ```
 
 The website can be packaged for distribution. You'll need to copy the static files along with the `target/release` directory to your server.
-
 
 ## General
 

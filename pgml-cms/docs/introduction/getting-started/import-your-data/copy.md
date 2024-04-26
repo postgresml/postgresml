@@ -30,7 +30,6 @@ If you're using another data store, it will almost always provide a CSV export f
 
 Create a table in PostgresML with the correct schema:
 
-
 {% tabs %}
 {% tab title="SQL" %}
 
