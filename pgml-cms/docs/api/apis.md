@@ -18,7 +18,7 @@ The PostgreSQL extension provides all of the ML & AI functionality, like trainin
 
 The following functions are implemented and maintained by the PostgresML extension:
 
-| Function name    | Description                                                                                                                                                                                        |
+| Function    | Description                                                                                                                                                                                        |
 |------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | [pgml.embed()](sql-extension/pgml.embed)     | Generate embeddings inside the database using open source embedding models from Hugging Face.                                                                                                |
 | [pgml.transform()](sql-extension/pgml.transform/) | Download and run latest Hugging Face transformer models, like Llama, Mixtral, and many more to perform various NLP tasks like text generation, summarization, sentiment analysis and more. |

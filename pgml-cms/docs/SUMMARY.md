@@ -15,7 +15,7 @@
 ## API
 
 * [Overview](api/apis.md)
-* [SQL Extension](api/sql-extension/README.md)
+* [SQL extension](api/sql-extension/README.md)
   * [pgml.deploy()](api/sql-extension/pgml.deploy.md)
   * [pgml.embed()](api/sql-extension/pgml.embed.md)
   * [pgml.chunk()](api/sql-extension/pgml.chunk.md)
