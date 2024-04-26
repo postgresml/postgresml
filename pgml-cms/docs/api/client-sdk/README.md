@@ -4,7 +4,7 @@ description: PostgresML client SDK for JavaScript, Python and Rust implements co
 
 # Client SDK
 
-The client SDK can be installed using standard package managers for JavaScript, Python, and Rust. Since the SDK is written in Rust, the JavaScript and Python packages comes with no additional dependencies.
+The client SDK can be installed using standard package managers for JavaScript, Python, and Rust. Since the SDK is written in Rust, the JavaScript and Python packages come with no additional dependencies.
 
 
 ## Installation
@@ -27,7 +27,7 @@ pip install pgml
 
 ## Getting started
 
-The SDK uses the database to perform all of its functionality. Before continuing, make sure you've created a [PostgresML database](https://postgresml.org/signup) and have the `DATABASE_URL` connection string handy.
+The SDK uses the database to perform most of its functionality. Before continuing, make sure you created a [PostgresML database](https://postgresml.org/signup) and have the `DATABASE_URL` connection string handy.
 
 ### Connect to PostgresML
 
@@ -65,12 +65,12 @@ async def main():
 {% endtab %}
 {% endtabs %}
 
-The example above imports the `pgml` module and creates a collection object. By itself, the collection tracks document contents and identifiers, but once we add a pipeline, we can instruct the SDK to perform additional tasks when documents and inserted and retrieved.
+The above example imports the `pgml` module and creates a collection object. By itself, the collection only tracks document contents and identifiers, but once we add a pipeline, we can instruct the SDK to perform additional tasks when documents and are inserted and retrieved.
 
 
 ### Create a pipeline
 
-Continuing the example, we will create a pipeline named `sample_pipeline`, which will use in-database embedding generation to automatically chunk and embed documents:
+Continuing the example, we will create a pipeline called `sample_pipeline`, which will use in-database embeddings generation to automatically chunk and embed documents:
 
 {% tabs %}
 {% tab title="JavaScript" %}

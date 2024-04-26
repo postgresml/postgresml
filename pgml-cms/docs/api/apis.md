@@ -27,11 +27,11 @@ The following functions are implemented and maintained by the PostgresML extensi
 | [pgml.predict()](sql-extension/pgml.predict/) | Perform real time inference using a model trained with pgml.train() on live application data. |
 | [pgml.tune()](sql-extension/pgml.tune) | Run LoRA fine tuning on an open source model from Hugging Face using data from a Postgres table or view. |
 
-Together with standard database functionality provided PostgreSQL, these functions allow to create and manage the entire lifestyle of a machine learning application.
+Together with standard database functionality provided by PostgreSQL, these functions allow to create and manage the entire life cycle of a machine learning application.
 
 ## [Client SDK](client-sdk/)
 
-The client SDK implements best practices and common use cases, using the PostgresML SQL functions and standard PostgreSQL features. The SDK core is written in Rust, which manages creating and running queries, connection pooling, and error handling.
+The client SDK implements best practices and common use cases, using the PostgresML SQL functions and standard PostgreSQL features to do it. The SDK core is written in Rust, which manages creating and running queries, connection pooling, and error handling.
 
 For each additional language we support (current JavaScript and Python), we create and publish language-native bindings. This architecture ensures all programming languages we support have identical APIs and similar performance when interacting with PostgresML.
 
