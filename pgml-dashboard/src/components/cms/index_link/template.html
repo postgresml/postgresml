@@ -46,7 +46,7 @@
                 <span class="text-wrap"><%- title %></span>
             </a>
             <div class="pt-2">
-                <span class="material-symbols-outlined rotate-on-aria-expanded text-white" href="#doc-<%= id %><%- id_suffix %>" role="button" aria-expanded="<%- aria %>" aria-controls="doc-<%= id %><%- id_suffix %>" data-action="click->navigation-left-nav-docs#expand">expand_more</span>
+                <span class="material-symbols-outlined rotate-on-aria-expanded text-white" href="#doc-<%= id %><%- id_suffix %>" role="button" aria-expanded="<%- aria %>" aria-controls="doc-<%= id %><%- id_suffix %>" data-action="click->navigation-left-nav-docs#toggle">expand_more</span>
             </div>
         </div>
     </div>
@@ -56,7 +56,7 @@
             <span class="text-wrap"><%- title %></span>
         </a>
         <div class="pt-2">
-            <span class="material-symbols-outlined rotate-on-aria-expanded"  href="#doc-<%= id %><%- id_suffix %>" role="button" aria-expanded="<%- aria %>" aria-controls="doc-<%= id %><%- id_suffix %>" data-action="click->navigation-left-nav-docs#expand">expand_more</span>
+            <span class="material-symbols-outlined rotate-on-aria-expanded"  href="#doc-<%= id %><%- id_suffix %>" role="button" aria-expanded="<%- aria %>" aria-controls="doc-<%= id %><%- id_suffix %>" data-action="click->navigation-left-nav-docs#toggle">expand_more</span>
         </div>
     </span>
     <% } %>
