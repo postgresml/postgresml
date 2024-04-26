@@ -105,6 +105,4 @@ LIMIT 100;
 
 If you'd like to play through an interactive notebook to generate models for search relevance in a Postgres database, try it in the Gym. An exercise for the curious reader, would be to combine all three scores above into a single algebraic function for ranking, and then into a fourth learned model...
 
-
-
 Many thanks and ❤️ to all those who are supporting this endeavor. We’d love to hear feedback from the broader ML and Engineering community about applications and other real world scenarios to help prioritize our work.

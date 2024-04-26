@@ -1,22 +1,38 @@
+---
+description: Import your data into PostgresML using one of many supported methods.
+---
+
 # Import your data
 
-Machine learning always depends on input data, whether it's generating text with pretrained LLMs, training a retention model on customer data, or predicting session abandonment in real time. Just like any PostgreSQL database, PostgresML can be configured as the authoritative application data store, a streaming replica from some other primary, or use foreign data wrappers to query another data host on demand. Depending on how frequently your data changes and where your authoritative data resides, different methodologies imply different tradeoffs.
+AI needs data, whether it's generating text with LLMs, creating embeddings, or training regression or classification models on customer data.
 
-PostgresML can easily ingest data from your existing data stores.
+Just like any PostgreSQL database, PostgresML can be configured as the primary application database, a logical replica of your primary database, or with foreign data wrappers to query your primary database on demand. Depending on how frequently your data changes and your latency requirements, one approach is better than the other.
 
-## Static data
+## Primary database
 
-Data that changes infrequently can be easily imported into PostgresML using `COPY`. All you have to do is export your data as a CSV file, create a table in Postgres to store it, and import it using the command line.
+If your intention is to use PostgresML as your primary database, your job here is done. You can use the connection credentials provided and start building your application on top of in-database AI right away.
 
-{% content-ref url="csv.md" %}
-[csv.md](csv.md)
-{% endcontent-ref %}
+## [Logical replica](logical-replication/)
 
-## Live data
+If your primary database is hosted elsewhere, for example AWS RDS, or Azure Postgres, you can get your data replicated to PostgresML in real time using logical replication. 
 
-Importing data from online databases can be done with foreign data wrappers. Hosted PostgresML databases come with both `postgres_fdw` and `dblink` extensions pre-installed, so you can import data from any of your existing Postgres databases, and export machine learning artifacts from PostgresML using just a few lines of SQL.
+<figure class="my-3 py-3"><img src="../../../.gitbook/assets/logical_replication_1.png" alt="Logical replication" width="80%"><figcaption></figcaption></figure>
 
-{% content-ref url="foreign-data-wrapper.md" %}
-[foreign-data-wrapper.md](foreign-data-wrapper.md)
-{% endcontent-ref %}
+Having access to your data immediately is very useful to
+accelerate your machine learning use cases and removes the need for moving data multiple times between microservices. Latency-sensitive applications should consider using this approach.
 
+## [Foreign data wrappers](foreign-data-wrappers)
+
+Foreign data wrappers are a set of PostgreSQL extensions that allow making direct connections from inside the database directly to other databases, even if they aren't running on Postgres. For example, Postgres has foreign data wrappers for MySQL, S3, Snowflake and many others.
+
+<figure class="my-3 py-3"><img src="../../../.gitbook/assets/fdw_1.png" alt="Foreign data wrappers" width="80%"><figcaption></figcaption></figure>
+
+FDWs are useful when data access is infrequent and not latency-sensitive. For many use cases, like offline batch workloads and not very busy websites, this approach is suitable and easy to get started with.
+
+## [Move data with COPY](copy)
+
+`COPY` is a powerful PostgreSQL command to import data from a file format like CSV. Most data stores out there support exporting data using the CSV format, so moving data from your data source to PostgresML can almost always be done this way.
+
+## [Migrate with pg_dump](pg-dump)
+
+_pg_dump_ is a command-line PostgreSQL utility to migrate databases from one server to another. Databases of almost any size can be migrated with _pg_dump_ quickly and safely.

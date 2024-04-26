@@ -68,9 +68,7 @@ The `diabetes` dataset is a toy (small, not realistic) dataset published by Scik
 | s6         | Blood sugar level.                                                   | float         |
 | **target** | Quantitative measure of disease progression one year after baseline. | float         |
 
-
 This dataset is not realistic because all data is perfectly arranged and normalized, which won't be the case with most real world datasets you'll run into, but it's perfect for our quick tutorial.
-
 
 Alright, we're ready to do some machine learning!
 

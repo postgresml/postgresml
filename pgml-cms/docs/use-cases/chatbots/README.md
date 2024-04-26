@@ -300,11 +300,9 @@ What is your name?<|im_end|>
 <|im_start|>assistant
 """
 
-
 async def main():
     model_output = await model.transform([user_input], {"max_new_tokens": 1000})
     print(model_output[0][0]["generated_text"], "\n")
-
 
 asyncio.run(main())
 ```
@@ -341,11 +339,9 @@ What did I just ask you?
 <im_start|>assistant
 """
 
-
 async def main():
     model_output = await model.transform([user_input], {"max_new_tokens": 1000})
     print(model_output[0][0]["generated_text"], "\n")
-
 
 asyncio.run(main())
 ```
@@ -441,7 +437,6 @@ pipeline = Pipeline("test-pipeline-1", model, splitter)
 # Create a collection to house these documents
 collection = Collection("chatbot-knowledge-base-1")
 
-
 async def main():
     # Add the pipeline to the collection
     await collection.add_pipeline(pipeline)
@@ -460,7 +455,6 @@ async def main():
         .fetch_all()
     )
     print(most_relevant_section[0][1])
-
 
 asyncio.run(main())
 ```
@@ -509,11 +503,9 @@ system_message = """You are a friendly and helpful chatbot named Hermes. Given t
 
 history = [{"role": "system", "content": ""}]
 
-
 def build_history_with_context(context):
     history[0]["content"] = system_message.replace("{context}", context)
     return history
-
 
 async def main():
     while True:
@@ -536,7 +528,6 @@ async def main():
             }
         )
         print(model_output["choices"][0]["message"]["content"], "\n")
-
 
 asyncio.run(main())
 ```

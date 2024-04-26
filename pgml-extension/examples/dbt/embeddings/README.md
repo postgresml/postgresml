@@ -90,7 +90,6 @@ Here's a summary of the key parameters:
 
 These configuration parameters offer a specific setup for the task, allowing for customization and flexibility in performing embeddings with the chosen splitter, model, table, query, and result limit.
 
-
 # Models
 dbt models form the backbone of data transformation and analysis pipelines. These models allow you to define the structure and logic for processing your data, enabling you to extract insights and generate valuable outputs. 
 
@@ -102,7 +101,6 @@ The Splitters [model](./models/splitters.sql) serves as a central repository for
 
 ## Models
 The Models [model](./models/models.sql) serves as a repository for storing information about different embeddings models and their associated hyperparameters. This model allows you to keep track of the various embedding techniques used in your data pipeline and their specific configuration settings.
-
 
 ## Embeddings
 [Embeddings](./models/embeddings.sql) focus on generating feature embeddings from chunks using an embedding model in models table. These embeddings capture the semantic representation of textual data, facilitating more effective machine learning models. 

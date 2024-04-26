@@ -14,7 +14,6 @@ Before you begin, make sure you have the following:
 - Python version >=3.8
 - (Optional) OpenAI API key
 
-
 # Getting started
 1. Create a virtual environment and install `pgml-chat` using `pip`:
 ```bash
@@ -104,7 +103,6 @@ model performance, as well as integrated notebooks for rapid iteration. Postgres
 If you have any further questions or need more information, please feel free to send an email to team@postgresml.org or join the PostgresML Discord community at https://discord.gg/DmyJP3qJ7U.
 ```
 
-
 ### Slack
 
 **Setup**
@@ -127,7 +125,6 @@ If you have set up the Slack app correctly, you should see the following output:
 Once the slack app is running, you can interact with the chatbot on Slack as shown below. In the example here, name of the bot is `PgBot`. This app responds only to direct messages to the bot.
 
 ![Slack Chatbot](./images/slack_screenshot.png)
-
 
 ### Discord
 
@@ -193,8 +190,6 @@ pip install .
 3. All the logic is in `pgml_chat/main.py`
 4. Check the [roadmap](#roadmap) for features that you would like to work on.
 5. If you are looking for features that are not included here, please open an issue and we will add it to the roadmap.
-
-
 
 # Roadmap
 - ~~Use a collection for chat history that can be retrieved and used to generate responses.~~

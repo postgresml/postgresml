@@ -12,6 +12,7 @@ pub struct IndexLink {
     pub open: bool,
     pub active: bool,
     pub level: i32,
+    pub id_suffix: String,
 }
 
 impl IndexLink {
@@ -25,6 +26,7 @@ impl IndexLink {
             open: false,
             active: false,
             level,
+            id_suffix: "".to_owned(),
         }
     }
 
@@ -68,6 +70,14 @@ impl IndexLink {
                 self.open = true;
             }
         }
+        self
+    }
+
+    // Adds a suffix to this and all children ids. 
+    // this prevents id collision with multiple naves on one screen
+    // like d-none for mobile nav
+    pub fn id_suffix(mut self, id_suffix: &str) -> IndexLink {
+        self.id_suffix = id_suffix.to_owned();
         self
     }
 }
