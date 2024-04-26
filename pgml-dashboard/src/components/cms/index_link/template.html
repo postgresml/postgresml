@@ -46,7 +46,7 @@
                 <span class="text-wrap"><%- title %></span>
             </a>
             <div class="pt-2">
-                <span class="material-symbols-outlined rotate-on-aria-expanded text-white" href="#doc-<%= id %>" role="button" aria-expanded="<%- aria %>" aria-controls="doc-<%= id %>" data-action="click->navigation-left-nav-docs#expand">expand_more</span>
+                <span class="material-symbols-outlined rotate-on-aria-expanded text-white" href="#doc-<%= id %><%- id_suffix %>" role="button" aria-expanded="<%- aria %>" aria-controls="doc-<%= id %><%- id_suffix %>" data-action="click->navigation-left-nav-docs#toggle">expand_more</span>
             </div>
         </div>
     </div>
@@ -56,15 +56,16 @@
             <span class="text-wrap"><%- title %></span>
         </a>
         <div class="pt-2">
-            <span class="material-symbols-outlined rotate-on-aria-expanded"  href="#doc-<%= id %>" role="button" aria-expanded="<%- aria %>" aria-controls="doc-<%= id %>" data-action="click->navigation-left-nav-docs#expand">expand_more</span>
+            <span class="material-symbols-outlined rotate-on-aria-expanded"  href="#doc-<%= id %><%- id_suffix %>" role="button" aria-expanded="<%- aria %>" aria-controls="doc-<%= id %><%- id_suffix %>" data-action="click->navigation-left-nav-docs#toggle">expand_more</span>
         </div>
     </span>
     <% } %>
 
-    <div class="collapse <%- show %>" id="doc-<%= id %>">
+    <div class="collapse <%- show %>" id="doc-<%= id %><%- id_suffix %>">
         <div class='nav flex-column level-<%- level %>-list' role="tablist" aria-orentation="vertical">
             <% for child in children.into_iter() { %>
-            <%- child.render_once().unwrap() %>
+                <% let child = child.id_suffix(&id_suffix); %>
+                <%- child.render_once().unwrap() %>
             <% } %>
         </div>
     </div>

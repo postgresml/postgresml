@@ -24,8 +24,8 @@
 %>
 
 <% if !mobile { %>
-<div class="doc-leftnav-container"  id="cart-counter" data-controller="navigation-left-nav-docs" data-turbo-permanent>
-  <nav class="doc-leftnav" data-scroll="0">
+<div class="doc-leftnav-container"  id="doc-leftnav-container" data-controller="navigation-left-nav-docs" data-turbo-permanent>
+  <nav class="doc-leftnav" data-scroll="0" data-navigation-left-nav-docs-target="leftNav">
     <div class="d-flex flex-column justify-content-between">
       <div class="d-xl-flex flex-column py-4">
         <div class="pt-2 ps-2 d-flex flex-column gap-4_5">
@@ -52,7 +52,7 @@
   <nav class="navbar px-0">
     <div class="card nav guides rounded-0 w-100">
       <div class="card-body py-2 py-xl-4">
-        <a class="my-1 d-flex justify-content-between align-items-center text-white" role="button" data-bs-toggle="collapse" href="#guides" aria-expanded="false" aria-congrols="guides">
+        <a class="my-1 d-flex justify-content-between align-items-center text-white" role="button" data-bs-toggle="collapse" href="#guides" aria-expanded="false" aria-controls="guides">
           <span>Docs</span><span class="material-symbols-outlined rotate-on-aria-expanded">expand_more</span>
         </a>
         <div class="collapse border-top pt-2" id="guides">
@@ -61,9 +61,10 @@
               <%+ doc_link %>
             <% } else { %>
               <div class="d-flex flex-column pt-2">
-                <%- title(doc_link.title) %>
+                <%- title(doc_link.title.to_uppercase()) %>
 
                 <% for item in doc_link.children {%>
+                  <% let item = item.id_suffix("mobile"); %>
                   <%+ item %>
                 <% } %>
               </div>
