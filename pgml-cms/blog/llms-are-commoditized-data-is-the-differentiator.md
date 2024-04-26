@@ -1,3 +1,9 @@
+---
+description: >-
+  Last year, OpenAI’s GPT-4 launched to great fanfare and was widely hailed as the arrival of AI. Last week, 
+  Meta’s Llama 3 surpassed the launch performance of GPT-4, making AI truly available to all with an open-weight model.
+image: ".gitbook/assets/open-weight-models.png"
+---
 # LLMs are Commoditized; Data is the Differentiator
 
 <div align="left">
