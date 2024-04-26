@@ -1,5 +1,5 @@
 ---
-description: Store, index and query vectors, with pgvector
+description: Use PostgreSQL as your vector database to store, index and search vectors with the pgvector extension.
 ---
 
 # Vector database

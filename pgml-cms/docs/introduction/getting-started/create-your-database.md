@@ -1,6 +1,6 @@
 ---
 description: >-
-  You can create a GPU powered database in less than a minute using our hosted
+  Create a GPU powered database in less than a minute using our hosted
   cloud.
 ---
 

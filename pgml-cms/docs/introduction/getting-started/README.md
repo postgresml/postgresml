@@ -1,5 +1,5 @@
 ---
-description: Setup a database and connect your application to PostgresML
+description: Getting starting with PostgresML, a GPU powered machine learning database.
 ---
 
 # Getting started

@@ -29,7 +29,6 @@ lazy_static! {
         "Blog",
         true,
         HashMap::from([
-            ("the-1.0-sdk-is-here", "the-1.0-sdk-is-here"),
             ("announcing-hnsw-support-in-our-sdk", "speeding-up-vector-recall-5x-with-hnsw"),
             ("backwards-compatible-or-bust-python-inside-rust-inside-postgres/", "backwards-compatible-or-bust-python-inside-rust-inside-postgres"),
             ("data-is-living-and-relational/", "data-is-living-and-relational"),
@@ -63,6 +62,7 @@ lazy_static! {
             ("transformers/fine_tuning/", "api/sql-extension/pgml.tune"),
             ("guides/predictions/overview", "api/sql-extension/pgml.predict/"),
             ("machine-learning/supervised-learning/data-pre-processing", "api/sql-extension/pgml.train/data-pre-processing"),
+            ("api/client-sdk/getting-started", "api/client-sdk/"),
         ])
     );
 }
@@ -115,6 +115,7 @@ pub struct Document {
     // url to thumbnail for social share
     pub thumbnail: Option<String>,
     pub url: String,
+    pub ignore: bool,
 }
 
 // Gets document markdown
@@ -189,7 +190,7 @@ impl Document {
         };
 
         // parse meta section
-        let (description, image, featured, tags) = match meta {
+        let (description, image, featured, tags, ignore) = match meta {
             Some(meta) => {
                 let description = if meta["description"].is_badvalue() {
                     None
@@ -234,9 +235,15 @@ impl Document {
                     tags
                 };
 
-                (description, image, featured, tags)
+                let ignore = if meta["ignore"].is_badvalue() {
+                    false
+                } else {
+                    meta["ignore"].as_bool().unwrap_or(false)
+                };
+
+                (description, image, featured, tags, ignore)
             }
-            None => (None, Some(default_image_path.clone()), false, Vec::new()),
+            None => (None, Some(default_image_path.clone()), false, Vec::new(), false),
         };
 
         let thumbnail = match &image {
@@ -300,6 +307,7 @@ impl Document {
             doc_type,
             thumbnail,
             url,
+            ignore,
         };
         Ok(document)
     }
@@ -327,6 +335,38 @@ impl Document {
         let html = String::from_utf8(html).unwrap();
 
         html
+    }
+
+    pub fn ignore(&self) -> bool {
+        self.ignore
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ContentPath {
+    path: PathBuf,
+    canonical: String,
+    redirected: bool,
+}
+
+impl ContentPath {
+    /// Should we issue a 301 redirect instead.
+    pub fn redirect(&self) -> bool {
+        self.redirected
+    }
+
+    pub fn path(&self) -> PathBuf {
+        self.path.clone()
+    }
+
+    pub fn canonical(&self) -> String {
+        self.canonical.clone()
+    }
+}
+
+impl From<ContentPath> for PathBuf {
+    fn from(path: ContentPath) -> PathBuf {
+        path.path
     }
 }
 
@@ -373,37 +413,56 @@ impl Collection {
     }
 
     pub async fn get_asset(&self, path: &str) -> Option<NamedFile> {
-        info!("get_asset: {} {path}", self.name);
+        debug!("get_asset: {} {path}", self.name);
 
         NamedFile::open(self.asset_dir.join(path)).await.ok()
     }
 
-    pub async fn get_content_path(&self, mut path: PathBuf, origin: &Origin<'_>) -> (PathBuf, String) {
-        info!("get_content: {} | {path:?}", self.name);
+    /// Get the actual path on disk to the content being requested.
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - The path to the content being requested.
+    /// * `origin` - The HTTP origin of the request.
+    ///
+    pub async fn get_content_path(&self, mut path: PathBuf, origin: &Origin<'_>) -> ContentPath {
+        debug!("get_content: {} | {path:?}", self.name);
 
-        let mut redirected = false;
         match self
             .redirects
             .get(path.as_os_str().to_str().expect("needs to be a well formed path"))
         {
             Some(redirect) => {
-                warn!("found redirect: {} <- {:?}", redirect, path);
-                redirected = true; // reserved for some fallback path
-                path = PathBuf::from(redirect);
+                debug!("found redirect: {} <- {:?}", redirect, path);
+
+                return ContentPath {
+                    redirected: true,
+                    path: PathBuf::from(redirect),
+                    canonical: "".into(),
+                };
             }
-            None => {}
-        };
+            None => (),
+        }
+
         let canonical = format!(
             "https://postgresml.org{}/{}",
             self.url_root.to_string_lossy(),
             path.to_string_lossy()
         );
-        if origin.path().ends_with("/") && !redirected {
+
+        if origin.path().ends_with("/") {
             path = path.join("README");
         }
+
         let path = self.root_dir.join(format!("{}.md", path.to_string_lossy()));
 
-        (path, canonical)
+        let path = ContentPath {
+            path,
+            canonical,
+            redirected: false,
+        };
+
+        path
     }
 
     /// Create an index of the Collection based on the SUMMARY.md from Gitbook.
@@ -605,7 +664,7 @@ impl Collection {
         path: &'a PathBuf,
         canonical: &str,
         cluster: &Cluster,
-    ) -> Result<ResponseOk, crate::responses::NotFound> {
+    ) -> Result<Response, crate::responses::NotFound> {
         match Document::from_path(&path).await {
             Ok(doc) => {
                 let head = crate::components::layouts::Head::new()
@@ -626,7 +685,7 @@ impl Collection {
                     article.is_careers()
                 };
 
-                Ok(ResponseOk(layout.render(article)))
+                Ok(Response::ok(layout.render(article)))
             }
             // Return page not found on bad path
             _ => {
@@ -758,9 +817,16 @@ async fn get_blog(
     path: PathBuf,
     cluster: &Cluster,
     origin: &Origin<'_>,
-) -> Result<ResponseOk, crate::responses::NotFound> {
-    let (doc_file_path, canonical) = BLOG.get_content_path(path.clone(), origin).await;
-    BLOG.render(&doc_file_path, &canonical, cluster).await
+) -> Result<Response, crate::responses::NotFound> {
+    let content_path = BLOG.get_content_path(path, origin).await;
+
+    if content_path.redirect() {
+        let redirect = Path::new("/blog/").join(content_path.path()).display().to_string();
+        return Ok(Response::redirect(redirect));
+    }
+
+    let canonical = content_path.canonical();
+    BLOG.render(&content_path.into(), &canonical, cluster).await
 }
 
 #[get("/careers/<path..>", rank = 5)]
@@ -768,9 +834,16 @@ async fn get_careers(
     path: PathBuf,
     cluster: &Cluster,
     origin: &Origin<'_>,
-) -> Result<ResponseOk, crate::responses::NotFound> {
-    let (doc_file_path, canonical) = CAREERS.get_content_path(path.clone(), origin).await;
-    CAREERS.render(&doc_file_path, &canonical, cluster).await
+) -> Result<Response, crate::responses::NotFound> {
+    let content_path = CAREERS.get_content_path(path, origin).await;
+
+    if content_path.redirect() {
+        let redirect = Path::new("/blog/").join(content_path.path()).display().to_string();
+        return Ok(Response::redirect(redirect));
+    }
+
+    let canonical = content_path.canonical();
+    CAREERS.render(&content_path.into(), &canonical, cluster).await
 }
 
 #[get("/careers/apply/<title>", rank = 4)]
@@ -789,33 +862,35 @@ async fn get_docs(
     path: PathBuf,
     cluster: &Cluster,
     origin: &Origin<'_>,
-) -> Result<ResponseOk, crate::responses::NotFound> {
-    let (doc_file_path, canonical) = DOCS.get_content_path(path.clone(), origin).await;
+) -> Result<Response, crate::responses::NotFound> {
+    use crate::components::{layouts::Docs, pages::docs::Article};
 
-    match Document::from_path(&doc_file_path).await {
-        Ok(doc) => {
+    let content_path = DOCS.get_content_path(path, origin).await;
+
+    if content_path.redirect() {
+        let redirect = Path::new("/docs/").join(content_path.path()).display().to_string();
+        return Ok(Response::redirect(redirect));
+    }
+
+    if let Ok(doc) = Document::from_path(&content_path.clone().into()).await {
+        if !doc.ignore() {
             let index = DOCS.open_index(&doc.path);
 
-            let layout = crate::components::layouts::Docs::new(&doc.title, Some(cluster))
+            let layout = Docs::new(&doc.title, Some(cluster))
                 .index(&index)
                 .image(&doc.thumbnail)
-                .canonical(&canonical);
+                .canonical(&content_path.canonical());
 
-            let page = crate::components::pages::docs::Article::new(&cluster)
-                .toc_links(&doc.toc_links)
-                .content(&doc.html());
+            let page = Article::new(&cluster).toc_links(&doc.toc_links).content(&doc.html());
 
-            Ok(ResponseOk(layout.render(page)))
-        }
-        // Return page not found on bad path
-        _ => {
-            let layout = crate::components::layouts::Docs::new("404", Some(cluster)).index(&DOCS.index);
-
-            let page = crate::components::pages::docs::Article::new(&cluster).document_not_found();
-
-            Err(crate::responses::NotFound(layout.render(page)))
+            return Ok(Response::ok(layout.render(page)));
         }
     }
+
+    let layout = crate::components::layouts::Docs::new("404", Some(cluster)).index(&DOCS.index);
+    let page = crate::components::pages::docs::Article::new(&cluster).document_not_found();
+
+    Err(crate::responses::NotFound(layout.render(page)))
 }
 
 #[get("/blog")]

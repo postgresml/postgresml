@@ -1,5 +1,5 @@
 ---
-description: PostgresML is compatible with all standard PostgreSQL clients
+description: Connect your application to PostgresML using our SDK or any standard PostgreSQL client.
 ---
 
 # Connect your app
