@@ -17,7 +17,7 @@ layout:
 
 # pgml.transform()
 
-The `pgml.transform()` is the most powerful function in PostgresML. It integrates open-source large language models, like Llama, Mixtral, and many more, which allows to perform complex tasks on your data.
+The `pgml.transform()` function is the most powerful feature of PostgresML. It integrates open-source large language models, like Llama, Mixtral, and many more, which allows to perform complex tasks on your data.
 
 The models are downloaded from [🤗 Hugging Face](https://huggingface.co/transformers) which hosts tens of thousands of pre-trained and fine-tuned models for various tasks like text generation, question answering, summarization, text classification, and more.
 
