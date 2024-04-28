@@ -11,6 +11,8 @@
   * [Foreign Data Wrappers](introduction/getting-started/import-your-data/foreign-data-wrappers.md)
   * [Move data with COPY](introduction/getting-started/import-your-data/copy.md)
   * [Migrate with pg_dump](introduction/getting-started/import-your-data/pg-dump.md)
+* [Architecture](introduction/architecture/README.md)
+  * [Why PostgresML?](introduction/architecture/why-postgresml.md)
 
 ## API
 
