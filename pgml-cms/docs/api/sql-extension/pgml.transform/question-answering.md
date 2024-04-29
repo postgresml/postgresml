@@ -1,10 +1,15 @@
 ---
-description: Retrieve the answer to a question from a given text
+description: Retrieve the answer to a question from a given text.
 ---
 
-# Question Answering
+# Question answering
 
-Question Answering models are designed to retrieve the answer to a question from a given text, which can be particularly useful for searching for information within a document. It's worth noting that some question answering models are capable of generating answers even without any contextual information.
+Question answering models are designed to retrieve the answer to a question from a given text, which can be particularly useful for searching for information within a document. It's worth noting that some question answering models are capable of generating answers even without any contextual information.
+
+## Example
+
+{% tabs %}
+{% tab title="SQL" %}
 
 ```sql
 SELECT pgml.transform(
@@ -18,7 +23,9 @@ SELECT pgml.transform(
 ) AS answer;
 ```
 
-_Result_
+{% endtab %}
+
+{% tab title="Result" %}
 
 ```json
 {
@@ -28,3 +35,11 @@ _Result_
     "answer": "İstanbul"
 }
 ```
+
+{% endtab %}
+{% endtabs %}
+
+
+### Additional resources
+
+- [Hugging Face documentation](https://huggingface.co/tasks/question-answering)
