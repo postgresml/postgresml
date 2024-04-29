@@ -11,8 +11,6 @@
   * [Foreign Data Wrappers](introduction/getting-started/import-your-data/foreign-data-wrappers.md)
   * [Move data with COPY](introduction/getting-started/import-your-data/copy.md)
   * [Migrate with pg_dump](introduction/getting-started/import-your-data/pg-dump.md)
-* [Architecture](introduction/architecture/README.md)
-  * [Why PostgresML?](introduction/architecture/why-postgresml.md)
 
 ## API
 
@@ -81,6 +79,8 @@
 
 ## Resources
 
+* [Architecture](resources/architecture/README.md)
+  * [Why PostgresML?](resources/architecture/why-postgresml.md)
 * [FAQs](resources/faqs.md)
 * [Data Storage & Retrieval](resources/data-storage-and-retrieval/tabular-data.md)
   * [Tabular data](resources/data-storage-and-retrieval/tabular-data.md)
@@ -99,8 +99,6 @@
   * [Contributing](resources/developer-docs/contributing.md)
   * [Distributed Training](resources/developer-docs/distributed-training.md)
   * [GPU Support](resources/developer-docs/gpu-support.md)
-  * [Deploying PostgresML](resources/developer-docs/deploying-postgresml/README.md)
-    * [Monitoring](resources/developer-docs/deploying-postgresml/monitoring.md)
   * [Self-hosting](resources/developer-docs/self-hosting/README.md)
     * [Pooler](resources/developer-docs/self-hosting/pooler.md)
     * [Building from source](resources/developer-docs/self-hosting/building-from-source.md)
