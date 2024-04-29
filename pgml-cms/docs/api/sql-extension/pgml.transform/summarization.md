@@ -1,5 +1,5 @@
 ---
-description: Task of creating a condensed version of a document
+description: Task of creating a condensed version of a document.
 ---
 
 # Summarization

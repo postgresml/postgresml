@@ -2,9 +2,9 @@
 description: Task that involves assigning a label or category to a given text.
 ---
 
-# Text Classification
+# Text classification
 
-Text generation is a task which includes sentiment analysis, natural language inference, and the assessment of grammatical correctness. It has a wide range of applications in fields such as marketing, customer service, and political analysis.
+Text classification is a task which includes sentiment analysis, natural language inference, and the assessment of grammatical correctness. It has a wide range of applications in fields such as marketing, customer service, and political analysis.
 
 ### Sentiment analysis
 
