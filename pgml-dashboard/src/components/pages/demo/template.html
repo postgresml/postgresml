@@ -8,6 +8,7 @@
 <% use crate::components::inputs::select::{Select, Option}; %>
 <% use crate::components::inputs::{SwitchV2, Radio, Checkbox}; %>
 <% use crate::components::cards::{Rgb, Secondary, Primary}; %>
+<% use crate::components::inputs::labels::WithTooltip; %>
 
 <div class="container" data-controller="pages-demo">
   <div class="py-5">
@@ -59,8 +60,14 @@
   </div>
 
   <div class="py-5">
+    <% 
+      let label = WithTooltip::new("Name".into())
+        .tooltip("Your full name.")
+        .icon("info");
+    %>
+
     <%+ Input::new()
-      .label("What is your name?".into())
+      .label(label.into())
       .icon("person")
       .placeholder("Enter your name")
       .name("name")
@@ -200,5 +207,17 @@
         <%+ Checkbox::new("Take full width checkbox", "block") %>
       </div>
     </div>
+  </div>
+
+  <div class="py-5">
+    <%+ WithTooltip::new("Model".into())
+        .tooltip("A model is great, but two is better.")
+        .icon("help_outline") %>
+  </div>
+
+  <div class="py-5">
+    <%+ WithTooltip::new("Model".into())
+        .tooltip_html("A model is great<br>, but<br> two<br> is better.")
+        .icon("help_outline") %>
   </div>
 </div>

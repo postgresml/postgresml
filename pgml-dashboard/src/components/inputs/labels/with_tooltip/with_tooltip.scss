@@ -1,0 +1,6 @@
+span[data-controller="inputs-labels-with-tooltip enable-tooltip"] {
+    span[data-bs-toggle="tooltip"] {
+        color: #{$slate-tint-100};
+        font-size: 1.2rem;
+    }
+}

@@ -400,10 +400,13 @@ export default class extends Controller {
 
   showChatbotAlert(level, message) {
     const toastElement = createToast(message, level);
-    showToast(toastElement, {
-      autohide: true,
-      delay: 7000,
-    });
+
+    if (toastElement) {
+      showToast(toastElement, {
+        autohide: true,
+        delay: 7000,
+      });
+    }
   }
 
   hideExampleQuestions() {

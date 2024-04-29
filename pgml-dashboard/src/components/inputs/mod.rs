@@ -5,6 +5,9 @@
 pub mod checkbox;
 pub use checkbox::Checkbox;
 
+// src/components/inputs/labels
+pub mod labels;
+
 // src/components/inputs/radio
 pub mod radio;
 pub use radio::Radio;

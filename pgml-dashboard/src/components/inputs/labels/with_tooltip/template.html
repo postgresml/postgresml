@@ -1,0 +1,15 @@
+<span
+  data-controller="inputs-labels-with-tooltip enable-tooltip"
+  class="d-inline-flex gap-1 align-items-top"
+>
+  <span><%+ component %></span>
+  <span
+    data-bs-toggle="tooltip"
+    data-bs-placement="right"
+    data-bs-title="<%- tooltip %>"
+    data-bs-html="<%= html %>"
+    class="material-symbols-outlined fw-bold"
+    >
+      <%= icon %>
+  </span>
+</span>

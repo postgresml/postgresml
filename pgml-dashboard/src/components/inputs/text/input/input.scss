@@ -1,7 +1,7 @@
 div[data-controller="inputs-text-input"] {
     --bs-danger: #{$peach-shade-100};
 
-    span.material-symbols-outlined {
+    span.inputs-text-input-icon{
         margin-left: -40px;
         color: #{$slate-shade-100};
 
