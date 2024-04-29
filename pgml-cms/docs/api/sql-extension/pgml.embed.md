@@ -22,7 +22,7 @@ pgml.embed(
 |----------|-------------|---------|
 | transformer | The name of a Hugging Face embedding model. | `intfloat/e5-large-v2` |
 | text | The text to embed. This can be a string or the name of a column from a PostgreSQL table. | `'I am your father, Luke'` |
-| kwargs | Additional arguments that are passed to the model. | |
+| kwargs | Additional arguments that are passed to the model during inference. | |
 
 ### Examples
 
@@ -43,7 +43,7 @@ SELECT * FROM pgml.embed(
 {% endtab %}
 {% endtabs %}
 
-#### Generate embeddings from a table
+#### Generate embeddings inside a table
 
 SQL functions can be used as part of a query to insert, update, or even automatically generate column values of any table:
 
@@ -96,9 +96,3 @@ LIMIT 1;
 {% endtabs %}
 
 This query will return the quote with the most similar meaning to `'Feel the force!'` by generating an embedding of that quote and comparing it to all other embeddings in the table, using vector cosine similarity as the measure of distance.
-
-## Performance
-
-First time `pgml.embed()` is called with a new model, it is downloaded from Hugging Face and saved in the cache directory. Subsequent calls will use the cached model, which is faster, and if the connection to the database is kept open, the model will be reused across multiple queries without being unloaded from memory.
-
-If a GPU is available, the model will be automatically loaded onto the GPU and the embedding generation will be even faster.

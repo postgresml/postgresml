@@ -27,7 +27,7 @@ The `pgml.transform()` function comes in two flavors, task-based and model-based
 
 ### Task-based API
 
-The task-based API automatically chooses a model to use based on the task:
+The task-based API automatically chooses a model based on the task:
 
 ```postgresql
 pgml.transform(
@@ -37,22 +37,34 @@ pgml.transform(
 )
 ```
 
-| Argument | Description | Example |
-|----------|-------------|---------|
-| task | The name of a natural language processing task. | `text-generation` |
-| args | Additional kwargs to pass to the pipeline. | `{"max_new_tokens": 50}` |
-| inputs | Array of prompts to pass to the model for inference. | `['Once upon a time...']` |
+| Argument | Description | Example | Required |
+|----------|-------------|---------|----------|
+| task | The name of a natural language processing task. | `'text-generation'` | Required |
+| args | Additional kwargs to pass to the pipeline. | `'{"max_new_tokens": 50}'::JSONB` | Optional |
+| inputs | Array of prompts to pass to the model for inference. Each prompt is evaluated independently and a separate result is returned. | `ARRAY['Once upon a time...']` | Required |
 
-#### Example
+#### Examples
 
 {% tabs %}
-{% tab title="SQL" %}
+{% tabs %}
+{% tab title="Text generation" %}
 
 ```postgresql
 SELECT *
-FROM pgml.transform (
-  'translation_en_to_fr',
-  'How do I say hello in French?',
+FROM pgml.transform(
+  task => 'text-generation',
+  inputs => ARRAY['In a galaxy far far away']
+);
+```
+
+{% endtab %}
+{% tab title="Translation" %}
+
+```postgresql
+SELECT *
+FROM pgml.transform(
+  task => 'translation_en_to_fr',
+  inputs => ARRAY['How do I say hello in French?']
 );
 ```
 
@@ -61,7 +73,7 @@ FROM pgml.transform (
 
 ### Model-based API
 
-The model-based API requires the name of the model and the task, passed as a JSON object, which allows it to be more generic:
+The model-based API requires the name of the model and the task, passed as a JSON object. This allows it to be more generic and support more models:
 
 ```postgresql
 pgml.transform(
@@ -71,16 +83,41 @@ pgml.transform(
 )
 ```
 
-| Argument | Description | Example |
-|----------|-------------|---------|
-| task | Model configuration, including name and task. | `{"task": "text-generation", "model": "mistralai/Mixtral-8x7B-v0.1"}` |
-| args | Additional kwargs to pass to the pipeline. | `{"max_new_tokens": 50}` |
-| inputs | Array of prompts to pass to the model for inference. | `['Once upon a time...']` |
+<table class="table-sm table">
+  <thead>
+    <th>Argument</th>
+    <th>Description</th>
+    <th>Example</th>
+  </thead>
+  <tbody>
+    <tr>
+      <td>model</td>
+      <td>Model configuration, including name and task.</td>
+      <td>
+        <div class="code-multi-line font-monospace">
+          '{
+            <br>&nbsp;&nbsp;"task": "text-generation",
+            <br>&nbsp;&nbsp;"model": "mistralai/Mixtral-8x7B-v0.1"
+          <br>}'::JSONB
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td>args</td>
+      <td>Additional kwargs to pass to the pipeline.</td>
+      <td><code>'{"max_new_tokens": 50}'::JSONB</code></td>
+    </tr>
+    <tr>
+      <td>inputs</td>
+      <td>Array of prompts to pass to the model for inference. Each prompt is evaluated independently.</td>
+      <td><code>ARRAY['Once upon a time...']</code></td>
+    </tr>
+</table>
 
 #### Example
 
 {% tabs %}
-{% tab title="SQL" %}
+{% tab title="PostgresML SQL" %}
 
 ```postgresql
 SELECT pgml.transform(
@@ -89,8 +126,9 @@ SELECT pgml.transform(
     "model": "TheBloke/zephyr-7B-beta-GPTQ",
     "model_type": "mistral",
     "revision": "main",
+    "device_map": "auto"
   }'::JSONB,
-  inputs  => ['AI is going to change the world in the following ways:'],
+  inputs  => ARRAY['AI is going to'],
   args   => '{
     "max_new_tokens": 100
   }'::JSONB
@@ -138,11 +176,12 @@ PostgresML currently supports most NLP tasks available on Hugging Face:
 | [Token classification](token-classification) | `token-classification` | Classify tokens in a text. |
 | [Translation](translation) | `translation` | Translate text from one language to another. |
 | [Zero-shot classification](zero-shot-classification) | `zero-shot-classification` | Classify a text without training data. |
+| Conversational | `conversational` | Engage in a conversation with the model, e.g. chatbot. |
 
+### Structured inputs
 
-## Performance
+Both versions of the `pgml.transform()` function also support structured inputs, formatted with JSON. Structured inputs are used with the conversational task, e.g. to differentiate between the system and user prompts. Simply replace the text array argument with an array of JSONB objects.
 
-Much like `pgml.embed()`, the models used in `pgml.transform()` are downloaded from Hugging Face and cached locally. If the connection to the database is kept open, the model remains in memory, which allows for faster inference on subsequent calls. If you want to free up memory, you can close the connection.
 
 ## Additional resources
 

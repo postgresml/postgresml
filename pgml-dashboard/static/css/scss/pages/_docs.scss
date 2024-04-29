@@ -113,7 +113,7 @@
         }
     }
 
-    code {
+    code, .code-multi-line {
         @extend .rounded-1;
 
         color: #{$gray-100};
@@ -121,6 +121,7 @@
         border: 1px solid #{$slate-tint-1000};
         padding: 2px;
         white-space: nowrap;
+        font-size: 0.875em;
     }
 
     img {
