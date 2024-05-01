@@ -14,7 +14,7 @@ The `pgml.embed()` function generates [embeddings](/docs/use-cases/embeddings/) 
 pgml.embed(
     transformer TEXT,
     "text" TEXT,
-    kwargs JSON
+    kwargs JSONB
 )
 ```
 
