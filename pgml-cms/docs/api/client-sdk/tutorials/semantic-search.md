@@ -17,7 +17,7 @@ This tutorial demonstrates using the `pgml` SDK to create a collection, add docu
 The SDK is imported and environment variables are loaded.
 
 {% tabs %}
-{% tab title="JavasScript" %}
+{% tab title="JavaScript" %}
 ```js
 const pgml = require("pgml");
 require("dotenv").config();
