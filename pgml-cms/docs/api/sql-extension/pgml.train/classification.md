@@ -8,7 +8,7 @@ description: >-
 
 ## Example
 
-This example trains models on the sklean digits dataset which is a copy of the test set of the [UCI ML hand-written digits datasets](https://archive.ics.uci.edu/ml/datasets/Optical+Recognition+of+Handwritten+Digits). This demonstrates using a table with a single array feature column for classification. You could do something similar with a vector column.
+This example trains models on the sklean digits dataset which is a copy of the test set of the [UCI ML hand-written digits datasets](https://archive.ics.uci.edu/ml/datasets/Optical+Recognition+of+Handwritten+Digits target="_blank"). This demonstrates using a table with a single array feature column for classification. You could do something similar with a vector column.
 
 ```sql
 -- load the sklearn digits dataset
@@ -33,16 +33,16 @@ LIMIT 10;
 
 ## Algorithms
 
-We currently support classification algorithms from [scikit-learn](https://scikit-learn.org/), [XGBoost](https://xgboost.readthedocs.io/), [LightGBM](https://lightgbm.readthedocs.io/) and [Catboost](https://catboost.ai/).
+We currently support classification algorithms from [scikit-learn](https://scikit-learn.org/ target="_blank"), [XGBoost](https://xgboost.readthedocs.io/ target="_blank"), [LightGBM](https://lightgbm.readthedocs.io/ target="_blank") and [Catboost](https://catboost.ai/ target="_blank").
 
 ### Gradient Boosting
 
 | Algorithm               | Reference                                                                                                                  |
 | ----------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `xgboost`               | [XGBClassifier](https://xgboost.readthedocs.io/en/stable/python/python\_api.html#xgboost.XGBClassifier)                    |
-| `xgboost_random_forest` | [XGBRFClassifier](https://xgboost.readthedocs.io/en/stable/python/python\_api.html#xgboost.XGBRFClassifier)                |
-| `lightgbm`              | [LGBMClassifier](https://lightgbm.readthedocs.io/en/latest/pythonapi/lightgbm.LGBMClassifier.html#lightgbm.LGBMClassifier) |
-| `catboost`              | [CatBoostClassifier](https://catboost.ai/en/docs/concepts/python-reference\_catboostclassifier)                            |
+| `xgboost`               | [XGBClassifier](https://xgboost.readthedocs.io/en/stable/python/python\_api.html#xgboost.XGBClassifier target="_blank")                    |
+| `xgboost_random_forest` | [XGBRFClassifier](https://xgboost.readthedocs.io/en/stable/python/python\_api.html#xgboost.XGBRFClassifier target="_blank")                |
+| `lightgbm`              | [LGBMClassifier](https://lightgbm.readthedocs.io/en/latest/pythonapi/lightgbm.LGBMClassifier.html#lightgbm.LGBMClassifier target="_blank") |
+| `catboost`              | [CatBoostClassifier](https://catboost.ai/en/docs/concepts/python-reference\_catboostclassifier target="_blank")                            |
 
 #### Examples
 
@@ -57,12 +57,12 @@ SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'catboost', hyperpar
 
 | Algorithm                 | Reference                                                                                                                                |
 | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `ada_boost`               | [AdaBoostClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.AdaBoostClassifier.html)                         |
-| `bagging`                 | [BaggingClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.BaggingClassifier.html)                           |
-| `extra_trees`             | [ExtraTreesClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.ExtraTreesClassifier.html)                     |
-| `gradient_boosting_trees` | [GradientBoostingClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.GradientBoostingClassifier.html)         |
-| `random_forest`           | [RandomForestClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html)                 |
-| `hist_gradient_boosting`  | [HistGradientBoostingClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.HistGradientBoostingClassifier.html) |
+| `ada_boost`               | [AdaBoostClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.AdaBoostClassifier.html target="_blank")                         |
+| `bagging`                 | [BaggingClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.BaggingClassifier.html target="_blank")                           |
+| `extra_trees`             | [ExtraTreesClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.ExtraTreesClassifier.html target="_blank")                     |
+| `gradient_boosting_trees` | [GradientBoostingClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.GradientBoostingClassifier.html target="_blank")         |
+| `random_forest`           | [RandomForestClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html target="_blank")                 |
+| `hist_gradient_boosting`  | [HistGradientBoostingClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.HistGradientBoostingClassifier.html target="_blank") |
 
 #### Examples
 
@@ -79,9 +79,9 @@ SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'hist_gradient_boost
 
 | Algorithm    | Reference                                                                                 |
 | ------------ | ----------------------------------------------------------------------------------------- |
-| `svm`        | [SVC](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html)             |
-| `nu_svm`     | [NuSVC](https://scikit-learn.org/stable/modules/generated/sklearn.svm.NuSVC.html)         |
-| `linear_svm` | [LinearSVC](https://scikit-learn.org/stable/modules/generated/sklearn.svm.LinearSVC.html) |
+| `svm`        | [SVC](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html target="_blank")             |
+| `nu_svm`     | [NuSVC](https://scikit-learn.org/stable/modules/generated/sklearn.svm.NuSVC.html target="_blank")         |
+| `linear_svm` | [LinearSVC](https://scikit-learn.org/stable/modules/generated/sklearn.svm.LinearSVC.html target="_blank") |
 
 #### Examples
 
@@ -95,11 +95,11 @@ SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'linear_svm');
 
 | Algorithm                     | Reference                                                                                                                               |
 | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `linear`                      | [LogisticRegression](https://scikit-learn.org/stable/modules/generated/sklearn.linear\_model.LogisticRegression.html)                   |
-| `ridge`                       | [RidgeClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.linear\_model.RidgeClassifier.html)                         |
-| `stochastic_gradient_descent` | [SGDClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.linear\_model.SGDClassifier.html)                             |
-| `perceptron`                  | [Perceptron](https://scikit-learn.org/stable/modules/generated/sklearn.linear\_model.Perceptron.html)                                   |
-| `passive_aggressive`          | [PassiveAggressiveClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.linear\_model.PassiveAggressiveClassifier.html) |
+| `linear`                      | [LogisticRegression](https://scikit-learn.org/stable/modules/generated/sklearn.linear\_model.LogisticRegression.html target="_blank")                   |
+| `ridge`                       | [RidgeClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.linear\_model.RidgeClassifier.html target="_blank")                         |
+| `stochastic_gradient_descent` | [SGDClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.linear\_model.SGDClassifier.html target="_blank")                             |
+| `perceptron`                  | [Perceptron](https://scikit-learn.org/stable/modules/generated/sklearn.linear\_model.Perceptron.html target="_blank")                                   |
+| `passive_aggressive`          | [PassiveAggressiveClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.linear\_model.PassiveAggressiveClassifier.html target="_blank") |
 
 #### Examples
 
@@ -114,7 +114,7 @@ SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'passive_aggressive'
 
 | Algorithm          | Reference                                                                                                                               |
 | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `gaussian_process` | [GaussianProcessClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.gaussian\_process.GaussianProcessClassifier.html) |
+| `gaussian_process` | [GaussianProcessClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.gaussian\_process.GaussianProcessClassifier.html target="_blank") |
 
 #### Examples
 

@@ -27,7 +27,7 @@ _Result_
 
 ### Model from hub
 
-To use a specific model from :hugging: model hub, pass the model name along with task name in task.
+To use a specific model from the HuggingFace model hub, pass the model name along with task name in task.
 
 ```sql
 SELECT pgml.transform(
@@ -109,7 +109,7 @@ _Result_
 
 ### Beam Search
 
-Text generation typically utilizes a greedy search algorithm that selects the word with the highest probability as the next word in the sequence. However, an alternative method called beam search can be used, which aims to minimize the possibility of overlooking hidden high probability word combinations. Beam search achieves this by retaining the num\_beams most likely hypotheses at each step and ultimately selecting the hypothesis with the highest overall probability. We set `num_beams > 1` and `early_stopping=True` so that generation is finished when all beam hypotheses reached the EOS token.
+Text generation typically utilizes a greedy search algorithm that selects the word with the highest probability as the next word in the sequence. However, an alternative method called beam search can be used, which aims to minimize the possibility of overlooking hidden high probability word combinations. Beam search achieves this by retaining the `num\_beams` most likely hypotheses at each step and ultimately selecting the hypothesis with the highest overall probability. We set `num_beams > 1` and `early_stopping=True` so that generation is finished when all beam hypotheses reached the EOS token.
 
 ```sql
 SELECT pgml.transform(
@@ -135,13 +135,15 @@ _Result_
 ]]
 ```
 
-Sampling methods involve selecting the next word or sequence of words at random from the set of possible candidates, weighted by their probabilities according to the language model. This can result in more diverse and creative text, as well as avoiding repetitive patterns. In its most basic form, sampling means randomly picking the next word $w\_t$ according to its conditional probability distribution: $$w_t \approx P(w_t|w_{1:t-1})$$
+Sampling methods involve selecting the next word or sequence of words at random from the set of possible candidates, weighted by their probabilities according to the language model. This can result in more diverse and creative text, as well as avoiding repetitive patterns. In its most basic form, sampling means randomly picking the next word `$w\_t$` according to its conditional probability distribution: `$$w_t \approx P(w_t|w_{1:t-1})$$`.
 
-However, the randomness of the sampling method can also result in less coherent or inconsistent text, depending on the quality of the model and the chosen sampling parameters such as temperature, top-k, or top-p. Therefore, choosing an appropriate sampling method and parameters is crucial for achieving the desired balance between creativity and coherence in generated text.
+However, the randomness of the sampling method can also result in less coherent or inconsistent text, depending on the quality of the model and the chosen sampling parameters such as `temperature`, `top-k`, or `top-p`. Therefore, choosing an appropriate sampling method and parameters is crucial for achieving the desired balance between creativity and coherence in generated text.
 
 You can pass `do_sample = True` in the arguments to use sampling methods. It is recommended to alter `temperature` or `top_p` but not both.
 
 ### _Temperature_
+
+The `temperature` parameter can fine tune the level of confidence, diversity, and randommness of a model. It uses a range from 0 (very conservative output) to infinity (very diverse output) to define how the model should select a certain output based on the output's certainty. Higher temperatures should be used when the certainty of the output is low, and lower temperatures should be used when the certainty is very high. A `temperature` of 1 is considered a medium setting.
 
 ```sql
 SELECT pgml.transform(
@@ -166,6 +168,8 @@ _Result_
 ```
 
 ### _Top p_
+
+Top_p is a technique used to improve the performance of generative models. It selects the tokens that are in the top percentage of probability distribution, allowing for more diverse responses. If you are experiencing repetitive responses, modifying this setting can improve the quality of the output. The value of `top_p` is a number between  0 and 1 that sets the probability distribution, so a setting of `.8` sets the probability distribution at 80 percent. This means that it selects tokens that have an 80% probability of being accurate or higher.
 
 ```sql
 SELECT pgml.transform(

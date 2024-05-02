@@ -10,11 +10,11 @@ Pre-trained models allow you to get up and running quickly, but you can likely i
 
 ### Translation Example
 
-The [Helsinki-NLP](https://huggingface.co/Helsinki-NLP) organization provides more than a thousand pre-trained models to translate between different language pairs. These can be further fine tuned on additional datasets with domain specific vocabulary. Researchers have also created large collections of documents that have been manually translated across languages by experts for training data.
+The [Helsinki-NLP](https://huggingface.co/Helsinki-NLP target="_blank") organization provides more than a thousand pre-trained models to translate between different language pairs. These can be further fine tuned on additional datasets with domain specific vocabulary. Researchers have also created large collections of documents that have been manually translated across languages by experts for training data.
 
 #### Prepare the data
 
-The [kde4](https://huggingface.co/datasets/kde4) dataset contains many language pairs. Subsets can be loaded into your Postgres instance with a call to `pgml.load_dataset`, or you may wish to create your own fine tuning dataset with vocabulary specific to your domain.
+The [kde4](https://huggingface.co/datasets/kde4 target="_blank") dataset contains many language pairs. Subsets can be loaded into your Postgres instance with a call to `pgml.load_dataset`, or you may wish to create your own fine tuning dataset with vocabulary specific to your domain.
 
 ```sql
 SELECT pgml.load_dataset('kde4', kwargs => '{"lang1": "en", "lang2": "es"}');
@@ -149,7 +149,7 @@ Time: 126.837 ms
 
 \===
 
-See the [task documentation](https://huggingface.co/tasks/translation) for more examples, use cases, models and datasets.
+See the [task documentation](https://huggingface.co/tasks/translation target="_blank") for more examples, use cases, models and datasets.
 
 ### Text Classification Example
 
@@ -190,7 +190,7 @@ SELECT * FROM pgml.imdb LIMIT 1;
 
 #### Tune the model
 
-Tuning has a nearly identical API to training, except you may pass the name of a [model published on Hugging Face](https://huggingface.co/models) to start with, rather than training an algorithm from scratch.
+Tuning has a nearly identical API to training, except you may pass the name of a [model published on Hugging Face](https://huggingface.co/models target="_blank") to start with, rather than training an algorithm from scratch.
 
 ```sql
 SELECT pgml.tune(
@@ -257,7 +257,7 @@ Time: 18.101 ms
 
 This shows that there is a 6.26% chance for category 0 (negative sentiment), and a 93.73% chance it's category 1 (positive sentiment).
 
-See the [task documentation](https://huggingface.co/tasks/text-classification) for more examples, use cases, models and datasets.
+See the [task documentation](https://huggingface.co/tasks/text-classification target="_blank") for more examples, use cases, models and datasets.
 
 ### Summarization Example
 
@@ -265,7 +265,7 @@ At a high level, summarization uses similar techniques to translation. Both use 
 
 #### Prepare the data
 
-[BillSum](https://huggingface.co/datasets/billsum) is a dataset with training examples that summarize US Congressional and California state bills. You can pass `kwargs` specific to loading datasets, in this case we'll restrict the dataset to California samples:
+[BillSum](https://huggingface.co/datasets/billsum target="_blank") is a dataset with training examples that summarize US Congressional and California state bills. You can pass `kwargs` specific to loading datasets, in this case we'll restrict the dataset to California samples:
 
 ```sql
 SELECT pgml.load_dataset('billsum', kwargs => '{"split": "ca_test"}');
@@ -377,7 +377,7 @@ LIMIT 10;
 
 #### Tune the model
 
-Tuning has a nearly identical API to training, except you may pass the name of a [model published on Hugging Face](https://huggingface.co/models) to start with, rather than training an algorithm from scratch.
+Tuning has a nearly identical API to training, except you may pass the name of a [model published on Hugging Face](https://huggingface.co/models target="_blank") to start with, rather than training an algorithm from scratch.
 
 ```sql
 SELECT pgml.tune(
@@ -443,7 +443,7 @@ Time: 18.101 ms
 
 This shows that there is a 6.26% chance for category 0 (negative sentiment), and a 93.73% chance it's category 1 (positive sentiment).
 
-See the [task documentation](https://huggingface.co/tasks/text-classification) for more examples, use cases, models and datasets.
+See the [task documentation](https://huggingface.co/tasks/text-classification target="_blank") for more examples, use cases, models and datasets.
 
 ### Text Generation
 

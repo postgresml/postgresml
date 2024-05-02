@@ -107,8 +107,6 @@ CREATE INDEX
 
 !!!
 
-Now we can incorporate a customer embedding to personalize the results whenever they search. Normally, we'd have the `customers.id` in our application already because they'd be searching and browsing our site, but we don't have an actual application or customers for this article, so we'll have to find one for our example. Let's find a customer that loves the movie Empire Strikes Back. No Star Wars made our original list, so we have a good opportunity to improve our previous results with personalization.
-
 ## Finding a customer to personalize results for
 
 Now that we have customer embeddings around movies they've reviewed, we can incorporate those to personalize the results whenever they search. Normally, we'd have the `customers.id` handy in our application because they'd be searching and browsing our app, but we don't have an actual application or customers for this article, so we'll have to find one for our example. Let's find a customer that loves the movie "Empire Strikes Back". No "Star Wars" made our original list of "Best 1980's scifi movie", so we have a good opportunity to improve our previous results with personalization.
@@ -184,8 +182,6 @@ WHERE customer_id = '44366773';
 This is odd at first glance. The review doesn't mention anything thing about Star Wars, and the sentiment is actually negative, even the `star_rating` is bad. How did they end up with an embedding so close to our desired sentiment of "I love all Star Wars, but Empire Strikes Back is particularly amazing"? Remember we didn't generate embeddings from their review text directly. We generated customer embeddings from the movies they had bothered to review. This customer has only ever reviewed 1 movie, and that happens to be the movie closest to our sentiment. Exactly what we were going for!
 
 If someone only ever bothered to write 1 review, and they are upset about the physical DVD, it's likely they are a big fan of the movie, and they are upset about the physical DVD because they wanted to keep it for a long time. This is a great example of how stacking and relating embeddings carefully can generate insights at a scale that is otherwise impossible, revealing the signal in the noise.
-
-Now we can write our personalized SQL query. It's nearly the same as our query from the previous article, but we're going to include an additional CTE to fetch the customers embedding by id, and then tweak our `final_score`. Here comes personalized query results, using that customer 44366773's embedding. Instead of the generic popularity boost we've been using, we'll calculate the cosine similarity of the customer embedding to all the movies in the results, and use that as a boost. This will push movies that are similar to the customer's embedding to the top of the results.
 
 ## Personalizing search results
 

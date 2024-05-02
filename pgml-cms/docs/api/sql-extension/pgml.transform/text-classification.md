@@ -8,7 +8,7 @@ Text classification is a task which includes sentiment analysis, natural languag
 
 ### Sentiment analysis
 
-Sentiment analysis is a type of natural language processing technique which analyzes a piece of text to determine the sentiment or emotion expressed within. It can be used to classify a text as positive, negative, or neutral.
+Sentiment analysis is a type of natural language processing (NLP) technique which analyzes a piece of text to determine the sentiment or emotion expressed within. It can be used to classify a text as positive, negative, or neutral.
 
 #### Example
 

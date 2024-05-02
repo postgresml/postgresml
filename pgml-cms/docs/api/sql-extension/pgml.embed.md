@@ -6,7 +6,7 @@ description: >-
 
 # pgml.embed()
 
-The `pgml.embed()` function generates [embeddings](/docs/use-cases/embeddings/) from text, using in-database models downloaded from Hugging Face. Thousands of [open-source models](https://huggingface.co/models?library=sentence-transformers) are available and new and better ones are being published regularly.
+The `pgml.embed()` function generates [embeddings](/docs/use-cases/embeddings/) from text, using in-database models downloaded from Hugging Face. Thousands of [open-source models](https://huggingface.co/models?library=sentence-transformers) are available, with new and better models being published regularly.
 
 ## API
 
@@ -69,7 +69,7 @@ VALUES
 {% endtab %}
 {% endtabs %}
 
-In this example, we're using [generated columns](https://www.postgresql.org/docs/current/ddl-generated-columns.html) to automatically create an embedding of the `quote` column every time the column value is updated.
+In this example, we are using [generated columns](https://www.postgresql.org/docs/current/ddl-generated-columns.html) to automatically create an embedding of the `quote` column every time the column value is updated.
 
 #### Using embeddings in queries
 
