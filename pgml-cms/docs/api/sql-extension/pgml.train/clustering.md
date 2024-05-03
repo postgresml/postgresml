@@ -4,7 +4,7 @@ Models can be trained using `pgml.train` on unlabeled data to identify groups wi
 
 ## Example
 
-This example trains models on the sklearn digits dataset -- which is a copy of the test set of the [UCI ML hand-written digits datasets](https://archive.ics.uci.edu/ml/datasets/Optical+Recognition+of+Handwritten+Digits target="_blank"). This demonstrates using a table with a single array feature column for clustering. You could do something similar with a vector column.
+This example trains models on the sklearn digits dataset -- which is a copy of the test set of the [UCI ML hand-written digits datasets](https://archive.ics.uci.edu/ml/datasets/Optical+Recognition+of+Handwritten+Digits). This demonstrates using a table with a single array feature column for clustering. You could do something similar with a vector column.
 
 ```sql
 SELECT pgml.load_dataset('digits');
@@ -31,10 +31,10 @@ All clustering algorithms implemented by PostgresML are online versions. You may
 
 | Algorithm              | Reference                                                                                                         |
 | ---------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `affinity_propagation` | [AffinityPropagation](https://scikit-learn.org/stable/modules/generated/sklearn.cluster.AffinityPropagation.html target="_blank") |
-| `birch`                | [Birch](https://scikit-learn.org/stable/modules/generated/sklearn.cluster.Birch.html target="_blank")                             |
-| `kmeans`               | [K-Means](https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html target="_blank")                          |
-| `mini_batch_kmeans`    | [MiniBatchKMeans](https://scikit-learn.org/stable/modules/generated/sklearn.cluster.MiniBatchKMeans.html target="_blank")         |
+| `affinity_propagation` | [AffinityPropagation](https://scikit-learn.org/stable/modules/generated/sklearn.cluster.AffinityPropagation.html) |
+| `birch`                | [Birch](https://scikit-learn.org/stable/modules/generated/sklearn.cluster.Birch.html)                             |
+| `kmeans`               | [K-Means](https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html)                          |
+| `mini_batch_kmeans`    | [MiniBatchKMeans](https://scikit-learn.org/stable/modules/generated/sklearn.cluster.MiniBatchKMeans.html)         |
 
 ### Examples
 

@@ -6,11 +6,11 @@ description: >-
 
 # Regression
 
-We currently support regression algorithms from [scikit-learn](https://scikit-learn.org/ target="_blank"), [XGBoost](https://xgboost.readthedocs.io/ target="_blank"), [LightGBM](https://lightgbm.readthedocs.io/ target="_blank") and [Catboost](https://catboost.ai/ target="_blank").
+We currently support regression algorithms from [scikit-learn](https://scikit-learn.org/), [XGBoost](https://xgboost.readthedocs.io/), [LightGBM](https://lightgbm.readthedocs.io/) and [Catboost](https://catboost.ai/).
 
 ## Example
 
-This example trains models on the sklean [diabetes dataset](https://scikit-learn.org/stable/modules/generated/sklearn.datasets.load\_diabetes.html#sklearn.datasets.load\_diabetes target="_blank"). This example uses multiple input features to predict a single output variable.
+This example trains models on the sklean [diabetes dataset](https://scikit-learn.org/stable/modules/generated/sklearn.datasets.load\_diabetes.html#sklearn.datasets.load\_diabetes). This example uses multiple input features to predict a single output variable.
 
 ```sql
 -- load the dataset
@@ -34,10 +34,10 @@ LIMIT 10;
 
 | Algorithm               | Reference                                                                                                               |
 | ----------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `xgboost`               | [XGBRegressor](https://xgboost.readthedocs.io/en/stable/python/python\_api.html#xgboost.XGBRegressor target="_blank")                   |
-| `xgboost_random_forest` | [XGBRFRegressor](https://xgboost.readthedocs.io/en/stable/python/python\_api.html#xgboost.XGBRFRegressor target="_blank")               |
-| `lightgbm`              | [LGBMRegressor](https://lightgbm.readthedocs.io/en/latest/pythonapi/lightgbm.LGBMRegressor.html#lightgbm.LGBMRegressor target="_blank") |
-| `catboost`              | [CatBoostRegressor](https://catboost.ai/en/docs/concepts/python-reference\_catboostregressor target="_blank")                           |
+| `xgboost`               | [XGBRegressor](https://xgboost.readthedocs.io/en/stable/python/python\_api.html#xgboost.XGBRegressor)                   |
+| `xgboost_random_forest` | [XGBRFRegressor](https://xgboost.readthedocs.io/en/stable/python/python\_api.html#xgboost.XGBRFRegressor)               |
+| `lightgbm`              | [LGBMRegressor](https://lightgbm.readthedocs.io/en/latest/pythonapi/lightgbm.LGBMRegressor.html#lightgbm.LGBMRegressor) |
+| `catboost`              | [CatBoostRegressor](https://catboost.ai/en/docs/concepts/python-reference\_catboostregressor)                           |
 
 #### Examples
 
@@ -52,12 +52,12 @@ SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'catboost', hyperp
 
 | Algorithm                 | Reference                                                                                                                              |
 | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `ada_boost`               | [AdaBoostRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.AdaBoostRegressor.html target="_blank")                         |
-| `bagging`                 | [BaggingRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.BaggingRegressor.html target="_blank")                           |
-| `extra_trees`             | [ExtraTreesRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.ExtraTreesRegressor.html target="_blank")                     |
-| `gradient_boosting_trees` | [GradientBoostingRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.GradientBoostingRegressor.html target="_blank")         |
-| `random_forest`           | [RandomForestRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestRegressor.html target="_blank")                 |
-| `hist_gradient_boosting`  | [HistGradientBoostingRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.HistGradientBoostingRegressor.html target="_blank") |
+| `ada_boost`               | [AdaBoostRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.AdaBoostRegressor.html)                         |
+| `bagging`                 | [BaggingRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.BaggingRegressor.html)                           |
+| `extra_trees`             | [ExtraTreesRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.ExtraTreesRegressor.html)                     |
+| `gradient_boosting_trees` | [GradientBoostingRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.GradientBoostingRegressor.html)         |
+| `random_forest`           | [RandomForestRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestRegressor.html)                 |
+| `hist_gradient_boosting`  | [HistGradientBoostingRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.HistGradientBoostingRegressor.html) |
 
 #### Examples
 
@@ -74,9 +74,9 @@ SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'hist_gradient_boo
 
 | Algorithm    | Reference                                                                                 |
 | ------------ | ----------------------------------------------------------------------------------------- |
-| `svm`        | [SVR](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVR.html target="_blank")             |
-| `nu_svm`     | [NuSVR](https://scikit-learn.org/stable/modules/generated/sklearn.svm.NuSVR.html target="_blank")         |
-| `linear_svm` | [LinearSVR](https://scikit-learn.org/stable/modules/generated/sklearn.svm.LinearSVR.html target="_blank") |
+| `svm`        | [SVR](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVR.html)             |
+| `nu_svm`     | [NuSVR](https://scikit-learn.org/stable/modules/generated/sklearn.svm.NuSVR.html)         |
+| `linear_svm` | [LinearSVR](https://scikit-learn.org/stable/modules/generated/sklearn.svm.LinearSVR.html) |
 
 #### Examples
 
@@ -90,21 +90,21 @@ SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'linear_svm', hype
 
 | Algorithm                           | Reference                                                                                                                             |
 | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `linear`                            | [LinearRegression](https://scikit-learn.org/stable/modules/generated/sklearn.linear\_model.LinearRegression.html target="_blank")                     |
-| `ridge`                             | [Ridge](https://scikit-learn.org/stable/modules/generated/sklearn.linear\_model.Ridge.html target="_blank")                                           |
-| `lasso`                             | [Lasso](https://scikit-learn.org/stable/modules/generated/sklearn.linear\_model.Lasso.html target="_blank")                                           |
-| `elastic_net`                       | [ElasticNet](https://scikit-learn.org/stable/modules/generated/sklearn.linear\_model.ElasticNet.html target="_blank")                                 |
-| `least_angle`                       | [LARS](https://scikit-learn.org/stable/modules/generated/sklearn.linear\_model.Lars.html target="_blank")                                             |
-| `lasso_least_angle`                 | [LassoLars](https://scikit-learn.org/stable/modules/generated/sklearn.linear\_model.LassoLars.html target="_blank")                                   |
-| `orthoganl_matching_pursuit`        | [OrthogonalMatchingPursuit](https://scikit-learn.org/stable/modules/generated/sklearn.linear\_model.OrthogonalMatchingPursuit.html target="_blank")   |
-| `bayesian_ridge`                    | [BayesianRidge](https://scikit-learn.org/stable/modules/generated/sklearn.linear\_model.BayesianRidge.html target="_blank")                           |
-| `automatic_relevance_determination` | [ARDRegression](https://scikit-learn.org/stable/modules/generated/sklearn.linear\_model.ARDRegression.html target="_blank")                           |
-| `stochastic_gradient_descent`       | [SGDRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.linear\_model.SGDRegressor.html target="_blank")                             |
-| `passive_aggressive`                | [PassiveAggressiveRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.linear\_model.PassiveAggressiveRegressor.html target="_blank") |
-| `ransac`                            | [RANSACRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.linear\_model.RANSACRegressor.html target="_blank")                       |
-| `theil_sen`                         | [TheilSenRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.linear\_model.TheilSenRegressor.html target="_blank")                   |
-| `huber`                             | [HuberRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.linear\_model.HuberRegressor.html target="_blank")                         |
-| `quantile`                          | [QuantileRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.linear\_model.QuantileRegressor.html target="_blank")                   |
+| `linear`                            | [LinearRegression](https://scikit-learn.org/stable/modules/generated/sklearn.linear\_model.LinearRegression.html)                     |
+| `ridge`                             | [Ridge](https://scikit-learn.org/stable/modules/generated/sklearn.linear\_model.Ridge.html)                                           |
+| `lasso`                             | [Lasso](https://scikit-learn.org/stable/modules/generated/sklearn.linear\_model.Lasso.html)                                           |
+| `elastic_net`                       | [ElasticNet](https://scikit-learn.org/stable/modules/generated/sklearn.linear\_model.ElasticNet.html)                                 |
+| `least_angle`                       | [LARS](https://scikit-learn.org/stable/modules/generated/sklearn.linear\_model.Lars.html)                                             |
+| `lasso_least_angle`                 | [LassoLars](https://scikit-learn.org/stable/modules/generated/sklearn.linear\_model.LassoLars.html)                                   |
+| `orthoganl_matching_pursuit`        | [OrthogonalMatchingPursuit](https://scikit-learn.org/stable/modules/generated/sklearn.linear\_model.OrthogonalMatchingPursuit.html)   |
+| `bayesian_ridge`                    | [BayesianRidge](https://scikit-learn.org/stable/modules/generated/sklearn.linear\_model.BayesianRidge.html)                           |
+| `automatic_relevance_determination` | [ARDRegression](https://scikit-learn.org/stable/modules/generated/sklearn.linear\_model.ARDRegression.html)                           |
+| `stochastic_gradient_descent`       | [SGDRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.linear\_model.SGDRegressor.html)                             |
+| `passive_aggressive`                | [PassiveAggressiveRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.linear\_model.PassiveAggressiveRegressor.html) |
+| `ransac`                            | [RANSACRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.linear\_model.RANSACRegressor.html)                       |
+| `theil_sen`                         | [TheilSenRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.linear\_model.TheilSenRegressor.html)                   |
+| `huber`                             | [HuberRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.linear\_model.HuberRegressor.html)                         |
+| `quantile`                          | [QuantileRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.linear\_model.QuantileRegressor.html)                   |
 
 #### Examples
 
@@ -130,8 +130,8 @@ SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'quantile');
 
 | Algorithm          | Reference                                                                                                                             |
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `kernel_ridge`     | [KernelRidge](https://scikit-learn.org/stable/modules/generated/sklearn.kernel\_ridge.KernelRidge.html target="_blank")                               |
-| `gaussian_process` | [GaussianProcessRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.gaussian\_process.GaussianProcessRegressor.html target="_blank") |
+| `kernel_ridge`     | [KernelRidge](https://scikit-learn.org/stable/modules/generated/sklearn.kernel\_ridge.KernelRidge.html)                               |
+| `gaussian_process` | [GaussianProcessRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.gaussian\_process.GaussianProcessRegressor.html) |
 
 #### Examples
 
