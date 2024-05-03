@@ -200,7 +200,7 @@ impl<'a> From<&str> for CodeFence<'a> {
             "bash"
         } else if options.starts_with("python") {
             "python"
-        } else if options.starts_with("javascript") || options.starts_with("js") {
+        } else if options.starts_with("javascript") || options.eq_ignore_ascii_case("js") {
             "javascript"
         } else if options.starts_with("postgresql") {
             "postgresql"
