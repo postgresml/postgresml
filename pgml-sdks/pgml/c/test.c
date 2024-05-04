@@ -21,7 +21,7 @@ int main() {
   // Print the documents
   printf("\n\nPrinting documents:\n");
   int i;
-  for (i = 0; i < r_size; i++) {
+  for (i = 0; i < r_size; ++i) {
     printf("Document %u -> %s\n", i, documents[i]);
   }
 
@@ -29,7 +29,7 @@ int main() {
   r_size = 0;
   char** results = CollectionC_vector_search(collection, "{\"query\": {\"fields\": {\"text\": {\"query\": \"Test query!\"}}}, \"limit\": 5}", pipeline, &r_size);
   printf("\n\nPrinting results:\n");
-  for (i = 0; i < r_size; i++) {
+  for (i = 0; i < r_size; ++i) {
     printf("Result %u -> %s\n", i, results[i]);
   }
 
