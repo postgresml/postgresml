@@ -27,7 +27,7 @@ _Result_
 
 ### Model from hub
 
-To use a specific model from the HuggingFace model hub, pass the model name along with task name in task.
+To use a specific model from the Hugging Face model hub, pass the model name along with task name in task.
 
 ```sql
 SELECT pgml.transform(
