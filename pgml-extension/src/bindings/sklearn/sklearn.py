@@ -43,7 +43,7 @@ _ALGORITHM_MAP = {
     "elastic_net_regression": sklearn.linear_model.ElasticNet,
     "least_angle_regression": sklearn.linear_model.Lars,
     "lasso_least_angle_regression": sklearn.linear_model.LassoLars,
-    "orthogonal_matching_persuit_regression": sklearn.linear_model.OrthogonalMatchingPursuit,
+    "orthogonal_matching_pursuit_regression": sklearn.linear_model.OrthogonalMatchingPursuit,
     "bayesian_ridge_regression": sklearn.linear_model.BayesianRidge,
     "automatic_relevance_determination_regression": sklearn.linear_model.ARDRegression,
     "stochastic_gradient_descent_regression": sklearn.linear_model.SGDRegressor,
@@ -95,6 +95,7 @@ _ALGORITHM_MAP = {
     "spectral_clustering": sklearn.cluster.SpectralClustering,
     "spectral_biclustering": sklearn.cluster.SpectralBiclustering,
     "spectral_coclustering": sklearn.cluster.SpectralCoclustering,
+    "pca_decomposition": sklearn.decomposition.PCA,
 }
 
 
@@ -182,7 +183,10 @@ def predictor_joint(estimator, num_targets):
 
     def predict(X):
         X = np.asarray(X).reshape((-1, estimator.n_features_in_))
-        y_hat = estimator.predict(X)
+        if hasattr(estimator.__class__, 'predict'):
+            y_hat = estimator.predict(X)
+        else:
+            y_hat = estimator.transform(X)
 
         # Only support single value models for just now.
         if num_targets == 1:
@@ -238,6 +242,8 @@ def calculate_metric(metric_name):
         func = mean_absolute_error
     elif metric_name == "confusion_matrix":
         func = confusion_matrix
+    elif metric_name == "variance":
+        func = variance
     else:
         raise Exception(f"Unknown metric requested: {metric_name}")
 
@@ -300,10 +306,15 @@ def classification_metrics(y_true, y_hat):
     }
 
 
-def cluster_metrics(num_features, inputs_labels):
+def clustering_metrics(num_features, inputs_labels):
     inputs = np.asarray(inputs_labels[0]).reshape((-1, num_features))
     labels = np.asarray(inputs_labels[1]).reshape((-1, 1))
 
     return {
         "silhouette": silhouette_score(inputs, labels),
     }
+
+def decomposition_metrics(pca):
+    return {
+      "cumulative_explained_variance": sum(pca.explained_variance_ratio_)
+   }

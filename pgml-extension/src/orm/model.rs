@@ -370,27 +370,27 @@ impl Model {
                     Runtime::rust => {
                         match algorithm {
                             Algorithm::xgboost => {
-                                crate::bindings::xgboost::Estimator::from_bytes(&data)?
+                                xgboost::Estimator::from_bytes(&data)?
                             }
                             Algorithm::lightgbm => {
-                                crate::bindings::lightgbm::Estimator::from_bytes(&data)?
+                                lightgbm::Estimator::from_bytes(&data)?
                             }
                             Algorithm::linear => match project.task {
                                 Task::regression => {
-                                    crate::bindings::linfa::LinearRegression::from_bytes(&data)?
+                                    linfa::LinearRegression::from_bytes(&data)?
                                 }
                                 Task::classification => {
-                                    crate::bindings::linfa::LogisticRegression::from_bytes(&data)?
+                                    linfa::LogisticRegression::from_bytes(&data)?
                                 }
                                 _ => bail!("No default runtime available for tasks other than `classification` and `regression` when using a linear algorithm."),
                             },
-                            Algorithm::svm => crate::bindings::linfa::Svm::from_bytes(&data)?,
+                            Algorithm::svm => linfa::Svm::from_bytes(&data)?,
                             _ => todo!(), //smartcore_load(&data, task, algorithm, &hyperparams),
                         }
                     }
 
                     #[cfg(feature = "python")]
-                    Runtime::python => crate::bindings::sklearn::Estimator::from_bytes(&data)?,
+                    Runtime::python => sklearn::Estimator::from_bytes(&data)?,
 
                     #[cfg(not(feature = "python"))]
                     Runtime::python => {
@@ -468,7 +468,8 @@ impl Model {
                     Algorithm::svm => linfa::Svm::fit,
                     _ => todo!(),
                 },
-                Task::cluster => todo!(),
+                Task::decomposition => todo!(),
+                Task::clustering=> todo!(),
                 _ => error!("use pgml.tune for transformers tasks"),
             },
 
@@ -488,7 +489,7 @@ impl Model {
                     Algorithm::random_forest => sklearn::random_forest_regression,
                     Algorithm::xgboost => sklearn::xgboost_regression,
                     Algorithm::xgboost_random_forest => sklearn::xgboost_random_forest_regression,
-                    Algorithm::orthogonal_matching_pursuit => sklearn::orthogonal_matching_persuit_regression,
+                    Algorithm::orthogonal_matching_pursuit => sklearn::orthogonal_matching_pursuit_regression,
                     Algorithm::bayesian_ridge => sklearn::bayesian_ridge_regression,
                     Algorithm::automatic_relevance_determination => {
                         sklearn::automatic_relevance_determination_regression
@@ -512,7 +513,7 @@ impl Model {
                     Algorithm::linear_svm => sklearn::linear_svm_regression,
                     Algorithm::lightgbm => sklearn::lightgbm_regression,
                     Algorithm::catboost => sklearn::catboost_regression,
-                    _ => panic!("{:?} does not support regression", self.algorithm),
+                    _ => error!("{:?} does not support regression", self.algorithm),
                 },
                 Task::classification => match self.algorithm {
                     Algorithm::linear => sklearn::linear_classification,
@@ -534,16 +535,20 @@ impl Model {
                     Algorithm::linear_svm => sklearn::linear_svm_classification,
                     Algorithm::lightgbm => sklearn::lightgbm_classification,
                     Algorithm::catboost => sklearn::catboost_classification,
-                    _ => panic!("{:?} does not support classification", self.algorithm),
+                    _ => error!("{:?} does not support classification", self.algorithm),
                 },
-                Task::cluster => match self.algorithm {
+                Task::clustering=> match self.algorithm {
                     Algorithm::affinity_propagation => sklearn::affinity_propagation,
                     Algorithm::birch => sklearn::birch,
                     Algorithm::kmeans => sklearn::kmeans,
                     Algorithm::mini_batch_kmeans => sklearn::mini_batch_kmeans,
                     Algorithm::mean_shift => sklearn::mean_shift,
-                    _ => panic!("{:?} does not support clustering", self.algorithm),
+                    _ => error!("{:?} does not support clustering", self.algorithm),
                 },
+                Task::decomposition => match self.algorithm {
+                    Algorithm::pca => sklearn::pca,
+                    _ => error!("{:?} does not support clustering", self.algorithm),
+                }
                 _ => error!("use pgml.tune for transformers tasks"),
             },
         }
@@ -618,7 +623,7 @@ impl Model {
             Task::regression => {
                 #[cfg(all(feature = "python", any(test, feature = "pg_test")))]
                 {
-                    let sklearn_metrics = crate::bindings::sklearn::regression_metrics(y_test, &y_hat).unwrap();
+                    let sklearn_metrics = sklearn::regression_metrics(y_test, &y_hat).unwrap();
                     metrics.insert("sklearn_r2".to_string(), sklearn_metrics["r2"]);
                     metrics.insert("sklearn_mean_absolute_error".to_string(), sklearn_metrics["mae"]);
                     metrics.insert("sklearn_mean_squared_error".to_string(), sklearn_metrics["mse"]);
@@ -641,7 +646,7 @@ impl Model {
                 #[cfg(all(feature = "python", any(test, feature = "pg_test")))]
                 {
                     let sklearn_metrics =
-                        crate::bindings::sklearn::classification_metrics(y_test, &y_hat, dataset.num_distinct_labels)
+                        sklearn::classification_metrics(y_test, &y_hat, dataset.num_distinct_labels)
                             .unwrap();
 
                     if dataset.num_distinct_labels == 2 {
@@ -692,13 +697,22 @@ impl Model {
                 // This one is inaccurate, I have it in my TODO to reimplement.
                 metrics.insert("mcc".to_string(), confusion_matrix.mcc());
             }
-            Task::cluster => {
+            Task::clustering => {
                 #[cfg(feature = "python")]
                 {
                     let sklearn_metrics =
-                        crate::bindings::sklearn::cluster_metrics(dataset.num_features, &dataset.x_test, &y_hat)
+                        sklearn::clustering_metrics(dataset.num_features, &dataset.x_test, &y_hat)
                             .unwrap();
                     metrics.insert("silhouette".to_string(), sklearn_metrics["silhouette"]);
+                }
+            }
+            Task::decomposition => {
+                #[cfg(feature = "python")]
+                {
+                    let sklearn_metrics =
+                        sklearn::decomposition_metrics(self.bindings.as_ref().unwrap())
+                            .unwrap();
+                    metrics.insert("cumulative_explained_variance".to_string(), sklearn_metrics["cumulative_explained_variance"]);
                 }
             }
             task => error!("No test metrics available for task: {:?}", task),
@@ -1164,5 +1178,12 @@ impl Model {
             .as_ref()
             .unwrap()
             .predict(features, self.num_features, self.num_classes)
+    }
+
+    pub fn decompose(&self, vector: &[f32]) -> Result<Vec<f32>> {
+        self.bindings
+            .as_ref()
+            .unwrap()
+            .predict(vector, self.num_features, self.num_classes)
     }
 }

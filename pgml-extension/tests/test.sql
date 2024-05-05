@@ -21,7 +21,8 @@ SELECT pgml.load_dataset('iris');
 SELECT pgml.load_dataset('linnerud');
 SELECT pgml.load_dataset('wine');
 
-\i examples/cluster.sql
+\i examples/clustering.sql
+\i examples/decomposition.sql
 \i examples/binary_classification.sql
 \i examples/image_classification.sql
 \i examples/joint_regression.sql
