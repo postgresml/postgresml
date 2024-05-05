@@ -317,4 +317,4 @@ def clustering_metrics(num_features, inputs_labels):
 def decomposition_metrics(pca):
     return {
       "cumulative_explained_variance": sum(pca.explained_variance_ratio_)
-   }
+    }

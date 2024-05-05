@@ -14,8 +14,11 @@ use anyhow::Result;
 use pyo3::prelude::*;
 use pyo3::types::PyTuple;
 
-use crate::{bindings::{Bindings, TracebackError}, create_pymodule, orm::*};
-
+use crate::{
+    bindings::{Bindings, TracebackError},
+    create_pymodule,
+    orm::*,
+};
 
 create_pymodule!("/src/bindings/sklearn/sklearn.py");
 
@@ -309,18 +312,13 @@ pub fn clustering_metrics(num_features: usize, inputs: &[f32], labels: &[f32]) -
 }
 
 pub fn decomposition_metrics(bindings: &Box<dyn Bindings>) -> Result<HashMap<String, f32>> {
-    Python::with_gil(|py| {
-        match bindings.as_any().downcast_ref::<Estimator>() {
-            Some(estimator) => {
-                let calculate_metric = get_module!(PY_MODULE).getattr(py, "decomposition_metrics")?;
-                let metrics = calculate_metric
-                    .call1(py, PyTuple::new(py, [&estimator.estimator]));
-                let metrics = metrics
-                    .format_traceback(py)?
-                    .extract(py).format_traceback(py)?;
-                Ok(metrics)
-            }
-            None => error!("Can't compute decomposition metrics for bindings other than sklearn")
+    Python::with_gil(|py| match bindings.as_any().downcast_ref::<Estimator>() {
+        Some(estimator) => {
+            let calculate_metric = get_module!(PY_MODULE).getattr(py, "decomposition_metrics")?;
+            let metrics = calculate_metric.call1(py, PyTuple::new(py, [&estimator.estimator]));
+            let metrics = metrics.format_traceback(py)?.extract(py).format_traceback(py)?;
+            Ok(metrics)
         }
+        None => error!("Can't compute decomposition metrics for bindings other than sklearn"),
     })
 }

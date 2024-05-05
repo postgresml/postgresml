@@ -225,7 +225,7 @@ fn train_joint(
     };
 
     // fix up default algorithm for clustering
-    let algorithm = if algorithm == Algorithm::linear && project.task == Task::clustering{
+    let algorithm = if algorithm == Algorithm::linear && project.task == Task::clustering {
         Algorithm::kmeans
     } else if algorithm == Algorithm::linear && project.task == Task::decomposition {
         Algorithm::pca

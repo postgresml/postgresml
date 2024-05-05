@@ -469,7 +469,7 @@ impl Model {
                     _ => todo!(),
                 },
                 Task::decomposition => todo!(),
-                Task::clustering=> todo!(),
+                Task::clustering => todo!(),
                 _ => error!("use pgml.tune for transformers tasks"),
             },
 
@@ -537,7 +537,7 @@ impl Model {
                     Algorithm::catboost => sklearn::catboost_classification,
                     _ => error!("{:?} does not support classification", self.algorithm),
                 },
-                Task::clustering=> match self.algorithm {
+                Task::clustering => match self.algorithm {
                     Algorithm::affinity_propagation => sklearn::affinity_propagation,
                     Algorithm::birch => sklearn::birch,
                     Algorithm::kmeans => sklearn::kmeans,
@@ -548,7 +548,7 @@ impl Model {
                 Task::decomposition => match self.algorithm {
                     Algorithm::pca => sklearn::pca,
                     _ => error!("{:?} does not support clustering", self.algorithm),
-                }
+                },
                 _ => error!("use pgml.tune for transformers tasks"),
             },
         }
@@ -646,8 +646,7 @@ impl Model {
                 #[cfg(all(feature = "python", any(test, feature = "pg_test")))]
                 {
                     let sklearn_metrics =
-                        sklearn::classification_metrics(y_test, &y_hat, dataset.num_distinct_labels)
-                            .unwrap();
+                        sklearn::classification_metrics(y_test, &y_hat, dataset.num_distinct_labels).unwrap();
 
                     if dataset.num_distinct_labels == 2 {
                         metrics.insert("sklearn_roc_auc".to_string(), sklearn_metrics["roc_auc"]);
@@ -701,18 +700,18 @@ impl Model {
                 #[cfg(feature = "python")]
                 {
                     let sklearn_metrics =
-                        sklearn::clustering_metrics(dataset.num_features, &dataset.x_test, &y_hat)
-                            .unwrap();
+                        sklearn::clustering_metrics(dataset.num_features, &dataset.x_test, &y_hat).unwrap();
                     metrics.insert("silhouette".to_string(), sklearn_metrics["silhouette"]);
                 }
             }
             Task::decomposition => {
                 #[cfg(feature = "python")]
                 {
-                    let sklearn_metrics =
-                        sklearn::decomposition_metrics(self.bindings.as_ref().unwrap())
-                            .unwrap();
-                    metrics.insert("cumulative_explained_variance".to_string(), sklearn_metrics["cumulative_explained_variance"]);
+                    let sklearn_metrics = sklearn::decomposition_metrics(self.bindings.as_ref().unwrap()).unwrap();
+                    metrics.insert(
+                        "cumulative_explained_variance".to_string(),
+                        sklearn_metrics["cumulative_explained_variance"],
+                    );
                 }
             }
             task => error!("No test metrics available for task: {:?}", task),
