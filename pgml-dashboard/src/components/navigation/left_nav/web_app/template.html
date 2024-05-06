@@ -1,5 +1,5 @@
 
-<% use crate::components::{LeftNavMenu, Dropdown}; %>
+<% use crate::components::LeftNavMenu; %>
 <div class="leftnav-container py-3 font-family-primary" data-controller="navigation-left-nav-web-app" data-turbo-permanent id='<%- id.unwrap_or_else(|| String::from("defaultId"))%>'>
   <nav 
     class="leftnav nav-pills h-100" 
@@ -8,18 +8,9 @@
     data-action="mousemove@document->navigation-left-nav-web-app#checkIfHover">
     <div class="d-flex flex-column justify-content-between h-100 menu-container leftnav-collapse-affect collapsed">
       <div class="d-flex flex-column">
-
-        <!-- <button class="btn btn-left-nav-toggle mb-4" type="button" data-bs-toggle="collapse" data-bs-target=".leftnav-collapse" aria-expanded="true">
-          <span class="left-nav-toggle-icon material-symbols-outlined leftnav-collapse-affect expanded">
-            keyboard_double_arrow_left
-          </span>
-          <span class="collapse collapse-horizontal leftnav-collapse show" data-extend-bs-collapse-target="stateReference"></span>
-        </button> -->
-
         <span class="leftnav-collapse collapse" data-extend-bs-collapse-target="stateReference" data-navigation-left-nav-web-app-target="stateReference"></span>
         <%+ LeftNavMenu { nav: upper_nav } %>
       </div>
-      <%+ LeftNavMenu { nav: lower_nav} %>
     </div>
   </nav>
 </div>

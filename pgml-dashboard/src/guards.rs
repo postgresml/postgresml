@@ -48,16 +48,6 @@ impl Cluster {
                 dropdown_nav: StaticNav {
                     links: vec![StaticNavLink::new("Local".to_string(), "/dashboard".to_string()).active(true)],
                 },
-                account_management_nav: StaticNav {
-                    links: vec![
-                        StaticNavLink::new("Notebooks".to_string(), "/dashboard".to_string()),
-                        StaticNavLink::new("Projects".to_string(), "/dashboard?tab=Projects".to_string()),
-                        StaticNavLink::new("Models".to_string(), "/dashboard?tab=Models".to_string()),
-                        StaticNavLink::new("Snapshots".to_string(), "/dashboard?tab=Snapshots".to_string()),
-                        StaticNavLink::new("Upload data".to_string(), "/dashboard?tab=Upload_Data".to_string()),
-                        StaticNavLink::new("PostgresML.org".to_string(), "https://postgresml.org".to_string()),
-                    ],
-                },
                 upper_left_nav: StaticNav {
                     links: vec![
                         StaticNavLink::new("Notebooks".to_string(), "/dashboard?tab=Notebooks".to_string())
@@ -81,7 +71,6 @@ impl Cluster {
                             .active(uri.is_some() && uri.clone().unwrap().starts_with("/dashboard?tab=Upload_Data")),
                     ],
                 },
-                lower_left_nav: StaticNav::default(),
                 marketing_footer: MarketingFooter::new().render_once().unwrap(),
                 head_items: None,
             },

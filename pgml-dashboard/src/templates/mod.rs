@@ -117,9 +117,7 @@ pub struct WebAppBase<'a> {
     pub breadcrumbs: Vec<NavLink<'a>>,
     pub head: Head,
     pub dropdown_nav: StaticNav,
-    pub account_management_nav: StaticNav,
     pub upper_left_nav: StaticNav,
-    pub lower_left_nav: StaticNav,
     pub body_components: Vec<Component>,
 }
 
@@ -130,9 +128,7 @@ impl<'a> WebAppBase<'a> {
         WebAppBase {
             head,
             dropdown_nav: context.dropdown_nav.clone(),
-            account_management_nav: context.account_management_nav.clone(),
             upper_left_nav: context.upper_left_nav.clone(),
-            lower_left_nav: context.lower_left_nav.clone(),
             ..Default::default()
         }
     }

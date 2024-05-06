@@ -52,9 +52,7 @@ pub struct Context {
     pub user: models::User,
     pub cluster: models::Cluster,
     pub dropdown_nav: StaticNav,
-    pub account_management_nav: StaticNav,
     pub upper_left_nav: StaticNav,
-    pub lower_left_nav: StaticNav,
     pub marketing_footer: String,
     pub head_items: Option<String>,
 }

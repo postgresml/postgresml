@@ -1,8 +1,7 @@
 <% 
-  use crate::utils::config; 
-  use crate::templates::components::GithubIcon;
+  use crate::utils::config;
   use crate::templates::components::PostgresLogo;
-  use crate::components::{Dropdown, ProfileIcon};
+  use crate::components::Dropdown;
 
   let standalone_dashboard = config::standalone_dashboard();
 %>
@@ -60,28 +59,22 @@
               <a class="nav-link p-lg-0" href="/blog">Blog</a>
             </li>
 
+            <% if !standalone_dashboard { %>
             <li class="nav-item d-flex align-items-center">
               <a class="nav-link p-lg-0" href="/support">Support</a>
             </li>
-  
-            <% if !account_management_nav.links.is_empty() { %>
-            <li class="d-none d-lg-flex nav-item align-items-center">
-              <%+
-                  Dropdown::nav(account_management_nav.links.clone())
-                    .icon(ProfileIcon::new().into())
-                    .expandable()
-                %>
-            </li>
-            <li class="nav-item d-flex d-lg-none align-items-center">
-              <a class="nav-link p-lg-0" data-bs-toggle="collapse" data-bs-target=".horizontal-collapse">Account Management</a>
-            </li>
             <% } %>
+
+            <!-- coming back to feedback -->
+            <!-- <li class="d-none d-lg-flex nav-item align-items-center">
+              <a class="nav-link p-lg-0" href="/support">Feedback lgscb</a>
+            </li> -->
           </ul>
 
           <!-- Main nav links for less than lg screens -->
-          <ul class="sub-menu-dropdown mb-2 d-lg-none">
-            <li class="menu-item d-flex align-items-center">
-              <button type="text" class="btn-search d-flex justify-content-between w-100 mx-4 mb-4" name="search" data-bs-toggle="modal" data-bs-target="#search" autocomplete="off" data-search-target="searchTrigger" data-action="search#openSearch">
+          <ul class="sub-menu-dropdown mb-2 d-lg-none d-flex flex-column gap-3">
+            <li class="nav-item d-flex align-items-center">
+              <button type="text" class="btn-search d-flex justify-content-between w-100 mx-4 mb-2" name="search" data-bs-toggle="modal" data-bs-target="#search" autocomplete="off" data-search-target="searchTrigger" data-action="search#openSearch">
                 Search
                 <span class="material-symbols-outlined">
                   search
@@ -90,28 +83,29 @@
             </li>
   
             <li class="menu-item rounded-0 d-flex align-items-center">
-              <a href="/docs">Docs</a>
+              <a class="ps-4" href="/docs">Docs</a>
             </li>
 
             <li class="menu-item rounded-0 d-flex align-items-center">
-              <a href="/blog">Blog</a>
+              <a class="ps-4" href="/blog">Blog</a>
             </li>
 
-            <li class="menu-item rounded-0 d-flex align-items-center">
-              <a href="/support">Support</a>
-            </li>
-  
             <% if !standalone_dashboard { %>
-            <% if !account_management_nav.links.is_empty() { %>
             <li class="menu-item rounded-0 d-flex align-items-center">
-              <a href="#" data-bs-toggle="collapse" data-bs-target=".horizontal-collapse">Account Management</a>
+              <a class="ps-4" href="/support">Support</a>
             </li>
             <% } %>
-            <% } %>
+  
+            <!-- coming back to feedback -->
+            <!-- <% if !standalone_dashboard { %>
+            <li class="menu-item rounded-0 d-flex align-items-center">
+              <a class="ps-4" href="#" data-bs-toggle="collapse" data-bs-target=".horizontal-collapse">Feedback</a>
+            </li>
+            <% } %> -->
           </ul>
         </div>
 
-        <!-- Account management for less than lg screens -->
+        <!-- Feedback popup for less than lg screens -->
         <div class="nav-item collapse-horizontal horizontal-collapse collapse drawer-submenu">
           <ul class="sub-menu-dropdown mb-2">
             <a class="btn btn-tertiary-web-app ms-4" data-bs-toggle="collapse" data-bs-target=".horizontal-collapse">
@@ -120,41 +114,40 @@
               </span>
               Back
             </a>
-            <% for item in account_management_nav.links.clone() { %>
-              <li class="menu-item rounded-0 d-flex align-items-center">
-                <a class="<% if item.disabled { %>disabled<% } %>" <% if item.disabled { %>
-                  href="" disabled <% } else { %>
-                  href="<%- item.href %>"<% } %>>
-                  <%- item.name %>
-                </a>
-              </li>
-            <% } %>
+            Feedback form will go here for mobile
           </ul>
         </div>
       </div>
-      
 
       <!-- Left Nav menu for less than large screens -->
       <div class="d-lg-none">
         <div class="collapse navbar-collapse" id="leftNavItems">
           <div class="nav-item w-100 d-flex flex-column flex-lg-row collapse show drawer-submenu">
-            <ul class="sub-menu-dropdown mb-2 d-lg-none">
-              <li class="mobile-dashboard-button mx-2 rounded-1 d-flex menu-item">
-                <a href="/deployments" class="py-2 text-white w-100 text-center">
-                  Dashboard
-                </a>
-              </li>
+            <ul class="sub-menu-dropdown mb-2 d-lg-none d-flex flex-column gap-3">
               <% for link in links { %>
-              <li class="menu-item rounded-0 d-flex align-items-center">
-                <a
-                class="<% if link.disabled  { %> disabled <% } %> <% if link.active { %> active <% } %> d-flex gap-2"
-                href="<% if !link.disabled { %> <%= link.href %> <% } %>">
-                <% if link.icon.as_ref().is_some() { %>
-                <span class="material-symbols-outlined %>"><%- link.icon.unwrap() %></span>
+                <% if link.name.to_lowercase() == "dashboard" {%>
+                <li class="menu-item d-flex mobile-dashboard-button mx-4 rounded-1">
+                  <a 
+                    class="py-2 text-white w-100 text-center d-flex gap-2 ps-4 justify-content-center <% if link.disabled  { %> disabled <% } %> <% if link.active { %> active <% } %>"
+                    href="<% if !link.disabled { %> <%= link.href %> <% } %>">
+                    <span class="d-flex align-items-center h-100">
+                      <img src="/dashboard/static/images/owl_white.webp" alt="postgresml_owl" width="12" height="16">
+                    </span>
+                    <%= link.name %>
+                  </a>
+                </li>
+                <% } else {%>
+                <li class="menu-item rounded-0 d-flex align-items-center">
+                  <a
+                    class="<% if link.disabled  { %> disabled <% } %> <% if link.active { %> active <% } %> d-flex gap-2 ps-4"
+                    href="<% if !link.disabled { %> <%= link.href %> <% } %>">
+                    <% if link.icon.as_ref().is_some() { %>
+                    <span class="material-symbols-outlined %>"><%- link.icon.unwrap() %></span>
+                    <% } %>
+                    <span><%= link.name %></span>
+                  </a>
+                </li>
                 <% } %>
-                <span><%= link.name %></span>
-              </a>
-              </li>
               <% } %>
             </ul>
           </div>
