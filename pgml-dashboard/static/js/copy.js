@@ -31,7 +31,10 @@ export default class extends Controller {
         navigator.clipboard.writeText(text)
 
         const toastElement = createToast('Copied to clipboard');
-        showToast(toastElement);
+
+        if (toastElement) {
+          showToast(toastElement);
+        }
     }
 
 }

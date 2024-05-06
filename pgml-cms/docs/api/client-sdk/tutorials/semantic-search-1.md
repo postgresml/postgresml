@@ -6,16 +6,16 @@ description: Example for Semantic Search
 
 This tutorial demonstrates using the `pgml` SDK to create a collection, add documents, build a pipeline for vector search, make a sample query, and archive the collection when finished.  In this tutorial we use [hkunlp/instructor-base](https://huggingface.co/hkunlp/instructor-base), a more advanced embeddings model that takes parameters when doing embedding and recall.
 
-[Link to full JavaScript implementation](../../../../../pgml-sdks/pgml/javascript/examples/question\_answering.js)
+[Link to full JavaScript implementation](https://github.com/postgresml/postgresml/blob/master/pgml-sdks/pgml/javascript/examples/question_answering.js)
 
-[Link to full Python implementation](../../../../../pgml-sdks/pgml/python/examples/question\_answering.py)
+[Link to full Python implementation](https://github.com/postgresml/postgresml/blob/master/pgml-sdks/pgml/python/examples/question_answering.py)
 
 ## Imports and Setup
 
 The SDK is imported and environment variables are loaded.
 
 {% tabs %}
-{% tab title="JavasScript" %}
+{% tab title="JavaScript" %}
 ```js
 const pgml = require("pgml");
 require("dotenv").config();

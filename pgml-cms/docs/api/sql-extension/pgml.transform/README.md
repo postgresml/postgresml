@@ -17,37 +17,173 @@ layout:
 
 # pgml.transform()
 
-PostgresML integrates [🤗 Hugging Face Transformers](https://huggingface.co/transformers) to bring state-of-the-art models into the data layer. There are tens of thousands of pre-trained models with pipelines to turn raw inputs into useful results. Many state of the art deep learning architectures have been published and made available for download. You will want to browse all the [models](https://huggingface.co/models) available to find the perfect solution for your [dataset](https://huggingface.co/dataset) and [task](https://huggingface.co/tasks).
+The `pgml.transform()` function is the most powerful feature of PostgresML. It integrates open-source large language models, like Llama, Mixtral, and many more, which allows to perform complex tasks on your data.
 
-We'll demonstrate some of the tasks that are immediately available to users of your database upon installation: [translation](https://github.com/postgresml/postgresml/blob/v2.7.12/pgml-dashboard/content/docs/guides/transformers/pre\_trained\_models.md#translation), [sentiment analysis](https://github.com/postgresml/postgresml/blob/v2.7.12/pgml-dashboard/content/docs/guides/transformers/pre\_trained\_models.md#sentiment-analysis), [summarization](https://github.com/postgresml/postgresml/blob/v2.7.12/pgml-dashboard/content/docs/guides/transformers/pre\_trained\_models.md#summarization), [question answering](https://github.com/postgresml/postgresml/blob/v2.7.12/pgml-dashboard/content/docs/guides/transformers/pre\_trained\_models.md#question-answering) and [text generation](https://github.com/postgresml/postgresml/blob/v2.7.12/pgml-dashboard/content/docs/guides/transformers/pre\_trained\_models.md#text-generation).
+The models are downloaded from [🤗 Hugging Face](https://huggingface.co/transformers) which hosts tens of thousands of pre-trained and fine-tuned models for various tasks like text generation, question answering, summarization, text classification, and more.
 
-### Examples
+## API
 
-All of the tasks and models demonstrated here can be customized by passing additional arguments to the `Pipeline` initializer or call. You'll find additional links to documentation in the examples below.
+The `pgml.transform()` function comes in two flavors, task-based and model-based.
 
-The Hugging Face [`Pipeline`](https://huggingface.co/docs/transformers/main\_classes/pipelines) API is exposed in Postgres via:
+### Task-based API
 
-```sql
+The task-based API automatically chooses a model based on the task:
+
+```postgresql
 pgml.transform(
-    task TEXT OR JSONB,      -- task name or full pipeline initializer arguments
-    call JSONB,              -- additional call arguments alongside the inputs
-    inputs TEXT[] OR BYTEA[] -- inputs for inference
+    task TEXT,
+    args JSONB,
+    inputs TEXT[]
 )
 ```
 
-This is roughly equivalent to the following Python:
+| Argument | Description | Example | Required |
+|----------|-------------|---------|----------|
+| task | The name of a natural language processing task. | `'text-generation'` | Required |
+| args | Additional kwargs to pass to the pipeline. | `'{"max_new_tokens": 50}'::JSONB` | Optional |
+| inputs | Array of prompts to pass to the model for inference. Each prompt is evaluated independently and a separate result is returned. | `ARRAY['Once upon a time...']` | Required |
+
+#### Examples
+
+{% tabs %}
+{% tabs %}
+{% tab title="Text generation" %}
+
+```postgresql
+SELECT *
+FROM pgml.transform(
+  task => 'text-generation',
+  inputs => ARRAY['In a galaxy far far away']
+);
+```
+
+{% endtab %}
+{% tab title="Translation" %}
+
+```postgresql
+SELECT *
+FROM pgml.transform(
+  task => 'translation_en_to_fr',
+  inputs => ARRAY['How do I say hello in French?']
+);
+```
+
+{% endtab %}
+{% endtabs %}
+
+### Model-based API
+
+The model-based API requires the name of the model and the task, passed as a JSON object. This allows it to be more generic and support more models:
+
+```postgresql
+pgml.transform(
+    model JSONB,
+    args JSONB,
+    inputs TEXT[]
+)
+```
+
+<table class="table-sm table">
+  <thead>
+    <th>Argument</th>
+    <th>Description</th>
+    <th>Example</th>
+  </thead>
+  <tbody>
+    <tr>
+      <td>model</td>
+      <td>Model configuration, including name and task.</td>
+      <td>
+        <div class="code-multi-line font-monospace">
+          '{
+            <br>&nbsp;&nbsp;"task": "text-generation",
+            <br>&nbsp;&nbsp;"model": "mistralai/Mixtral-8x7B-v0.1"
+          <br>}'::JSONB
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td>args</td>
+      <td>Additional kwargs to pass to the pipeline.</td>
+      <td><code>'{"max_new_tokens": 50}'::JSONB</code></td>
+    </tr>
+    <tr>
+      <td>inputs</td>
+      <td>Array of prompts to pass to the model for inference. Each prompt is evaluated independently.</td>
+      <td><code>ARRAY['Once upon a time...']</code></td>
+    </tr>
+</table>
+
+#### Example
+
+{% tabs %}
+{% tab title="PostgresML SQL" %}
+
+```postgresql
+SELECT pgml.transform(
+  task   => '{
+    "task": "text-generation",
+    "model": "TheBloke/zephyr-7B-beta-GPTQ",
+    "model_type": "mistral",
+    "revision": "main",
+    "device_map": "auto"
+  }'::JSONB,
+  inputs  => ARRAY['AI is going to'],
+  args   => '{
+    "max_new_tokens": 100
+  }'::JSONB
+);
+```
+
+{% endtab %}
+
+{% tab title="Equivalent Python" %}
 
 ```python
 import transformers
 
 def transform(task, call, inputs):
     return transformers.pipeline(**task)(inputs, **call)
+
+transform(
+    {
+        "task": "text-generation",
+        "model": "TheBloke/zephyr-7B-beta-GPTQ",
+        "model_type": "mistral",
+        "revision": "main",
+    },
+    {"max_new_tokens": 100},
+    ['AI is going to change the world in the following ways:']
+)
 ```
 
-Most pipelines operate on `TEXT[]` inputs, but some require binary `BYTEA[]` data like audio classifiers. `inputs` can be `SELECT`ed from tables in the database, or they may be passed in directly with the query. The output of this call is a `JSONB` structure that is task specific. See the [Postgres JSON](https://www.postgresql.org/docs/14/functions-json.html) reference for ways to process this output dynamically.
+{% endtab %}
+{% endtabs %}
 
-!!! tip
 
-Models will be downloaded and stored locally on disk after the first call. They are also cached per connection to improve repeated calls in a single session. To free that memory, you'll need to close your connection. You may want to establish dedicated credentials and connection pools via [pgcat](https://github.com/levkk/pgcat) or [pgbouncer](https://www.pgbouncer.org/) for larger models that have billions of parameters. You may also pass `{"cache": false}` in the JSON `call` args to prevent this behavior.
+### Supported tasks
 
-!!!
+PostgresML currently supports most NLP tasks available on Hugging Face:
+
+| Task | Name | Description |
+|------|-------------|---------|
+| [Fill mask](fill-mask) | `key-mask` | Fill in the blank in a sentence. |
+| [Question answering](question-answering) | `question-answering` | Answer a question based on a context. |
+| [Summarization](summarization) | `summarization` | Summarize a long text. |
+| [Text classification](text-classification) | `text-classification` | Classify a text as positive or negative. |
+| [Text generation](text-generation) | `text-generation` | Generate text based on a prompt. |
+| [Text-to-text generation](text-to-text-generation) | `text-to-text-generation` | Generate text based on an instruction in the prompt. |
+| [Token classification](token-classification) | `token-classification` | Classify tokens in a text. |
+| [Translation](translation) | `translation` | Translate text from one language to another. |
+| [Zero-shot classification](zero-shot-classification) | `zero-shot-classification` | Classify a text without training data. |
+| Conversational | `conversational` | Engage in a conversation with the model, e.g. chatbot. |
+
+### Structured inputs
+
+Both versions of the `pgml.transform()` function also support structured inputs, formatted with JSON. Structured inputs are used with the conversational task, e.g. to differentiate between the system and user prompts. Simply replace the text array argument with an array of JSONB objects.
+
+
+## Additional resources
+
+- [Hugging Face datasets](https://huggingface.co/datasets)
+- [Hugging Face tasks](https://huggingface.co/tasks)
