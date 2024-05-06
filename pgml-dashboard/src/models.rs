@@ -55,10 +55,11 @@ impl Project {
         match self.task.as_ref().unwrap().as_str() {
             "classification" | "text_classification" | "question_answering" => Ok("f1"),
             "regression" => Ok("r2"),
+            "clustering" => Ok("silhouette"),
+            "decomposition" => Ok("cumulative_explained_variance"),
             "summarization" => Ok("rouge_ngram_f1"),
             "translation" => Ok("bleu"),
             "text_generation" | "text2text" => Ok("perplexity"),
-            "cluster" => Ok("silhouette"),
             task => Err(anyhow::anyhow!("Unhandled task: {}", task)),
         }
     }
@@ -67,10 +68,11 @@ impl Project {
         match self.task.as_ref().unwrap().as_str() {
             "classification" | "text_classification" | "question_answering" => Ok("F<sup>1</sup>"),
             "regression" => Ok("R<sup>2</sup>"),
+            "clustering" => Ok("silhouette"),
+            "decomposition" => Ok("Cumulative Explained Variance"),
             "summarization" => Ok("Rouge Ngram F<sup>1</sup>"),
             "translation" => Ok("Bleu"),
             "text_generation" | "text2text" => Ok("Perplexity"),
-            "cluster" => Ok("silhouette"),
             task => Err(anyhow::anyhow!("Unhandled task: {}", task)),
         }
     }
