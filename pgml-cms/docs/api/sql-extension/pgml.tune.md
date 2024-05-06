@@ -45,7 +45,7 @@ translation
 
 \===
 
-This HuggingFace dataset stores the data as language key pairs in a JSON document. To use it with PostgresML, we'll need to provide a `VIEW` that structures the data into more primitively typed columns.
+This Hugging Face dataset stores the data as language key pairs in a JSON document. To use it with PostgresML, we'll need to provide a `VIEW` that structures the data into more primitively typed columns.
 
 \=== "SQL"
 
