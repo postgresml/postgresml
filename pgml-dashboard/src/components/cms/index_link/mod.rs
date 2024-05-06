@@ -73,7 +73,7 @@ impl IndexLink {
         self
     }
 
-    // Adds a suffix to this and all children ids. 
+    // Adds a suffix to this and all children ids.
     // this prevents id collision with multiple naves on one screen
     // like d-none for mobile nav
     pub fn id_suffix(mut self, id_suffix: &str) -> IndexLink {

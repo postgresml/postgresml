@@ -66,4 +66,8 @@
             background-color: #{$gray-700};
         }
     }
+
+    .mobile-dashboard-button:not(:active) {
+        background-color: #{$gray-700};
+    }
 }

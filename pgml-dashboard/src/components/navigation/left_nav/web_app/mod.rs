@@ -7,17 +7,15 @@ use sailfish::TemplateOnce;
 pub struct WebApp {
     pub upper_nav: StaticNav,
     pub lower_nav: StaticNav,
-    pub dropdown_nav: StaticNav,
     pub id: Option<String>,
 }
 
 impl WebApp {
-    pub fn new(upper_nav: StaticNav, lower_nav: StaticNav, dropdown_nav: StaticNav) -> WebApp {
+    pub fn new(upper_nav: StaticNav, lower_nav: StaticNav) -> WebApp {
         WebApp {
             upper_nav,
             lower_nav,
-            dropdown_nav,
-            id: None
+            id: None,
         }
     }
 

@@ -142,7 +142,6 @@
 
 .drawer-submenu {
     white-space: nowrap;
-    background-color: #{gray-800};
     @include media-breakpoint-down(lg) {
         background-color: #{$gray-900};
     }

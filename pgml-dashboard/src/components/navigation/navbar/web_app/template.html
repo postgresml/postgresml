@@ -1,7 +1,10 @@
 <% 
+  use crate::utils::config; 
   use crate::templates::components::GithubIcon;
   use crate::templates::components::PostgresLogo;
-  use crate::components::{Dropdown, ProfileIcon}; 
+  use crate::components::{Dropdown, ProfileIcon};
+
+  let standalone_dashboard = config::standalone_dashboard();
 %>
 
   <div class="fixed-top-nav font-family-primary" data-controller="navigation-navbar-web-app">
@@ -136,6 +139,11 @@
         <div class="collapse navbar-collapse" id="leftNavItems">
           <div class="nav-item w-100 d-flex flex-column flex-lg-row collapse show drawer-submenu">
             <ul class="sub-menu-dropdown mb-2 d-lg-none">
+              <li class="mobile-dashboard-button mx-2 rounded-1 d-flex menu-item">
+                <a href="/deployments" class="py-2 text-white w-100 text-center">
+                  Dashboard
+                </a>
+              </li>
               <% for link in links { %>
               <li class="menu-item rounded-0 d-flex align-items-center">
                 <a
