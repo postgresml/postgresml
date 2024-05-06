@@ -4,9 +4,9 @@ description: CLI tool to build and deploy chatbots
 
 # Example Application
 
-Introduction
+## Introduction
 
-A command line tool to build and deploy a _**knowledge based**_ chatbot using PostgresML and OpenAI API.
+This tutorial will walk you through the process of creating a command line tool to build and deploy a _**knowledge based**_ chatbot using PostgresML and OpenAI API.
 
 There are two stages in building a knowledge based chatbot:
 
@@ -20,7 +20,7 @@ This tool automates the above two stages and provides a command line interface t
 Before you begin, make sure you have the following:
 
 * PostgresML Database: Sign up for a free [GPU-powered database](https://postgresml.org/signup)
-* Python version >=3.8
+* Python version of 3.8 or newer
 * OpenAI API key
 
 ## Getting started
@@ -40,7 +40,7 @@ wget https://raw.githubusercontent.com/postgresml/postgresml/master/pgml-apps/pg
 ```
 
 3. Copy the template file to `.env`
-4. Update environment variables with your OpenAI API key and PostgresML database credentials.
+4. Update environment variables with your OpenAI API key and PostgresML database credentials, replacing the sample `OPENAI_API_KEY` and `DATABASE_URL` data with your data in the following command:
 
 ```bash
 OPENAI_API_KEY=<OPENAI_API_KEY>
@@ -79,7 +79,7 @@ optional arguments:
 
 ### Ingest
 
-In this step, we ingest documents, chunk documents, generate embeddings and index these embeddings for fast query.
+In this step, you ingest documents, chunk documents, generate embeddings and index these embeddings for fast query.
 
 ```bash
 LOG_LEVEL=DEBUG pgml-chat --root_dir <directory> --collection_name <collection_name> --stage ingest
@@ -93,7 +93,7 @@ You can interact with the bot using the command line interface or Slack.
 
 #### Command Line Interface
 
-In this step, we start chatting with the chatbot at the command line. You can increase the log level to ERROR to suppress the logs. CLI is the default chat interface.
+In this step, you can start chatting with the chatbot at the command line. You can increase the log level to ERROR to suppress the logs. CLI is the default chat interface.
 
 ```bash
 LOG_LEVEL=ERROR pgml-chat --collection_name <collection_name> --stage chat --chat_interface cli
@@ -121,7 +121,7 @@ SLACK_BOT_TOKEN=<SLACK_BOT_TOKEN>
 SLACK_APP_TOKEN=<SLACK_APP_TOKEN>
 ```
 
-In this step, we start chatting with the chatbot on Slack. You can increase the log level to ERROR to suppress the logs.
+In this step, you can start chatting with the chatbot on Slack. You can increase the log level to ERROR to suppress the logs.
 
 ```bash
 LOG_LEVEL=ERROR pgml-chat --collection_name <collection_name> --stage chat --chat_interface slack
@@ -145,7 +145,7 @@ Once the slack app is running, you can interact with the chatbot on Slack as sho
 DISCORD_BOT_TOKEN=<DISCORD_BOT_TOKEN>
 ```
 
-In this step, we start chatting with the chatbot on Discord. You can increase the log level to ERROR to suppress the logs.
+In this step, you can start chatting with the chatbot on Discord. You can increase the log level to ERROR to suppress the logs.
 
 ```bash
 pgml-chat --collection_name <collection_name> --stage chat --chat_interface discord

@@ -4,11 +4,13 @@ description: The key concepts that make up PostgresML.
 
 # Overview
 
-PostgresML is a complete MLOps platform built on PostgreSQL. Our operating principle is:
+PostgresML is a complete [MLOps platform](## "A Machine Learning Operations platform is a set of practices that streamlines bringing machine learning models to production") built on PostgreSQL. Our operating principle is:
 
 > _Move models to the database, rather than constantly moving data to the models._
 
 Data for ML & AI systems is inherently larger and more dynamic than the models. It's more efficient, manageable and reliable to move models to the database, rather than continuously moving data to the models.
+
+We offer both [managed-cloud](/docs/product/cloud-database/) and [local](/docs/resources/developer-docs/installation) installations to provide solutions for wherever you keep your data.
 
 ## AI engine
 
@@ -48,8 +50,8 @@ Some of the use cases include:
 
 ## Our mission
 
-PostgresML strives to provide access to open source AI for everyone. We are continuously developping PostgresML to keep up with the rapidly evolving use cases for ML & AI, but we remain committed to never breaking user facing APIs. We welcome contributions to our [open source code and documentation](https://github.com/postgresml) from the community.
+PostgresML strives to provide access to open source AI for everyone. We are continuously developing PostgresML to keep up with the rapidly evolving use cases for ML & AI, but we remain committed to never breaking user-facing APIs. We welcome contributions to our [open source code and documentation](https://github.com/postgresml target="_blank") from the community.
 
 ## Managed cloud
 
-While our extension and pooler are open source, we also offer a managed cloud database service for production deployments of PostgresML. You can [sign up](https://postgresml.org/signup) for an account and get a free Serverless database in seconds.
+While our extension and pooler are open source, we also offer a managed cloud database service for production deployments of PostgresML. You can [sign up](https://postgresml.org/signup target="_blank") for an account and get a free Serverless database in seconds.

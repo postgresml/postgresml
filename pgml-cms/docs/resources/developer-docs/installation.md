@@ -33,7 +33,7 @@ brew bundle
 
 **Rust**
 
-PostgresML is written in Rust, so you'll need to install the latest compiler from [rust-lang.org](https://rust-lang.org). Additionally, we use the Rust PostgreSQL extension framework `pgrx`, which requires some initialization steps:
+PostgresML is written in Rust, so you'll need to install the latest compiler from [rust-lang.org](https://rust-lang.org target="_blank"). Additionally, we use the Rust PostgreSQL extension framework `pgrx`, which requires some initialization steps:
 
 ```bash
 cargo install cargo-pgrx --version 0.11.2 && \
@@ -238,7 +238,7 @@ make install
 
 ### Other Linuxes
 
-PostgresML will compile and run on pretty much any modern Linux distribution. For a quick example, you can take a look at what we do to build the extension on [Ubuntu](https://github.com/postgresml/postgresml/blob/master/.github/workflows/ubuntu-packages-and-docker-image.yml), and modify those steps to work on your distribution.
+PostgresML will compile and run on pretty much any modern Linux distribution. For a quick example, you can take a look at what we do to build the extension on [Ubuntu](https://github.com/postgresml/postgresml/blob/master/.github/workflows/ubuntu-packages-and-docker-image.yml target="_blank"), and modify those steps to work on your distribution.
 
 #### Get the source code
 
@@ -279,7 +279,7 @@ lld
 
 **Rust**
 
-PostgresML is written in Rust, so you'll need to install the latest compiler version from [rust-lang.org](https://rust-lang.org).
+PostgresML is written in Rust, so you'll need to install the latest compiler version from [rust-lang.org](https://rust-lang.org target="_blank").
 
 #### `pgrx`
 
@@ -310,7 +310,7 @@ The dashboard is a web app that can be run against any Postgres database which h
 To get our source code, you can clone our GitHub repository (if you haven't already):
 
 ```bash
-git clone clone https://github.com/postgresml/postgresml && \
+git clone https://github.com/postgresml/postgresml && \
 cd pgml-dashboard
 ```
 
@@ -333,7 +333,7 @@ DATABASE_URL=postgres:///pgml_dashboard
 
 ### Get Rust
 
-The dashboard is written in Rust and uses the SQLx crate to interact with Postgres. Make sure to install the latest Rust compiler from [rust-lang.org](https://rust-lang.org).
+The dashboard is written in Rust and uses the SQLx crate to interact with Postgres. Make sure to install the latest Rust compiler from [rust-lang.org](https://rust-lang.org target="_blank").
 
 ### Database setup
 
@@ -346,7 +346,7 @@ cargo sqlx database setup
 
 ### Frontend dependencies
 
-The dashboard frontend is using Sass which requires Node & the Sass compiler. You can install Node from Brew, your package repository, or by using [Node Version Manager](https://github.com/nvm-sh/nvm).
+The dashboard frontend is using Sass which requires Node & the Sass compiler. You can install Node from Brew, your package repository, or by using [Node Version Manager](https://github.com/nvm-sh/nvm target="_blank").
 
 If using nvm, you can install the latest stable Node version with:
 

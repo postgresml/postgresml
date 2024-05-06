@@ -87,7 +87,7 @@ SELECT * FROM pgml.deploy(
 
 ### Rolling Back
 
-In case the new model isn't performing well in production, it's easy to rollback to the previous version. A rollback creates a new deployment for the old model. Multiple rollbacks in a row will oscillate between the two most recently deployed models, making rollbacks a safe and reversible operation.
+If the new model is not performing well in production, it is easy to rollback to the previous version. A rollback creates a new deployment for the old model. Multiple rollbacks in a row will oscillate between the two most recently deployed models, making rollbacks a safe and reversible operation.
 
 #### Rollback
 
@@ -101,7 +101,7 @@ SELECT * FROM pgml.deploy(
 #### Output
 
 ```sql
-             project               | strategy | algorithm
+             project                | strategy | algorithm
 ------------------------------------+----------+-----------
  Handwritten Digit Image Classifier | rollback | linear
 (1 row)
@@ -129,7 +129,7 @@ SELECT * FROM pgml.deploy(
 
 ### Specific Model IDs
 
-In the case you need to deploy an exact model that is not the `most_recent` or `best_score`, you may deploy a model by id. Model id's can be found in the `pgml.models` table.
+In the case you need to deploy an exact model that is not the `most_recent` or `best_score`, you may deploy a model by id. Model ids can be found in the `pgml.models` table.
 
 #### SQL
 

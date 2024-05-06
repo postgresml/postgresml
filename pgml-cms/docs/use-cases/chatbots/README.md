@@ -33,7 +33,7 @@ text -> tokens -> LLM -> probability distribution -> predicted token -> text
 <figure><img src="https://files.gitbook.com/v0/b/gitbook-x-prod.appspot.com/o/spaces%2FrvfCoPdoQeoovZiqNG90%2Fuploads%2FPzJzmVS3uNhbvseiJbgi%2FScreenshot%20from%202023-12-13%2013-19-33.png?alt=media&#x26;token=11d57b2a-6aa3-4374-b26c-afc6f531d2f3" alt=""><figcaption><p>The flow of inputs through an LLM. In this case the inputs are "What is Baldur's Gate 3?" and the output token "14" maps to the word "I"</p></figcaption></figure>
 
 {% hint style="info" %}
-We have simplified the tokenization process. Words do not always map directly to tokens. For instance, the word "Baldur's" may actually map to multiple tokens. For more information on tokenization checkout [HuggingFace's summary](https://huggingface.co/docs/transformers/tokenizer\_summary).
+We have simplified the tokenization process. Words do not always map directly to tokens. For instance, the word "Baldur's" may actually map to multiple tokens. For more information on tokenization checkout [Hugging Face's summary](https://huggingface.co/docs/transformers/tokenizer\_summary).
 {% endhint %}
 
 To be very specific, modern LLM's are [function approximators](https://en.wikipedia.org/wiki/Function\_approximation) for the next most likely `token` given a list of `tokens`. They are not perfect and the level of accuracy is dependent on a number of factors like the model architecture, the training algorithms, and potentially most importantly the data it was trained on.
@@ -356,7 +356,7 @@ By chaining these special tags we can build a conversation that Hermes has been 
 This example highlights that modern LLM's are stateless function approximators. Notice we have included the first question we asked and the models response in our input. Every time we ask it a new question in our conversation, we will have to supply the entire conversation history if we want it to know what we already discussed. LLMs have no built in way to remember past questions and conversations.
 {% endhint %}
 
-Doing this by hand seems very tedious, how do we actually accomplish this in the real world? We use [Jinja](https://jinja.palletsprojects.com/en/3.1.x/) templates. Conversational models on HuggingFace typical come with a Jinja template which can be found in the `tokenizer_config.json`. [Checkout `teknium/OpenHermes-2.5-Mistral-7B`'s Jinja template in the `tokenizer_config.json`](https://huggingface.co/teknium/OpenHermes-2.5-Mistral-7B/blob/main/tokenizer\_config.json). For more information on Jinja templating check out [HuggingFace's introduction](https://huggingface.co/docs/transformers/main/chat\_templating).
+Doing this by hand seems very tedious, how do we actually accomplish this in the real world? We use [Jinja](https://jinja.palletsprojects.com/en/3.1.x/) templates. Conversational models on Hugging Face typical come with a Jinja template which can be found in the `tokenizer_config.json`. [Checkout `teknium/OpenHermes-2.5-Mistral-7B`'s Jinja template in the `tokenizer_config.json`](https://huggingface.co/teknium/OpenHermes-2.5-Mistral-7B/blob/main/tokenizer\_config.json). For more information on Jinja templating check out [Hugging Face's introduction](https://huggingface.co/docs/transformers/main/chat\_templating).
 
 Luckily for everyone reading this, our `pgml` library automatically handles templating and formatting inputs correctly so we can skip a bunch of boring code. We do want to change up our program a little bit to take advantage of this automatic templating:
 
@@ -393,7 +393,7 @@ Hello! My name is Hermes. How can I help you today?
 You just asked me what my name is, and I am a friendly and helpful chatbot named Hermes. How can I assist you today? Feel free to ask me any questions or seek any assistance you need.
 ```
 
-Note that we have a list of dictionaries called `history` we use to store the chat history, and instead of feeding text into our model, we are inputting the `history` list. Our library automatically converts this list of dictionaries into the format expected by the model. Notice the `roles` in the dictionaries are the same as the `roles` of the messages in the previous example. This list of dictionaries with keys `role` and `content`  as a storage system for messages is pretty standard and used by us as well as OpenAI and HuggingFace.
+Note that we have a list of dictionaries called `history` we use to store the chat history, and instead of feeding text into our model, we are inputting the `history` list. Our library automatically converts this list of dictionaries into the format expected by the model. Notice the `roles` in the dictionaries are the same as the `roles` of the messages in the previous example. This list of dictionaries with keys `role` and `content`  as a storage system for messages is pretty standard and used by us as well as OpenAI and Hugging Face.
 
 Let's ask it the dreaded question:
 
