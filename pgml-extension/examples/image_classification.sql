@@ -5,9 +5,8 @@
 -- This demonstrates using a table with a single array feature column
 -- for classification.
 --
--- The final result after a few seconds of training is not terrible. Maybe not perfect
--- enough for mission critical applications, but it's telling how quickly "off the shelf" 
--- solutions can solve problems these days.
+-- Some algorithms converge on this trivial dataset in under a second, demonstrating the
+-- speed with which modern machines can "learn" from example data.
 
 -- Exit on error (psql)
 -- \set ON_ERROR_STOP true

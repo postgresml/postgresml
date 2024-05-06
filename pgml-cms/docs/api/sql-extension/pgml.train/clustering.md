@@ -16,8 +16,8 @@ SELECT image FROM pgml.digits;
 -- view the dataset
 SELECT left(image::text, 40) || ',...}' FROM pgml.digit_vectors LIMIT 10;
 
--- train a simple model to classify the data
-SELECT * FROM pgml.train('Handwritten Digit Clusters', 'cluster', 'pgml.digit_vectors', hyperparams => '{"n_clusters": 10}');
+-- train a simple model to cluster the data
+SELECT * FROM pgml.train('Handwritten Digit Clusters', 'clustering', 'pgml.digit_vectors', hyperparams => '{"n_clusters": 10}');
 
 -- check out the predictions
 SELECT target, pgml.predict('Handwritten Digit Clusters', image) AS prediction
@@ -27,7 +27,7 @@ LIMIT 10;
 
 ## Algorithms
 
-All clustering algorithms implemented by PostgresML are online versions. You may use the [pgml.predict](../../../api/sql-extension/pgml.predict/ "mention")function to cluster novel datapoints after the clustering model has been trained.
+All clustering algorithms implemented by PostgresML are online versions. You may use the [pgml.predict](../../../api/sql-extension/pgml.predict/ "mention")function to cluster novel data points after the clustering model has been trained.
 
 | Algorithm              | Reference                                                                                                         |
 | ---------------------- | ----------------------------------------------------------------------------------------------------------------- |

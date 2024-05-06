@@ -14,7 +14,11 @@ use anyhow::Result;
 use pyo3::prelude::*;
 use pyo3::types::PyTuple;
 
-use crate::{bindings::Bindings, create_pymodule, orm::*};
+use crate::{
+    bindings::{Bindings, TracebackError},
+    create_pymodule,
+    orm::*,
+};
 
 create_pymodule!("/src/bindings/sklearn/sklearn.py");
 
@@ -35,8 +39,8 @@ wrap_fit!(random_forest_regression, "random_forest_regression");
 wrap_fit!(xgboost_regression, "xgboost_regression");
 wrap_fit!(xgboost_random_forest_regression, "xgboost_random_forest_regression");
 wrap_fit!(
-    orthogonal_matching_persuit_regression,
-    "orthogonal_matching_persuit_regression"
+    orthogonal_matching_pursuit_regression,
+    "orthogonal_matching_pursuit_regression"
 );
 wrap_fit!(bayesian_ridge_regression, "bayesian_ridge_regression");
 wrap_fit!(
@@ -108,6 +112,8 @@ wrap_fit!(optics, "optics_clustering");
 wrap_fit!(spectral, "spectral_clustering");
 wrap_fit!(spectral_bi, "spectral_biclustering");
 wrap_fit!(spectral_co, "spectral_coclustering");
+
+wrap_fit!(pca, "pca_decomposition");
 
 fn fit(dataset: &Dataset, hyperparams: &Hyperparams, algorithm_task: &'static str) -> Result<Box<dyn Bindings>> {
     let hyperparams = serde_json::to_string(hyperparams).unwrap();
@@ -293,14 +299,26 @@ pub fn classification_metrics(ground_truth: &[f32], y_hat: &[f32], num_classes: 
     Ok(scores)
 }
 
-pub fn cluster_metrics(num_features: usize, inputs: &[f32], labels: &[f32]) -> Result<HashMap<String, f32>> {
+pub fn clustering_metrics(num_features: usize, inputs: &[f32], labels: &[f32]) -> Result<HashMap<String, f32>> {
     Python::with_gil(|py| {
-        let calculate_metric = get_module!(PY_MODULE).getattr(py, "cluster_metrics")?;
+        let calculate_metric = get_module!(PY_MODULE).getattr(py, "clustering_metrics")?;
 
         let scores: HashMap<String, f32> = calculate_metric
             .call1(py, (num_features, PyTuple::new(py, [inputs, labels])))?
             .extract(py)?;
 
         Ok(scores)
+    })
+}
+
+pub fn decomposition_metrics(bindings: &Box<dyn Bindings>) -> Result<HashMap<String, f32>> {
+    Python::with_gil(|py| match bindings.as_any().downcast_ref::<Estimator>() {
+        Some(estimator) => {
+            let calculate_metric = get_module!(PY_MODULE).getattr(py, "decomposition_metrics")?;
+            let metrics = calculate_metric.call1(py, PyTuple::new(py, [&estimator.estimator]));
+            let metrics = metrics.format_traceback(py)?.extract(py).format_traceback(py)?;
+            Ok(metrics)
+        }
+        None => error!("Can't compute decomposition metrics for bindings other than sklearn"),
     })
 }

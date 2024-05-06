@@ -48,6 +48,7 @@ pub enum Algorithm {
     spectral_bi,
     spectral_co,
     catboost,
+    pca,
 }
 
 impl std::str::FromStr for Algorithm {
@@ -99,6 +100,7 @@ impl std::str::FromStr for Algorithm {
             "spectral_bi" => Ok(Algorithm::spectral_bi),
             "spectral_co" => Ok(Algorithm::spectral_co),
             "catboost" => Ok(Algorithm::catboost),
+            "pca" => Ok(Algorithm::pca),
             _ => Err(()),
         }
     }
@@ -151,6 +153,7 @@ impl std::string::ToString for Algorithm {
             Algorithm::spectral_bi => "spectral_bi".to_string(),
             Algorithm::spectral_co => "spectral_co".to_string(),
             Algorithm::catboost => "catboost".to_string(),
+            Algorithm::pca => "pca".to_string(),
         }
     }
 }
