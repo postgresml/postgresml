@@ -20,9 +20,17 @@ export default class extends Controller {
   setLeftNavToLocation() {
     this.removeAllActive();
 
-    let tag =
-      "a[href='" + window.location.pathname + window.location.search + "']";
-    let element = this.element.querySelector(tag);
+    // When we fix our routing window.location.search will not be needed.
+    // then we can just get element by querySelector
+    let tag = window.location.pathname + window.location.search.split("&")[0];
+
+    let element;
+
+    for (let item in this.linkTargets) {
+      if (this.linkTargets[item].href.includes(tag)) {
+        element = this.linkTargets[item];
+      }
+    }
 
     if (element) {
       element.classList.add("active");
