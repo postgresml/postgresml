@@ -57,6 +57,8 @@ impl Json {
 
 pub(crate) trait TryToNumeric {
     fn try_to_u64(&self) -> anyhow::Result<u64>;
+
+    #[allow(dead_code)]
     fn try_to_i64(&self) -> anyhow::Result<i64> {
         self.try_to_u64().map(|u| u as i64)
     }
