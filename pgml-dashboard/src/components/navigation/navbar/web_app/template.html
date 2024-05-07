@@ -126,7 +126,7 @@
           <div class="nav-item w-100 d-flex flex-column flex-lg-row collapse show drawer-submenu">
             <ul class="sub-menu-dropdown mb-2 d-lg-none d-flex flex-column gap-3">
               <% for link in links { %>
-                <% if link.name.to_lowercase() == "dashboard" {%>
+                <% if link.name.to_lowercase() == "home" {%>
                 <li class="menu-item d-flex mobile-dashboard-button mx-4 rounded-1">
                   <a 
                     class="py-2 text-white w-100 text-center d-flex gap-2 ps-4 justify-content-center <% if link.disabled  { %> disabled <% } %> <% if link.active { %> active <% } %>"
