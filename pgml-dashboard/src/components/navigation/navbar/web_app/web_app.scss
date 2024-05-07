@@ -70,4 +70,8 @@
     .mobile-dashboard-button:not(:active) {
         background-color: #{$gray-700};
     }
+
+    .btn-dropdown {
+        padding: 8px 20px;
+    }
 }
