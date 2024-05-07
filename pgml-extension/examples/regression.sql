@@ -1,4 +1,4 @@
--- This example trains models on the sklean diabetes dataset
+-- This example trains models on the sklearn diabetes dataset
 -- Source URL: https://www4.stat.ncsu.edu/~boos/var.select/diabetes.html
 -- For more information see:
 --   Bradley Efron, Trevor Hastie, Iain Johnstone and Robert Tibshirani (2004)

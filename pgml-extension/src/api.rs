@@ -225,8 +225,10 @@ fn train_joint(
     };
 
     // fix up default algorithm for clustering
-    let algorithm = if algorithm == Algorithm::linear && project.task == Task::cluster {
+    let algorithm = if algorithm == Algorithm::linear && project.task == Task::clustering {
         Algorithm::kmeans
+    } else if algorithm == Algorithm::linear && project.task == Task::decomposition {
+        Algorithm::pca
     } else {
         algorithm
     };
@@ -480,6 +482,13 @@ fn predict_batch(project_name: &str, features: Vec<f32>) -> SetOfIterator<'stati
         Project::get_deployed_model_id(project_name),
         features,
     ))
+}
+
+#[pg_extern(immutable, parallel_safe, strict, name = "decompose")]
+fn decompose(project_name: &str, vector: Vec<f32>) -> Vec<f32> {
+    let model_id = Project::get_deployed_model_id(project_name);
+    let model = unwrap_or_error!(Model::find_cached(model_id));
+    unwrap_or_error!(model.decompose(&vector))
 }
 
 #[pg_extern(immutable, parallel_safe, strict, name = "predict")]
