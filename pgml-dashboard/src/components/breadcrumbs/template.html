@@ -1,14 +1,17 @@
 <nav>
   <nav aria-label="breadcrumb z-1">
     <ol class="breadcrumb">
-      <!-- not quite ready for this yet -->
-      <!-- <li class="breadcrumb-item body-regular-text <% if links.is_empty() {%>active<% } %>">
-        <a class="d-flex" href="/deployments">
-          <span class="material-symbols-outlined">
-            roofing
-          </span>
+      <li class="breadcrumb-item body-regular-text <% if links.is_empty() {%>active<% } %>">
+        <a class="d-flex gap-2 align-items-center" href="/deployments">
+          <span class="icon-owl"></span>
+          Home
         </a>
-      </li> -->
+      </li>
+
+      <% if !links.is_empty() {%>
+      <div class="vr my-1 mx-2"></div>
+      <% } %>
+
       <% for link in links {
         let active = if link.active {
           "active"

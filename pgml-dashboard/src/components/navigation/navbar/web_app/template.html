@@ -12,8 +12,9 @@
       <div class="controls">
         <!-- Toggles items that come from left nav -->
         <button class="navbar-toggler collapsed top-nav-controls" type="button" data-bs-toggle="collapse" data-bs-target="#leftNavItems" aria-controls="LeftNavItems" aria-expanded="false" aria-label="Toggle navigation">
-          <div class="mobile-left-nav-controls rounded-1">
-            <img class="m-2" src="/dashboard/static/images/owl_white.webp" alt="postgresml_owl" width="12" height="16">
+
+          <div class="mobile-left-nav-controls rounded-1 p-2 d-flex">
+            <span class="icon-owl text-white mx-1"></span>
           </div>
         </button>
 
@@ -130,9 +131,7 @@
                   <a 
                     class="py-2 text-white w-100 text-center d-flex gap-2 ps-4 justify-content-center <% if link.disabled  { %> disabled <% } %> <% if link.active { %> active <% } %>"
                     href="<% if !link.disabled { %> <%= link.href %> <% } %>">
-                    <span class="d-flex align-items-center h-100">
-                      <img src="/dashboard/static/images/owl_white.webp" alt="postgresml_owl" width="12" height="16">
-                    </span>
+                    <span class="icon-owl" style="line-height: unset;"></span>
                     <%= link.name %>
                   </a>
                 </li>

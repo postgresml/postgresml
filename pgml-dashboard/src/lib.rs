@@ -570,7 +570,7 @@ pub async fn uploaded_index(cluster: ConnectedCluster<'_>, table_name: &str) -> 
 pub async fn dashboard(cluster: ConnectedCluster<'_>, tab: Option<&str>, id: Option<i64>) -> Result<ResponseOk, Error> {
     let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster.inner.context);
 
-    let mut breadcrumbs = vec![NavLink::new("Dashboard", "/dashboard")];
+    let mut breadcrumbs = vec![];
 
     let tab = tab.unwrap_or("Notebooks");
 
