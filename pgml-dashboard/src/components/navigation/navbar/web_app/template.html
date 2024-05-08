@@ -2,6 +2,7 @@
   use crate::utils::config;
   use crate::templates::components::PostgresLogo;
   use crate::components::Dropdown;
+  use crate::models::Cluster;
 
   let standalone_dashboard = config::standalone_dashboard();
 %>
@@ -82,7 +83,7 @@
                 </span>
               </button>
             </li>
-  
+
             <li class="menu-item rounded-0 d-flex align-items-center">
               <a class="ps-4" href="/docs">Docs</a>
             </li>
@@ -125,6 +126,17 @@
         <div class="collapse navbar-collapse" id="leftNavItems">
           <div class="nav-item w-100 d-flex flex-column flex-lg-row collapse show drawer-submenu">
             <ul class="sub-menu-dropdown mb-2 d-lg-none d-flex flex-column gap-3">
+              <% if cluster.id != Cluster::default().id { %>
+              <li>
+                <div class="px-4 d-flex flex-column">
+                  <%+ cluster.tier.unwrap_or_default() %>
+                  <div class="d-flex flex-row justify-content-between align-items-end text-break gap-2">
+                    <span class="text-wrap"><%- cluster.name %></span>
+                    <%+ cluster.status.unwrap_or_default() %>
+                  </div>
+                </div>
+              </li>
+              <% } %>
               <% for link in links { %>
                 <% if link.name.to_lowercase() == "home" {%>
                 <li class="menu-item d-flex mobile-dashboard-button mx-4 rounded-1">

@@ -48,7 +48,7 @@ impl Cluster {
                 dropdown_nav: StaticNav {
                     links: vec![StaticNavLink::new("Local".to_string(), "/dashboard".to_string()).active(true)],
                 },
-                upper_left_nav: StaticNav {
+                product_left_nav: StaticNav {
                     links: vec![
                         StaticNavLink::new("Notebooks".to_string(), "/dashboard?tab=Notebooks".to_string())
                             .icon("add_notes")
