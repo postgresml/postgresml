@@ -127,6 +127,7 @@
     &.disabled {
         color: #{$neon-shade-400};
         background-color: #{$neon-shade-700};
+        --bs-btn-border-color: #{$neon-shade-700};
     }
 
     &:hover,
