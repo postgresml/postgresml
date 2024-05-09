@@ -14,7 +14,7 @@ table.table.table-lg {
       background: #{$gray-800};
       text-transform: uppercase;
       font-size: 0.75rem;
-      padding: 16px 0;
+      padding: 16px 12px 16px 0;
 
       &:first-of-type {
         padding-left: 67px;
@@ -42,7 +42,7 @@ table.table.table-lg {
       td {
         background: #{$gray-600};
         vertical-align: middle;
-        padding: 20px 0;
+        padding: 20px 12px 20px 0;
 
         &:first-of-type {
           padding-left: 67px;
