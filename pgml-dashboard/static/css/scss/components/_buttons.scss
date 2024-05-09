@@ -120,7 +120,8 @@
 
     --bs-btn-line-height: 16px;
 
-    border: 0px;
+    --bs-btn-border-color: #{$neon-shade-100};
+    --bs-btn-border-width: 2px;
 
     &:disabled,
     &.disabled {
