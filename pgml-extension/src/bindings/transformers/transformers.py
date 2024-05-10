@@ -8,7 +8,6 @@ import json
 from datetime import datetime
 
 import datasets
-from InstructorEmbedding import INSTRUCTOR
 import numpy
 import orjson
 from rouge import Rouge
@@ -502,9 +501,7 @@ def transform(task, args, inputs, stream=False):
 
 
 def create_embedding(transformer):
-    instructor = transformer.startswith("hkunlp/instructor")
-    klass = INSTRUCTOR if instructor else SentenceTransformer
-    return klass(transformer)
+    return SentenceTransformer(transformer)
 
 
 def embed_using(model, transformer, inputs, kwargs):
@@ -512,13 +509,9 @@ def embed_using(model, transformer, inputs, kwargs):
         kwargs = orjson.loads(kwargs)
 
     instructor = transformer.startswith("hkunlp/instructor")
-    if instructor:
-        texts_with_instructions = []
+    if instructor and "instruction" in kwargs:
         instruction = kwargs.pop("instruction")
-        for text in inputs:
-            texts_with_instructions.append([instruction, text])
-
-        inputs = texts_with_instructions
+        kwargs["prompt"] = instruction
 
     return model.encode(inputs, **kwargs)
 
@@ -1029,7 +1022,6 @@ class FineTuningBase:
         path: str,
         hyperparameters: dict,
     ) -> None:
-
         # initialize class variables
         self.project_id = project_id
         self.model_id = model_id
@@ -1100,8 +1092,9 @@ class FineTuningBase:
         # Calculate and print the number and percentage of trainable parameters
         r_log("info", f"Trainable model parameters: {trainable_model_params}")
         r_log("info", f"All model parameters: {all_model_params}")
-        r_log("info",
-            f"Percentage of trainable model parameters: {100 * trainable_model_params / all_model_params:.2f}%"
+        r_log(
+            "info",
+            f"Percentage of trainable model parameters: {100 * trainable_model_params / all_model_params:.2f}%",
         )
 
     def tokenize_function(self):
@@ -1396,9 +1389,10 @@ class FineTuningConversation(FineTuningBase):
                 "bias": "none",
                 "task_type": "CAUSAL_LM",
             }
-            r_log("info",
+            r_log(
+                "info",
                 "LoRA configuration are not set. Using default parameters"
-                + json.dumps(self.lora_config_params)
+                + json.dumps(self.lora_config_params),
             )
 
         self.prompt_template = None
@@ -1406,13 +1400,11 @@ class FineTuningConversation(FineTuningBase):
             self.prompt_template = hyperparameters.pop("prompt_template")
 
     def train(self):
-
         args = TrainingArguments(
             output_dir=self.path, logging_dir=self.path, **self.training_args
         )
 
         def formatting_prompts_func(example):
-
             system_content = example["system"]
             user_content = example["user"]
             assistant_content = example["assistant"]
@@ -1463,7 +1455,7 @@ class FineTuningConversation(FineTuningBase):
             peft_config=LoraConfig(**self.lora_config_params),
             callbacks=[PGMLCallback(self.project_id, self.model_id)],
         )
-        r_log("info","Creating Supervised Fine Tuning trainer done. Training ... ")
+        r_log("info", "Creating Supervised Fine Tuning trainer done. Training ... ")
 
         # Train
         self.trainer.train()
@@ -1582,7 +1574,6 @@ def finetune_conversation(
     project_id,
     model_id,
 ):
-
     train_dataset = datasets.Dataset.from_dict(
         {
             "system": system_train,
