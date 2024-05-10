@@ -13,7 +13,7 @@
       <dt>Project</dt>
       <dd><a href="<%- urls::deployment_project_by_id(project.id) %>" data-turbo="false"><%= project.name %></a></dd>
       <dt>Model</dt>
-      <dd><a href="/dashboard?tab=Models&model_id=<%= model.id %>" data-turbo="false"><%= model.algorithm %></a></dd>
+      <dd><a href="<%- urls::deployment_model_by_id(model.id) %>" data-turbo="false"><%= model.algorithm %></a></dd>
       <dt>Reason</dt>
       <dd><%= deployment.human_readable_strategy() %></dd>
       <dt>Deployed</dt>

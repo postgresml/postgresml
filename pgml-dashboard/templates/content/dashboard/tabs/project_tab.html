@@ -1,4 +1,4 @@
-
-<turbo-frame id="project" src="/dashboard/projects_turboframe/<%= project_id %>">
+<% use crate::utils::urls; %>
+<turbo-frame id="project" src="<%- urls::deployment_projects_turboframe() %>/<%= project_id %>">
   <div class="d-flex justify-content-center align-items-center py-5">Loading project, one moment...</div>
 </turbo-frame>

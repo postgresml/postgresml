@@ -94,7 +94,11 @@ pub async fn notebook_reset(cluster: ConnectedCluster<'_>, notebook_id: i64) -> 
     let notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
     notebook.reset(cluster.pool()).await?;
 
-    Ok(Redirect::to(format!("/dashboard/notebooks_turboframe/{}", notebook_id)))
+    Ok(Redirect::to(format!(
+        "{}/{}",
+        urls::deployment_notebooks_turboframe(),
+        notebook_id
+    )))
 }
 
 #[post("/notebooks/<notebook_id>/cell", data = "<cell>")]
@@ -111,7 +115,11 @@ pub async fn cell_create(
         cell.render(cluster.pool()).await?;
     }
 
-    Ok(Redirect::to(format!("/dashboard/notebooks_turboframe/{}", notebook_id)))
+    Ok(Redirect::to(format!(
+        "{}/{}",
+        urls::deployment_notebooks_turboframe(),
+        notebook_id
+    )))
 }
 
 #[post("/notebooks/<notebook_id>/reorder", data = "<cells>")]
@@ -133,7 +141,11 @@ pub async fn notebook_reorder(
 
     transaction.commit().await?;
 
-    Ok(Redirect::to(format!("/dashboard/notebooks_turboframe/{}", notebook_id)))
+    Ok(Redirect::to(format!(
+        "{}/{}",
+        urls::deployment_notebooks_turboframe(),
+        notebook_id
+    )))
 }
 
 #[get("/notebooks/<notebook_id>/cell/<cell_id>")]
@@ -158,8 +170,10 @@ pub async fn cell_cancel(cluster: ConnectedCluster<'_>, notebook_id: i64, cell_i
     let cell = models::Cell::get_by_id(cluster.pool(), cell_id).await?;
     cell.cancel(cluster.pool()).await?;
     Ok(Redirect::to(format!(
-        "/dashboard/notebooks/{}/cell/{}",
-        notebook_id, cell_id
+        "{}/{}/cell/{}",
+        urls::deployment_notebooks(),
+        notebook_id,
+        cell_id
     )))
 }
 
@@ -258,8 +272,10 @@ pub async fn cell_delete(cluster: ConnectedCluster<'_>, notebook_id: i64, cell_i
     let _ = cell.delete(cluster.pool()).await?;
 
     Ok(Redirect::to(format!(
-        "/dashboard/notebooks/{}/cell/{}",
-        notebook_id, cell_id
+        "{}/{}/cell/{}",
+        urls::deployment_notebooks(),
+        notebook_id,
+        cell_id
     )))
 }
 

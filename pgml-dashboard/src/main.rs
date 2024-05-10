@@ -109,7 +109,7 @@ async fn main() {
         .mount("/", rocket::routes![index, error])
         .mount("/dashboard/static", FileServer::from(config::static_dir()))
         .mount("/dashboard", pgml_dashboard::routes())
-        .mount("/dashboard", pgml_dashboard::api::deployment::routes())
+        .mount("/engine", pgml_dashboard::api::deployment::routes())
         .mount("/", pgml_dashboard::api::routes())
         .mount("/", rocket::routes![pgml_dashboard::playground])
         .register("/", catchers![error_catcher, not_authorized_catcher, not_found_handler])
@@ -126,6 +126,7 @@ async fn main() {
 mod test {
     use crate::{error, index};
     use pgml_dashboard::guards::Cluster;
+    use pgml_dashboard::utils::urls;
     use pgml_dashboard::utils::{config, markdown};
     use rocket::fs::FileServer;
     use rocket::local::asynchronous::Client;
@@ -148,7 +149,7 @@ mod test {
             .mount("/", rocket::routes![index, error])
             .mount("/dashboard/static", FileServer::from(config::static_dir()))
             .mount("/dashboard", pgml_dashboard::routes())
-            .mount("/dashboard", pgml_dashboard::api::notebooks::routes())
+            .mount("/engine", pgml_dashboard::api::deployment::routes())
             .mount("/", pgml_dashboard::api::cms::routes())
     }
 
@@ -168,21 +169,21 @@ mod test {
     #[rocket::async_test]
     async fn test_notebooks_index() {
         let client = Client::tracked(rocket().await).await.unwrap();
-        let response = client.get("/dashboard/notebooks_turboframe").dispatch().await;
+        let response = client.get(urls::deployment_notebooks_turboframe()).dispatch().await;
         assert_eq!(response.status().code, 200);
     }
 
     #[rocket::async_test]
     async fn test_projects_index() {
         let client = Client::tracked(rocket().await).await.unwrap();
-        let response = client.get("/dashboard/projects").dispatch().await;
+        let response = client.get(urls::deployment_projects_turboframe()).dispatch().await;
         assert_eq!(response.status().code, 200);
     }
 
     #[rocket::async_test]
     async fn test_models_index() {
         let client = Client::tracked(rocket().await).await.unwrap();
-        let response = client.get("/dashboard/models").dispatch().await;
+        let response = client.get(urls::deployment_models_turboframe()).dispatch().await;
         assert_eq!(response.status().code, 200);
     }
 
@@ -196,20 +197,20 @@ mod test {
     #[rocket::async_test]
     async fn test_uploader() {
         let client = Client::tracked(rocket().await).await.unwrap();
-        let response = client.get("/dashboard/uploader").dispatch().await;
+        let response = client.get(urls::deployment_uploader_turboframe()).dispatch().await;
         assert_eq!(response.status().code, 200);
     }
 
     #[rocket::async_test]
     async fn test_snapshots_index() {
         let client = Client::tracked(rocket().await).await.unwrap();
-        let response = client.get("/dashboard/snapshots").dispatch().await;
+        let response = client.get(urls::deployment_snapshots_turboframe()).dispatch().await;
         assert_eq!(response.status().code, 200);
     }
 
     #[rocket::async_test]
     async fn test_snapshot_entries() {
-        let snapshots_endpoint = "/dashboard/snapshots";
+        let snapshots_endpoint = &urls::deployment_snapshots();
         let client = Client::tracked(rocket().await).await.unwrap();
         let response = client.get(snapshots_endpoint).dispatch().await;
 
@@ -224,7 +225,7 @@ mod test {
 
     #[rocket::async_test]
     async fn test_notebook_entries() {
-        let notebooks_endpoint = "/dashboard/notebooks_turboframe";
+        let notebooks_endpoint = &urls::deployment_notebooks();
         let client = Client::tracked(rocket().await).await.unwrap();
         let response = client.get(notebooks_endpoint).dispatch().await;
 
@@ -239,7 +240,7 @@ mod test {
 
     #[rocket::async_test]
     async fn test_project_entries() {
-        let projects_endpoint = "/dashboard/projects";
+        let projects_endpoint = &urls::deployment_projects();
         let client = Client::tracked(rocket().await).await.unwrap();
         let response = client.get(projects_endpoint).dispatch().await;
 
@@ -254,7 +255,7 @@ mod test {
 
     #[rocket::async_test]
     async fn test_model_entries() {
-        let models_endpoint = "/dashboard/models";
+        let models_endpoint = &urls::deployment_models();
         let client = Client::tracked(rocket().await).await.unwrap();
         let response = client.get(models_endpoint).dispatch().await;
 

@@ -1,11 +1,13 @@
 <%
+    use crate::utils::urls;
+
     let source = match table_name {
-        Some(name) => format!("/dashboard/uploader_turboframe/done?table_name={}", name), 
+        Some(name) => format!("{}/done?table_name={}", urls::deployment_uploader_turboframe(),name), 
         None => "".to_string(),
     };
 %>
 
-<turbo-frame id="upload" src="/dashboard/uploader_turboframe">
+<turbo-frame id="upload" src="<%- urls::deployment_uploader_turboframe() %>">
     <div class="d-flex justify-content-center align-items-center py-5">Loading snapshots, one moment...</div>
 </turbo-frame>
 <turbo-frame id="uploaded" src="<%= source %>">

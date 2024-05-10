@@ -6,7 +6,7 @@
       <ol class="object_list project_list">
         <% for project in projects { %>
         <li>
-          <a href="<%- &urls::deployment_project_by_id(project.id) %>" data-turbo-frame="_top">
+          <a href="<%- urls::deployment_project_by_id(project.id) %>" data-turbo-frame="_top">
             <span><%= project.name %></span>
             <span>
               <time datetime="<% project.created_at; %>">

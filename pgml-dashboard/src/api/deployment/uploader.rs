@@ -52,7 +52,8 @@ pub async fn uploader_upload(
         .await
     {
         Ok(()) => Ok(Redirect::to(format!(
-            "/dashboard/uploader/done?table_name={}",
+            "{}/done?table_name={}",
+            urls::deployment_uploader_turboframe(),
             uploaded_file.table_name()
         ))),
         Err(err) => Err(BadRequest(
