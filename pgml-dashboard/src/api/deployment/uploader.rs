@@ -16,8 +16,6 @@ use crate::templates;
 use crate::utils::tabs;
 use crate::utils::urls;
 
-use std::collections::HashMap;
-
 // Returns the uploader page.
 #[get("/uploader")]
 pub async fn uploader(cluster: ConnectedCluster<'_>) -> Result<ResponseOk, Error> {

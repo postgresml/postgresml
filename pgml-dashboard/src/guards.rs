@@ -19,7 +19,7 @@ pub struct Cluster {
 }
 
 impl Cluster {
-    pub fn default(uri: Option<String>) -> Self {
+    pub fn default() -> Self {
         // Needed for query cancellation
         let max_connections = 2;
 
@@ -73,8 +73,7 @@ impl<'r> FromRequest<'r> for &'r Cluster {
     type Error = ();
 
     async fn from_request(request: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
-        let uri = request.uri().to_string();
-        request::Outcome::Success(request.local_cache(|| Cluster::default(Some(uri))))
+        request::Outcome::Success(request.local_cache(|| Cluster::default()))
     }
 }
 

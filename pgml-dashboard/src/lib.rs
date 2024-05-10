@@ -3,13 +3,11 @@
 #[macro_use]
 extern crate rocket;
 
-use rocket::form::Form;
 use rocket::http::CookieJar;
 use rocket::response::Redirect;
 use rocket::route::Route;
 use sailfish::TemplateOnce;
 use sqlx::PgPool;
-use std::collections::HashMap;
 
 pub mod api;
 pub mod components;
@@ -23,13 +21,9 @@ pub mod types;
 pub mod utils;
 
 use components::notifications::marketing::{AlertBanner, FeatureBanner};
-use guards::{Cluster, ConnectedCluster};
-use responses::{BadRequest, Error, ResponseOk};
-use templates::{
-    components::{NavLink, StaticNav},
-    *,
-};
-use utils::tabs;
+use guards::Cluster;
+use responses::{Error, ResponseOk};
+use templates::{components::StaticNav, *};
 
 use crate::utils::cookies::Notifications;
 use crate::utils::urls;
@@ -175,7 +169,7 @@ pub enum NotificationLevel {
 
 // Reroute old style query style dashboard links.
 #[get("/?<tab>&<id>")]
-pub async fn dashboard(cluster: ConnectedCluster<'_>, tab: Option<&str>, id: Option<i64>) -> Redirect {
+pub async fn dashboard(tab: Option<&str>, id: Option<i64>) -> Redirect {
     let tab = tab.unwrap_or("Notebooks");
 
     match tab {

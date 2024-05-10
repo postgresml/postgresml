@@ -6,12 +6,8 @@ use crate::{
     responses::{Error, ResponseOk},
 };
 
-use crate::templates::{components::NavLink, *};
-
 use crate::models;
 use crate::templates;
-use crate::utils::tabs;
-use crate::utils::urls;
 
 use std::collections::HashMap;
 
