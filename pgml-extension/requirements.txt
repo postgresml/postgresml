@@ -38,7 +38,6 @@ transformers-stream-generator
 xformers; sys_platform == 'linux' # only runs on nvidia hardware
 
 # Embeddings
-InstructorEmbedding
 sentence-transformers
 
 # Ratings
