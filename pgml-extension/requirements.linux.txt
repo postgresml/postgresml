@@ -16,7 +16,6 @@ cloudpickle==3.0.0
 cmake==3.29.2
 colorama==0.4.6
 coloredlogs==15.0.1
-command-not-found==0.3
 contourpy==1.2.1
 cryptography==3.4.8
 ctransformers==0.2.27
@@ -28,7 +27,6 @@ deepspeed==0.14.2
 dill==0.3.7
 diskcache==5.6.3
 distro==1.7.0
-distro-info==1.1+ubuntu0.1
 dnspython==2.6.1
 einops==0.8.0
 email_validator==2.1.1
@@ -131,7 +129,6 @@ PyGObject==3.42.1
 PyJWT==2.3.0
 pynvml==11.5.0
 pyparsing==2.4.7
-python-apt==2.4.0+ubuntu2
 python-dateutil==2.9.0.post0
 python-dotenv==1.0.1
 python-multipart==0.0.9
