@@ -125,8 +125,8 @@
 
     &:disabled,
     &.disabled {
-        color: #{$neon-shade-400};
-        background-color: #{$neon-shade-700};
+        --bs-btn-color: #{$neon-shade-400};
+        --bs-btn-bg: #{$neon-shade-700};
         --bs-btn-border-color: #{$neon-shade-700};
     }
 
