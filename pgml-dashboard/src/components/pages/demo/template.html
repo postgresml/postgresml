@@ -1,4 +1,4 @@
-<% use crate::components::tables::small::*; %>
+<% use crate::components::tables::{small as small_table, large as large_table}; %>
 <% use crate::components::headings::{Green, Blue, Gray}; %>
 <% use crate::components::inputs::text::EditableHeader; %>
 <% use crate::components::inputs::text::{Input, search::{Search, search::SearchOptions}}; %>
@@ -12,16 +12,41 @@
 
 <div class="container" data-controller="pages-demo">
   <div class="py-5">
-    <%+ Table::new(&["Model", "Performance", "Cost"], &[
-      Row::new(&[
+    <%+ small_table::Table::new(&["Model", "Performance", "Cost"], &[
+      small_table::Row::new(&[
         "intfloat/e5-small".into(),
         "5ms/embedding".into(),
         "$0.0000000001/embedding".into(),
       ]).into(),
-      Row::new(&[
+      small_table::Row::new(&[
         "intfloat/e5-large".into(),
         "10ms/embedding".into(),
         "$0.0000000002/embedding".into(),
+      ]).into(),
+      small_table::Row::new(&[
+        "intfloat/e5-large-with-overflow-intfloat/e5-large-with-overflow-intfloat/e5-large-with-overflow".into(),
+        "10ms/embedding".into(),
+        "$0.0000000002/embedding-intfloat/e5-large-with-overflow-intfloat/e5-large-with-overflow".into(),
+      ]).into(),
+    ]) %>
+  </div>
+
+  <div class="py-5">
+    <%+ large_table::Table::new(&["Model", "Performance", "Cost"], &[
+      large_table::Row::new(&[
+        "intfloat/e5-small".into(),
+        "5ms/embedding".into(),
+        "$0.0000000001/embedding".into(),
+      ]).into(),
+      large_table::Row::new(&[
+        "intfloat/e5-large".into(),
+        "10ms/embedding".into(),
+        "$0.0000000002/embedding".into(),
+      ]).into(),
+      large_table::Row::new(&[
+        "intfloat/e5-large-with-overflow-intfloat/e5-large-with-overflow-intfloat/e5-large-with-overflow".into(),
+        "10ms/embedding".into(),
+        "$0.0000000002/embedding-intfloat/e5-large-with-overflow-intfloat/e5-large-with-overflow".into(),
       ]).into(),
     ]) %>
   </div>
@@ -219,5 +244,12 @@
     <%+ WithTooltip::new("Model".into())
         .tooltip_html("A model is great<br>, but<br> two<br> is better.")
         .icon("help_outline") %>
+  </div>
+
+  <div class="py-5 d-flex gap-2">
+    <button class="btn btn-primary-web-app">Primary button</button>
+    <button class="btn btn-primary-web-app" disabled>Primary disabled</button>
+    <button class="btn btn-secondary-web-app">Secondary button</button>
+    <button class="btn btn-secondary-web-app" disabled>Secondary button</button>
   </div>
 </div>

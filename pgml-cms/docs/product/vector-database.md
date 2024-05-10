@@ -18,7 +18,7 @@ Vectors can be stored in columns, just like any other data type. To add a vector
 
 #### Adding a vector column
 
-Using the example from [Tabular data](../resources/data-storage-and-retrieval/tabular-data.md), let's add a vector column to our USA House Prices table:
+Using the example from [Tabular data](../resources/data-storage-and-retrieval/README.md), let's add a vector column to our USA House Prices table:
 
 {% tabs %}
 {% tab title="SQL" %}

@@ -14,7 +14,7 @@
 
 ## API
 
-* [Overview](api/apis.md)
+* [Overview](api/overview.md)
 * [SQL extension](api/sql-extension/README.md)
   * [pgml.embed()](api/sql-extension/pgml.embed.md)
   * [pgml.transform()](api/sql-extension/pgml.transform/README.md)
@@ -84,8 +84,7 @@
 * [Architecture](resources/architecture/README.md)
   * [Why PostgresML?](resources/architecture/why-postgresml.md)
 * [FAQs](resources/faqs.md)
-* [Data Storage & Retrieval](resources/data-storage-and-retrieval/tabular-data.md)
-  * [Tabular data](resources/data-storage-and-retrieval/tabular-data.md)
+* [Data Storage & Retrieval](resources/data-storage-and-retrieval/README.md)
   * [Documents](resources/data-storage-and-retrieval/documents.md)
   * [Partitioning](resources/data-storage-and-retrieval/partitioning.md)
   * [LLM based pipelines with PostgresML and dbt (data build tool)](resources/data-storage-and-retrieval/llm-based-pipelines-with-postgresml-and-dbt-data-build-tool.md)
