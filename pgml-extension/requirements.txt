@@ -36,7 +36,7 @@ tokenizers
 transformers
 transformers-stream-generator
 xformers; sys_platform == 'linux' # only runs on nvidia hardware
-vllm
+vllm; sys_platform == 'linux' # only runs on linux
 
 # Embeddings
 sentence-transformers
