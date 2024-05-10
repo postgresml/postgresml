@@ -21,6 +21,7 @@ use walkdir::WalkDir;
 use crate::debug_sqlx_query;
 use crate::filter_builder::FilterBuilder;
 use crate::pipeline::FieldAction;
+use crate::rag_query_builder::build_rag_query;
 use crate::search_query_builder::build_search_query;
 use crate::vector_search_query_builder::build_vector_search_query;
 use crate::{
@@ -315,6 +316,9 @@ impl Collection {
 
             let mp = MultiProgress::new();
             mp.println(format!("Added Pipeline {}, Now Syncing...", pipeline.name))?;
+
+            // TODO: Revisit this. If the pipeline is added but fails to sync, then it will be "out of sync" with the documents in the table
+            // This is rare, but could happen
             pipeline
                 .resync(project_info, pool.acquire().await?.as_mut())
                 .await?;
@@ -1084,6 +1088,24 @@ impl Collection {
                 .into()
             })
             .collect())
+    }
+
+    #[instrument(skip(self))]
+    pub async fn rag(&self, query: Json, pipeline: &Pipeline) -> anyhow::Result<String> {
+        let pool = get_or_initialize_pool(&self.database_url).await?;
+        let (built_query, values) = build_rag_query(query.clone(), self, pipeline).await?;
+        let results: Vec<(Json,)> = sqlx::query_as_with(&built_query, values)
+            .fetch_all(&pool)
+            .await?;
+        Ok(results[0]
+            .0
+            .as_array()
+            .context("Error converting LLM response to Array")?
+            .first()
+            .context("Error getting first LLM response")?
+            .as_str()
+            .context("Error converting LLM response to string")?
+            .to_owned())
     }
 
     /// Archives a [Collection]

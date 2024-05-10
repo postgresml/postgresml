@@ -29,6 +29,7 @@ mod pipeline;
 mod queries;
 mod query_builder;
 mod query_runner;
+mod rag_query_builder;
 mod remote_embeddings;
 mod search_query_builder;
 mod single_field_pipeline;
@@ -1957,6 +1958,175 @@ mod tests {
         assert!(!diagram.is_empty());
         println!("{diagram}");
         collection.archive().await?;
+        Ok(())
+    }
+
+    ///////////////////////////////
+    // RAG ////////////////////////
+    ///////////////////////////////
+
+    #[tokio::test]
+    async fn can_rag_with_local_embeddings() -> anyhow::Result<()> {
+        internal_init_logger(None, None).ok();
+        let collection_name = "test r_c_crwle_1";
+        let mut collection = Collection::new(collection_name, None)?;
+        let documents = generate_dummy_documents(10);
+        collection.upsert_documents(documents.clone(), None).await?;
+        let pipeline_name = "0";
+        let mut pipeline = Pipeline::new(
+            pipeline_name,
+            Some(
+                json!({
+                    "body": {
+                        "splitter": {
+                            "model": "recursive_character"
+                        },
+                        "semantic_search": {
+                            "model": "intfloat/e5-small-v2",
+                            "parameters": {
+                                "prompt": "passage: "
+                            }
+                        },
+                    },
+                })
+                .into(),
+            ),
+        )?;
+        collection.add_pipeline(&mut pipeline).await?;
+        // Single variable test
+        let results = collection
+            .rag(
+                json!({
+                    "CONTEXT": {
+                        "vector_search": {
+                            "query": {
+                                "fields": {
+                                    "body": {
+                                        "query": "Test document: 2",
+                                        "boost": 1.0,
+                                        "parameters": {
+                                            "prompt": "query: "
+                                        }
+                                    },
+                                },
+                            },
+                            "limit": 5
+                        },
+                        "aggregate": {
+                          "join": "\n"
+                        }
+                    },
+                    "completion": {
+                        "model": "mistralai/Mistral-7B-Instruct-v0.2",
+                        "prompt": "Some text with {CONTEXT}",
+                        "temperature": 0.7
+                    }
+                })
+                .into(),
+                &mut pipeline,
+            )
+            .await?;
+        eprintln!("{}", results);
+
+        // Multi-variable test
+        let results = collection
+            .rag(
+                json!({
+                    "CONTEXT": {
+                        "vector_search": {
+                            "query": {
+                                "fields": {
+                                    "body": {
+                                        "query": "Test document: 2",
+                                        "boost": 1.0,
+                                        "parameters": {
+                                            "prompt": "query: "
+                                        }
+                                    },
+                                },
+                            },
+                            "limit": 2
+                        },
+                        "aggregate": {
+                          "join": "\n"
+                        }
+                    },
+                    "CONTEXT2": {
+                        "vector_search": {
+                            "query": {
+                                "fields": {
+                                    "body": {
+                                        "query": "Test document: 3",
+                                        "boost": 1.0,
+                                        "parameters": {
+                                            "prompt": "query: "
+                                        }
+                                    },
+                                }
+                            },
+                            "limit": 2
+                        },
+                        "aggregate": {
+                          "join": "\n"
+                        }
+                    },
+                    "completion": {
+                        "model": "mistralai/Mistral-7B-Instruct-v0.2",
+                        "prompt": "Some text with {CONTEXT} AND {CONTEXT2}",
+                        "temperature": 0.7
+                    }
+                })
+                .into(),
+                &mut pipeline,
+            )
+            .await?;
+        eprintln!("{}", results);
+
+        // Chat test
+        let results = collection
+            .rag(
+                json!({
+                    "CONTEXT": {
+                        "vector_search": {
+                            "query": {
+                                "fields": {
+                                    "body": {
+                                        "query": "Test document: 2",
+                                        "boost": 1.0,
+                                        "parameters": {
+                                            "prompt": "query: "
+                                        }
+                                    },
+                                },
+                            },
+                            "limit": 2
+                        },
+                        "aggregate": {
+                          "join": "\n"
+                        }
+                    },
+                    "chat": {
+                        "model": "mistralai/Mistral-7B-Instruct-v0.2",
+                        "messages": [
+                            // {
+                            //     "role": "system",
+                            //     "content": "You are a friendly and helpful chatbot"
+                            // },
+                            {
+                                "role": "user",
+                                "content": "Some text with {CONTEXT}",
+                            }
+                        ],
+                        "temperature": 0.7
+                    }
+                })
+                .into(),
+                &mut pipeline,
+            )
+            .await?;
+        eprintln!("{}", results);
+
+        // collection.archive().await?;
         Ok(())
     }
 }
