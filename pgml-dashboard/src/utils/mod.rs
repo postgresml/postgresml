@@ -4,6 +4,7 @@ pub mod datadog;
 pub mod markdown;
 pub mod tabs;
 pub mod time;
+pub mod urls;
 
 use rand::{distributions::Alphanumeric, Rng};
 

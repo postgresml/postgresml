@@ -1,3 +1,4 @@
+<% use crate::utils::urls; %>
 <turbo-frame id="project">
   <div class="notebook">
     <section>
@@ -11,7 +12,7 @@
         </li>
         <% for model in models.iter() { %>
         <li>
-          <a href="/dashboard?tab=Model&id=<%= model.id %>" data-turbo-frame="_top">
+          <a href="<%- urls::deployment_model_by_id(model.id) %>" data-turbo-frame="_top">
             <span class="material-symbols-outlined d-flex justify-content-center align-items-center">
               <% if model.search.is_some() { %>
                 <% if model.search.as_ref().unwrap().as_str() == "grid" { %>

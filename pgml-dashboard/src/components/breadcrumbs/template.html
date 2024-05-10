@@ -1,8 +1,19 @@
+<%
+  use crate::utils::config;
+  use crate::utils::urls;
+
+  let home_uri = if config::standalone_dashboard() {
+    urls::deployment_notebooks()
+  } else {
+    "/deployments".to_string()
+  };
+%>
+
 <nav>
   <nav aria-label="breadcrumb z-1">
     <ol class="breadcrumb">
       <li class="breadcrumb-item body-regular-text <% if links.is_empty() {%>active<% } %>">
-        <a class="d-flex gap-2 align-items-center" href="/deployments">
+        <a class="d-flex gap-2 align-items-center" href="<%- home_uri %>">
           <span class="icon-owl"></span>
           Home
         </a>

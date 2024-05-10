@@ -109,6 +109,7 @@ async fn main() {
         .mount("/", rocket::routes![index, error])
         .mount("/dashboard/static", FileServer::from(config::static_dir()))
         .mount("/dashboard", pgml_dashboard::routes())
+        .mount("/dashboard", pgml_dashboard::api::deployment::routes())
         .mount("/", pgml_dashboard::api::routes())
         .mount("/", rocket::routes![pgml_dashboard::playground])
         .register("/", catchers![error_catcher, not_authorized_catcher, not_found_handler])
@@ -147,6 +148,7 @@ mod test {
             .mount("/", rocket::routes![index, error])
             .mount("/dashboard/static", FileServer::from(config::static_dir()))
             .mount("/dashboard", pgml_dashboard::routes())
+            .mount("/dashboard", pgml_dashboard::api::notebooks::routes())
             .mount("/", pgml_dashboard::api::cms::routes())
     }
 
@@ -166,7 +168,7 @@ mod test {
     #[rocket::async_test]
     async fn test_notebooks_index() {
         let client = Client::tracked(rocket().await).await.unwrap();
-        let response = client.get("/dashboard/notebooks").dispatch().await;
+        let response = client.get("/dashboard/notebooks_turboframe").dispatch().await;
         assert_eq!(response.status().code, 200);
     }
 
@@ -222,7 +224,7 @@ mod test {
 
     #[rocket::async_test]
     async fn test_notebook_entries() {
-        let notebooks_endpoint = "/dashboard/notebooks";
+        let notebooks_endpoint = "/dashboard/notebooks_turboframe";
         let client = Client::tracked(rocket().await).await.unwrap();
         let response = client.get(notebooks_endpoint).dispatch().await;
 

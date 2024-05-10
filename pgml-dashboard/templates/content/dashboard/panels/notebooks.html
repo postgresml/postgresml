@@ -1,3 +1,4 @@
+<% use crate::utils::urls; %>
 <turbo-frame id="notebooks">
   <div class="pb-5 position-relative">
     <div style="width: 526px;
@@ -29,7 +30,7 @@
                 <small class="legal-text text-muted">Last modified <%= notebook.updated_at.month() as u32 %>/<%= notebook.updated_at.day() %>/<%= notebook.updated_at.year() %></small>
               </div>
           </div>
-            <a href="/dashboard?tab=Notebook&id=<%= notebook.id %>" data-turbo-frame="_top" class="stretched-link">
+            <a href="<%- urls::deployment_notebook_by_id(notebook.id) %>" data-turbo-frame="_top" class="stretched-link">
             </a>
           </div>
         </div>
@@ -41,7 +42,7 @@
           <div class="card-body h-100 pt-2 pe-2">
             <div class="d-flex flex-column h-100">
               <div class="d-flex justify-content-end">
-                <a href="/dashboard/notebooks" class="btn btn-close"></a>
+                <a href="/dashboard/notebooks_turboframe" class="btn btn-close"></a>
               </div>
               <div class="d-flex flex-column justify-content-between flex-grow-1 gap-4">
                 <div>
@@ -65,7 +66,7 @@
       <% if !new { %>
       <div class="col-12 col-md-6 col-xxl-4">
         <div class="h-100 position-relative">
-          <a href="/dashboard/notebooks?new=true" class="stretched-link"></a>
+          <a href="/dashboard/notebooks_turboframe?new=true" class="stretched-link"></a>
           <div class="d-flex justify-content-center align-items-center h-100">
             <div class="d-flex align-content-center flex-column">
               <img height="48" width="auto" src="/dashboard/static/images/icons/new_notebook.svg" alt="New notebook">

@@ -1,3 +1,4 @@
+<% use crate::utils::urls; %>
 <turbo-frame id="deployment">
   <section>
     <h1><span class="material-symbols-outlined">inventory</span>Deployment
@@ -10,7 +11,7 @@
   
     <dl>
       <dt>Project</dt>
-      <dd><a href="/dashboard?tab=Projects&project_id=<%= project.id %>" data-turbo="false"><%= project.name %></a></dd>
+      <dd><a href="<%- urls::deployment_project_by_id(project.id) %>" data-turbo="false"><%= project.name %></a></dd>
       <dt>Model</dt>
       <dd><a href="/dashboard?tab=Models&model_id=<%= model.id %>" data-turbo="false"><%= model.algorithm %></a></dd>
       <dt>Reason</dt>
