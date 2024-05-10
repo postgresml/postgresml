@@ -40,7 +40,6 @@ fsspec==2023.10.0
 gekko==1.1.1
 graphviz==0.20.3
 greenlet==3.0.3
-gyp==0.1
 h11==0.14.0
 hjson==3.1.0
 httpcore==1.0.5
