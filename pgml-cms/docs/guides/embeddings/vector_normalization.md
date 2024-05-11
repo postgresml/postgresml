@@ -1,10 +1,10 @@
 # Vector Normalization
 
-The purpose of vector normalization is to convert a vector into a unit vector — that is, a vector that retains the same direction but has a magnitude (or length) of 1. This process is essential for various computational techniques where the magnitude of a vector may influence the outcome undesirably, such as when calculating cosine similarity or when needing to compare vectors based solely on direction.
+Vector normalization converts a vector into a unit vector — that is, a vector that retains the same direction but has a magnitude (or length) of 1. This process is essential for various computational techniques where the magnitude of a vector may influence the outcome undesirably, such as when calculating the inner product instead of cosine similarity or when needing to compare vectors based solely on direction.
 
 ## Purpose and Benefits
 
-- **Cosine Similarity**: In machine learning and data science, normalized vectors are crucial when using the inner product, instead of the more expensive cosine similarity metric. Inner product inherently requires vectors of unit length to accurately measure angles between vectors. Normalized L2 vectors indexed with the inner product can give a 3x speedup compared to computing the cosine similarity, while yielding otherwise identical results. 
+- **Cosine Similarity**: In machine learning and data science, normalized vectors are crucial when using the inner product, instead of the more expensive cosine similarity metric. Inner product inherently requires vectors of unit length to accurately measure angles between vectors. L2 Normalized vectors indexed with the inner product can reduce computational complexity 3x in the inner loop compared to cosine similarity, while yielding otherwise identical results. 
 
 - **Directionality**: Normalization strips away the magnitude of the vector, leaving a descriptor of direction only. This is useful when direction matters more than length, such as in feature scaling in machine learning where you want to normalize features to have equal influence regardless of their absolute values.
 
@@ -15,7 +15,6 @@ The purpose of vector normalization is to convert a vector into a unit vector �
 Assume you've created a table in your database that stores embeddings generated using [pgml.embed()](../../api/sql-extension/pgml.embed.md), although you can normalize any vector.
 
 ```sql
--- Create a table to store your text data and its vector representation
 CREATE TABLE documents (
    id SERIAL PRIMARY KEY,
    body TEXT,
@@ -23,8 +22,9 @@ CREATE TABLE documents (
 );
 ```
 
+Example of inserting text and its corresponding embedding
+
 ```sql
--- Example of inserting text and its corresponding embedding
 INSERT INTO documents (body)
 VALUES -- Normalized embedding vectors are automatically generated
     ('Example text data'),
@@ -45,7 +45,6 @@ FROM documents;
 Another valid approach would be to just store the normalized embedding in the documents table.
 
 ```sql
--- Create a table to store your text data and its normalized vector representation
 CREATE TABLE documents (
    id SERIAL PRIMARY KEY,
    body TEXT,
@@ -57,23 +56,23 @@ CREATE TABLE documents (
    Normalization is critical for ensuring that the magnitudes of feature vectors do not distort the performance of machine learning algorithms.
 
 - **L1 Normalization (Manhattan Norm)**: This function scales the vector so that the sum of the absolute values of its components is equal to 1. It's useful when differences in magnitude are important but the components represent independent dimensions.
-```sql
-SELECT pgml.normalize_l1(embedding) FROM documents;
-```
+    ```sql
+    SELECT pgml.normalize_l1(embedding) FROM documents;
+    ```
 - **L2 Normalization (Euclidean Norm)**: Scales the vector so that the sum of the squares of its components is equal to 1. This is particularly important for cosine similarity calculations in machine learning.
-```sql
-SELECT pgml.normalize_l2(embedding) FROM documents;
-```
+    ```sql
+    SELECT pgml.normalize_l2(embedding) FROM documents;
+    ```
 - **Max Normalization**: Scales the vector such that the maximum absolute value of any component is 1. This normalization is less common but can be useful when the maximum value represents a bounded capacity.
-```sql
-SELECT pgml.normalize_max(embedding) FROM documents;
-```
+    ```sql
+    SELECT pgml.normalize_max(embedding) FROM documents;
+    ```
 
 ## Querying and Using Normalized Vectors
    After normalization, you can use these vectors for various applications, such as similarity searches, clustering, or as input for further machine learning models within PostgresML.
 
 ```sql
--- Querying for similarity using cosine similarity
+-- Querying for similarity using l2 normalized dot product, which is equivalent to cosine similarity
 WITH normalized_vectors AS (
    SELECT id, pgml.normalize_l2(embedding) AS norm_vector
    FROM documents
@@ -86,4 +85,4 @@ WHERE a.id <> b.id;
 ## Considerations and Best Practices
    
 - **Performance**: Normalization can be computationally intensive, especially with large datasets. Consider batch processing and appropriate indexing.
-- **Storage**: Normalized vectors might not need to be persisted if they are only used transiently, which can save storage.
+- **Storage**: Normalized vectors might not need to be persisted if they are only used transiently, which can save storage or IO latency.
