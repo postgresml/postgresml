@@ -26,7 +26,7 @@ Example of inserting text and its corresponding embedding
 
 ```sql
 INSERT INTO documents (body)
-VALUES -- Normalized embedding vectors are automatically generated
+VALUES -- embedding vectors are automatically generated
     ('Example text data'),
     ('Another example document'),
     ('Some other thing');
@@ -56,14 +56,19 @@ CREATE TABLE documents (
    Normalization is critical for ensuring that the magnitudes of feature vectors do not distort the performance of machine learning algorithms.
 
 - **L1 Normalization (Manhattan Norm)**: This function scales the vector so that the sum of the absolute values of its components is equal to 1. It's useful when differences in magnitude are important but the components represent independent dimensions.
+    
     ```sql
     SELECT pgml.normalize_l1(embedding) FROM documents;
     ```
+  
 - **L2 Normalization (Euclidean Norm)**: Scales the vector so that the sum of the squares of its components is equal to 1. This is particularly important for cosine similarity calculations in machine learning.
+
     ```sql
     SELECT pgml.normalize_l2(embedding) FROM documents;
     ```
+  
 - **Max Normalization**: Scales the vector such that the maximum absolute value of any component is 1. This normalization is less common but can be useful when the maximum value represents a bounded capacity.
+
     ```sql
     SELECT pgml.normalize_max(embedding) FROM documents;
     ```
