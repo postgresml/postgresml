@@ -60,7 +60,7 @@
   * [Indexing w/ pgvector]()
   * [Aggregation]()
   * [Vector Similarity](guides/embeddings/vector_similarity.md)
-  * [Normalizing]()
+  * [Vector Normalization](guides/embeddings/vector_normalization.md)
 * [Search]()
   * [Keyword Search]()
   * [Vector Search]()

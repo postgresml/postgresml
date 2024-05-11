@@ -40,7 +40,7 @@ Other cloud providers claim to offer embeddings "inside the database", but [benc
 
 ## Vectors support arithmetic
 
-Vectors can be operated on mathematically with simple equations. For example, vector addition is defined as the sum of all the pairs of elements in the two vectors. This might be useful to combine two concepts into a single embedding. For example "frozen" + "rain" should be similar to (≈) "snow" if the embedding model has encoded the nuances of natural language. 
+Vectors can be operated on mathematically with simple equations. For example, vector addition is defined as the sum of all the pairs of elements in the two vectors. This might be useful to combine two concepts into a single new embedding. For example "frozen" + "rain" should be similar to (≈) "snow" if the embedding model has encoded the nuances of natural language and precipitation. 
 
 Most vector operations are simple enough to implement in a few lines of code. Here's a naive implementation (no hardware acceleration) of vector addition in some popular languages:
 
@@ -79,7 +79,7 @@ add(x, y)
 
 ### Vector Similarity
 
-Similar embeddings should represent similar concepts. Embedding similarity (≈) is defined as the distance between their two vectors. There are 3 primary ways to measure the distance between two vectors, that have slight tradeoffs in performance and accuracy. 
+Similar embeddings should represent similar concepts. If we have one embedding created from a user query and a bunch of other embeddings from documents, we can find documents that are most similar to the query by calculating the similarity between the query and each document. Embedding similarity (≈) is defined as the distance between the two vectors. 
 
-If two vectors are identical (=), then the distance between them is 0. If the distance is small, then they are similar (≈). You can read more about some of the available [difference metrics](vector_similarity.md) if you'd like to build a stronger intuition, but the defaults are usually a good starting place. 
+There are several ways to measure the distance between two vectors, that have tradeoffs in latency and accuracy. If two vectors are identical (=), then the distance between them is 0. If the distance is small, then they are similar (≈). You can read more about some of the available [distance metrics](vector_similarity.md) if you'd like to build a stronger intuition, but the defaults are usually a good starting place. 
 
