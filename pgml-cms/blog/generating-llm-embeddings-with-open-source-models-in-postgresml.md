@@ -142,7 +142,7 @@ Aside from using this function with strings passed from a client, we can use it 
 
 !!! generic
 
-!!! code\_block time="54.820 ms"
+!!! code_block time="54.820 ms"
 
 ```postgresql
 SELECT
@@ -156,7 +156,7 @@ LIMIT 1;
 
 !!! results
 
-```
+```postgressql
 CREATE INDEX
 ```
 
