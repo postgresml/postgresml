@@ -8,7 +8,7 @@ As the demand for sophisticated data analysis and machine learning capabilities 
 
 Embeddings are a key building block with many applications in modern AI/ML systems. They are particularly valuable for handling various types of unstructured data like text, images, and more, providing a pathway to richer insights and improved performance. They allow computers to operate on natural language and other high level concepts by reducing them to billions of simple arithmetic operations.
 
-## Applications of Embeddings
+## Applications of embeddings
 
 - **Search and Information Retrieval**: Embeddings can transform search queries and documents into vectors, making it easier to find the most relevant documents for a given query based on semantic similarity.
 - **Personalization**: In recommendation systems, embeddings can help understand user queries and preferences, enhancing the accuracy of recommendations.
@@ -20,15 +20,17 @@ This guide will introduce you to the fundamentals of embeddings within PostgresM
 
 In this guide, we will cover:
 
-* [In-database Generation]()
+* [In-database Generation](guides/embeddings/in-database-generation.md)
 * [Dimensionality Reduction]()
 * [Re-ranking nearest neighbors]()
 * [Indexing w/ pgvector]()
-* [Aggregation]()
+* [Aggregation](guides/embeddings/vector-aggregation)
+* [Similarity](guides/embeddings/vector-similarity)
+* [Normalization](guides/embeddings/vector-normalization)
 
-## Embeddings are Vectors
+## Embeddings are vectors
 
-In the context of large language models, embeddings are representations of words, phrases, or even entire sentences. Each word or text snippet is mapped to a vector in a high-dimensional space. These vectors capture semantic and syntactic nuances, meaning that similar words have vectors that are close together in this space. For instance, "king" and "queen" would be represented by vectors that are closer together than "king" and "apple".
+In the context of large language models (LLMs), embeddings are representations of words, phrases, or even entire sentences. Each word or text snippet is mapped to a vector in a high-dimensional space. These vectors capture semantic and syntactic nuances, meaning that similar words have vectors that are close together in this space. For instance, "king" and "queen" would be represented by vectors that are closer together than "king" and "apple".
 
 Vectors can be stored in the native Postgres [`ARRAY[]`](https://www.postgresql.org/docs/current/arrays.html) datatype which is compatible with many application programming languages' native datatypes. Modern CPUs and GPUs offer hardware acceleration for common array operations, which can give substantial performance benefits when operating at scale, but which are typically not enabled in a Postgres database. You'll need to ensure you're compiling your full stack with support for your hardware to get the most bang for your buck, or you can leave that up to us, and get full hardware acceleration in a PostgresML cloud database. 
 
@@ -77,9 +79,5 @@ add(x, y)
 {% endtab %}
 {% endtabs %}
 
-### Vector Similarity
 
-Similar embeddings should represent similar concepts. If we have one embedding created from a user query and a bunch of other embeddings from documents, we can find documents that are most similar to the query by calculating the similarity between the query and each document. Embedding similarity (≈) is defined as the distance between the two vectors. 
-
-There are several ways to measure the distance between two vectors, that have tradeoffs in latency and accuracy. If two vectors are identical (=), then the distance between them is 0. If the distance is small, then they are similar (≈). You can read more about some of the available [distance metrics](vector_similarity.md) if you'd like to build a stronger intuition, but the defaults are usually a good starting place. 
-
+If we pass the vectors for "snow" and "rain" into this function, we'd hope to get a vector similar to "snow" as the result, depending on the quality of the model that was used to create the word embeddings.

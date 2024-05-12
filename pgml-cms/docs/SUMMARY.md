@@ -54,13 +54,13 @@
 ## Guides
 
 * [Embeddings](guides/embeddings/README.md)
-  * [In-database Generation]()
+  * [In-database Generation](guides/embeddings/in-database-generation.md)
   * [Dimensionality Reduction]()
   * [Re-ranking nearest neighbors]()
   * [Indexing w/ pgvector]()
-  * [Aggregation](guides/embeddings/vector_aggregation.md)
-  * [Similarity](guides/embeddings/vector_similarity.md)
-  * [Normalization](guides/embeddings/vector_normalization.md)
+  * [Aggregation](guides/embeddings/vector-aggregation)
+  * [Similarity](guides/embeddings/vector-similarity)
+  * [Normalization](guides/embeddings/vector-normalization)
 * [Search]()
   * [Keyword Search]()
   * [Vector Search]()
@@ -77,14 +77,6 @@
   * [Events]()
 * [Fraud Detection]()
 * [Incentive Optimization]()
-* [Sentiment Analysis]()
-* [Summarization]()
-
-## Reference
-
-* [SQL]()
-  * [Explain plans]()
-  * [Composition]()
 * [Machine Learning]()
   * [Feature Engineering]()
   * [Regression]()
@@ -95,6 +87,14 @@
   * [Tokenization]()
   * [Chunking]()
   * [Text Generation]()
+  * [Sentiment Analysis]()
+  * [Summarization]()
+ 
+## Reference
+
+* [SQL]()
+  * [Explain plans]()
+  * [Composition]()
 * [LLMs]()
   * [LLama]() 
   * [GPT]()
@@ -125,9 +125,6 @@
   * [Personalize embedding results with application data in your database](use-cases/embeddings/personalize-embedding-results-with-application-data-in-your-database.md)
 * [Supervised Learning](use-cases/supervised-learning.md)
 * [Natural Language Processing](use-cases/natural-language-processing.md)
-* [Fraud Detection](use-cases/fraud-detection.md)
-* [Recommendation Engine](use-cases/recommendation-engine.md)
-* [Time-series Forecasting](use-cases/time-series-forecasting.md)
 
 ## Resources
 

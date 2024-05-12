@@ -1,9 +1,14 @@
-# Vector Distances
-There are many distance functions that can be used to measure the similarity or differences between vectors. We list a few of the more common ones here with details on how they work, to help you choose. It's worth taking the time to understand the differences between these simple formulas, because they are the inner loop that accounts for almost all computation when doing nearest neighbor search. They are listed here in order of computational complexity, although modern hardware accelerated implementations can typically compare on the order of 100,000 vectors per second per processor. Modern CPUs may also have tens to hundreds of cores, and GPUs have tens of thousands, to further parallelize searches of large numbers of vectors. 
+# Vector Similarity
+
+Similar embeddings should represent similar concepts. If we have one embedding created from a user query and a bunch of other embeddings from documents, we can find documents that are most similar to the query by calculating the similarity between the query and each document. Embedding similarity (≈) is defined as the distance between the two vectors.
+
+There are several ways to measure the distance between two vectors, that have tradeoffs in latency and accuracy. If two vectors are identical (=), then the distance between them is 0. If the distance is small, then they are similar (≈).  Here, we explore a few of the more common ones here with details on how they work, to help you choose. It's worth taking the time to understand the differences between these simple formulas, because they are the inner loop that accounts for almost all computation when doing nearest neighbor search. 
+
+They are listed here in order of computational complexity, although modern hardware accelerated implementations can typically compare on the order of 100,000 vectors per second per processor, depending on how many dimensions the vectors have. Modern CPUs may also have tens to hundreds of cores, and GPUs have tens of thousands, to further parallelize searches across large numbers of vectors. 
 
 !!! note
 
-If you just want the cliff notes: [Normalize your vectors](vector_normalization.md) and use the inner product as your distance metric between two vectors. This is implemented as: `pgml.dot_product(a, b)`
+If you just want the cliff notes: [Normalize your vectors](vector-normalization) and use the inner product as your distance metric between two vectors. This is implemented as: `pgml.dot_product(a, b)`
 
 !!!
 
@@ -149,7 +154,7 @@ This metric is as fast to compute as the Euclidean Distance, but may provide mor
 
 !!! tip
 
-This is probably the best all around distance metric. It's computationally simple, but also twice as fast due to optimized assembly intructions. It's also able to places more weight on the dominating dimensions of the vectors which can improve relevance during recall. As long as [your vectors are normalized](vector_normalization.md).
+This is probably the best all around distance metric. It's computationally simple, but also twice as fast due to optimized assembly intructions. It's also able to places more weight on the dominating dimensions of the vectors which can improve relevance during recall. As long as [your vectors are normalized](vector-normalization).
 
 !!!
 
@@ -214,7 +219,7 @@ Cosine distance is a popular metric, because it normalizes the vectors, which me
 
 !!! tip
 
-Use PostgresML to [normalize all your vectors](vector_normalization.md) as a separate processing step to pay that cost only at indexing time, and then switch to the inner product which will provide equivalent distance measures, at 1/3 of the computation in the inner loop. _That's not exactly true on all platforms_, because the inner loop is implemented with optimized assembly that can take advantage of additional hardware acceleration, so make sure to always benchmark on your own hardware. On our hardware, the performance difference is negligible.
+Use PostgresML to [normalize all your vectors](vector-normalization) as a separate processing step to pay that cost only at indexing time, and then switch to the inner product which will provide equivalent distance measures, at 1/3 of the computation in the inner loop. _That's not exactly true on all platforms_, because the inner loop is implemented with optimized assembly that can take advantage of additional hardware acceleration, so make sure to always benchmark on your own hardware. On our hardware, the performance difference is negligible.
 
 !!!
 
