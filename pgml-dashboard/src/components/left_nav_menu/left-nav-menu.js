@@ -20,14 +20,9 @@ export default class extends Controller {
   setLeftNavToLocation() {
     this.removeAllActive();
 
-    // Get the first 3 parts of the pathname to match the left nav href
-    let path = window.location.pathname.split("/").slice(0, 3).join("/");
-    let tag = 'a[href="' + path + '"]';
-
-    let element = this.element.querySelector(tag);
-
-    if (element) {
-      element.classList.add("active");
+    let tab = this.findTab();
+    if( tab ) {
+      tab.classList.add("active");
     }
   }
 
@@ -35,6 +30,24 @@ export default class extends Controller {
   removeAllActive() {
     for (let i = 0; i < this.linkTargets.length; i++) {
       this.linkTargets[i].classList.remove("active");
+    }
+  }
+
+  // Recursive function to find the tab that matches the current window
+  findTab(level=1, tag="a[href='/']") {
+    let element = this.element.querySelectorAll(tag);    
+    if( element.length == 1 ) {
+      return element[0];
+    } else {
+      let path_vec = window.location.pathname.split("/");
+      if( level > path_vec.length ) {
+        return; 
+      }
+  
+      let path = path_vec.slice(0, level).join("/");
+      let tag = 'a[href="' + path + '"]';
+
+      return this.findTab(level + 1, tag)
     }
   }
 

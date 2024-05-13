@@ -100,7 +100,7 @@ async fn main() {
         site_search_copy.build().await.expect("Error building site search");
     });
 
-    pgml_dashboard::migrate(guards::Cluster::default(None).pool())
+    pgml_dashboard::migrate(guards::Cluster::default().pool())
         .await
         .unwrap();
 
