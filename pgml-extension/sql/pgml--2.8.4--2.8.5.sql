@@ -1,3 +1,4 @@
+DROP FUNCTION pgml."embed"(TEXT,TEXT[],JSONB);
 -- pgml::api::embed
 CREATE OR REPLACE FUNCTION pgml."embed"(
 	"transformer" TEXT, /* &str */
