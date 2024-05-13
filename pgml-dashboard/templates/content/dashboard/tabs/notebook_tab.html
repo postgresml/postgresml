@@ -1,5 +1,4 @@
 
-<% use crate::utils::urls; %>
-<turbo-frame id="notebook" src="<%- urls::deployment_notebooks_turboframe() %>/<%= id %>">
+<turbo-frame id="notebook" src="/dashboard/notebooks/<%= id %>">
     <div class="d-flex justify-content-center align-items-center py-5">Loading notebook, one moment...</div>
 </turbo-frame>

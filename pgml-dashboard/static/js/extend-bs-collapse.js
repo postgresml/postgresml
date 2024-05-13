@@ -1,6 +1,6 @@
 // extends bootstraps collapse component by adding collapse state class to any 
 // html element you like.  This is useful for adding style changes to elements 
-// that do not need to collapse, when a collapse state change occurs. 
+// that do not need to collapse, when a collapse state change occures. 
 import {
     Controller
 } from '@hotwired/stimulus'
@@ -19,12 +19,10 @@ export default class extends Controller {
         this.navStates = ['collapsing', 'collapsed', 'expanding', 'expanded']
         this.events = ['hide.bs.collapse', 'hidden.bs.collapse', 'show.bs.collapse', 'shown.bs.collapse']
 
-        this.callback = () =>  {
-            this.getAllAffected().forEach(item => this.toggle(item))
-        }
-
         this.events.forEach(event => {
-            this.stateReferenceTarget.addEventListener(event, this.callback)
+            this.stateReferenceTarget.addEventListener(event, () => {
+                this.getAllAffected().forEach(item => this.toggle(item))
+            })
         })
     }
 
@@ -46,9 +44,4 @@ export default class extends Controller {
         item.classList.add(eClass)
     }
 
-    disconnect() {
-        this.events.forEach(event => {
-            this.stateReferenceTarget.removeEventListener(event, this.callback)
-        })
-    }
 }

@@ -2,7 +2,6 @@ use std::collections::HashMap;
 
 use comrak::{markdown_to_html, ComrakExtensionOptions, ComrakOptions};
 use csv_async::AsyncReaderBuilder;
-use pgml_components::Component;
 use sailfish::TemplateOnce;
 use sqlx::postgres::types::PgInterval;
 use sqlx::types::time::PrimitiveDateTime;
@@ -985,8 +984,6 @@ impl User {
 pub struct Cluster {
     pub id: i64,
     pub name: String,
-    pub tier: Option<Component>,
-    pub status: Option<Component>,
 }
 
 impl Default for Cluster {
@@ -994,8 +991,6 @@ impl Default for Cluster {
         Cluster {
             id: -1,
             name: "Local".to_string(),
-            tier: None,
-            status: None,
         }
     }
 }
