@@ -1,4 +1,3 @@
-<% use crate::utils::urls; %>
 <turbo-frame id="upload">
   <div class="notebook">
     <section>
@@ -34,7 +33,7 @@
     </section>
     
     <section>
-      <form action="<%- urls::deployment_uploader() %>" method="post" enctype="multipart/form-data" data-turbo-frame="upload">
+      <form action="/dashboard/uploader" method="post" enctype="multipart/form-data" data-turbo-frame="upload">
         <div class="flex flex-center mb-3">
           <input class="form-control" id="file" type="file" name="file" accept="text/csv,application/json" required="true" />
           <div class="flex flex-center" style="margin-left: 2rem;">

@@ -1,5 +1,4 @@
 use crate::components::StaticNavLink;
-use std::hash::{DefaultHasher, Hash, Hasher};
 
 #[derive(Debug, Clone, Default)]
 pub struct StaticNav {
@@ -16,18 +15,5 @@ impl StaticNav {
             Some(item) => item.clone(),
             None => StaticNavLink::default(),
         }
-    }
-
-    pub fn unique_id(&self) -> String {
-        let mut id = String::new();
-        for link in &self.links {
-            id.push_str(&link.name);
-            id.push_str(&link.disabled.to_string());
-            id.push_str(&link.href);
-        }
-
-        let mut s = DefaultHasher::new();
-        id.hash(&mut s);
-        format!("nav{}", s.finish().to_string())
     }
 }

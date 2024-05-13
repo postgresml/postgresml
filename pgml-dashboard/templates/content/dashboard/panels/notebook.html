@@ -1,5 +1,4 @@
 <% use crate::templates::components::{ConfirmModal, Modal};
-use crate::utils::urls;
 
 let modal = Modal::new(
   ConfirmModal::new(
@@ -9,7 +8,7 @@ let modal = Modal::new(
 
 %>
 <turbo-frame id="notebook">
-  <div data-controller="notebook" data-notebook-modal-outlet="#<%=modal.id %>" data-notebook-url-root-value="<%- urls::deployment_notebooks() %>">
+  <div data-controller="notebook" data-notebook-modal-outlet="#<%=modal.id %>">
     
     <div class="card mb-4 z-1" data-notebook-target="menu">
       <div class="card-body p-1">
@@ -22,7 +21,7 @@ let modal = Modal::new(
                 </span>
                 Run All
               </button>
-              <form action="<%- urls::deployment_notebooks() %>/<%= notebook.id %>/reset" method="post">
+              <form action="/dashboard/notebooks/<%= notebook.id %>/reset" method="post">
                 <button class="btn btn-tertiary d-flex gap-1">
                   <span class="material-symbols-outlined fs-5">
                     replay
@@ -94,7 +93,7 @@ let modal = Modal::new(
 
      <%+ modal %>
 
-    <form action="<%- urls::deployment_notebooks() %>/<%= notebook.id %>/cell" method="post" data-notebook-target="newCell">
+    <form action="/dashboard/notebooks/<%= notebook.id %>/cell" method="post" data-notebook-target="newCell">
       <input type="hidden" name="cell_type" value="3"> <!-- SQL -->
       <input type="hidden" name="contents" value="">
     </form>

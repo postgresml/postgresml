@@ -1,28 +1,23 @@
 use crate::components::{StaticNav, StaticNavLink};
-use crate::models::Cluster;
+use crate::utils::config;
 use pgml_components::component;
 use sailfish::TemplateOnce;
 
 #[derive(TemplateOnce, Default)]
 #[template(path = "navigation/navbar/web_app/template.html")]
 pub struct WebApp {
+    pub standalone_dashboard: bool,
     pub links: Vec<StaticNavLink>,
-    pub deployment_controls: StaticNav,
-    pub cluster: Cluster,
+    pub account_management_nav: StaticNav,
 }
 
 impl WebApp {
-    pub fn new(links: Vec<StaticNavLink>, deployment_controls: StaticNav) -> WebApp {
+    pub fn new(links: Vec<StaticNavLink>, account_management_nav: StaticNav) -> WebApp {
         WebApp {
+            standalone_dashboard: config::standalone_dashboard(),
             links,
-            deployment_controls,
-            cluster: Cluster::default(),
+            account_management_nav,
         }
-    }
-
-    pub fn cluster(mut self, cluster: Cluster) -> Self {
-        self.cluster = cluster;
-        self
     }
 }
 

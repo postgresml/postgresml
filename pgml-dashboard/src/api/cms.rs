@@ -1123,7 +1123,7 @@ This is the end of the markdown
         }
     }
 
-    // Ensure Docs render and there are no unparsed gitbook compnents.
+    // Ensure Docs render and ther are no unparsed gitbook compnents.
     #[sqlx::test]
     async fn render_guides_test() {
         let client = Client::tracked(rocket().await).await.unwrap();
