@@ -36,9 +36,9 @@ tokenizers
 transformers
 transformers-stream-generator
 xformers; sys_platform == 'linux' # only runs on nvidia hardware
+vllm; sys_platform == 'linux' # only runs on linux
 
 # Embeddings
-InstructorEmbedding
 sentence-transformers
 
 # Ratings
@@ -50,3 +50,5 @@ sacremoses
 datasets
 orjson
 langchain
+evaluate
+trl

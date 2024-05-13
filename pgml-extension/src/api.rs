@@ -589,17 +589,21 @@ fn load_dataset(
 #[cfg(all(feature = "python", not(feature = "use_as_lib")))]
 #[pg_extern(immutable, parallel_safe, name = "embed")]
 pub fn embed(transformer: &str, text: &str, kwargs: default!(JsonB, "'{}'")) -> Vec<f32> {
-    embed_batch(transformer, Vec::from([text]), kwargs)
-        .first()
-        .unwrap()
-        .to_vec()
+    match crate::bindings::transformers::embed(transformer, vec![text], &kwargs.0) {
+        Ok(output) => output.first().unwrap().to_vec(),
+        Err(e) => error!("{e}"),
+    }
 }
 
 #[cfg(all(feature = "python", not(feature = "use_as_lib")))]
 #[pg_extern(immutable, parallel_safe, name = "embed")]
-pub fn embed_batch(transformer: &str, inputs: Vec<&str>, kwargs: default!(JsonB, "'{}'")) -> Vec<Vec<f32>> {
+pub fn embed_batch(
+    transformer: &str,
+    inputs: Vec<&str>,
+    kwargs: default!(JsonB, "'{}'"),
+) -> SetOfIterator<'static, Vec<f32>> {
     match crate::bindings::transformers::embed(transformer, inputs, &kwargs.0) {
-        Ok(output) => output,
+        Ok(output) => SetOfIterator::new(output.into_iter()),
         Err(e) => error!("{e}"),
     }
 }
