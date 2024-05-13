@@ -50,3 +50,5 @@ sacremoses
 datasets
 orjson
 langchain
+evaluate
+trl
