@@ -1584,7 +1584,6 @@ mod tests {
                         "nested_number": {
                             "number": 3
                         },
-
                         "tie": 2,
                     })
                     .into(),
@@ -1643,6 +1642,26 @@ mod tests {
             documents
                 .iter()
                 .map(|d| d["document"]["nested_number"]["number"].as_i64().unwrap())
+                .collect::<Vec<_>>(),
+            vec![1, 2, 3]
+        );
+        let documents = collection
+            .get_documents(Some(json!({"order_by": { "COLUMN_id": "desc"}}).into()))
+            .await?;
+        assert_eq!(
+            documents
+                .iter()
+                .map(|d| d["row_id"].as_i64().unwrap())
+                .collect::<Vec<_>>(),
+            vec![3, 2, 1]
+        );
+        let documents = collection
+            .get_documents(Some(json!({"order_by": { "COLUMN_id": "asc"}}).into()))
+            .await?;
+        assert_eq!(
+            documents
+                .iter()
+                .map(|d| d["row_id"].as_i64().unwrap())
                 .collect::<Vec<_>>(),
             vec![1, 2, 3]
         );
