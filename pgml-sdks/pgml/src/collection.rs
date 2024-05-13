@@ -3,6 +3,7 @@ use indicatif::MultiProgress;
 use itertools::Itertools;
 use regex::Regex;
 use rust_bridge::{alias, alias_methods};
+use sea_query::Alias;
 use sea_query::{Expr, NullOrdering, Order, PostgresQueryBuilder, Query};
 use sea_query_binder::SqlxBinder;
 use serde_json::json;
@@ -656,8 +657,9 @@ impl Collection {
     ///     Each object must have a `field` key with the name of the field to order by, and a `direction`
     ///     key with the value `asc` or `desc`.
     ///   * `last_row_id` - The id of the last document returned
-    ///   * `offset` - The number of documents to skip before returning results.
-    ///   * `filter` - A JSON object specifying the filter to apply to the documents.
+    ///   * `offset` - The number of documents to skip before returning results
+    ///   * `filter` - A JSON object specifying the filter to apply to the documents
+    ///   * `keys` - a JSON array specifying the document keys to return
     ///
     /// # Example
     ///
@@ -691,8 +693,32 @@ impl Collection {
                 self.documents_table_name.to_table_tuple(),
                 SIden::Str("documents"),
             )
-            .expr(Expr::cust("*")) // Adds the * in SELECT * FROM
+            .columns([
+                SIden::Str("id"),
+                SIden::Str("created_at"),
+                SIden::Str("source_uuid"),
+                SIden::Str("version"),
+            ])
             .limit(limit);
+
+        if let Some(keys) = args.remove("keys") {
+            let document_queries = keys
+                .as_array()
+                .context("`keys` must be an array")?
+                .iter()
+                .map(|d| {
+                    let key = d.as_str().context("`key` value must be a string")?;
+                    anyhow::Ok(format!("'{key}', document #> '{{{key}}}'"))
+                })
+                .collect::<anyhow::Result<Vec<String>>>()?
+                .join(",");
+            query.expr_as(
+                Expr::cust(format!("jsonb_build_object({document_queries})")),
+                Alias::new("document"),
+            );
+        } else {
+            query.column(SIden::Str("document"));
+        }
 
         if let Some(order_by) = args.remove("order_by") {
             let order_by_builder =

@@ -30,8 +30,8 @@ CREATE TABLE IF NOT EXISTS %s (
   id serial8 PRIMARY KEY,
   created_at timestamp NOT NULL DEFAULT now(),
   source_uuid uuid NOT NULL,
-  document jsonb NOT NULL,
   version jsonb NOT NULL DEFAULT '{}'::jsonb,
+  document jsonb NOT NULL,
   UNIQUE (source_uuid)
 );
 "#;
