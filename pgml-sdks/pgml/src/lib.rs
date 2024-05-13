@@ -1344,6 +1344,50 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn can_get_document_keys_get_documents() -> anyhow::Result<()> {
+        internal_init_logger(None, None).ok();
+        let mut collection = Collection::new("test r_c_cuafgd_1", None)?;
+
+        let documents = vec![
+            serde_json::json!({"id": 1, "random_key": 10, "nested": {"nested2": "test" } , "text": "hello world 1"}).into(),
+            serde_json::json!({"id": 2, "random_key": 11, "text": "hello world 2"}).into(),
+            serde_json::json!({"id": 3, "random_key": 12, "text": "hello world 3"}).into(),
+        ];
+        collection.upsert_documents(documents.clone(), None).await?;
+
+        let documents = collection
+            .get_documents(Some(
+                serde_json::json!({
+                    "keys": [
+                        "id",
+                        "random_key",
+                        "nested,nested2"
+                    ]
+                })
+                .into(),
+            ))
+            .await?;
+        assert!(!documents[0]["document"]
+            .as_object()
+            .unwrap()
+            .contains_key("text"));
+        assert!(documents[0]["document"]
+            .as_object()
+            .unwrap()
+            .contains_key("id"));
+        assert!(documents[0]["document"]
+            .as_object()
+            .unwrap()
+            .contains_key("random_key"));
+        assert!(documents[0]["document"]
+            .as_object()
+            .unwrap()
+            .contains_key("nested,nested2"));
+        collection.archive().await?;
+        Ok(())
+    }
+
+    #[tokio::test]
     async fn can_paginate_get_documents() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
         let mut collection = Collection::new("test_r_c_cpgd_2", None)?;
