@@ -2,7 +2,7 @@
     @extend .navbar;
     background-color: var(--webapp-nav-bg);
 
-    border-bottom: 1px solid #{$gray-500};
+    border-bottom: 1px solid #{$gray-600};
     border-radius: 0px;
     gap: 12px;
 
@@ -44,5 +44,34 @@
                 width: 100%;
             }
         }
+    }
+
+    .deployment_controls {
+        min-width: 300px;
+    }
+
+    .sub-menu-dropdown {
+        background-color: #{$gray-800};
+        height: 100vh;
+    }
+
+    .top-nav-controls {
+        &:not(.collapsed) {
+            .mobile-left-nav-controls {
+                background-color: #{$neon-tint-100};
+            }
+        }
+
+        .mobile-left-nav-controls {
+            background-color: #{$gray-700};
+        }
+    }
+
+    .mobile-dashboard-button:not(:active) {
+        background-color: #{$gray-700};
+    }
+
+    .btn-dropdown {
+        padding: 8px 20px;
     }
 }

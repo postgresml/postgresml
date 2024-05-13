@@ -29,6 +29,8 @@
     .dropdown-item {
         overflow: hidden;
         text-overflow: ellipsis;
+        --bs-dropdown-link-hover-bg: #{$gray-700};
+        --bs-dropdown-link-active-bg: #{$neon-tint-100};
     }
 }
 
@@ -65,10 +67,6 @@
         .material-symbols-outlined {
             transform: rotate(-180deg);
         }
-    }
-
-    .collapase {
-        width: 100%;
     }
 
     .btn-dropdown-text {
