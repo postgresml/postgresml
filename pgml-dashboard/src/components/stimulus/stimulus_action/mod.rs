@@ -13,6 +13,7 @@ pub enum StimulusEvents {
     FocusIn,
     KeyDown,
     KeyUp,
+    KeyDownWithKey(String),
 }
 
 impl fmt::Display for StimulusEvents {
@@ -27,6 +28,7 @@ impl fmt::Display for StimulusEvents {
             StimulusEvents::FocusIn => write!(f, "focusin"),
             StimulusEvents::KeyDown => write!(f, "keydown"),
             StimulusEvents::KeyUp => write!(f, "keyup"),
+            StimulusEvents::KeyDownWithKey(ref key) => write!(f, "keydown.{}", key),
         }
     }
 }
@@ -45,6 +47,7 @@ impl FromStr for StimulusEvents {
             "focusin" => Ok(StimulusEvents::FocusIn),
             "keydown" => Ok(StimulusEvents::KeyDown),
             "keyup" => Ok(StimulusEvents::KeyUp),
+            "keydown.enter" => Ok(StimulusEvents::KeyDownWithKey("enter".into())),
             _ => Err(()),
         }
     }
@@ -87,6 +90,14 @@ impl StimulusAction {
 
     pub fn new_input() -> Self {
         Self::new().action(StimulusEvents::Input)
+    }
+
+    pub fn new_focusout() -> Self {
+        Self::new().action(StimulusEvents::FocusOut)
+    }
+
+    pub fn new_keydown_with_key(key: &str) -> Self {
+        Self::new().action(StimulusEvents::KeyDownWithKey(key.into()))
     }
 }
 
