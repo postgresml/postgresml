@@ -12,6 +12,24 @@ use crate::{
     vector_search_query_builder::{build_sqlx_query, ValidQuery},
 };
 
+const fn default_temperature() -> f32 {
+    1.
+}
+const fn default_max_tokens() -> u32 {
+    1000000
+}
+const fn default_top_p() -> f32 {
+    1.
+}
+const fn default_presence_penalty() -> f32 {
+    0.
+}
+
+#[allow(dead_code)]
+const fn default_n() -> u32 {
+    0
+}
+
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(deny_unknown_fields)]
 struct ValidAggregate {
@@ -44,7 +62,14 @@ enum ValidVariable {
 struct ValidCompletion {
     model: String,
     prompt: String,
+    #[serde(default = "default_temperature")]
     temperature: f32,
+    #[serde(default = "default_max_tokens")]
+    max_tokens: u32,
+    #[serde(default = "default_top_p")]
+    top_p: f32,
+    #[serde(default = "default_presence_penalty")]
+    presence_penalty: f32,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -58,7 +83,14 @@ struct ChatMessage {
 struct ValidChat {
     model: String,
     messages: Vec<ChatMessage>,
+    #[serde(default = "default_temperature")]
     temperature: f32,
+    #[serde(default = "default_max_tokens")]
+    max_tokens: u32,
+    #[serde(default = "default_top_p")]
+    top_p: f32,
+    #[serde(default = "default_presence_penalty")]
+    presence_penalty: f32,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -134,6 +166,8 @@ pub async fn build_rag_query(
         anyhow::bail!("All variables in RAG query must be uppercase")
     }
 
+    let mut final_query = Query::select();
+
     let mut with_clause = WithClause::new();
     let pipeline_table = format!("{}.pipelines", collection.name);
     let mut pipeline_cte = Query::select();
@@ -145,8 +179,10 @@ pub async fn build_rag_query(
     pipeline_cte.table_name(Alias::new("pipeline"));
     with_clause.cte(pipeline_cte);
 
+    let mut json_objects = Vec::new();
+
     for (var_name, var_query) in rag.variables.iter() {
-        let var_replace_select = match var_query {
+        let (var_replace_select, var_source) = match var_query {
             ValidVariable::VectorSearch(vector_search) => {
                 let (sqlx_select_statement, sqlx_ctes) = build_sqlx_query(
                     serde_json::json!(vector_search.vector_search).into(),
@@ -162,13 +198,21 @@ pub async fn build_rag_query(
                 let mut sqlx_query = CommonTableExpression::from_select(sqlx_select_statement);
                 sqlx_query.table_name(Alias::new(var_name));
                 with_clause.cte(sqlx_query);
-                format!(
-                    r#"(SELECT string_agg(chunk, '{}') FROM "{var_name}")"#,
-                    vector_search.aggregate.join
+                (
+                    format!(
+                        r#"(SELECT string_agg(chunk, '{}') FROM "{var_name}")"#,
+                        vector_search.aggregate.join
+                    ),
+                    format!(
+                        r#"(SELECT json_agg(jsonb_build_object('chunk', chunk, 'document', document, 'score', score)) FROM "{var_name}")"#
+                    ),
                 )
             }
-            ValidVariable::RawSQL(_) => todo!(),
+            ValidVariable::RawSQL(sql) => (format!("({})", sql.sql), format!("({})", sql.sql)),
         };
+
+        // final_query.expr(Expr::cust(format!("{var_source} {var_name}")));
+        json_objects.push(format!("'{var_name}', {var_source}"));
 
         match &mut rag_f {
             ValidRAGWrapper::Completion(completion) => {
@@ -206,16 +250,14 @@ pub async fn build_rag_query(
         }
     }
 
-    let mut final_query = Query::select();
-
-    match rag_f {
+    let transform_call = match rag_f {
         ValidRAGWrapper::Completion(completion) => {
             let mut args = serde_json::json!(completion.completion);
             args.as_object_mut().unwrap().remove("model");
             args.as_object_mut().unwrap().remove("prompt");
             let args_string = serde_json::to_string(&args)?;
 
-            final_query.expr(Expr::cust(format!(
+            format!(
                 r#"
                     pgml.transform(
                       task   => '{{
@@ -227,7 +269,7 @@ pub async fn build_rag_query(
                     ) 
                 "#,
                 completion.completion.model, completion.completion.prompt
-            )));
+            )
         }
         ValidRAGWrapper::Chat(chat) => {
             let mut args = serde_json::json!(chat.chat);
@@ -253,7 +295,7 @@ pub async fn build_rag_query(
                 .collect();
             let prompt: String = prompt.join(",");
 
-            final_query.expr(Expr::cust(format!(
+            format!(
                 r#"
                     pgml.transform(
                       task   => '{{
@@ -262,12 +304,23 @@ pub async fn build_rag_query(
                       }}'::JSONB,
                       inputs  => ARRAY[{}],
                       args   => '{args_string}'::JSONB
-                    ) 
+                    )
                 "#,
                 chat.chat.model, prompt
-            )));
+            )
         }
-    }
+    };
+
+    let sources = format!(",'sources', jsonb_build_object({})", json_objects.join(","));
+
+    final_query.expr(Expr::cust(format!(
+        r#"
+            jsonb_build_object(
+                'rag',
+                {transform_call}{sources}
+            )
+        "#
+    )));
 
     let (sql, values) = final_query
         .with(with_clause)

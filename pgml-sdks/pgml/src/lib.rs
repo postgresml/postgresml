@@ -1233,6 +1233,11 @@ mod tests {
                             }
                         }
                     },
+                    "document": {
+                        "keys": [
+                            "id"
+                        ]
+                    },
                     "limit": 5
                 })
                 .into(),
@@ -1366,6 +1371,108 @@ mod tests {
             .map(|r| r.2["id"].as_u64().unwrap())
             .collect();
         assert_eq!(ids, vec![4, 5, 6]);
+        collection.archive().await?;
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn can_vector_search_with_local_embeddings_and_specify_document_keys(
+    ) -> anyhow::Result<()> {
+        internal_init_logger(None, None).ok();
+        let collection_name = "test r_c_cvswleasdk_0";
+        let mut collection = Collection::new(collection_name, None)?;
+        let documents = generate_dummy_documents(2);
+        collection.upsert_documents(documents.clone(), None).await?;
+        let pipeline_name = "v0";
+        let mut pipeline = Pipeline::new(
+            pipeline_name,
+            Some(
+                json!({
+                    "body": {
+                        "splitter": {
+                            "model": "recursive_character"
+                        },
+                        "semantic_search": {
+                            "model": "intfloat/e5-small-v2",
+                            "parameters": {
+                                "prompt": "passage: "
+                            }
+                        },
+                    },
+                })
+                .into(),
+            ),
+        )?;
+        collection.add_pipeline(&mut pipeline).await?;
+        let results = collection
+            .vector_search(
+                json!({
+                    "query": {
+                        "fields": {
+                            "body": {
+                                "query": "Test document: 2",
+                                "parameters": {
+                                    "prompt": "query: "
+                                },
+                            },
+                        },
+                    },
+                    "document": {
+                        "keys": [
+                            "id",
+                            "title"
+                        ]
+                    },
+                    "limit": 5
+                })
+                .into(),
+                &mut pipeline,
+            )
+            .await?;
+        assert!(results[0]["document"]
+            .as_object()
+            .unwrap()
+            .contains_key("id"));
+        assert!(results[0]["document"]
+            .as_object()
+            .unwrap()
+            .contains_key("title"));
+        assert!(!results[0]["document"]
+            .as_object()
+            .unwrap()
+            .contains_key("body"));
+
+        let results = collection
+            .vector_search(
+                json!({
+                    "query": {
+                        "fields": {
+                            "body": {
+                                "query": "Test document: 2",
+                                "parameters": {
+                                    "prompt": "query: "
+                                },
+                            },
+                        },
+                    },
+                    "limit": 5
+                })
+                .into(),
+                &mut pipeline,
+            )
+            .await?;
+        assert!(results[0]["document"]
+            .as_object()
+            .unwrap()
+            .contains_key("id"));
+        assert!(results[0]["document"]
+            .as_object()
+            .unwrap()
+            .contains_key("title"));
+        assert!(results[0]["document"]
+            .as_object()
+            .unwrap()
+            .contains_key("body"));
         collection.archive().await?;
         Ok(())
     }
@@ -1993,7 +2100,50 @@ mod tests {
             ),
         )?;
         collection.add_pipeline(&mut pipeline).await?;
+
         // Single variable test
+        let results = collection
+            .rag(
+                json!({
+                    "CONTEXT": {
+                        "vector_search": {
+                            "query": {
+                                "fields": {
+                                    "body": {
+                                        "query": "Test document: 2",
+                                        "parameters": {
+                                            "prompt": "query: "
+                                        }
+                                    },
+                                },
+                            },
+                            "document": {
+                                "keys": [
+                                    "id"
+                                ]
+                            },
+                            "limit": 5
+                        },
+                        "aggregate": {
+                          "join": "\n"
+                        }
+                    },
+                    "completion": {
+                        "model": "meta-llama/Meta-Llama-3-8B-Instruct",
+                        "prompt": "Some text with {CONTEXT}",
+                        "max_tokens": 10,
+                    }
+                })
+                .into(),
+                &mut pipeline,
+            )
+            .await?;
+        assert!(!results["rag"].as_array().unwrap()[0]
+            .as_str()
+            .unwrap()
+            .is_empty());
+
+        // Multi-variable test
         let results = collection
             .rag(
                 json!({
@@ -2010,25 +2160,102 @@ mod tests {
                                     },
                                 },
                             },
-                            "limit": 5
+                            "limit": 2
+                        },
+                        "aggregate": {
+                          "join": "\n"
+                        }
+                    },
+                    "CONTEXT2": {
+                        "vector_search": {
+                            "query": {
+                                "fields": {
+                                    "body": {
+                                        "query": "Test document: 3",
+                                        "parameters": {
+                                            "prompt": "query: "
+                                        }
+                                    },
+                                }
+                            },
+                            "document": {
+                                "keys": [
+                                    "id"
+                                ]
+                            },
+                            "limit": 2
                         },
                         "aggregate": {
                           "join": "\n"
                         }
                     },
                     "completion": {
-                        "model": "mistralai/Mistral-7B-Instruct-v0.2",
-                        "prompt": "Some text with {CONTEXT}",
-                        "temperature": 0.7
+                        "model": "meta-llama/Meta-Llama-3-8B-Instruct",
+                        "prompt": "Some text with {CONTEXT} AND {CONTEXT2}",
+                        "max_tokens": 10
                     }
                 })
                 .into(),
                 &mut pipeline,
             )
             .await?;
-        eprintln!("{}", results);
+        assert!(!results["rag"].as_array().unwrap()[0]
+            .as_str()
+            .unwrap()
+            .is_empty());
 
-        // Multi-variable test
+        // Chat test
+        let results = collection
+            .rag(
+                json!({
+                    "CONTEXT": {
+                        "vector_search": {
+                            "query": {
+                                "fields": {
+                                    "body": {
+                                        "query": "Test document: 2",
+                                        "parameters": {
+                                            "prompt": "query: "
+                                        }
+                                    },
+                                },
+                            },
+                            "document": {
+                                "keys": [
+                                    "id"
+                                ]
+                            },
+                            "limit": 2
+                        },
+                        "aggregate": {
+                          "join": "\n"
+                        }
+                    },
+                    "chat": {
+                        "model": "meta-llama/Meta-Llama-3-8B-Instruct",
+                        "messages": [
+                            {
+                                "role": "system",
+                                "content": "You are a friendly and helpful chatbot"
+                            },
+                            {
+                                "role": "user",
+                                "content": "Some text with {CONTEXT}",
+                            }
+                        ],
+                        "max_tokens": 10
+                    }
+                })
+                .into(),
+                &mut pipeline,
+            )
+            .await?;
+        assert!(!results["rag"].as_array().unwrap()[0]
+            .as_str()
+            .unwrap()
+            .is_empty());
+
+        // Multi-variable chat test
         let results = collection
             .rag(
                 json!({
@@ -2070,19 +2297,31 @@ mod tests {
                           "join": "\n"
                         }
                     },
-                    "completion": {
-                        "model": "mistralai/Mistral-7B-Instruct-v0.2",
-                        "prompt": "Some text with {CONTEXT} AND {CONTEXT2}",
-                        "temperature": 0.7
+                    "chat": {
+                        "model": "meta-llama/Meta-Llama-3-8B-Instruct",
+                        "messages": [
+                            {
+                                "role": "system",
+                                "content": "You are a friendly and helpful chatbot"
+                            },
+                            {
+                                "role": "user",
+                                "content": "Some text with {CONTEXT} AND {CONTEXT2}",
+                            }
+                        ],
+                        "max_tokens": 10
                     }
                 })
                 .into(),
                 &mut pipeline,
             )
             .await?;
-        eprintln!("{}", results);
+        assert!(!results["rag"].as_array().unwrap()[0]
+            .as_str()
+            .unwrap()
+            .is_empty());
 
-        // Chat test
+        // Chat test with custom SQL query
         let results = collection
             .rag(
                 json!({
@@ -2105,28 +2344,34 @@ mod tests {
                           "join": "\n"
                         }
                     },
+                    "CUSTOM": {
+                        "sql": "SELECT 'test'"
+                    },
                     "chat": {
-                        "model": "mistralai/Mistral-7B-Instruct-v0.2",
+                        "model": "meta-llama/Meta-Llama-3-8B-Instruct",
                         "messages": [
-                            // {
-                            //     "role": "system",
-                            //     "content": "You are a friendly and helpful chatbot"
-                            // },
+                            {
+                                "role": "system",
+                                "content": "You are a friendly and helpful chatbot"
+                            },
                             {
                                 "role": "user",
-                                "content": "Some text with {CONTEXT}",
+                                "content": "Some text with {CONTEXT} - {CUSTOM}",
                             }
                         ],
-                        "temperature": 0.7
+                        "max_tokens": 10
                     }
                 })
                 .into(),
                 &mut pipeline,
             )
             .await?;
-        eprintln!("{}", results);
+        assert!(!results["rag"].as_array().unwrap()[0]
+            .as_str()
+            .unwrap()
+            .is_empty());
 
-        // collection.archive().await?;
+        collection.archive().await?;
         Ok(())
     }
 }

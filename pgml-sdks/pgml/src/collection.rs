@@ -1091,21 +1091,13 @@ impl Collection {
     }
 
     #[instrument(skip(self))]
-    pub async fn rag(&self, query: Json, pipeline: &Pipeline) -> anyhow::Result<String> {
+    pub async fn rag(&self, query: Json, pipeline: &Pipeline) -> anyhow::Result<Json> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
         let (built_query, values) = build_rag_query(query.clone(), self, pipeline).await?;
-        let results: Vec<(Json,)> = sqlx::query_as_with(&built_query, values)
+        let mut results: Vec<(Json,)> = sqlx::query_as_with(&built_query, values)
             .fetch_all(&pool)
             .await?;
-        Ok(results[0]
-            .0
-            .as_array()
-            .context("Error converting LLM response to Array")?
-            .first()
-            .context("Error getting first LLM response")?
-            .as_str()
-            .context("Error converting LLM response to string")?
-            .to_owned())
+        Ok(std::mem::take(&mut results[0].0))
     }
 
     /// Archives a [Collection]

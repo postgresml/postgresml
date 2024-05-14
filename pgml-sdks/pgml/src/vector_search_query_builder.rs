@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use sea_query::{
     Alias, CommonTableExpression, Expr, Func, JoinType, Order, PostgresQueryBuilder, Query,
-    SelectStatement, WithClause, WithQuery,
+    SelectStatement, WithClause,
 };
 use sea_query_binder::{SqlxBinder, SqlxValues};
 
@@ -37,11 +37,19 @@ struct ValidQueryActions {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(deny_unknown_fields)]
+struct ValidDocument {
+    keys: Option<Vec<String>>,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(deny_unknown_fields)]
 pub struct ValidQuery {
     query: ValidQueryActions,
     // Need this when coming from JavaScript as everything is an f64 from JS
     #[serde(default, deserialize_with = "crate::utils::deserialize_u64")]
     limit: Option<u64>,
+    // Document related items
+    document: Option<ValidDocument>,
 }
 
 pub async fn build_sqlx_query(
@@ -220,12 +228,28 @@ pub async fn build_sqlx_query(
         }
 
         let mut wrapper_query = Query::select();
+
+        // Allows filtering on which keys to return with the document
+        if let Some(document) = &valid_query.document {
+            if let Some(keys) = &document.keys {
+                let document_queries = keys
+                    .iter()
+                    .map(|key| format!("'{key}', document #> '{{{key}}}'"))
+                    .collect::<Vec<String>>()
+                    .join(",");
+                wrapper_query.expr_as(
+                    Expr::cust(format!("jsonb_build_object({document_queries})")),
+                    Alias::new("document"),
+                );
+            } else {
+                wrapper_query.column(SIden::Str("document"));
+            }
+        } else {
+            wrapper_query.column(SIden::Str("document"));
+        }
+
         wrapper_query
-            .columns([
-                SIden::Str("document"),
-                SIden::Str("chunk"),
-                SIden::Str("score"),
-            ])
+            .columns([SIden::Str("chunk"), SIden::Str("score")])
             .from_subquery(query, Alias::new("s"));
 
         queries.push(wrapper_query);
