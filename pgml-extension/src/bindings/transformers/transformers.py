@@ -211,9 +211,9 @@ class GGMLPipeline(object):
     def __init__(self, model_name, **task):
         import ctransformers
 
-        task.pop("model")
-        task.pop("task")
-        task.pop("device")
+        task.pop("model", None)
+        task.pop("task", None)
+        task.pop("device", None)
         self.model = ctransformers.AutoModelForCausalLM.from_pretrained(
             model_name, **task
         )
