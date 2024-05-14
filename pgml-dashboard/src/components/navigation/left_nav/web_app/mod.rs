@@ -6,17 +6,17 @@ use sailfish::TemplateOnce;
 #[template(path = "navigation/left_nav/web_app/template.html")]
 pub struct WebApp {
     pub upper_nav: StaticNav,
-    pub lower_nav: StaticNav,
-    pub dropdown_nav: StaticNav,
+    pub id: Option<String>,
 }
 
 impl WebApp {
-    pub fn new(upper_nav: StaticNav, lower_nav: StaticNav, dropdown_nav: StaticNav) -> WebApp {
-        WebApp {
-            upper_nav,
-            lower_nav,
-            dropdown_nav,
-        }
+    pub fn new(upper_nav: StaticNav) -> WebApp {
+        WebApp { upper_nav, id: None }
+    }
+
+    pub fn id(mut self, id: &str) -> WebApp {
+        self.id = Some(id.to_string());
+        self
     }
 }
 

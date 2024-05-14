@@ -1,3 +1,4 @@
+<% use crate::utils::urls; %>
 <turbo-frame id="cell_<%= cell.id %>">
   <section class="notebook-cell notebook-delete-undo" data-controller="notebook-cell" data-notebook-cell-target="undo">
     <div class="flex">
@@ -11,14 +12,14 @@
       </div>
 
       <div class="notebook-buttons">
-        <form action="/dashboard/notebooks/<%= notebook.id %>/cell/<%= cell.id %>?bust_cache=<%= bust_cache %>" method="get">
+        <form action="<%- urls::deployment_notebooks() %>/<%= notebook.id %>/cell/<%= cell.id %>?bust_cache=<%= bust_cache %>" method="get">
           <button type="submit" title="Undo cell delete">
             <span class="material-symbols-outlined">
               replay
             </span>
           </button>
         </form>
-        <form action="/dashboard/notebooks/<%= notebook.id %>/cell/<%= cell.id %>/delete" method="post">
+        <form action="<%- urls::deployment_notebooks() %>/<%= notebook.id %>/cell/<%= cell.id %>/delete" method="post">
           <input type="hidden" name="confirm" value="true" />
           <button type="submit" title="Delete forever">
             <span class="material-symbols-outlined">

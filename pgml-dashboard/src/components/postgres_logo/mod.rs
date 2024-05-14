@@ -6,6 +6,7 @@ use sailfish::TemplateOnce;
 pub struct PostgresLogo {
     link: String,
     bigger: bool,
+    hide_owl: bool,
 }
 
 impl PostgresLogo {
@@ -13,11 +14,17 @@ impl PostgresLogo {
         PostgresLogo {
             link: link.to_owned(),
             bigger: false,
+            hide_owl: false,
         }
     }
 
     pub fn bigger(mut self) -> PostgresLogo {
         self.bigger = true;
+        self
+    }
+
+    pub fn hide_owl(mut self) -> PostgresLogo {
+        self.hide_owl = true;
         self
     }
 }

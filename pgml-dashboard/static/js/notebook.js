@@ -14,6 +14,10 @@ export default class extends Controller {
 
   static outlets = ['modal'];
 
+  static values = {
+    urlRoot: String,
+  }
+
   cellCheckIntervalMillis = 500
 
   connect() {
@@ -59,7 +63,7 @@ export default class extends Controller {
     const notebookId = this.scrollerTarget.dataset.notebookId
     const ids = cells.map(cell => parseInt(cell.dataset.cellId))
 
-    fetch(`/dashboard/notebooks/${notebookId}/reorder`, {
+    fetch(`${this.urlRootValue}/${notebookId}/reorder`, {
       method: 'POST',
       body: JSON.stringify({
         cells: ids,
