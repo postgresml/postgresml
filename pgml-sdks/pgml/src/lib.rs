@@ -432,6 +432,86 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn can_add_pipeline_and_upsert_documents_with_parallel_batches() -> anyhow::Result<()> {
+        internal_init_logger(None, None).ok();
+        let collection_name = "test_r_c_capaud_107";
+        let pipeline_name = "test_r_p_capaud_6";
+        let mut pipeline = Pipeline::new(
+            pipeline_name,
+            Some(
+                json!({
+                    "title": {
+                        "semantic_search": {
+                            "model": "intfloat/e5-small"
+                        }
+                    },
+                    "body": {
+                        "splitter": {
+                            "model": "recursive_character",
+                            "parameters": {
+                                "chunk_size": 1000,
+                                "chunk_overlap": 40
+                            }
+                        },
+                        "semantic_search": {
+                            "model": "hkunlp/instructor-base",
+                            "parameters": {
+                                "instruction": "Represent the Wikipedia document for retrieval"
+                            }
+                        },
+                        "full_text_search": {
+                            "configuration": "english"
+                        }
+                    }
+                })
+                .into(),
+            ),
+        )?;
+        let mut collection = Collection::new(collection_name, None)?;
+        collection.add_pipeline(&mut pipeline).await?;
+        let documents = generate_dummy_documents(20);
+        collection
+            .upsert_documents(
+                documents.clone(),
+                Some(
+                    json!({
+                        "batch_size": 4,
+                        "parallel_batches": 5
+                    })
+                    .into(),
+                ),
+            )
+            .await?;
+        let pool = get_or_initialize_pool(&None).await?;
+        let documents_table = format!("{}.documents", collection_name);
+        let queried_documents: Vec<models::Document> =
+            sqlx::query_as(&query_builder!("SELECT * FROM %s", documents_table))
+                .fetch_all(&pool)
+                .await?;
+        assert!(queried_documents.len() == 20);
+        let chunks_table = format!("{}_{}.title_chunks", collection_name, pipeline_name);
+        let title_chunks: Vec<models::Chunk> =
+            sqlx::query_as(&query_builder!("SELECT * FROM %s", chunks_table))
+                .fetch_all(&pool)
+                .await?;
+        assert!(title_chunks.len() == 20);
+        let chunks_table = format!("{}_{}.body_chunks", collection_name, pipeline_name);
+        let body_chunks: Vec<models::Chunk> =
+            sqlx::query_as(&query_builder!("SELECT * FROM %s", chunks_table))
+                .fetch_all(&pool)
+                .await?;
+        assert!(body_chunks.len() == 120);
+        let tsvectors_table = format!("{}_{}.body_tsvectors", collection_name, pipeline_name);
+        let tsvectors: Vec<models::TSVector> =
+            sqlx::query_as(&query_builder!("SELECT * FROM %s", tsvectors_table))
+                .fetch_all(&pool)
+                .await?;
+        assert!(tsvectors.len() == 120);
+        collection.archive().await?;
+        Ok(())
+    }
+
+    #[tokio::test]
     async fn can_upsert_documents_and_add_pipeline() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
         let collection_name = "test_r_c_cudaap_51";
