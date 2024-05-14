@@ -157,8 +157,14 @@
     }
   }
 
-  .docs-content-max-width-container {
+.docs-content-max-width-container {
     max-width: $docs-content-max-width;
 
     margin: 0px auto;
-  }
+}
+
+.web-app-content-area {
+    @include media-breakpoint-up(lg) {
+        margin-left: $left-nav-w-collapsed
+    }
+}

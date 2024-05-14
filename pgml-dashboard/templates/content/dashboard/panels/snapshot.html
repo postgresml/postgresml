@@ -1,3 +1,4 @@
+<% use crate::utils::urls; %>
 <turbo-frame id="snapshot">
   <div class="notebook">
     <section>
@@ -27,7 +28,7 @@
       <% let project = &projects[&models.iter().next().unwrap().project_id]; %>
       <ol class="object_list model_list">
         <li>
-          <a href="/dashboard?tab=Project&id=<%= project.id %>" data-turbo-frame="_top">
+          <a href="<%- urls::deployment_project_by_id(project.id) %>" data-turbo-frame="_top">
             <h3 style="padding-right: 20%"><%= project.name %></h3>
             <b><%- project.key_metric_display_name().unwrap() %></b>
             <figure id="project_<%= project.id %>"></figure>
@@ -35,7 +36,7 @@
       </li>
         <% for model in models.iter() { %>
         <li>
-          <a href="/dashboard?tab=Model&id=<%= model.id %>" data-turbo-frame="_top">
+          <a href="<%- urls::deployment_model_by_id(model.id) %>" data-turbo-frame="_top">
             <span class="material-symbols-outlined d-flex justify-content-center align-items-center">
               <% if model.search.is_some() { %>
                 <% if model.search.as_ref().unwrap().as_str() == "grid" { %>

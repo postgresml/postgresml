@@ -142,7 +142,6 @@
 
 .drawer-submenu {
     white-space: nowrap;
-    background-color: #{gray-800};
     @include media-breakpoint-down(lg) {
         background-color: #{$gray-900};
     }
@@ -162,7 +161,7 @@
     font-weight: 400;
 
     .material-symbols-outlined {
-        color: #{$neon-shade-300};
+        color: #{$slate-shade-300};
     }
 
     button, a {
@@ -180,11 +179,11 @@
             @include semibold_by_shadow($gray-100)
         }
         span.material-symbols-outlined {
-            @include bold_by_shadow($neon-shade-300)
+            @include bold_by_shadow($slate-shade-300)
         }
     }
     
-    &:active, &:focus, &:target, .active {
+    &:active:not(.disabled), &:focus:not(.disabled), &:target:not(.disabled), .active:not(.disabled) {
         background-color: #{$neon-tint-100};
         color: #{$gray-100};
         border-radius: calc($border-radius / 2);
