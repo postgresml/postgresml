@@ -442,7 +442,10 @@ mod tests {
                 json!({
                     "title": {
                         "semantic_search": {
-                            "model": "intfloat/e5-small"
+                            "model": "intfloat/e5-small-v2",
+                            "parameters": {
+                                "prompt": "passage: "
+                            }
                         }
                     },
                     "body": {
@@ -454,9 +457,9 @@ mod tests {
                             }
                         },
                         "semantic_search": {
-                            "model": "hkunlp/instructor-base",
+                            "model": "intfloat/e5-small-v2",
                             "parameters": {
-                                "instruction": "Represent the Wikipedia document for retrieval"
+                                "prompt": "passage: "
                             }
                         },
                         "full_text_search": {
@@ -475,7 +478,7 @@ mod tests {
                 documents.clone(),
                 Some(
                     json!({
-                        "batch_size": 4,
+                        "batch_size": 2,
                         "parallel_batches": 5
                     })
                     .into(),
