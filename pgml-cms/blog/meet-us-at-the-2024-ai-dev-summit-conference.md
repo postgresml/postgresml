@@ -26,9 +26,9 @@ AI DevSummit is the world’s largest artificial intelligence developer & engine
 
 !!! tip
 
-  <p class="h3">Free pass promo module</p>
+  <p class="h3">Get a free pass on us</p>
 
-  [Get a free AI DevSummit OPEN Pass (a $100 value) on us](https://www.devnetwork.com/invited-registration/?event=AI%20DevSummit%202024&c=PostgresML&img1=https%3A%2F%2Fmms.businesswire.com%2Fmedia%2F20231109984513%2Fen%2F1938432%2F22%2FPostgresML_Logo.jpg&utm_source=feathr&utm_medium=sponsor&utm_campaign=PostgresML&discount=PostgresML&type=sponsor)
+  [We’re giving away 50 AI DevSummit OPEN passes (a $100 value) here. Get yours today.](https://www.devnetwork.com/invited-registration/?event=AI%20DevSummit%202024&c=PostgresML&img1=https%3A%2F%2Fmms.businesswire.com%2Fmedia%2F20231109984513%2Fen%2F1938432%2F22%2FPostgresML_Logo.jpg&utm_source=feathr&utm_medium=sponsor&utm_campaign=PostgresML&discount=PostgresML&type=sponsor)
 
 !!!
 
