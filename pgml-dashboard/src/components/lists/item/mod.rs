@@ -1,4 +1,4 @@
-use pgml_components::component;
+use pgml_components::{component, Component};
 use sailfish::TemplateOnce;
 use std::fmt;
 
@@ -29,6 +29,7 @@ impl fmt::Display for Color {
 pub struct Item {
     value: String,
     color: Color,
+    alt_item_indicator: Option<Component>,
 }
 
 impl Item {
@@ -36,6 +37,7 @@ impl Item {
         Item {
             value: String::from("Your list item"),
             color: Color::Green,
+            alt_item_indicator: None,
         }
     }
 
@@ -46,6 +48,11 @@ impl Item {
 
     pub fn color(mut self, color: Color) -> Item {
         self.color = color;
+        self
+    }
+
+    pub fn alt_item_indicator(mut self, indicator: Component) -> Item {
+        self.alt_item_indicator = Some(indicator);
         self
     }
 }

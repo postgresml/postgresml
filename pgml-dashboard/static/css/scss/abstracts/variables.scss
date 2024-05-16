@@ -1,5 +1,5 @@
 //
-// Default SASS Variable Overrides
+// Default SASS Variable Overrides and Custom Variables
 //
 
 // Neutral Scale
@@ -14,7 +14,27 @@ $gray-800: #17181A;
 $gray-900: #000000;
 
 // Violet Scale
+$violet-tint-100: #A105FF;
+$violet-tint-200: #Aa1dff;
+$violet-tint-300: #b336ff;
+$violet-tint-400: #bd50ff;
+$violet-tint-500: #c669ff;
+$violet-tint-600: #d082ff;
+$violet-tint-700: #d99bff;
+$violet-tint-800: #e2b4ff;
+$violet-tint-900: #eccdff;
+$violet-tint-1000: #f5e6ff;
+
 $violet-shade-100: #A105FF;
+$violet-shade-200: #9004e5;
+$violet-shade-300: #8004cc;
+$violet-shade-400: #7003b2;
+$violet-shade-500: #600399;
+$violet-shade-600: #50027f;
+$violet-shade-700: #400266;
+$violet-shade-800: #30014c;
+$violet-shade-900: #200133;
+$violet-shade-1000: #100019;
 
 // Neon Scale 
 $neon-tint-100: #5162FF;
@@ -97,6 +117,7 @@ $slate-shade-800: #2B274C;
 $slate-shade-900: #1D1A33;
 $slate-shade-1000: #0E0D19;
 
+// Magenta Scale 
 $magenta-shade-100: #E6008A;
 $magenta-shade-200: #cf007c;
 $magenta-shade-300: #b8006e;

@@ -10,7 +10,7 @@
         <ul class="list-group gap-3">
           <% for bullet in bullets {%>
             <div class="d-flex flex-row align-items-center gap-2">
-              <%+ Checkmark::new().active() %><div class="d-flex align-items-center gap-2"><%- bullet %></div>
+              <%+ Checkmark::new() %><div class="d-flex align-items-center gap-2"><%- bullet %></div>
             </div>
           <% } %>
         </ul>

@@ -1,6 +1,12 @@
 <div class="list-group-item d-flex align-items-center gap-2">
+  <% if alt_item_indicator.is_some() {%>
+    <div class="align-self-start" style="padding-top: 3px;">
+      <%+ alt_item_indicator.unwrap() %>
+    </div>
+  <% } else { %>
   <span class="material-symbols-outlined text-gradient-<%- color.to_string() %> align-self-start">
     check
-    </span>
+  </span>
+  <% } %>
   <%- value %>
 </div>
