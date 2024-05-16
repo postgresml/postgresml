@@ -168,3 +168,14 @@
         margin-left: $left-nav-w-collapsed
     }
 }
+
+#ai-dev-summit-tip-container {
+    .admonition-title {
+        display: none
+    }
+
+    .admonition-tip {
+        padding: 1.75rem;
+        text-align: center;
+    }
+}
