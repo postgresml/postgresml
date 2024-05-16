@@ -533,23 +533,21 @@ impl Collection {
 
         let mut set = JoinSet::new();
         for batch in documents.chunks(batch_size as usize) {
-            if set.len() < parallel_batches {
-                let local_self = self.clone();
-                let local_batch = batch.to_owned();
-                let local_args = args.clone();
-                let local_pipelines = pipelines.clone();
-                let local_pool = pool.clone();
-                set.spawn(async move {
-                    local_self
-                        ._upsert_documents(local_batch, local_args, local_pipelines, local_pool)
-                        .await
-                });
-            } else {
-                if let Some(res) = set.join_next().await {
-                    res??;
-                    progress_bar.inc(batch_size);
-                }
+            if set.len() >= parallel_batches {
+                set.join_next().await.unwrap()??;
+                progress_bar.inc(batch_size);
             }
+
+            let local_self = self.clone();
+            let local_batch = batch.to_owned();
+            let local_args = args.clone();
+            let local_pipelines = pipelines.clone();
+            let local_pool = pool.clone();
+            set.spawn(async move {
+                local_self
+                    ._upsert_documents(local_batch, local_args, local_pipelines, local_pool)
+                    .await
+            });
         }
 
         while let Some(res) = set.join_next().await {
