@@ -1,21 +1,23 @@
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-
-use sea_query::{Alias, CommonTableExpression, Expr, PostgresQueryBuilder, Query, WithClause};
+use sea_query::{
+    Alias, CommonTableExpression, Expr, PostgresQueryBuilder, Query, SimpleExpr, WithClause,
+};
 use sea_query_binder::{SqlxBinder, SqlxValues};
+use serde::{Deserialize, Serialize};
+use serde_with::{serde_as, FromInto};
+use std::collections::HashMap;
 
 use crate::{
     collection::Collection,
     debug_sea_query, models,
     pipeline::Pipeline,
-    types::{IntoTableNameAndSchema, Json},
+    types::{CustomU64Convertor, IntoTableNameAndSchema, Json},
     vector_search_query_builder::{build_sqlx_query, ValidQuery},
 };
 
 const fn default_temperature() -> f32 {
     1.
 }
-const fn default_max_tokens() -> u32 {
+const fn default_max_tokens() -> u64 {
     1000000
 }
 const fn default_top_p() -> f32 {
@@ -26,7 +28,7 @@ const fn default_presence_penalty() -> f32 {
 }
 
 #[allow(dead_code)]
-const fn default_n() -> u32 {
+const fn default_n() -> u64 {
     0
 }
 
@@ -57,6 +59,7 @@ enum ValidVariable {
     RawSQL(RawSQL),
 }
 
+#[serde_as]
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(deny_unknown_fields)]
 struct ValidCompletion {
@@ -64,8 +67,10 @@ struct ValidCompletion {
     prompt: String,
     #[serde(default = "default_temperature")]
     temperature: f32,
+    // Need this when coming from JavaScript as everything is an f64 from JS
     #[serde(default = "default_max_tokens")]
-    max_tokens: u32,
+    #[serde_as(as = "FromInto<CustomU64Convertor>")]
+    max_tokens: u64,
     #[serde(default = "default_top_p")]
     top_p: f32,
     #[serde(default = "default_presence_penalty")]
@@ -78,6 +83,7 @@ struct ChatMessage {
     content: String,
 }
 
+#[serde_as]
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(deny_unknown_fields)]
 struct ValidChat {
@@ -85,8 +91,10 @@ struct ValidChat {
     messages: Vec<ChatMessage>,
     #[serde(default = "default_temperature")]
     temperature: f32,
+    // Need this when coming from JavaScript as everything is an f64 from JS
     #[serde(default = "default_max_tokens")]
-    max_tokens: u32,
+    #[serde_as(as = "FromInto<CustomU64Convertor>")]
+    max_tokens: u64,
     #[serde(default = "default_top_p")]
     top_p: f32,
     #[serde(default = "default_presence_penalty")]
@@ -104,13 +112,13 @@ struct ValidRAG {
 #[derive(Debug, Clone)]
 struct CompletionRAG {
     completion: ValidCompletion,
-    is_prompt_formatted: bool,
+    prompt_expr: SimpleExpr,
 }
 
 #[derive(Debug, Clone)]
 struct FormattedMessage {
+    content_expr: SimpleExpr,
     message: ChatMessage,
-    is_formatted: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -136,15 +144,15 @@ impl TryFrom<ValidRAG> for ValidRAGWrapper {
                     .messages
                     .iter()
                     .map(|c| FormattedMessage {
+                        content_expr: Expr::cust_with_values("$1", [c.content.clone()]),
                         message: c.clone(),
-                        is_formatted: false,
                     })
                     .collect(),
                 chat,
             })),
             (Some(completion), None) => Ok(ValidRAGWrapper::Completion(CompletionRAG {
+                prompt_expr: Expr::cust_with_values("$1", [completion.prompt.clone()]),
                 completion,
-                is_prompt_formatted: false,
             })),
             (Some(_), Some(_)) => anyhow::bail!("Cannot provide both `completion` and `chat`"),
         }
@@ -155,6 +163,7 @@ pub async fn build_rag_query(
     query: Json,
     collection: &Collection,
     pipeline: &Pipeline,
+    stream: bool,
 ) -> anyhow::Result<(String, SqlxValues)> {
     let rag: ValidRAG = serde_json::from_value(query.0)?;
 
@@ -211,121 +220,156 @@ pub async fn build_rag_query(
             ValidVariable::RawSQL(sql) => (format!("({})", sql.sql), format!("({})", sql.sql)),
         };
 
-        // final_query.expr(Expr::cust(format!("{var_source} {var_name}")));
-        json_objects.push(format!("'{var_name}', {var_source}"));
+        if !stream {
+            json_objects.push(format!("'{var_name}', {var_source}"));
+        }
 
         match &mut rag_f {
             ValidRAGWrapper::Completion(completion) => {
-                if completion.is_prompt_formatted {
-                    completion.completion.prompt = format!(
-                        "replace({}, '{{{var_name}}}', {var_replace_select})",
-                        completion.completion.prompt
-                    );
-                } else {
-                    completion.completion.prompt = format!(
-                        "replace('{}', '{{{var_name}}}', {var_replace_select})",
-                        completion.completion.prompt
-                    );
-                    completion.is_prompt_formatted = true;
-                }
+                completion.prompt_expr = Expr::cust_with_expr(
+                    format!("replace($1, '{{{var_name}}}', {var_replace_select})"),
+                    completion.prompt_expr.clone(),
+                );
             }
             ValidRAGWrapper::Chat(chat) => {
                 for message in &mut chat.messages {
                     if message.message.content.contains(&format!("{{{var_name}}}")) {
-                        if message.is_formatted {
-                            message.message.content = format!(
-                                "replace({}, '{{{var_name}}}', {var_replace_select})",
-                                message.message.content
-                            );
-                        } else {
-                            message.message.content = format!(
-                                "replace('{}', '{{{var_name}}}', {var_replace_select})",
-                                message.message.content
-                            );
-                            message.is_formatted = true;
-                        }
+                        message.content_expr = Expr::cust_with_expr(
+                            format!("replace($1, '{{{var_name}}}', {var_replace_select})"),
+                            message.content_expr.clone(),
+                        )
                     }
                 }
             }
         }
     }
 
-    let transform_call = match rag_f {
+    let transform_expr = match rag_f {
         ValidRAGWrapper::Completion(completion) => {
             let mut args = serde_json::json!(completion.completion);
             args.as_object_mut().unwrap().remove("model");
             args.as_object_mut().unwrap().remove("prompt");
-            let args_string = serde_json::to_string(&args)?;
+            let args_expr = Expr::cust_with_values("$1", [args]);
 
-            format!(
-                r#"
-                    pgml.transform(
-                      task   => '{{
-                        "task": "text-generation",
-                        "model": "{}"
-                      }}'::JSONB,
-                      inputs  => ARRAY[{}],
-                      args   => '{args_string}'::JSONB
-                    ) 
-                "#,
-                completion.completion.model, completion.completion.prompt
-            )
+            let task_expr = Expr::cust_with_values(
+                "$1",
+                [serde_json::json!({
+                    "task": "text-generation",
+                    "model": completion.completion.model
+                })],
+            );
+
+            if stream {
+                Expr::cust_with_exprs(
+                    "
+                        pgml.transform_stream(
+                          task   => $1,
+                          input  => $2,
+                          args   => $3
+                        )
+                    ",
+                    [task_expr, completion.prompt_expr, args_expr],
+                )
+            } else {
+                Expr::cust_with_exprs(
+                    "
+                        pgml.transform(
+                          task   => $1,
+                          inputs  => zzzzz_zzzzz_start $2 zzzzz_zzzzz_end,
+                          args   => $3
+                        ) 
+                    ",
+                    [task_expr, completion.prompt_expr, args_expr],
+                )
+            }
         }
         ValidRAGWrapper::Chat(chat) => {
             let mut args = serde_json::json!(chat.chat);
             args.as_object_mut().unwrap().remove("model");
             args.as_object_mut().unwrap().remove("messages");
-            let args_string = serde_json::to_string(&args)?;
-            let prompt: Vec<String> = chat
-                .messages
-                .into_iter()
-                .map(|p| {
-                    if p.is_formatted {
-                        format!(
-                            "jsonb_build_object('role', '{}', 'content', {})",
-                            p.message.role, p.message.content
-                        )
-                    } else {
-                        format!(
-                            "jsonb_build_object('role', '{}', 'content', '{}')",
-                            p.message.role, p.message.content
-                        )
-                    }
-                })
-                .collect();
-            let prompt: String = prompt.join(",");
+            let args_expr = Expr::cust_with_values("$1", [args]);
 
-            format!(
-                r#"
-                    pgml.transform(
-                      task   => '{{
-                        "task": "conversational",
-                        "model": "{}"
-                      }}'::JSONB,
-                      inputs  => ARRAY[{}],
-                      args   => '{args_string}'::JSONB
-                    )
-                "#,
-                chat.chat.model, prompt
-            )
+            let task_expr = Expr::cust_with_values(
+                "$1",
+                [serde_json::json!({
+                    "task": "conversational",
+                    "model": chat.chat.model
+                })],
+            );
+
+            let dollar_string = chat
+                .messages
+                .iter()
+                .enumerate()
+                .map(|(i, _c)| format!("${}", i + 1))
+                .collect::<Vec<String>>()
+                .join(", ");
+            let prompt_exprs = chat.messages.into_iter().map(|cm| {
+                let role_expr = Expr::cust_with_values("$1", [cm.message.role]);
+                Expr::cust_with_exprs(
+                    "jsonb_build_object('role', $1, 'content', $2)",
+                    [role_expr, cm.content_expr],
+                )
+            });
+            let inputs_expr = Expr::cust_with_exprs(format!("{dollar_string}"), prompt_exprs);
+
+            if stream {
+                Expr::cust_with_exprs(
+                    "
+                        pgml.transform_stream(
+                          task   => $1,
+                          inputs  => zzzzz_zzzzz_start $2 zzzzz_zzzzz_end,
+                          args   => $3
+                        )
+                    ",
+                    [task_expr, inputs_expr, args_expr],
+                )
+            } else {
+                Expr::cust_with_exprs(
+                    "
+                        pgml.transform(
+                          task   => $1,
+                          inputs  => zzzzz_zzzzz_start $2 zzzzz_zzzzz_end,
+                          args   => $3
+                        )
+                    ",
+                    [task_expr, inputs_expr, args_expr],
+                )
+            }
         }
     };
 
-    let sources = format!(",'sources', jsonb_build_object({})", json_objects.join(","));
-
-    final_query.expr(Expr::cust(format!(
-        r#"
-            jsonb_build_object(
-                'rag',
-                {transform_call}{sources}
-            )
-        "#
-    )));
+    if stream {
+        final_query.expr(transform_expr);
+    } else {
+        let sources = format!(",'sources', jsonb_build_object({})", json_objects.join(","));
+        final_query.expr(Expr::cust_with_expr(
+            format!(
+                r#"
+                    jsonb_build_object(
+                        'rag',
+                        $1{sources}
+                    )
+                "#
+            ),
+            transform_expr,
+        ));
+    }
 
     let (sql, values) = final_query
         .with(with_clause)
         .build_sqlx(PostgresQueryBuilder);
-    debug_sea_query!(VECTOR_SEARCH, sql, values);
+
+    let sql = sql.replace("zzzzz_zzzzz_start", "ARRAY[");
+    let sql = sql.replace("zzzzz_zzzzz_end", "]");
+
+    let sql = if stream {
+        format!("DECLARE c CURSOR FOR {sql}")
+    } else {
+        sql
+    };
+
+    debug_sea_query!(RAG, sql, values);
 
     Ok((sql, values))
 }

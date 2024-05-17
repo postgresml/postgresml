@@ -23,6 +23,7 @@ use crate::filter_builder::FilterBuilder;
 use crate::pipeline::FieldAction;
 use crate::rag_query_builder::build_rag_query;
 use crate::search_query_builder::build_search_query;
+use crate::types::GeneralJsonAsyncIterator;
 use crate::vector_search_query_builder::build_vector_search_query;
 use crate::{
     get_or_initialize_pool, models, order_by_builder,
@@ -35,7 +36,39 @@ use crate::{
 };
 
 #[cfg(feature = "python")]
-use crate::{pipeline::PipelinePython, query_builder::QueryBuilderPython, types::JsonPython};
+use crate::{
+    pipeline::PipelinePython,
+    query_builder::QueryBuilderPython,
+    types::{GeneralJsonAsyncIteratorPython, JsonPython},
+};
+
+/// A RAGStream Struct
+#[derive(alias)]
+#[allow(dead_code)]
+pub struct RAGStream {
+    general_json_async_iterator: Option<GeneralJsonAsyncIterator>,
+    sources: Json,
+}
+
+// Required that we implement clone for our rust-bridge macros but it will not be used
+impl Clone for RAGStream {
+    fn clone(&self) -> Self {
+        panic!("Cannot clone RAGStream")
+    }
+}
+
+#[alias_methods(stream, sources)]
+impl RAGStream {
+    pub fn stream(&mut self) -> anyhow::Result<GeneralJsonAsyncIterator> {
+        self.general_json_async_iterator
+            .take()
+            .context("Cannot call stream method more than once")
+    }
+
+    pub fn sources(&self) -> anyhow::Result<Json> {
+        panic!("Cannot get sources yet for RAG streaming")
+    }
+}
 
 /// Our project tasks
 #[derive(Debug, Clone)]
@@ -128,6 +161,8 @@ pub struct Collection {
     add_search_event,
     vector_search,
     query,
+    rag,
+    rag_stream,
     exists,
     archive,
     upsert_directory,
@@ -1093,11 +1128,41 @@ impl Collection {
     #[instrument(skip(self))]
     pub async fn rag(&self, query: Json, pipeline: &Pipeline) -> anyhow::Result<Json> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
-        let (built_query, values) = build_rag_query(query.clone(), self, pipeline).await?;
+        let (built_query, values) = build_rag_query(query.clone(), self, pipeline, false).await?;
         let mut results: Vec<(Json,)> = sqlx::query_as_with(&built_query, values)
             .fetch_all(&pool)
             .await?;
         Ok(std::mem::take(&mut results[0].0))
+    }
+
+    #[instrument(skip(self))]
+    pub async fn rag_stream(&self, query: Json, pipeline: &Pipeline) -> anyhow::Result<RAGStream> {
+        let pool = get_or_initialize_pool(&self.database_url).await?;
+
+        let (built_query, values) = build_rag_query(query.clone(), self, pipeline, true).await?;
+
+        let mut transaction = pool.begin().await?;
+
+        sqlx::query_with(&built_query, values)
+            .execute(&mut *transaction)
+            .await?;
+
+        let s = futures::stream::try_unfold(transaction, move |mut transaction| async move {
+            let mut res: Vec<Json> = sqlx::query_scalar("FETCH 1 FROM c")
+                .fetch_all(&mut *transaction)
+                .await?;
+            if !res.is_empty() {
+                Ok(Some((std::mem::take(&mut res[0]), transaction)))
+            } else {
+                transaction.commit().await?;
+                Ok(None)
+            }
+        });
+
+        Ok(RAGStream {
+            general_json_async_iterator: Some(GeneralJsonAsyncIterator(Box::pin(s))),
+            sources: serde_json::json!({}).into(),
+        })
     }
 
     /// Archives a [Collection]

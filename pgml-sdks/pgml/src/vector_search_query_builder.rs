@@ -1,12 +1,12 @@
 use anyhow::Context;
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-
 use sea_query::{
     Alias, CommonTableExpression, Expr, Func, JoinType, Order, PostgresQueryBuilder, Query,
     SelectStatement, WithClause,
 };
 use sea_query_binder::{SqlxBinder, SqlxValues};
+use serde::{Deserialize, Serialize};
+use serde_with::{serde_as, FromInto};
+use std::collections::HashMap;
 
 use crate::{
     collection::Collection,
@@ -16,7 +16,7 @@ use crate::{
     models,
     pipeline::Pipeline,
     remote_embeddings::build_remote_embeddings,
-    types::{IntoTableNameAndSchema, Json, SIden},
+    types::{CustomU64Convertor, IntoTableNameAndSchema, Json, SIden},
 };
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -41,13 +41,19 @@ struct ValidDocument {
     keys: Option<Vec<String>>,
 }
 
+const fn default_limit() -> u64 {
+    10
+}
+
+#[serde_as]
 #[derive(Debug, Deserialize, Serialize, Clone)]
-#[serde(deny_unknown_fields)]
+// #[serde(deny_unknown_fields)]
 pub struct ValidQuery {
     query: ValidQueryActions,
     // Need this when coming from JavaScript as everything is an f64 from JS
-    #[serde(default, deserialize_with = "crate::utils::deserialize_u64")]
-    limit: Option<u64>,
+    #[serde(default = "default_limit")]
+    #[serde_as(as = "FromInto<CustomU64Convertor>")]
+    limit: u64,
     // Document related items
     document: Option<ValidDocument>,
 }
@@ -60,7 +66,7 @@ pub async fn build_sqlx_query(
     prefix: Option<&str>,
 ) -> anyhow::Result<(SelectStatement, Vec<CommonTableExpression>)> {
     let valid_query: ValidQuery = serde_json::from_value(query.0)?;
-    let limit = valid_query.limit.unwrap_or(10);
+    let limit = valid_query.limit;
     let fields = valid_query.query.fields.unwrap_or_default();
 
     let prefix = prefix.unwrap_or("");
@@ -169,7 +175,9 @@ pub async fn build_sqlx_query(
                 // Build the score CTE
                 query
                     .expr(Expr::cust_with_values(
-                        r#"(1 - (embeddings.embedding <=> $1::vector)) {boost} AS score"#,
+                        format!(
+                            r#"(1 - (embeddings.embedding <=> $1::vector)) * {boost} AS score"#
+                        ),
                         [embedding.clone()],
                     ))
                     .order_by_expr(

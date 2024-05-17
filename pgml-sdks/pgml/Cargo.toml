@@ -46,6 +46,7 @@ inquire = "0.6"
 parking_lot = "0.12.1"
 once_cell = "1.19.0"
 url = "2.5.0"
+serde_with = "3.8.1"
 
 [features]
 default = []

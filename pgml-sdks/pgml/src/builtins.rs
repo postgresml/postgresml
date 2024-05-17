@@ -108,7 +108,10 @@ mod tests {
     async fn can_transform() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
         let builtins = Builtins::new(None);
-        let task = Json::from(serde_json::json!("translation_en_to_fr"));
+        let task = Json::from(serde_json::json!({
+            "task": "text-generation",
+            "model": "meta-llama/Meta-Llama-3-8B-Instruct"
+        }));
         let inputs = vec!["test1".to_string(), "test2".to_string()];
         let results = builtins.transform(task, inputs, None).await?;
         assert!(results.as_array().is_some());

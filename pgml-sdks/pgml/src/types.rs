@@ -4,7 +4,31 @@ use itertools::Itertools;
 use rust_bridge::alias_manual;
 use sea_query::Iden;
 use serde::{Deserialize, Serialize};
+use serde_json::{json, Value};
 use std::ops::{Deref, DerefMut};
+
+#[derive(Serialize, Deserialize)]
+pub struct CustomU64Convertor(pub Value);
+
+impl From<u64> for CustomU64Convertor {
+    fn from(value: u64) -> Self {
+        Self(json!(value))
+    }
+}
+
+impl From<CustomU64Convertor> for u64 {
+    fn from(value: CustomU64Convertor) -> Self {
+        if value.0.is_f64() {
+            value.0.as_f64().unwrap() as u64
+        } else if value.0.is_i64() {
+            value.0.as_i64().unwrap() as u64
+        } else if value.0.is_u64() {
+            value.0.as_u64().unwrap()
+        } else {
+            panic!("Cannot convert value into u64")
+        }
+    }
+}
 
 /// A wrapper around `serde_json::Value`
 #[derive(alias_manual, sqlx::Type, Debug, Clone, Deserialize, PartialEq, Eq)]

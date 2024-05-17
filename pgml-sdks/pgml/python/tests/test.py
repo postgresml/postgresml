@@ -83,7 +83,12 @@ async def test_can_search():
     pipeline = pgml.Pipeline(
         "test_p_p_tcs_0",
         {
-            "title": {"semantic_search": {"model": "intfloat/e5-small"}},
+            "title": {
+                "semantic_search": {
+                    "model": "intfloat/e5-small-v2",
+                    "parameters": {"prompt": "passage: "},
+                }
+            },
             "body": {
                 "splitter": {"model": "recursive_character"},
                 "semantic_search": {
@@ -102,7 +107,11 @@ async def test_can_search():
             "query": {
                 "full_text_search": {"body": {"query": "Test", "boost": 1.2}},
                 "semantic_search": {
-                    "title": {"query": "This is a test", "boost": 2.0},
+                    "title": {
+                        "query": "This is a test",
+                        "parameters": {"prompt": "passage: "},
+                        "boost": 2.0,
+                    },
                     "body": {"query": "This is the body test", "boost": 1.01},
                 },
                 "filter": {"id": {"$gt": 1}},
@@ -112,7 +121,7 @@ async def test_can_search():
         pipeline,
     )
     ids = [result["id"] for result in results["results"]]
-    assert ids == [5, 4, 3]
+    assert ids == [3, 5, 4]
     await collection.archive()
 
 
@@ -127,12 +136,18 @@ async def test_can_vector_search():
         "test_p_p_tcvs_0",
         {
             "title": {
-                "semantic_search": {"model": "intfloat/e5-small"},
+                "semantic_search": {
+                    "model": "intfloat/e5-small-v2",
+                    "parameters": {"prompt": "passage: "},
+                },
                 "full_text_search": {"configuration": "english"},
             },
             "text": {
                 "splitter": {"model": "recursive_character"},
-                "semantic_search": {"model": "intfloat/e5-small"},
+                "semantic_search": {
+                    "model": "intfloat/e5-small-v2",
+                    "parameters": {"prompt": "passage: "},
+                },
             },
         },
     )
@@ -143,8 +158,15 @@ async def test_can_vector_search():
         {
             "query": {
                 "fields": {
-                    "title": {"query": "Test document: 2", "full_text_filter": "test"},
-                    "text": {"query": "Test document: 2"},
+                    "title": {
+                        "query": "Test document: 2",
+                        "parameters": {"prompt": "passage: "},
+                        "full_text_filter": "test",
+                    },
+                    "text": {
+                        "query": "Test document: 2",
+                        "parameters": {"prompt": "passage: "},
+                    },
                 },
                 "filter": {"id": {"$gt": 2}},
             },
@@ -159,7 +181,7 @@ async def test_can_vector_search():
 
 @pytest.mark.asyncio
 async def test_can_vector_search_with_query_builder():
-    model = pgml.Model()
+    model = pgml.Model("intfloat/e5-small-v2", "pgml", {"prompt": "passage: "})
     splitter = pgml.Splitter()
     pipeline = pgml.SingleFieldPipeline("test_p_p_tcvswqb_1", model, splitter)
     collection = pgml.Collection(name="test_p_c_tcvswqb_5")
@@ -172,7 +194,106 @@ async def test_can_vector_search_with_query_builder():
         .fetch_all()
     )
     ids = [document["id"] for (_, _, document) in results]
-    assert ids == [2, 1, 0]
+    assert ids == [1, 2, 0]
+    await collection.archive()
+
+
+###################################################
+## Test RAG #######################################
+###################################################
+
+
+@pytest.mark.asyncio
+async def test_can_rag():
+    pipeline = pgml.Pipeline(
+        "1",
+        {
+            "body": {
+                "splitter": {"model": "recursive_character"},
+                "semantic_search": {
+                    "model": "intfloat/e5-small-v2",
+                    "parameters": {"prompt": "passage: "},
+                },
+            },
+        },
+    )
+    collection = pgml.Collection("test_p_c_cr")
+    await collection.add_pipeline(pipeline)
+    await collection.upsert_documents(generate_dummy_documents(5))
+    results = await collection.rag(
+        {
+            "CONTEXT": {
+                "vector_search": {
+                    "query": {
+                        "fields": {
+                            "body": {
+                                "query": "test",
+                                "parameters": {"prompt": "query: "},
+                            },
+                        },
+                    },
+                    "document": {"keys": ["id"]},
+                    "limit": 5,
+                },
+                "aggregate": {"join": "\n"},
+            },
+            "completion": {
+                "model": "meta-llama/Meta-Llama-3-8B-Instruct",
+                "prompt": "Some text with {CONTEXT}",
+                "max_tokens": 10,
+            },
+        },
+        pipeline,
+    )
+    assert len(results["rag"][0]) > 0
+    assert len(results["sources"]["CONTEXT"]) > 0
+    await collection.archive()
+
+
+@pytest.mark.asyncio
+async def test_can_rag_stream():
+    pipeline = pgml.Pipeline(
+        "1",
+        {
+            "body": {
+                "splitter": {"model": "recursive_character"},
+                "semantic_search": {
+                    "model": "intfloat/e5-small-v2",
+                    "parameters": {"prompt": "passage: "},
+                },
+            },
+        },
+    )
+    collection = pgml.Collection("test_p_c_crs")
+    await collection.add_pipeline(pipeline)
+    await collection.upsert_documents(generate_dummy_documents(5))
+    results = await collection.rag_stream(
+        {
+            "CONTEXT": {
+                "vector_search": {
+                    "query": {
+                        "fields": {
+                            "body": {
+                                "query": "test",
+                                "parameters": {"prompt": "query: "},
+                            },
+                        },
+                    },
+                    "document": {"keys": ["id"]},
+                    "limit": 5,
+                },
+                "aggregate": {"join": "\n"},
+            },
+            "completion": {
+                "model": "meta-llama/Meta-Llama-3-8B-Instruct",
+                "prompt": "Some text with {CONTEXT}",
+                "max_tokens": 10,
+            },
+        },
+        pipeline,
+    )
+    async for c in results.stream():
+        assert len(c) > 0
     await collection.archive()
 
 
@@ -235,15 +356,19 @@ async def test_order_documents():
 
 @pytest.mark.asyncio
 async def test_transformer_pipeline():
-    t = pgml.TransformerPipeline("text-generation")
+    t = pgml.TransformerPipeline(
+        "text-generation", "meta-llama/Meta-Llama-3-8B-Instruct"
+    )
     it = await t.transform(["AI is going to"], {"max_new_tokens": 5})
     assert len(it) > 0
 
 
 @pytest.mark.asyncio
 async def test_transformer_pipeline_stream():
-    t = pgml.TransformerPipeline("text-generation")
-    it = await t.transform_stream("AI is going to", {"max_new_tokens": 5})
+    t = pgml.TransformerPipeline(
+        "text-generation", "meta-llama/Meta-Llama-3-8B-Instruct"
+    )
+    it = await t.transform_stream("AI is going to", {"max_tokens": 5})
     total = []
     async for c in it:
         total.append(c)
@@ -258,7 +383,7 @@ async def test_transformer_pipeline_stream():
 def test_open_source_ai_create():
     client = pgml.OpenSourceAI()
     results = client.chat_completions_create(
-        "HuggingFaceH4/zephyr-7b-beta",
+        "meta-llama/Meta-Llama-3-8B-Instruct",
         [
             {
                 "role": "system",
@@ -269,6 +394,7 @@ def test_open_source_ai_create():
                 "content": "How many helicopters can a human eat in one sitting?",
             },
         ],
+        max_tokens=10,
         temperature=0.85,
     )
     assert len(results["choices"]) > 0
@@ -278,7 +404,7 @@ def test_open_source_ai_create():
 async def test_open_source_ai_create_async():
     client = pgml.OpenSourceAI()
     results = await client.chat_completions_create_async(
-        "HuggingFaceH4/zephyr-7b-beta",
+        "meta-llama/Meta-Llama-3-8B-Instruct",
         [
             {
                 "role": "system",
@@ -289,6 +415,7 @@ async def test_open_source_ai_create_async():
                 "content": "How many helicopters can a human eat in one sitting?",
             },
         ],
+        max_tokens=10,
         temperature=0.85,
     )
     assert len(results["choices"]) > 0
@@ -297,7 +424,7 @@ async def test_open_source_ai_create_async():
 def test_open_source_ai_create_stream():
     client = pgml.OpenSourceAI()
     results = client.chat_completions_create_stream(
-        "HuggingFaceH4/zephyr-7b-beta",
+        "meta-llama/Meta-Llama-3-8B-Instruct",
         [
             {
                 "role": "system",
@@ -311,15 +438,17 @@ def test_open_source_ai_create_stream():
         temperature=0.85,
         n=3,
     )
+    output = []
     for c in results:
-        assert len(c["choices"]) > 0
+        output.append(c["choices"])
+    assert len(output) > 0
 
 
 @pytest.mark.asyncio
 async def test_open_source_ai_create_stream_async():
     client = pgml.OpenSourceAI()
     results = await client.chat_completions_create_stream_async(
-        "HuggingFaceH4/zephyr-7b-beta",
+        "meta-llama/Meta-Llama-3-8B-Instruct",
         [
             {
                 "role": "system",
@@ -333,8 +462,10 @@ async def test_open_source_ai_create_stream_async():
         temperature=0.85,
         n=3,
     )
+    output = []
     async for c in results:
-        assert len(c["choices"]) > 0
+        output.append(c["choices"])
+    assert len(output) > 0
 
 
 ###################################################
