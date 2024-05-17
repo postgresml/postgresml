@@ -41,8 +41,9 @@ pub fn pip_freeze() -> Result<TableIterator<'static, (name!(package, String),)>>
 pub fn validate_dependencies() -> Result<bool> {
     Python::with_gil(|py| {
         let sys = PyModule::import(py, "sys").unwrap();
+        let executable: String = sys.getattr("executable").unwrap().extract().unwrap();
         let version: String = sys.getattr("version").unwrap().extract().unwrap();
-        info!("Python version: {version}");
+        info!("Python version: {version}, executable: {}", executable);
         for module in ["xgboost", "lightgbm", "numpy", "sklearn"] {
             match py.import(module) {
                 Ok(_) => (),
