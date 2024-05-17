@@ -1,7 +1,5 @@
 ---
 featured: true
-tags:
-  - marketing
 description: Meet us at AI DevSummit in South San Francisco May 29-30
 image: ".gitbook/assets/image/ai_dev_summit.png"
 ---
