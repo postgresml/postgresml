@@ -179,3 +179,14 @@
     background-image: url("/dashboard/static/images/newsletter_subscribe_background_mobile.png");
     background-color: #{$pink};
 }
+
+#ai-dev-summit-tip-container {
+    .admonition-title {
+        display: none
+    }
+
+    .admonition-tip {
+        padding: 1.75rem;
+        text-align: center;
+    }
+}

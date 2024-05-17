@@ -10,7 +10,7 @@ export default class extends Controller {
   initialize() {
     this.paused = false;
     this.runtime = 0;
-    this.times = 1;
+    this.times = 0;
   }
 
   connect() {
