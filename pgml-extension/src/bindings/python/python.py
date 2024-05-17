@@ -21,7 +21,7 @@ def activate_venv(venv):
         __venv = venv
         return True
     else:
-        print("virutalenv not found: %s" % venv, file=sys.stderr)
+        print("virtualenv not found: %s" % venv, file=sys.stderr)
         return False
 
 
