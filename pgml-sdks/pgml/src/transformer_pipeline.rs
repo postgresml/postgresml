@@ -32,7 +32,7 @@ impl TransformerPipeline {
         a.insert("model".to_string(), model.into());
 
         // We must convert any floating point values to integers or our extension will get angry
-        for field in vec!["gpu_layers"] {
+        for field in ["gpu_layers"] {
             if let Some(v) = a.remove(field) {
                 let x: u64 = CustomU64Convertor(v).into();
                 a.insert(field.to_string(), x.into());
@@ -62,7 +62,7 @@ impl TransformerPipeline {
         }
 
         // We must convert any floating point values to integers or our extension will get angry
-        for field in vec!["max_tokens", "n"] {
+        for field in ["max_tokens", "n"] {
             if let Some(v) = a.remove(field) {
                 let x: u64 = CustomU64Convertor(v).into();
                 a.insert(field.to_string(), x.into());
@@ -95,7 +95,7 @@ impl TransformerPipeline {
                 .fetch_all(&pool)
                 .await?
         };
-        let results = results.get(0).unwrap().get::<serde_json::Value, _>(0);
+        let results = results.first().unwrap().get::<serde_json::Value, _>(0);
         Ok(Json(results))
     }
 
@@ -121,7 +121,7 @@ impl TransformerPipeline {
         }
 
         // We must convert any floating point values to integers or our extension will get angry
-        for field in vec!["max_tokens", "n"] {
+        for field in ["max_tokens", "n"] {
             if let Some(v) = a.remove(field) {
                 let x: u64 = CustomU64Convertor(v).into();
                 a.insert(field.to_string(), x.into());

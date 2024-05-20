@@ -84,7 +84,7 @@ impl Builtins {
             query.bind(task.0)
         };
         let results = query.bind(inputs).bind(args).fetch_all(&pool).await?;
-        let results = results.get(0).unwrap().get::<serde_json::Value, _>(0);
+        let results = results.first().unwrap().get::<serde_json::Value, _>(0);
         Ok(Json(results))
     }
 }

@@ -1126,7 +1126,7 @@ impl Collection {
     }
 
     #[instrument(skip(self))]
-    pub async fn rag(&self, query: Json, pipeline: &Pipeline) -> anyhow::Result<Json> {
+    pub async fn rag(&self, query: Json, pipeline: &mut Pipeline) -> anyhow::Result<Json> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
         let (built_query, values) = build_rag_query(query.clone(), self, pipeline, false).await?;
         let mut results: Vec<(Json,)> = sqlx::query_as_with(&built_query, values)
@@ -1136,7 +1136,11 @@ impl Collection {
     }
 
     #[instrument(skip(self))]
-    pub async fn rag_stream(&self, query: Json, pipeline: &Pipeline) -> anyhow::Result<RAGStream> {
+    pub async fn rag_stream(
+        &self,
+        query: Json,
+        pipeline: &mut Pipeline,
+    ) -> anyhow::Result<RAGStream> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
 
         let (built_query, values) = build_rag_query(query.clone(), self, pipeline, true).await?;
