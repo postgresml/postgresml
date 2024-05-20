@@ -29,6 +29,7 @@ mod pipeline;
 mod queries;
 mod query_builder;
 mod query_runner;
+mod rag_query_builder;
 mod remote_embeddings;
 mod search_query_builder;
 mod single_field_pipeline;
@@ -281,6 +282,7 @@ fn main(mut cx: neon::context::ModuleContext) -> neon::result::NeonResult<()> {
 mod tests {
     use super::*;
     use crate::types::Json;
+    use futures::StreamExt;
     use serde_json::json;
 
     fn generate_dummy_documents(count: usize) -> Vec<Json> {
@@ -329,7 +331,7 @@ mod tests {
     #[tokio::test]
     async fn can_add_remove_pipeline() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let mut pipeline = Pipeline::new("test_p_carp_58", Some(json!({}).into()))?;
+        let mut pipeline = Pipeline::new("0", Some(json!({}).into()))?;
         let mut collection = Collection::new("test_r_c_carp_1", None)?;
         assert!(collection.database_data.is_none());
         collection.add_pipeline(&mut pipeline).await?;
@@ -344,8 +346,8 @@ mod tests {
     #[tokio::test]
     async fn can_add_remove_pipelines() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let mut pipeline1 = Pipeline::new("test_r_p_carps_1", Some(json!({}).into()))?;
-        let mut pipeline2 = Pipeline::new("test_r_p_carps_2", Some(json!({}).into()))?;
+        let mut pipeline1 = Pipeline::new("0", Some(json!({}).into()))?;
+        let mut pipeline2 = Pipeline::new("1", Some(json!({}).into()))?;
         let mut collection = Collection::new("test_r_c_carps_11", None)?;
         collection.add_pipeline(&mut pipeline1).await?;
         collection.add_pipeline(&mut pipeline2).await?;
@@ -354,7 +356,7 @@ mod tests {
         collection.remove_pipeline(&pipeline1).await?;
         let pipelines = collection.get_pipelines().await?;
         assert!(pipelines.len() == 1);
-        assert!(collection.get_pipeline("test_r_p_carps_1").await.is_err());
+        assert!(collection.get_pipeline("0").await.is_err());
         collection.archive().await?;
         Ok(())
     }
@@ -363,14 +365,17 @@ mod tests {
     async fn can_add_pipeline_and_upsert_documents() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
         let collection_name = "test_r_c_capaud_107";
-        let pipeline_name = "test_r_p_capaud_6";
+        let pipeline_name = "0";
         let mut pipeline = Pipeline::new(
             pipeline_name,
             Some(
                 json!({
                     "title": {
                         "semantic_search": {
-                            "model": "intfloat/e5-small"
+                            "model": "intfloat/e5-small-v2",
+                            "parameters": {
+                                "prompt": "passage: "
+                            }
                         }
                     },
                     "body": {
@@ -382,9 +387,9 @@ mod tests {
                             }
                         },
                         "semantic_search": {
-                            "model": "hkunlp/instructor-base",
+                            "model": "intfloat/e5-small-v2",
                             "parameters": {
-                                "instruction": "Represent the Wikipedia document for retrieval"
+                                "prompt": "passage: "
                             }
                         },
                         "full_text_search": {
@@ -521,14 +526,17 @@ mod tests {
         let mut collection = Collection::new(collection_name, None)?;
         let documents = generate_dummy_documents(2);
         collection.upsert_documents(documents.clone(), None).await?;
-        let pipeline_name = "test_r_p_cudaap_9";
+        let pipeline_name = "0";
         let mut pipeline = Pipeline::new(
             pipeline_name,
             Some(
                 json!({
                     "title": {
                         "semantic_search": {
-                            "model": "intfloat/e5-small"
+                            "model": "intfloat/e5-small-v2",
+                            "parameters": {
+                                "prompt": "passage: "
+                            }
                         }
                     },
                     "body": {
@@ -536,7 +544,10 @@ mod tests {
                             "model": "recursive_character"
                         },
                         "semantic_search": {
-                            "model": "intfloat/e5-small",
+                            "model": "intfloat/e5-small-v2",
+                            "parameters": {
+                                "prompt": "passage: "
+                             }
                         },
                         "full_text_search": {
                             "configuration": "english"
@@ -581,7 +592,7 @@ mod tests {
 
     #[tokio::test]
     async fn disable_enable_pipeline() -> anyhow::Result<()> {
-        let mut pipeline = Pipeline::new("test_p_dep_1", Some(json!({}).into()))?;
+        let mut pipeline = Pipeline::new("0", Some(json!({}).into()))?;
         let mut collection = Collection::new("test_r_c_dep_1", None)?;
         collection.add_pipeline(&mut pipeline).await?;
         let queried_pipeline = &collection.get_pipelines().await?[0];
@@ -601,14 +612,17 @@ mod tests {
         internal_init_logger(None, None).ok();
         let collection_name = "test_r_c_cudaep_43";
         let mut collection = Collection::new(collection_name, None)?;
-        let pipeline_name = "test_r_p_cudaep_9";
+        let pipeline_name = "0";
         let mut pipeline = Pipeline::new(
             pipeline_name,
             Some(
                 json!({
                     "title": {
                         "semantic_search": {
-                            "model": "intfloat/e5-small"
+                            "model": "intfloat/e5-small-v2",
+                            "parameters": {
+                                "prompt": "passage: "
+                            }
                         }
                     }
                 })
@@ -646,14 +660,17 @@ mod tests {
         collection
             .upsert_documents(documents[..2].to_owned(), None)
             .await?;
-        let pipeline_name1 = "test_r_p_rpdt1_0";
+        let pipeline_name1 = "0";
         let mut pipeline = Pipeline::new(
             pipeline_name1,
             Some(
                 json!({
                     "title": {
                         "semantic_search": {
-                            "model": "intfloat/e5-small"
+                            "model": "intfloat/e5-small-v2",
+                            "parameters": {
+                                "prompt": "passage: "
+                            }
                         }
                     },
                     "body": {
@@ -661,7 +678,10 @@ mod tests {
                             "model": "recursive_character"
                         },
                         "semantic_search": {
-                            "model": "intfloat/e5-small",
+                            "model": "intfloat/e5-small-v2",
+                            "parameters": {
+                                "prompt": "passage: "
+                            }
                         },
                         "full_text_search": {
                             "configuration": "english"
@@ -697,14 +717,17 @@ mod tests {
                 .await?;
         assert!(tsvectors.len() == 8);
 
-        let pipeline_name2 = "test_r_p_rpdt2_0";
+        let pipeline_name2 = "1";
         let mut pipeline = Pipeline::new(
             pipeline_name2,
             Some(
                 json!({
                     "title": {
                         "semantic_search": {
-                            "model": "intfloat/e5-small"
+                            "model": "intfloat/e5-small-v2",
+                            "parameters": {
+                                "prompt": "passage: "
+                            }
                         }
                     },
                     "body": {
@@ -712,7 +735,10 @@ mod tests {
                             "model": "recursive_character"
                         },
                         "semantic_search": {
-                            "model": "intfloat/e5-small",
+                            "model": "intfloat/e5-small-v2",
+                            "parameters": {
+                                "prompt": "passage: "
+                            }
                         },
                         "full_text_search": {
                             "configuration": "english"
@@ -792,16 +818,19 @@ mod tests {
     #[tokio::test]
     async fn pipeline_sync_status() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let collection_name = "test_r_c_pss_5";
+        let collection_name = "test_r_c_pss_6";
         let mut collection = Collection::new(collection_name, None)?;
-        let pipeline_name = "test_r_p_pss_0";
+        let pipeline_name = "0";
         let mut pipeline = Pipeline::new(
             pipeline_name,
             Some(
                 json!({
                     "title": {
                         "semantic_search": {
-                            "model": "intfloat/e5-small"
+                            "model": "intfloat/e5-small-v2",
+                            "parameters": {
+                                "prompt": "passage: "
+                            }
                         },
                         "full_text_search": {
                             "configuration": "english"
@@ -902,14 +931,17 @@ mod tests {
         internal_init_logger(None, None).ok();
         let collection_name = "test_r_c_cschpfp_4";
         let mut collection = Collection::new(collection_name, None)?;
-        let pipeline_name = "test_r_p_cschpfp_0";
+        let pipeline_name = "0";
         let mut pipeline = Pipeline::new(
             pipeline_name,
             Some(
                 json!({
                     "title": {
                         "semantic_search": {
-                            "model": "intfloat/e5-small",
+                            "model": "intfloat/e5-small-v2",
+                            "parameters": {
+                                "prompt": "passage: "
+                            },
                             "hnsw": {
                                 "m": 100,
                                 "ef_construction": 200
@@ -948,18 +980,21 @@ mod tests {
     #[tokio::test]
     async fn can_search_with_local_embeddings() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let collection_name = "test_r_c_cswle_121";
+        let collection_name = "test_r_c_cswle_123";
         let mut collection = Collection::new(collection_name, None)?;
         let documents = generate_dummy_documents(10);
         collection.upsert_documents(documents.clone(), None).await?;
-        let pipeline_name = "test_r_p_cswle_9";
+        let pipeline_name = "0";
         let mut pipeline = Pipeline::new(
             pipeline_name,
             Some(
                 json!({
                     "title": {
                         "semantic_search": {
-                            "model": "intfloat/e5-small"
+                            "model": "intfloat/e5-small-v2",
+                            "parameters": {
+                                "prompt": "passage: "
+                            }
                         },
                         "full_text_search": {
                             "configuration": "english"
@@ -970,12 +1005,15 @@ mod tests {
                             "model": "recursive_character"
                         },
                         "semantic_search": {
-                            "model": "intfloat/e5-small"
+                            "model": "intfloat/e5-small-v2",
+                            "parameters": {
+                                "prompt": "passage: "
+                            }
                         },
                         "semantic_search": {
-                            "model": "hkunlp/instructor-base",
+                            "model": "intfloat/e5-small-v2",
                             "parameters": {
-                                "instruction": "Represent the Wikipedia document for retrieval"
+                                "prompt": "passage: "
                             }
                         },
                         "full_text_search": {
@@ -984,7 +1022,10 @@ mod tests {
                     },
                     "notes": {
                        "semantic_search": {
-                            "model": "intfloat/e5-small"
+                            "model": "intfloat/e5-small-v2",
+                            "parameters": {
+                                "prompt": "passage: "
+                            }
                         }
                     }
                 })
@@ -1007,17 +1048,23 @@ mod tests {
                 "semantic_search": {
                     "title": {
                         "query": "This is a test",
+                        "parameters": {
+                            "prompt": "query: ",
+                        },
                         "boost": 2.0
                     },
                     "body": {
                         "query": "This is the body test",
                         "parameters": {
-                            "instruction": "Represent the Wikipedia question for retrieving supporting documents: ",
+                            "prompt": "query: ",
                         },
                         "boost": 1.01
                     },
                     "notes": {
                         "query": "This is the notes test",
+                        "parameters": {
+                            "prompt": "query: ",
+                        },
                         "boost": 1.01
                     }
                 },
@@ -1039,7 +1086,7 @@ mod tests {
             .iter()
             .map(|r| r["document"]["id"].as_u64().unwrap())
             .collect();
-        assert_eq!(ids, vec![9, 2, 7, 8, 3]);
+        assert_eq!(ids, vec![9, 3, 4, 7, 5]);
 
         let pool = get_or_initialize_pool(&None).await?;
 
@@ -1064,7 +1111,7 @@ mod tests {
         // Document ids are 1 based in the db not 0 based like they are here
         assert_eq!(
             search_results.iter().map(|sr| sr.2).collect::<Vec<i64>>(),
-            vec![10, 3, 8, 9, 4]
+            vec![10, 4, 5, 8, 6]
         );
 
         let event = json!({"clicked": true});
@@ -1097,14 +1144,17 @@ mod tests {
         let mut collection = Collection::new(collection_name, None)?;
         let documents = generate_dummy_documents(10);
         collection.upsert_documents(documents.clone(), None).await?;
-        let pipeline_name = "test_r_p_cswre_8";
+        let pipeline_name = "0";
         let mut pipeline = Pipeline::new(
             pipeline_name,
             Some(
                 json!({
                     "title": {
                         "semantic_search": {
-                            "model": "intfloat/e5-small"
+                            "model": "intfloat/e5-small-v2",
+                            "parameters": {
+                                "prompt": "passage: "
+                            }
                         }
                     },
                     "body": {
@@ -1138,6 +1188,9 @@ mod tests {
                         "semantic_search": {
                             "title": {
                                 "query": "This is a test",
+                                "parameters": {
+                                    "prompt": "query: ",
+                                },
                                 "boost": 2.0
                             },
                             "body": {
@@ -1163,7 +1216,7 @@ mod tests {
             .iter()
             .map(|r| r["document"]["id"].as_u64().unwrap())
             .collect();
-        assert_eq!(ids, vec![2, 3, 7, 4, 8]);
+        assert_eq!(ids, vec![3, 9, 4, 7, 5]);
         collection.archive().await?;
         Ok(())
     }
@@ -1179,16 +1232,16 @@ mod tests {
         let mut collection = Collection::new(collection_name, None)?;
         let documents = generate_dummy_documents(10);
         collection.upsert_documents(documents.clone(), None).await?;
-        let pipeline_name = "test_r_p_cvswle_0";
+        let pipeline_name = "0";
         let mut pipeline = Pipeline::new(
             pipeline_name,
             Some(
                 json!({
                     "title": {
                         "semantic_search": {
-                            "model": "hkunlp/instructor-base",
+                            "model": "intfloat/e5-small-v2",
                             "parameters": {
-                                "instruction": "Represent the Wikipedia document for retrieval"
+                                "prompt": "passage: "
                             }
                         },
                         "full_text_search": {
@@ -1200,7 +1253,10 @@ mod tests {
                             "model": "recursive_character"
                         },
                         "semantic_search": {
-                            "model": "intfloat/e5-small"
+                            "model": "intfloat/e5-small-v2",
+                            "parameters": {
+                                "prompt": "passage: "
+                            }
                         },
                     },
                 })
@@ -1216,13 +1272,16 @@ mod tests {
                             "title": {
                                 "query": "Test document: 2",
                                 "parameters": {
-                                    "instruction": "Represent the Wikipedia document for retrieval"
+                                    "prompt": "passage: "
                                 },
                                 "full_text_filter": "test",
                                 "boost": 1.2
                             },
                             "body": {
                                 "query": "Test document: 2",
+                                "parameters": {
+                                    "prompt": "passage: "
+                                },
                                 "boost": 1.0
                             },
                         },
@@ -1231,6 +1290,11 @@ mod tests {
                                 "$gt": 3
                             }
                         }
+                    },
+                    "document": {
+                        "keys": [
+                            "id"
+                        ]
                     },
                     "limit": 5
                 })
@@ -1242,7 +1306,7 @@ mod tests {
             .into_iter()
             .map(|r| r["document"]["id"].as_u64().unwrap())
             .collect();
-        assert_eq!(ids, vec![8, 4, 7, 6, 9]);
+        assert_eq!(ids, vec![4, 8, 5, 6, 9]);
         collection.archive().await?;
         Ok(())
     }
@@ -1254,14 +1318,17 @@ mod tests {
         let mut collection = Collection::new(collection_name, None)?;
         let documents = generate_dummy_documents(10);
         collection.upsert_documents(documents.clone(), None).await?;
-        let pipeline_name = "test_r_p_cvswre_0";
+        let pipeline_name = "0";
         let mut pipeline = Pipeline::new(
             pipeline_name,
             Some(
                 json!({
                     "title": {
                         "semantic_search": {
-                            "model": "intfloat/e5-small"
+                            "model": "intfloat/e5-small-v2",
+                            "parameters": {
+                                "prompt": "passage: "
+                            }
                         },
                         "full_text_search": {
                             "configuration": "english"
@@ -1289,7 +1356,10 @@ mod tests {
                         "fields": {
                             "title": {
                                 "full_text_filter": "test",
-                                "query": "Test document: 2"
+                                "query": "Test document: 2",
+                                "parameters": {
+                                    "prompt": "passage: "
+                                },
                             },
                             "body": {
                                 "query": "Test document: 2"
@@ -1311,7 +1381,7 @@ mod tests {
             .into_iter()
             .map(|r| r["document"]["id"].as_u64().unwrap())
             .collect();
-        assert_eq!(ids, vec![4, 5, 6, 7, 9]);
+        assert_eq!(ids, vec![4, 8, 5, 6, 9]);
         collection.archive().await?;
         Ok(())
     }
@@ -1321,12 +1391,15 @@ mod tests {
         internal_init_logger(None, None).ok();
         let mut collection = Collection::new("test r_c_cvswqb_7", None)?;
         let mut pipeline = Pipeline::new(
-            "test_r_p_cvswqb_0",
+            "0",
             Some(
                 json!({
                     "text": {
                         "semantic_search": {
-                            "model": "intfloat/e5-small"
+                            "model": "intfloat/e5-small-v2",
+                            "parameters": {
+                                "prompt": "passage: "
+                            }
                         },
                         "full_text_search": {
                             "configuration": "english"
@@ -1342,7 +1415,16 @@ mod tests {
         collection.add_pipeline(&mut pipeline).await?;
         let results = collection
             .query()
-            .vector_recall("test query", &pipeline, None)
+            .vector_recall(
+                "test query",
+                &pipeline,
+                Some(
+                    json!({
+                        "prompt": "query: "
+                    })
+                    .into(),
+                ),
+            )
             .limit(3)
             .filter(
                 json!({
@@ -1365,6 +1447,108 @@ mod tests {
             .map(|r| r.2["id"].as_u64().unwrap())
             .collect();
         assert_eq!(ids, vec![4, 5, 6]);
+        collection.archive().await?;
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn can_vector_search_with_local_embeddings_and_specify_document_keys(
+    ) -> anyhow::Result<()> {
+        internal_init_logger(None, None).ok();
+        let collection_name = "test r_c_cvswleasdk_0";
+        let mut collection = Collection::new(collection_name, None)?;
+        let documents = generate_dummy_documents(2);
+        collection.upsert_documents(documents.clone(), None).await?;
+        let pipeline_name = "0";
+        let mut pipeline = Pipeline::new(
+            pipeline_name,
+            Some(
+                json!({
+                    "body": {
+                        "splitter": {
+                            "model": "recursive_character"
+                        },
+                        "semantic_search": {
+                            "model": "intfloat/e5-small-v2",
+                            "parameters": {
+                                "prompt": "passage: "
+                            }
+                        },
+                    },
+                })
+                .into(),
+            ),
+        )?;
+        collection.add_pipeline(&mut pipeline).await?;
+        let results = collection
+            .vector_search(
+                json!({
+                    "query": {
+                        "fields": {
+                            "body": {
+                                "query": "Test document: 2",
+                                "parameters": {
+                                    "prompt": "query: "
+                                },
+                            },
+                        },
+                    },
+                    "document": {
+                        "keys": [
+                            "id",
+                            "title"
+                        ]
+                    },
+                    "limit": 5
+                })
+                .into(),
+                &mut pipeline,
+            )
+            .await?;
+        assert!(results[0]["document"]
+            .as_object()
+            .unwrap()
+            .contains_key("id"));
+        assert!(results[0]["document"]
+            .as_object()
+            .unwrap()
+            .contains_key("title"));
+        assert!(!results[0]["document"]
+            .as_object()
+            .unwrap()
+            .contains_key("body"));
+
+        let results = collection
+            .vector_search(
+                json!({
+                    "query": {
+                        "fields": {
+                            "body": {
+                                "query": "Test document: 2",
+                                "parameters": {
+                                    "prompt": "query: "
+                                },
+                            },
+                        },
+                    },
+                    "limit": 5
+                })
+                .into(),
+                &mut pipeline,
+            )
+            .await?;
+        assert!(results[0]["document"]
+            .as_object()
+            .unwrap()
+            .contains_key("id"));
+        assert!(results[0]["document"]
+            .as_object()
+            .unwrap()
+            .contains_key("title"));
+        assert!(results[0]["document"]
+            .as_object()
+            .unwrap()
+            .contains_key("body"));
         collection.archive().await?;
         Ok(())
     }
@@ -1925,7 +2109,10 @@ mod tests {
                 json!({
                         "title": {
                             "semantic_search": {
-                                "model": "intfloat/e5-small"
+                                "model": "intfloat/e5-small-v2",
+                            "parameters": {
+                                "prompt": "passage: "
+                            }
                             },
                             "full_text_search": {
                                 "configuration": "english"
@@ -1936,7 +2123,10 @@ mod tests {
                                 "model": "recursive_character"
                             },
                             "semantic_search": {
-                                "model": "intfloat/e5-small"
+                                "model": "intfloat/e5-small-v2",
+                            "parameters": {
+                                "prompt": "passage: "
+                            }
                             },
                             "full_text_search": {
                                 "configuration": "english"
@@ -1944,7 +2134,10 @@ mod tests {
                         },
                         "notes": {
                            "semantic_search": {
-                                "model": "intfloat/e5-small"
+                                "model": "intfloat/e5-small-v2",
+                            "parameters": {
+                                "prompt": "passage: "
+                            }
                             }
                         }
                 })
@@ -1956,6 +2149,632 @@ mod tests {
         let diagram = collection.generate_er_diagram(&mut pipeline).await?;
         assert!(!diagram.is_empty());
         println!("{diagram}");
+        collection.archive().await?;
+        Ok(())
+    }
+
+    ///////////////////////////////
+    // RAG ////////////////////////
+    ///////////////////////////////
+
+    #[tokio::test]
+    async fn can_rag_with_local_embeddings() -> anyhow::Result<()> {
+        internal_init_logger(None, None).ok();
+        let collection_name = "test r_c_crwle_1";
+        let mut collection = Collection::new(collection_name, None)?;
+        let documents = generate_dummy_documents(10);
+        collection.upsert_documents(documents.clone(), None).await?;
+        let pipeline_name = "0";
+        let mut pipeline = Pipeline::new(
+            pipeline_name,
+            Some(
+                json!({
+                    "body": {
+                        "splitter": {
+                            "model": "recursive_character"
+                        },
+                        "semantic_search": {
+                            "model": "intfloat/e5-small-v2",
+                            "parameters": {
+                                "prompt": "passage: "
+                            }
+                        },
+                    },
+                })
+                .into(),
+            ),
+        )?;
+        collection.add_pipeline(&mut pipeline).await?;
+
+        // Single variable test
+        let results = collection
+            .rag(
+                json!({
+                    "CONTEXT": {
+                        "vector_search": {
+                            "query": {
+                                "fields": {
+                                    "body": {
+                                        "query": "Test document: 2",
+                                        "parameters": {
+                                            "prompt": "query: "
+                                        }
+                                    },
+                                },
+                            },
+                            "document": {
+                                "keys": [
+                                    "id"
+                                ]
+                            },
+                            "limit": 5
+                        },
+                        "aggregate": {
+                          "join": "\n"
+                        }
+                    },
+                    "completion": {
+                        "model": "meta-llama/Meta-Llama-3-8B-Instruct",
+                        "prompt": "Some text with {CONTEXT}",
+                        "max_tokens": 10,
+                    }
+                })
+                .into(),
+                &mut pipeline,
+            )
+            .await?;
+        assert!(!results["rag"].as_array().unwrap()[0]
+            .as_str()
+            .unwrap()
+            .is_empty());
+
+        // Multi-variable test
+        let results = collection
+            .rag(
+                json!({
+                    "CONTEXT": {
+                        "vector_search": {
+                            "query": {
+                                "fields": {
+                                    "body": {
+                                        "query": "Test document: 2",
+                                        "boost": 1.0,
+                                        "parameters": {
+                                            "prompt": "query: "
+                                        }
+                                    },
+                                },
+                            },
+                            "limit": 2
+                        },
+                        "aggregate": {
+                          "join": "\n"
+                        }
+                    },
+                    "CONTEXT2": {
+                        "vector_search": {
+                            "query": {
+                                "fields": {
+                                    "body": {
+                                        "query": "Test document: 3",
+                                        "parameters": {
+                                            "prompt": "query: "
+                                        }
+                                    },
+                                }
+                            },
+                            "document": {
+                                "keys": [
+                                    "id"
+                                ]
+                            },
+                            "limit": 2
+                        },
+                        "aggregate": {
+                          "join": "\n"
+                        }
+                    },
+                    "completion": {
+                        "model": "meta-llama/Meta-Llama-3-8B-Instruct",
+                        "prompt": "Some text with {CONTEXT} AND {CONTEXT2}",
+                        "max_tokens": 10
+                    }
+                })
+                .into(),
+                &mut pipeline,
+            )
+            .await?;
+        assert!(!results["rag"].as_array().unwrap()[0]
+            .as_str()
+            .unwrap()
+            .is_empty());
+
+        // Chat test
+        let results = collection
+            .rag(
+                json!({
+                    "CONTEXT": {
+                        "vector_search": {
+                            "query": {
+                                "fields": {
+                                    "body": {
+                                        "query": "Test document: 2",
+                                        "parameters": {
+                                            "prompt": "query: "
+                                        }
+                                    },
+                                },
+                            },
+                            "document": {
+                                "keys": [
+                                    "id"
+                                ]
+                            },
+                            "limit": 2
+                        },
+                        "aggregate": {
+                          "join": "\n"
+                        }
+                    },
+                    "chat": {
+                        "model": "meta-llama/Meta-Llama-3-8B-Instruct",
+                        "messages": [
+                            {
+                                "role": "system",
+                                "content": "You are a friendly and helpful chatbot"
+                            },
+                            {
+                                "role": "user",
+                                "content": "Some text with {CONTEXT}",
+                            }
+                        ],
+                        "max_tokens": 10
+                    }
+                })
+                .into(),
+                &mut pipeline,
+            )
+            .await?;
+        assert!(!results["rag"].as_array().unwrap()[0]
+            .as_str()
+            .unwrap()
+            .is_empty());
+
+        // Multi-variable chat test
+        let results = collection
+            .rag(
+                json!({
+                    "CONTEXT": {
+                        "vector_search": {
+                            "query": {
+                                "fields": {
+                                    "body": {
+                                        "query": "Test document: 2",
+                                        "boost": 1.0,
+                                        "parameters": {
+                                            "prompt": "query: "
+                                        }
+                                    },
+                                },
+                            },
+                            "limit": 2
+                        },
+                        "aggregate": {
+                          "join": "\n"
+                        }
+                    },
+                    "CONTEXT2": {
+                        "vector_search": {
+                            "query": {
+                                "fields": {
+                                    "body": {
+                                        "query": "Test document: 3",
+                                        "boost": 1.0,
+                                        "parameters": {
+                                            "prompt": "query: "
+                                        }
+                                    },
+                                }
+                            },
+                            "limit": 2
+                        },
+                        "aggregate": {
+                          "join": "\n"
+                        }
+                    },
+                    "chat": {
+                        "model": "meta-llama/Meta-Llama-3-8B-Instruct",
+                        "messages": [
+                            {
+                                "role": "system",
+                                "content": "You are a friendly and helpful chatbot"
+                            },
+                            {
+                                "role": "user",
+                                "content": "Some text with {CONTEXT} AND {CONTEXT2}",
+                            }
+                        ],
+                        "max_tokens": 10
+                    }
+                })
+                .into(),
+                &mut pipeline,
+            )
+            .await?;
+        assert!(!results["rag"].as_array().unwrap()[0]
+            .as_str()
+            .unwrap()
+            .is_empty());
+
+        // Chat test with custom SQL query
+        let results = collection
+            .rag(
+                json!({
+                    "CONTEXT": {
+                        "vector_search": {
+                            "query": {
+                                "fields": {
+                                    "body": {
+                                        "query": "Test document: 2",
+                                        "boost": 1.0,
+                                        "parameters": {
+                                            "prompt": "query: "
+                                        }
+                                    },
+                                },
+                            },
+                            "limit": 2
+                        },
+                        "aggregate": {
+                          "join": "\n"
+                        }
+                    },
+                    "CUSTOM": {
+                        "sql": "SELECT 'test'"
+                    },
+                    "chat": {
+                        "model": "meta-llama/Meta-Llama-3-8B-Instruct",
+                        "messages": [
+                            {
+                                "role": "system",
+                                "content": "You are a friendly and helpful chatbot"
+                            },
+                            {
+                                "role": "user",
+                                "content": "Some text with {CONTEXT} - {CUSTOM}",
+                            }
+                        ],
+                        "max_tokens": 10
+                    }
+                })
+                .into(),
+                &mut pipeline,
+            )
+            .await?;
+        assert!(!results["rag"].as_array().unwrap()[0]
+            .as_str()
+            .unwrap()
+            .is_empty());
+
+        collection.archive().await?;
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn can_rag_stream_with_local_embeddings() -> anyhow::Result<()> {
+        internal_init_logger(None, None).ok();
+        let collection_name = "test r_c_crswle_1";
+        let mut collection = Collection::new(collection_name, None)?;
+        let documents = generate_dummy_documents(10);
+        collection.upsert_documents(documents.clone(), None).await?;
+        let pipeline_name = "0";
+        let mut pipeline = Pipeline::new(
+            pipeline_name,
+            Some(
+                json!({
+                    "body": {
+                        "splitter": {
+                            "model": "recursive_character"
+                        },
+                        "semantic_search": {
+                            "model": "intfloat/e5-small-v2",
+                            "parameters": {
+                                "prompt": "passage: "
+                            }
+                        },
+                    },
+                })
+                .into(),
+            ),
+        )?;
+        collection.add_pipeline(&mut pipeline).await?;
+
+        // Single variable test
+        let mut results = collection
+            .rag_stream(
+                json!({
+                    "CONTEXT": {
+                        "vector_search": {
+                            "query": {
+                                "fields": {
+                                    "body": {
+                                        "query": "Test document: 2",
+                                        "parameters": {
+                                            "prompt": "query: "
+                                        }
+                                    },
+                                },
+                            },
+                            "document": {
+                                "keys": [
+                                    "id"
+                                ]
+                            },
+                            "limit": 5
+                        },
+                        "aggregate": {
+                          "join": "\n"
+                        }
+                    },
+                    "completion": {
+                        "model": "meta-llama/Meta-Llama-3-8B-Instruct",
+                        "prompt": "Some text with {CONTEXT}",
+                        "max_tokens": 10,
+                    }
+                })
+                .into(),
+                &mut pipeline,
+            )
+            .await?;
+        let mut stream = results.stream()?;
+        while let Some(o) = stream.next().await {
+            o?;
+        }
+
+        // Multi-variable test
+        let mut results = collection
+            .rag_stream(
+                json!({
+                    "CONTEXT": {
+                        "vector_search": {
+                            "query": {
+                                "fields": {
+                                    "body": {
+                                        "query": "Test document: 2",
+                                        "parameters": {
+                                            "prompt": "query: "
+                                        }
+                                    },
+                                },
+                            },
+                            "document": {
+                                "keys": [
+                                    "id"
+                                ]
+                            },
+                            "limit": 2
+                        },
+                        "aggregate": {
+                          "join": "\n"
+                        }
+                    },
+                    "CONTEXT2": {
+                        "vector_search": {
+                            "query": {
+                                "fields": {
+                                    "body": {
+                                        "query": "Test document: 2",
+                                        "parameters": {
+                                            "prompt": "query: "
+                                        }
+                                    },
+                                },
+                            },
+                            "document": {
+                                "keys": [
+                                    "id"
+                                ]
+                            },
+                            "limit": 2
+                        },
+                        "aggregate": {
+                          "join": "\n"
+                        }
+                    },
+                    "completion": {
+                        "model": "meta-llama/Meta-Llama-3-8B-Instruct",
+                        "prompt": "Some text with {CONTEXT} - {CONTEXT2}",
+                        "max_tokens": 10,
+                    }
+                })
+                .into(),
+                &mut pipeline,
+            )
+            .await?;
+        let mut stream = results.stream()?;
+        while let Some(o) = stream.next().await {
+            o?;
+        }
+
+        // Single variable chat test
+        let mut results = collection
+            .rag_stream(
+                json!({
+                    "CONTEXT": {
+                        "vector_search": {
+                            "query": {
+                                "fields": {
+                                    "body": {
+                                        "query": "Test document: 2",
+                                        "parameters": {
+                                            "prompt": "query: "
+                                        }
+                                    },
+                                },
+                            },
+                            "document": {
+                                "keys": [
+                                    "id"
+                                ]
+                            },
+                            "limit": 5
+                        },
+                        "aggregate": {
+                          "join": "\n"
+                        }
+                    },
+                    "chat": {
+                        "model": "meta-llama/Meta-Llama-3-8B-Instruct",
+                        "messages": [
+                            {
+                                "role": "system",
+                                "content": "You are a friendly and helpful chatbot"
+                            },
+                            {
+                                "role": "user",
+                                "content": "Some text with {CONTEXT}",
+                            }
+                        ],
+                        "max_tokens": 10
+                    }
+                })
+                .into(),
+                &mut pipeline,
+            )
+            .await?;
+        let mut stream = results.stream()?;
+        while let Some(o) = stream.next().await {
+            o?;
+        }
+
+        // Multi-variable chat test
+        let mut results = collection
+            .rag_stream(
+                json!({
+                    "CONTEXT": {
+                        "vector_search": {
+                            "query": {
+                                "fields": {
+                                    "body": {
+                                        "query": "Test document: 2",
+                                        "parameters": {
+                                            "prompt": "query: "
+                                        }
+                                    },
+                                },
+                            },
+                            "document": {
+                                "keys": [
+                                    "id"
+                                ]
+                            },
+                            "limit": 2
+                        },
+                        "aggregate": {
+                          "join": "\n"
+                        }
+                    },
+                    "CONTEXT2": {
+                        "vector_search": {
+                            "query": {
+                                "fields": {
+                                    "body": {
+                                        "query": "Test document: 2",
+                                        "parameters": {
+                                            "prompt": "query: "
+                                        }
+                                    },
+                                },
+                            },
+                            "document": {
+                                "keys": [
+                                    "id"
+                                ]
+                            },
+                            "limit": 2
+                        },
+                        "aggregate": {
+                          "join": "\n"
+                        }
+                    },
+                    "chat": {
+                        "model": "meta-llama/Meta-Llama-3-8B-Instruct",
+                        "messages": [
+                            {
+                                "role": "system",
+                                "content": "You are a friendly and helpful chatbot"
+                            },
+                            {
+                                "role": "user",
+                                "content": "Some text with {CONTEXT} - {CONTEXT2}",
+                            }
+                        ],
+                        "max_tokens": 10
+                    }
+                })
+                .into(),
+                &mut pipeline,
+            )
+            .await?;
+        let mut stream = results.stream()?;
+        while let Some(o) = stream.next().await {
+            o?;
+        }
+
+        // Raw SQL test
+        let mut results = collection
+            .rag_stream(
+                json!({
+                    "CONTEXT": {
+                        "vector_search": {
+                            "query": {
+                                "fields": {
+                                    "body": {
+                                        "query": "Test document: 2",
+                                        "parameters": {
+                                            "prompt": "query: "
+                                        }
+                                    },
+                                },
+                            },
+                            "document": {
+                                "keys": [
+                                    "id"
+                                ]
+                            },
+                            "limit": 2
+                        },
+                        "aggregate": {
+                          "join": "\n"
+                        }
+                    },
+                    "CUSTOM": {
+                        "sql": "SELECT 'test'"
+                    },
+                    "chat": {
+                        "model": "meta-llama/Meta-Llama-3-8B-Instruct",
+                        "messages": [
+                            {
+                                "role": "system",
+                                "content": "You are a friendly and helpful chatbot"
+                            },
+                            {
+                                "role": "user",
+                                "content": "Some text with {CONTEXT} - {CUSTOM}",
+                            }
+                        ],
+                        "max_tokens": 10
+                    }
+                })
+                .into(),
+                &mut pipeline,
+            )
+            .await?;
+        let mut stream = results.stream()?;
+        while let Some(o) = stream.next().await {
+            o?;
+        }
+
         collection.archive().await?;
         Ok(())
     }
