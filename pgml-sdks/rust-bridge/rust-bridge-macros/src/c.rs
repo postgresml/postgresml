@@ -15,7 +15,7 @@ pub fn generate_c_alias(parsed: DeriveInput) -> proc_macro::TokenStream {
     let expanded = quote! {
         #[cfg(feature = "c")]
         pub struct #name_ident {
-            pub wrapped: *mut #wrapped_type_ident
+            pub wrapped: #wrapped_type_ident
         }
 
         #[cfg(feature = "c")]
@@ -23,7 +23,7 @@ pub fn generate_c_alias(parsed: DeriveInput) -> proc_macro::TokenStream {
             unsafe fn custom_into(self) -> *mut #name_ident {
                 Box::into_raw(Box::new(
                     #name_ident {
-                        wrapped: Box::into_raw(Box::new(self))
+                        wrapped: self
                     }
                 ))
             }
@@ -32,9 +32,8 @@ pub fn generate_c_alias(parsed: DeriveInput) -> proc_macro::TokenStream {
         #[cfg(feature = "c")]
         unsafe impl rust_bridge::c::CustomInto<#wrapped_type_ident> for *mut #name_ident {
             unsafe fn custom_into(self) -> #wrapped_type_ident {
-                let c = Box::leak(Box::from_raw(self));
-                let s = Box::leak(Box::from_raw(c.wrapped));
-                s.clone()
+                let c = Box::from_raw(self);
+                c.wrapped
             }
         }
 
@@ -42,7 +41,7 @@ pub fn generate_c_alias(parsed: DeriveInput) -> proc_macro::TokenStream {
         unsafe impl rust_bridge::c::CustomInto<&'static mut #wrapped_type_ident> for *mut #name_ident {
             unsafe fn custom_into(self) -> &'static mut #wrapped_type_ident {
                 let c = Box::leak(Box::from_raw(self));
-                Box::leak(Box::from_raw(c.wrapped))
+                &mut c.wrapped
             }
         }
 
@@ -50,10 +49,12 @@ pub fn generate_c_alias(parsed: DeriveInput) -> proc_macro::TokenStream {
         unsafe impl rust_bridge::c::CustomInto<&'static #wrapped_type_ident> for *mut #name_ident {
             unsafe fn custom_into(self) -> &'static #wrapped_type_ident {
                 let c = Box::leak(Box::from_raw(self));
-                &*Box::leak(Box::from_raw(c.wrapped))
+                &c.wrapped
             }
         }
     };
+
+    eprintln!("\n\n{expanded}\n\n");
 
     proc_macro::TokenStream::from(expanded)
 }
@@ -172,6 +173,18 @@ pub fn generate_c_methods(
 
         methods.push(method);
     }
+
+    let method_name = format_ident!("{name_ident}_delete");
+    let destructor = quote! {
+        #[cfg(feature = "c")]
+        #[no_mangle]
+        pub unsafe extern "C" fn #method_name(ptr: *mut #name_ident) {
+            drop(Box::from_raw(ptr))
+        }
+    };
+
+    eprintln!("\n\n{destructor}\n\n");
+    methods.push(destructor);
 
     proc_macro::TokenStream::from(quote! {
         #(#methods)*
