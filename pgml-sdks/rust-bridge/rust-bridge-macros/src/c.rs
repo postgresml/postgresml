@@ -16,7 +16,6 @@ pub fn generate_c_alias(parsed: DeriveInput) -> proc_macro::TokenStream {
     let wrapped_type_ident = parsed.ident;
 
     let expanded = quote! {
-        #[repr(C)]
         #[cfg(feature = "c")]
         pub struct #name_ident {
             pub wrapped: *mut #wrapped_type_ident
