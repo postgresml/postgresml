@@ -82,7 +82,7 @@ jobs:
           brew install python@3.10
           brew install python@3.11
           brew install python@3.12
-          pip3 install maturin
+          pip3 install maturin --break-system-packages
       - name: Build and deploy wheels to TestPyPI
         if: github.event.inputs.deploy_to_pypi == 'false'
         env:
