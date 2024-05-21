@@ -99,7 +99,11 @@ pub fn generate_c_methods(
             rust_function_arguments,
         ) = get_method_arguments(&wrapped_type_ident, &name_ident, &method);
 
-        let method_name = format_ident!("{}_{}", name_ident, method_ident);
+        let method_name = format_ident!(
+            "pgml_{}_{}",
+            name_ident.to_string().to_lowercase(),
+            method_ident
+        );
 
         let (return_part, augment_r_size) =
             rust_output_to_c_output(&wrapped_type_ident, &method.output_type);
@@ -174,7 +178,7 @@ pub fn generate_c_methods(
         methods.push(method);
     }
 
-    let method_name = format_ident!("{name_ident}_delete");
+    let method_name = format_ident!("pgml_{}_delete", name_ident.to_string().to_lowercase());
     let destructor = quote! {
         #[cfg(feature = "c")]
         #[no_mangle]
