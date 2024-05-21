@@ -1,9 +1,6 @@
 use proc_macro2::Ident;
-use quote::{format_ident, quote, ToTokens};
-use std::{
-    io::{Read, Write},
-    str::FromStr,
-};
+use quote::{format_ident, quote};
+use std::str::FromStr;
 use syn::{visit::Visit, DeriveInput, ItemImpl, Type};
 
 use crate::{
