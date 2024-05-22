@@ -13,7 +13,7 @@ use crate::{get_or_initialize_pool, query_runner::QueryRunner, types::Json};
 #[cfg(feature = "python")]
 use crate::{query_runner::QueryRunnerPython, types::JsonPython};
 
-#[alias_methods(new, query, transform)]
+#[alias_methods(new, query, transform, embed)]
 impl Builtins {
     pub fn new(database_url: Option<String>) -> Self {
         Self { database_url }
@@ -86,6 +86,22 @@ impl Builtins {
         let results = query.bind(inputs).bind(args).fetch_all(&pool).await?;
         let results = results.first().unwrap().get::<serde_json::Value, _>(0);
         Ok(Json(results))
+    }
+
+    /// Run the built-in `pgml.embed()` function.
+    ///
+    /// # Arguments
+    ///
+    /// * `model` - The model to use.
+    /// * `text` - The text to embed.
+    ///
+    pub async fn embed(&self, model: &str, text: &str) -> anyhow::Result<Json> {
+        let pool = get_or_initialize_pool(&self.database_url).await?;
+        let query = sqlx::query("SELECT pgml.embed($1, $2)");
+        let result = query.bind(model).bind(text).fetch_one(&pool).await?;
+        let result = result.get::<Vec<f32>, _>(0);
+        let result = serde_json::to_value(result)?;
+        Ok(Json(result))
     }
 }
 
