@@ -1,0 +1,14 @@
+div[data-controller="inputs-range-group-pricing-calc"] {
+  input[type="text"]:focus {
+      text-decoration: underline;
+      text-underline-offset: 5px;
+    }
+
+  .error {
+    border: 2px solid #{$error};
+  }
+
+  .unit {
+    font-size: 14px;
+  }
+}

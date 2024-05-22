@@ -12,6 +12,7 @@ use crate::components::cards::marketing::Slider as SliderCard;
 use crate::components::icons::Checkmark;
 use crate::components::Slider;
 use crate::components::pagination::Pagination;
+use crate::components::inputs::{range::Range, RangeGroupPricingCalc};
 %>
 
 <div class="min-height: 100vh;" data-controller="playground">
@@ -281,6 +282,10 @@ use crate::components::pagination::Pagination;
           </div>
     </div>
   </div>
+
+  <%+ Range::new() %>
+
+  <%+ RangeGroupPricingCalc::new() %>
 
 </div>
 
