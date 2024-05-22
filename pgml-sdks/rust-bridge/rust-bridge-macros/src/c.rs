@@ -91,13 +91,8 @@ pub fn generate_c_methods(
         }
         let method_ident = method.method_ident.clone();
 
-        let (
-            go_function_arguments,
-            go_arguments_prep,
-            mut c_function_arguments,
-            c_argument_prep,
-            rust_function_arguments,
-        ) = get_method_arguments(&wrapped_type_ident, &name_ident, &method);
+        let (mut c_function_arguments, c_argument_prep, rust_function_arguments) =
+            get_method_arguments(&wrapped_type_ident, &name_ident, &method);
 
         let method_name = format_ident!(
             "pgml_{}_{}",
@@ -203,11 +198,7 @@ fn get_method_arguments(
     proc_macro2::TokenStream,
     proc_macro2::TokenStream,
     proc_macro2::TokenStream,
-    proc_macro2::TokenStream,
-    proc_macro2::TokenStream,
 ) {
-    let mut go_function_arguments = Vec::new();
-    let mut go_arguments_prep = Vec::new();
     let mut c_function_arguments = Vec::new();
     let mut c_argument_prep = Vec::new();
     let mut rust_function_arguments = Vec::new();
@@ -227,8 +218,6 @@ fn get_method_arguments(
     for (argument_name, argument_type) in &method.method_arguments {
         let argument_name_without_mut = argument_name.replacen("mut", "", 1);
         let (
-            go_function_arguments_,
-            go_arguments_prep_,
             c_function_arguments_,
             c_function_argument_types,
             c_argument_prep_,
@@ -242,16 +231,12 @@ fn get_method_arguments(
             .collect::<Vec<String>>()
             .join(",");
 
-        go_function_arguments.push(go_function_arguments_);
-        go_arguments_prep.push(go_arguments_prep_);
         c_function_arguments.push(c_function_arguments_);
         c_argument_prep.push(c_argument_prep_);
         rust_function_arguments.push(rust_function_arguments_);
     }
 
     (
-        proc_macro2::TokenStream::from_str(&go_function_arguments.join("\n")).unwrap(),
-        proc_macro2::TokenStream::from_str(&go_arguments_prep.join("\n")).unwrap(),
         proc_macro2::TokenStream::from_str(&c_function_arguments.join(",")).unwrap(),
         proc_macro2::TokenStream::from_str(&c_argument_prep.join("\n")).unwrap(),
         proc_macro2::TokenStream::from_str(&rust_function_arguments.join(",")).unwrap(),
@@ -269,22 +254,14 @@ fn get_method_arguments(
 fn get_c_types(
     argument_name: &str,
     ty: &SupportedType,
-) -> (String, String, Vec<String>, Vec<String>, String, String) {
+) -> (Vec<String>, Vec<String>, String, String) {
     let t = ty.to_language_string(&None);
     let c_to_rust = format!("let {argument_name}: {t} = {argument_name}.custom_into();");
     match ty {
         SupportedType::Reference(r) => {
-            let (
-                go_function_arguments,
-                go_argument_prep,
-                c_function_arguments,
-                c_function_argument_types,
-                c_argument_prep,
-                rust_function_arguments,
-            ) = get_c_types(argument_name, &r.ty);
+            let (c_function_arguments, c_function_argument_types, _, _) =
+                get_c_types(argument_name, &r.ty);
             (
-                "".to_string(),
-                "".to_string(),
                 c_function_arguments,
                 c_function_argument_types,
                 c_to_rust,
@@ -292,22 +269,14 @@ fn get_c_types(
             )
         }
         SupportedType::str | SupportedType::String => (
-            "".to_string(),
-            "".to_string(),
             vec![format!("{argument_name}")],
             vec!["*mut std::ffi::c_char".to_string()],
             c_to_rust,
             argument_name.to_string(),
         ),
         SupportedType::Option(r) => {
-            let (
-                go_function_arguments,
-                go_argument_prep,
-                mut c_function_arguments,
-                mut c_function_argument_types,
-                c_argument_prep,
-                rust_function_arguments,
-            ) = get_c_types(argument_name, &r);
+            let (c_function_arguments, mut c_function_argument_types, _, _) =
+                get_c_types(argument_name, r);
 
             let v = c_function_argument_types.last_mut().unwrap();
             if !v.starts_with('*') {
@@ -315,8 +284,6 @@ fn get_c_types(
             }
 
             (
-                "".to_string(),
-                "".to_string(),
                 c_function_arguments,
                 c_function_argument_types,
                 c_to_rust,
@@ -324,34 +291,24 @@ fn get_c_types(
             )
         }
         SupportedType::bool => (
-            "".to_string(),
-            "".to_string(),
             vec![format!("{argument_name}")],
             vec!["bool".to_string()],
             "".to_string(),
             argument_name.to_string(),
         ),
         SupportedType::Vec(v) => {
-            let (
-                go_function_arguments,
-                go_argument_prep,
-                mut c_function_arguments,
-                mut c_function_argument_types,
-                mut c_argument_prep,
-                rust_function_arguments,
-            ) = get_c_types(argument_name, v);
+            let (mut c_function_arguments, mut c_function_argument_types, _, _) =
+                get_c_types(argument_name, v);
 
             let v = c_function_argument_types.last_mut().unwrap();
             *v = v.replacen("*mut", "*mut *mut", 1);
             c_function_arguments.push("v_size".to_string());
             c_function_argument_types.push("std::ffi::c_ulong".to_string());
-            c_argument_prep = "let v_size: usize = v_size as usize;".to_string();
+            let c_argument_prep = "let v_size: usize = v_size as usize;".to_string();
             let c_to_rust =
                 format!("{c_argument_prep}\nlet {argument_name}: {t} = {argument_name}.custom_into_vec(v_size);");
 
             (
-                "".to_string(),
-                "".to_string(),
                 c_function_arguments,
                 c_function_argument_types,
                 c_to_rust,
@@ -362,40 +319,30 @@ fn get_c_types(
         SupportedType::Tuple(_) => panic!("Tuple arguments not supported in c"),
         SupportedType::S => unreachable!(),
         SupportedType::i64 => (
-            "".to_string(),
-            "".to_string(),
             vec![format!("{argument_name}")],
             vec!["std::ffi::c_long".to_string()],
             format!("let {argument_name}: {t} = {argument_name} as {t};"),
             argument_name.to_string(),
         ),
         SupportedType::u64 => (
-            "".to_string(),
-            "".to_string(),
             vec![format!("{argument_name}")],
             vec!["std::ffi::c_ulong".to_string()],
             format!("let {argument_name}: {t} = {argument_name} as {t};"),
             argument_name.to_string(),
         ),
         SupportedType::i32 => (
-            "".to_string(),
-            "".to_string(),
             vec![format!("{argument_name}")],
             vec!["std::ffi::c_int".to_string()],
             format!("let {argument_name}: {t} = {argument_name} as {t};"),
             argument_name.to_string(),
         ),
         SupportedType::f64 => (
-            "".to_string(),
-            "".to_string(),
             vec![format!("{argument_name}")],
             vec!["std::ffi::c_double".to_string()],
             format!("let {argument_name}: {t} = {argument_name} as {t};"),
             argument_name.to_string(),
         ),
         SupportedType::CustomType(s) => (
-            "".to_string(),
-            "".to_string(),
             vec![format!("{argument_name}")],
             vec![format!("*mut {s}C")],
             c_to_rust,
