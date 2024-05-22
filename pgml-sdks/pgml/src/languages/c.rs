@@ -1,5 +1,4 @@
-use crate::types::{DateTime, GeneralJsonAsyncIterator, GeneralJsonIterator, Json};
-use futures::pin_mut;
+use crate::types::{GeneralJsonAsyncIterator, GeneralJsonIterator, Json};
 use futures::stream::Stream;
 use rust_bridge::c::CustomInto;
 use std::pin::Pin;
@@ -36,12 +35,8 @@ unsafe impl CustomInto<*mut GeneralJsonIteratorC> for GeneralJsonIterator {
 
 #[no_mangle]
 pub unsafe extern "C" fn GeneralJsonIteratorC_done(iterator: *mut GeneralJsonIteratorC) -> bool {
-    let mut c = Box::leak(Box::from_raw(iterator));
-    if let Some(_) = (*c.wrapped).peek() {
-        false
-    } else {
-        true
-    }
+    let c = Box::leak(Box::from_raw(iterator));
+    (*c.wrapped).peek().is_none()
 }
 
 #[no_mangle]
@@ -53,11 +48,12 @@ pub unsafe extern "C" fn GeneralJsonIteratorC_next(
     (*b).next().unwrap().unwrap().custom_into()
 }
 
+type PeekableStream =
+    futures::stream::Peekable<Pin<Box<dyn Stream<Item = Result<Json, anyhow::Error>> + Send>>>;
+
 #[repr(C)]
 pub struct GeneralJsonAsyncIteratorC {
-    pub wrapped: *mut futures::stream::Peekable<
-        Pin<Box<dyn Stream<Item = Result<Json, anyhow::Error>> + Send>>,
-    >,
+    pub wrapped: *mut PeekableStream,
 }
 
 unsafe impl CustomInto<*mut GeneralJsonAsyncIteratorC> for GeneralJsonAsyncIterator {
@@ -74,16 +70,11 @@ pub unsafe extern "C" fn GeneralJsonAsyncIteratorC_done(
     iterator: *mut GeneralJsonAsyncIteratorC,
 ) -> bool {
     crate::get_or_set_runtime().block_on(async move {
-        use futures::stream::StreamExt;
         let c = Box::leak(Box::from_raw(iterator));
         let s = Box::leak(Box::from_raw(c.wrapped));
         let mut s = Pin::new(s);
         let res = s.as_mut().peek_mut().await;
-        if let Some(res) = res {
-            false
-        } else {
-            true
-        }
+        res.is_none()
     })
 }
 
@@ -93,7 +84,7 @@ pub unsafe extern "C" fn GeneralJsonAsyncIteratorC_next(
 ) -> *mut JsonC {
     crate::get_or_set_runtime().block_on(async move {
         use futures::stream::StreamExt;
-        let mut c = Box::leak(Box::from_raw(iterator));
+        let c = Box::leak(Box::from_raw(iterator));
         (*c.wrapped).next().await.unwrap().unwrap().custom_into()
     })
 }
