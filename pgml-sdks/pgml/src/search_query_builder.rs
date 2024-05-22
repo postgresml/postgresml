@@ -1,12 +1,12 @@
 use anyhow::Context;
-use serde::Deserialize;
-use std::collections::HashMap;
-
 use sea_query::{
     Alias, CommonTableExpression, Expr, Func, JoinType, Order, PostgresQueryBuilder, Query,
     SimpleExpr, WithClause,
 };
 use sea_query_binder::{SqlxBinder, SqlxValues};
+use serde::Deserialize;
+use serde_with::{serde_as, FromInto};
+use std::collections::HashMap;
 
 use crate::{
     collection::Collection,
@@ -16,7 +16,7 @@ use crate::{
     models,
     pipeline::Pipeline,
     remote_embeddings::build_remote_embeddings,
-    types::{IntoTableNameAndSchema, Json, SIden},
+    types::{CustomU64Convertor, IntoTableNameAndSchema, Json, SIden},
 };
 
 #[derive(Debug, Deserialize)]
@@ -42,13 +42,19 @@ struct ValidQueryActions {
     filter: Option<Json>,
 }
 
+const fn default_limit() -> u64 {
+    10
+}
+
+#[serde_as]
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct ValidQuery {
     query: ValidQueryActions,
     // Need this when coming from JavaScript as everything is an f64 from JS
-    #[serde(default, deserialize_with = "crate::utils::deserialize_u64")]
-    limit: Option<u64>,
+    #[serde(default = "default_limit")]
+    #[serde_as(as = "FromInto<CustomU64Convertor>")]
+    limit: u64,
 }
 
 pub async fn build_search_query(
@@ -57,7 +63,7 @@ pub async fn build_search_query(
     pipeline: &Pipeline,
 ) -> anyhow::Result<(String, SqlxValues)> {
     let valid_query: ValidQuery = serde_json::from_value(query.0.clone())?;
-    let limit = valid_query.limit.unwrap_or(10);
+    let limit = valid_query.limit;
 
     let pipeline_table = format!("{}.pipelines", collection.name);
     let documents_table = format!("{}.documents", collection.name);

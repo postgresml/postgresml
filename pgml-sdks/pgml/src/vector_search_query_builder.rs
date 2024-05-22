@@ -1,12 +1,12 @@
 use anyhow::Context;
-use serde::Deserialize;
-use std::collections::HashMap;
-
 use sea_query::{
     Alias, CommonTableExpression, Expr, Func, JoinType, Order, PostgresQueryBuilder, Query,
-    WithClause,
+    SelectStatement, WithClause,
 };
 use sea_query_binder::{SqlxBinder, SqlxValues};
+use serde::{Deserialize, Serialize};
+use serde_with::{serde_as, FromInto};
+use std::collections::HashMap;
 
 use crate::{
     collection::Collection,
@@ -16,10 +16,10 @@ use crate::{
     models,
     pipeline::Pipeline,
     remote_embeddings::build_remote_embeddings,
-    types::{IntoTableNameAndSchema, Json, SIden},
+    types::{CustomU64Convertor, IntoTableNameAndSchema, Json, SIden},
 };
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(deny_unknown_fields)]
 struct ValidField {
     query: String,
@@ -28,30 +28,48 @@ struct ValidField {
     boost: Option<f32>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(deny_unknown_fields)]
 struct ValidQueryActions {
     fields: Option<HashMap<String, ValidField>>,
     filter: Option<Json>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(deny_unknown_fields)]
-struct ValidQuery {
-    query: ValidQueryActions,
-    // Need this when coming from JavaScript as everything is an f64 from JS
-    #[serde(default, deserialize_with = "crate::utils::deserialize_u64")]
-    limit: Option<u64>,
+struct ValidDocument {
+    keys: Option<Vec<String>>,
 }
 
-pub async fn build_vector_search_query(
+const fn default_limit() -> u64 {
+    10
+}
+
+#[serde_as]
+#[derive(Debug, Deserialize, Serialize, Clone)]
+// #[serde(deny_unknown_fields)]
+pub struct ValidQuery {
+    query: ValidQueryActions,
+    // Need this when coming from JavaScript as everything is an f64 from JS
+    #[serde(default = "default_limit")]
+    #[serde_as(as = "FromInto<CustomU64Convertor>")]
+    limit: u64,
+    // Document related items
+    document: Option<ValidDocument>,
+}
+
+pub async fn build_sqlx_query(
     query: Json,
     collection: &Collection,
     pipeline: &Pipeline,
-) -> anyhow::Result<(String, SqlxValues)> {
+    include_pipeline_table_cte: bool,
+    prefix: Option<&str>,
+) -> anyhow::Result<(SelectStatement, Vec<CommonTableExpression>)> {
     let valid_query: ValidQuery = serde_json::from_value(query.0)?;
-    let limit = valid_query.limit.unwrap_or(10);
+    let limit = valid_query.limit;
     let fields = valid_query.query.fields.unwrap_or_default();
+
+    let prefix = prefix.unwrap_or("");
 
     if fields.is_empty() {
         anyhow::bail!("at least one field is required to search over")
@@ -61,16 +79,18 @@ pub async fn build_vector_search_query(
     let documents_table = format!("{}.documents", collection.name);
 
     let mut queries = Vec::new();
-    let mut with_clause = WithClause::new();
+    let mut ctes = Vec::new();
 
-    let mut pipeline_cte = Query::select();
-    pipeline_cte
-        .from(pipeline_table.to_table_tuple())
-        .columns([models::PipelineIden::Schema])
-        .and_where(Expr::col(models::PipelineIden::Name).eq(&pipeline.name));
-    let mut pipeline_cte = CommonTableExpression::from_select(pipeline_cte);
-    pipeline_cte.table_name(Alias::new("pipeline"));
-    with_clause.cte(pipeline_cte);
+    if include_pipeline_table_cte {
+        let mut pipeline_cte = Query::select();
+        pipeline_cte
+            .from(pipeline_table.to_table_tuple())
+            .columns([models::PipelineIden::Schema])
+            .and_where(Expr::col(models::PipelineIden::Name).eq(&pipeline.name));
+        let mut pipeline_cte = CommonTableExpression::from_select(pipeline_cte);
+        pipeline_cte.table_name(Alias::new("pipeline"));
+        ctes.push(pipeline_cte);
+    }
 
     for (key, vf) in fields {
         let model_runtime = pipeline
@@ -116,15 +136,15 @@ pub async fn build_vector_search_query(
                     Alias::new("embedding"),
                 );
                 let mut embedding_cte = CommonTableExpression::from_select(embedding_cte);
-                embedding_cte.table_name(Alias::new(format!("{key}_embedding")));
-                with_clause.cte(embedding_cte);
+                embedding_cte.table_name(Alias::new(format!("{prefix}{key}_embedding")));
+                ctes.push(embedding_cte);
 
                 query
                     .expr(Expr::cust(format!(
-                        r#"(1 - (embeddings.embedding <=> (SELECT embedding FROM "{key}_embedding")::vector)) * {boost} AS score"#
+                        r#"(1 - (embeddings.embedding <=> (SELECT embedding FROM "{prefix}{key}_embedding")::vector)) * {boost} AS score"#
                     )))
                     .order_by_expr(Expr::cust(format!(
-                        r#"embeddings.embedding <=> (SELECT embedding FROM "{key}_embedding")::vector"#
+                        r#"embeddings.embedding <=> (SELECT embedding FROM "{prefix}{key}_embedding")::vector"#
                     )), Order::Asc);
             }
             ModelRuntime::OpenAI => {
@@ -155,7 +175,9 @@ pub async fn build_vector_search_query(
                 // Build the score CTE
                 query
                     .expr(Expr::cust_with_values(
-                        r#"(1 - (embeddings.embedding <=> $1::vector)) {boost} AS score"#,
+                        format!(
+                            r#"(1 - (embeddings.embedding <=> $1::vector)) * {boost} AS score"#
+                        ),
                         [embedding.clone()],
                     ))
                     .order_by_expr(
@@ -214,12 +236,28 @@ pub async fn build_vector_search_query(
         }
 
         let mut wrapper_query = Query::select();
+
+        // Allows filtering on which keys to return with the document
+        if let Some(document) = &valid_query.document {
+            if let Some(keys) = &document.keys {
+                let document_queries = keys
+                    .iter()
+                    .map(|key| format!("'{key}', document #> '{{{key}}}'"))
+                    .collect::<Vec<String>>()
+                    .join(",");
+                wrapper_query.expr_as(
+                    Expr::cust(format!("jsonb_build_object({document_queries})")),
+                    Alias::new("document"),
+                );
+            } else {
+                wrapper_query.column(SIden::Str("document"));
+            }
+        } else {
+            wrapper_query.column(SIden::Str("document"));
+        }
+
         wrapper_query
-            .columns([
-                SIden::Str("document"),
-                SIden::Str("chunk"),
-                SIden::Str("score"),
-            ])
+            .columns([SIden::Str("chunk"), SIden::Str("score")])
             .from_subquery(query, Alias::new("s"));
 
         queries.push(wrapper_query);
@@ -236,6 +274,19 @@ pub async fn build_vector_search_query(
         .order_by(SIden::Str("score"), Order::Desc)
         .limit(limit);
 
+    Ok((query, ctes))
+}
+
+pub async fn build_vector_search_query(
+    query: Json,
+    collection: &Collection,
+    pipeline: &Pipeline,
+) -> anyhow::Result<(String, SqlxValues)> {
+    let (query, ctes) = build_sqlx_query(query, collection, pipeline, true, None).await?;
+    let mut with_clause = WithClause::new();
+    for cte in ctes {
+        with_clause.cte(cte);
+    }
     let (sql, values) = query.with(with_clause).build_sqlx(PostgresQueryBuilder);
 
     debug_sea_query!(VECTOR_SEARCH, sql, values);

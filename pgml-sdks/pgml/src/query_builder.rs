@@ -71,7 +71,7 @@ impl QueryBuilder {
         self.pipeline = Some(pipeline.clone());
         self.query["query"]["fields"]["text"]["query"] = json!(query);
         if let Some(query_parameters) = query_parameters {
-            self.query["query"]["fields"]["text"]["model_parameters"] = query_parameters.0;
+            self.query["query"]["fields"]["text"]["parameters"] = query_parameters.0;
         }
         self
     }
