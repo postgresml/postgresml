@@ -116,7 +116,7 @@ impl Builtins {
         let texts = texts
             .0
             .as_array()
-            .with_context(|| "embed_batch takes an array of texts")?
+            .with_context(|| "embed_batch takes an array of strings")?
             .into_iter()
             .map(|v| {
                 v.as_str()
@@ -165,6 +165,30 @@ mod tests {
         let inputs = vec!["test1".to_string(), "test2".to_string()];
         let results = builtins.transform(task, inputs, None).await?;
         assert!(results.as_array().is_some());
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn can_embed() -> anyhow::Result<()> {
+        internal_init_logger(None, None).ok();
+        let builtins = Builtins::new(None);
+        let results = builtins.embed("intfloat/e5-small-v2", "test").await?;
+        assert!(results.as_array().is_some());
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn can_embed_batch() -> anyhow::Result<()> {
+        internal_init_logger(None, None).ok();
+        let builtins = Builtins::new(None);
+        let results = builtins
+            .embed_batch(
+                "intfloat/e5-small-v2",
+                Json(serde_json::json!(["test", "test2",])),
+            )
+            .await?;
+        assert!(results.as_array().is_some());
+        assert_eq!(results.as_array().unwrap().len(), 2);
         Ok(())
     }
 }
