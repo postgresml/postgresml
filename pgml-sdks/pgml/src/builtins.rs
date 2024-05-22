@@ -1,3 +1,4 @@
+use anyhow::Context;
 use rust_bridge::{alias, alias_methods};
 use sqlx::Row;
 use tracing::instrument;
@@ -13,7 +14,7 @@ use crate::{get_or_initialize_pool, query_runner::QueryRunner, types::Json};
 #[cfg(feature = "python")]
 use crate::{query_runner::QueryRunnerPython, types::JsonPython};
 
-#[alias_methods(new, query, transform, embed)]
+#[alias_methods(new, query, transform, embed, embed_batch)]
 impl Builtins {
     pub fn new(database_url: Option<String>) -> Self {
         Self { database_url }
@@ -97,11 +98,44 @@ impl Builtins {
     ///
     pub async fn embed(&self, model: &str, text: &str) -> anyhow::Result<Json> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
-        let query = sqlx::query("SELECT pgml.embed($1, $2)");
+        let query = sqlx::query("SELECT embed FROM pgml.embed($1, $2)");
         let result = query.bind(model).bind(text).fetch_one(&pool).await?;
         let result = result.get::<Vec<f32>, _>(0);
         let result = serde_json::to_value(result)?;
         Ok(Json(result))
+    }
+
+    /// Run the built-in `pgml.embed()` function, but with handling for batch inputs and outputs.
+    ///
+    /// # Arguments
+    ///
+    /// * `model` - The model to use.
+    /// * `texts` - The texts to embed.
+    ///
+    pub async fn embed_batch(&self, model: &str, texts: Json) -> anyhow::Result<Json> {
+        let texts = texts
+            .0
+            .as_array()
+            .with_context(|| "embed_batch takes an array of texts")?
+            .into_iter()
+            .map(|v| {
+                v.as_str()
+                    .with_context(|| "only text embeddings are supported")
+                    .unwrap()
+                    .to_string()
+            })
+            .collect::<Vec<String>>();
+        let pool = get_or_initialize_pool(&self.database_url).await?;
+        let query = sqlx::query("SELECT embed AS embed_batch FROM pgml.embed($1, $2)");
+        let results = query
+            .bind(model)
+            .bind(texts)
+            .fetch_all(&pool)
+            .await?
+            .into_iter()
+            .map(|embeddings| embeddings.get::<Vec<f32>, _>(0))
+            .collect::<Vec<Vec<f32>>>();
+        Ok(Json(serde_json::to_value(results)?))
     }
 }
 
