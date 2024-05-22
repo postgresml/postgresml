@@ -1,0 +1,34 @@
+<% 
+  use crate::components::inputs::range::Range;
+  use crate::components::stimulus::stimulus_target::StimulusTarget;
+
+  let range_target = StimulusTarget::new().controller("inputs-range-group-pricing-calc").name("range");
+%>
+<!-- range group pricing calc -->
+<div 
+  data-controller="inputs-range-group-pricing-calc" 
+  data-action="inputs-range:sliderMoved->inputs-range-group-pricing-calc#updateText"
+  data-inputs-range-group-pricing-calc-min-value="<%- min %>"
+  data-inputs-range-group-pricing-calc-max-value="<%- max %>"
+  data-value="0"
+  <%- target %>>
+  <div class="input-group flex-column">
+    <div class="d-flex flex-row">
+      <input class="text-input form-control w-100"
+        name="<%- name %>"
+        type="text"
+        data-inputs-range-group-pricing-calc-target="textInput"
+        data-action="focusout->inputs-range-group-pricing-calc#textUpdated"
+        value="<%= initial_value.clone() %>">
+      <div class="text-nowrap text-white-300 text-uppercase eyebrow-text unit"><%- label %></div>
+    </div>
+    <% if include_slider {%>
+    <%+ Range::new()
+        .interpolation_type(&interpolation_type.to_string())
+        .target(range_target)
+        .min(min)
+        .max(max)
+        .initial_value(initial_value) %>
+    <% } %>
+  </div>
+</div>

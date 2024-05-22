@@ -105,7 +105,7 @@
     }
 }
 
-.btn-primary-web-app {
+.btn-primary-web-app, .btn-primary-marketing {
     --bs-btn-padding-x: 30px;
     --bs-btn-padding-y: 20px;
 
@@ -141,6 +141,11 @@
     &:focus-within {
         @include bold_by_shadow(var(--bs-btn-focus-color));
     }
+}
+
+.btn-primary-marketing {
+    --bs-btn-padding-x: 24px;
+    --bs-btn-padding-y: 16px;
 }
 
 .btn-secondary-web-app {

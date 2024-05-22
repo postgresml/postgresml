@@ -4,30 +4,27 @@ use sailfish::TemplateOnce;
 #[derive(TemplateOnce, Default)]
 #[template(path = "icons/checkmark/template.html")]
 pub struct Checkmark {
-    state: String,
+    color: String,
     twitter: bool,
+    disabled: bool,
 }
 
 impl Checkmark {
     pub fn new() -> Checkmark {
         Checkmark {
-            state: String::from("inactive"),
+            color: String::from("blue"),
             twitter: false,
+            disabled: false,
         }
     }
 
-    pub fn active(mut self) -> Self {
-        self.state = String::from("active");
-        self
-    }
-
-    pub fn inactive(mut self) -> Self {
-        self.state = String::from("inactive");
+    pub fn color(mut self, color: &str) -> Self {
+        self.color = String::from(color);
         self
     }
 
     pub fn disabled(mut self) -> Self {
-        self.state = String::from("disabled");
+        self.disabled = true;
         self
     }
 
