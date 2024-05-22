@@ -72,6 +72,18 @@ def test_can_create_builtins():
     builtins = pgml.Builtins()
     assert builtins is not None
 
+@pytest.mark.asyncio
+async def test_can_embed_with_builtins():
+    builtins = pgml.Builtins()
+    result = await builtins.embed("intfloat/e5-small-v2", "test")
+    assert result is not None
+
+@pytest.mark.asyncio
+async def test_can_embed_batch_with_builtins():
+    builtins = pgml.Builtins()
+    result = await builtins.embed_batch("intfloat/e5-small-v2", ["test"])
+    assert result is not None
+
 
 ###################################################
 ## Test searches ##################################
