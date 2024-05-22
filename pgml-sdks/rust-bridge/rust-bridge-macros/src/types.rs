@@ -37,9 +37,9 @@ pub enum SupportedType {
     CustomType(String),
 }
 
-impl ToString for SupportedType {
-    fn to_string(&self) -> String {
-        self.to_language_string(&None)
+impl std::fmt::Display for SupportedType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_language_string(&None))
     }
 }
 

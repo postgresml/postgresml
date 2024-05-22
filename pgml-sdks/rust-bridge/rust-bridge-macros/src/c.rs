@@ -401,7 +401,6 @@ fn get_c_types(
             c_to_rust,
             argument_name.to_string(),
         ),
-        _ => todo!(),
     }
 }
 

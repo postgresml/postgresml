@@ -1,7 +1,6 @@
 use proc_macro2::{Group, Ident};
 use quote::{format_ident, ToTokens};
 use syn::{
-    parenthesized,
     parse::{Parse, Parser},
     punctuated::Punctuated,
     token,
@@ -30,7 +29,7 @@ impl From<&str> for SupportedLanguage {
 }
 
 pub struct AttributeArgs {
-    pub args: Vec<Item>,
+    args: Vec<Item>,
 }
 
 #[derive(Debug, Clone)]

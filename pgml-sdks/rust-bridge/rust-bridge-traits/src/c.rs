@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 /// Very similar to the `Into` trait, but we can implement it on foreign types.
 pub unsafe trait CustomInto<T> {
     unsafe fn custom_into(self) -> T;

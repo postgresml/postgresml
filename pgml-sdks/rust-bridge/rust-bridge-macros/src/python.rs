@@ -373,7 +373,6 @@ pub fn generate_python_methods(
     if let Ok(path) = path {
         let mut file = OpenOptions::new()
             .create(true)
-            .write(true)
             .append(true)
             .read(true)
             .open(path)
