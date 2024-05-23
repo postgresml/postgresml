@@ -34,7 +34,7 @@ Vector aggregation is extensively used across various machine learning applicati
 ## Available Methods of Vector Aggregation
 
 ### Example Data
-```sql
+```postgresql
 CREATE TABLE documents (
    id SERIAL PRIMARY KEY,
    body TEXT,
@@ -44,7 +44,7 @@ CREATE TABLE documents (
 
 Example of inserting text and its corresponding embedding
 
-```sql
+```postgresql
 INSERT INTO documents (body)
 VALUES -- embedding vectors are automatically generated
     ('Example text data'),
@@ -55,7 +55,7 @@ VALUES -- embedding vectors are automatically generated
 ### Summation
 Adding up all the vectors element-wise. This method is simple and effective, preserving all the information from the original vectors, but can lead to large values if many vectors are summed.
 
-```sql
+```postgresql
 SELECT id, pgml.sum(embedding)
 FROM documents
 GROUP BY id;
@@ -64,7 +64,7 @@ GROUP BY id;
 ### Averaging (Mean)
 Computing the element-wise mean of the vectors. This is probably the most common aggregation method, as it normalizes the scale of the vectors against the number of vectors being aggregated, preventing any single vector from dominating the result.
 
-```sql
+```postgresql
 SELECT id, pgml.divide(pgml.sum(embedding), count(*)) AS avg
 FROM documents
 GROUP BY id;
@@ -73,7 +73,7 @@ GROUP BY id;
 ### Weighted Average
 Similar to averaging, but each vector is multiplied by a weight that reflects its importance before averaging. This method is useful when some vectors are more significant than others.
 
-```sql
+```postgresql
 SELECT id, pgml.divide(pgml.sum(pgml.multiply(embedding, id)), count(*)) AS id_weighted_avg
 FROM documents
 GROUP BY id;
@@ -82,7 +82,7 @@ GROUP BY id;
 ### Max Pooling
 Taking the maximum value of each dimension across all vectors. This method is particularly useful for capturing the most pronounced features in a set of vectors.
 
-```sql
+```postgresql
 SELECT id, pgml.max_abs(embedding)
 FROM documents
 GROUP BY id;
@@ -91,7 +91,7 @@ GROUP BY id;
 ### Min Pooling
 Taking the minimum value of each dimension across all vectors, useful for capturing the least dominant features.
 
-```sql
+```postgresql
 SELECT id, pgml.min_abs(embedding)
 FROM documents
 GROUP BY id;

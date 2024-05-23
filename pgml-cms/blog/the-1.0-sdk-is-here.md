@@ -119,7 +119,7 @@ print(results)
 
 The SQL for the vector\_search is actually just:
 
-```sql
+```postgresql
 WITH "pipeline" (
     "schema"
 ) AS (

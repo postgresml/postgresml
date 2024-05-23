@@ -54,7 +54,7 @@ These queries can execute in milliseconds on large production-sized corpora with
 
 The following full blown example is for demonstration purposes only of a 3rd generation search engine. You can test it for real in the PostgresML Gym to build up a complete understanding.
 
-```sql
+```postgresql
 WITH query AS (
   -- construct a query context with arguments that would typically be
   -- passed in from the application layer

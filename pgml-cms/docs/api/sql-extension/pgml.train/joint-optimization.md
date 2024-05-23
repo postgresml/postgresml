@@ -4,7 +4,7 @@ Some algorithms support joint optimization of the task across multiple outputs, 
 
 To leverage multiple outputs in PostgresML, you'll need to substitute the standard usage of `pgml.train()` with `pgml.train_joint()`, which has the same API, except the notable exception of `y_column_name` parameter, which now accepts an array instead of a simple string.
 
-```sql
+```postgresql
 SELECT * FROM pgml.train_join(
     'My Joint Project',
     task => 'regression',

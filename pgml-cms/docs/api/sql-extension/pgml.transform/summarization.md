@@ -11,7 +11,7 @@ Summarization involves creating a condensed version of a document that includes 
 {% tabs %}
 {% tab title="SQL" %}
 
-```sql
+```postgresql
 SELECT pgml.transform(
         task => '{
           "task": "summarization", 

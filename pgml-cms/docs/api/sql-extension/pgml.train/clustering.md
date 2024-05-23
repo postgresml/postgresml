@@ -6,7 +6,7 @@ Models can be trained using `pgml.train` on unlabeled data to identify groups wi
 
 This example trains models on the sklearn digits dataset -- which is a copy of the test set of the [UCI ML hand-written digits datasets](https://archive.ics.uci.edu/ml/datasets/Optical+Recognition+of+Handwritten+Digits). This demonstrates using a table with a single array feature column for clustering. You could do something similar with a vector column.
 
-```sql
+```postgresql
 SELECT pgml.load_dataset('digits');
 
 -- create an unlabeled table of the images for unsupervised learning
@@ -38,7 +38,7 @@ All clustering algorithms implemented by PostgresML are online versions. You may
 
 ### Examples
 
-```sql
+```postgresql
 SELECT * FROM pgml.train('Handwritten Digit Clusters', algorithm => 'affinity_propagation');
 SELECT * FROM pgml.train('Handwritten Digit Clusters', algorithm => 'birch', hyperparams => '{"n_clusters": 10}');
 SELECT * FROM pgml.train('Handwritten Digit Clusters', algorithm => 'kmeans', hyperparams => '{"n_clusters": 10}');

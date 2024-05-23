@@ -125,3 +125,11 @@ SELECT * FROM pgml.deploy('Diabetes Progression', 'best_score', 'svm');
 SELECT target, pgml.predict('Diabetes Progression', ARRAY[age, sex, bmi, bp, s1, s2, s3, s4, s5, s6]) AS prediction
 FROM pgml.diabetes 
 LIMIT 10;
+
+begin;
+delete from pgml.models;
+delete from pgml.projects;
+delete from pgml.snapshots;
+delete from pgml.files;
+delete from pgml.deployments;
+commit;

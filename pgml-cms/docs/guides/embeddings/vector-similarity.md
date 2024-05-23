@@ -65,7 +65,7 @@ An optimized version is provided by:
 
 !!! code_block time="1191.069 ms" 
 
-```sql
+```postgresql
 WITH query AS (
     SELECT vector
     FROM test_data
@@ -131,7 +131,7 @@ An optimized version is provided by:
 
 !!! code_block time="1359.114 ms"
 
-```sql
+```postgresql
 WITH query AS (
     SELECT vector
     FROM test_data
@@ -197,7 +197,7 @@ An optimized version is provided by:
 
 !!! code_block time="498.649 ms"
 
-```sql
+```postgresql
 WITH query AS (
     SELECT vector
     FROM test_data
@@ -287,7 +287,7 @@ The optimized version is provided by:
 
 !!! code_block time="508.587 ms"
 
-```sql
+```postgresql
 WITH query AS (
     SELECT vector
     FROM test_data
@@ -304,7 +304,7 @@ Or you could reverse order by `cosine_similarity` for the same ranking:
 
 !!! code_block time="502.461 ms"
 
-```sql
+```postgresql
 WITH query AS (
     SELECT vector
     FROM test_data
@@ -325,7 +325,7 @@ You should benchmark and compare the computational cost of these distance metric
 
 !!! code_block
 
-```sql
+```postgresql
 \timing on
 ```
 
@@ -333,7 +333,7 @@ You should benchmark and compare the computational cost of these distance metric
 
 !!! code_block
 
-```sql
+```postgresql
 CREATE TABLE test_data (
     id BIGSERIAL NOT NULL,
     vector FLOAT4[]
@@ -346,7 +346,7 @@ Insert 10k vectors, that have 1k dimensions each
 
 !!! code_block
 
-```sql
+```postgresql
 INSERT INTO test_data (vector) 
 SELECT array_agg(random())
 FROM generate_series(1,10000000) i

@@ -10,7 +10,7 @@ Token classification is a task in natural language understanding, where labels a
 
 Named Entity Recognition (NER) is a task that involves identifying named entities in a text. These entities can include the names of people, locations, or organizations. The task is completed by labeling each token with a class for each named entity and a class named "0" for tokens that don't contain any entities. In this task, the input is text, and the output is the annotated text with named entities.
 
-```sql
+```postgresql
 SELECT pgml.transform(
     inputs => ARRAY[
         'I am Omar and I live in New York City.'
@@ -36,7 +36,7 @@ PoS tagging is a task that involves identifying the parts of speech, such as nou
 
 Look for models with `pos` to use a zero-shot classification model on the :hugs: Hugging Face model hub.
 
-```sql
+```postgresql
 select pgml.transform(
 	inputs => array [
   	'I live in Amsterdam.'

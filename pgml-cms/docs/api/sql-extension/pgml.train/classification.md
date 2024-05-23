@@ -10,7 +10,7 @@ description: >-
 
 This example trains models on the sklean digits dataset which is a copy of the test set of the [UCI ML hand-written digits datasets](https://archive.ics.uci.edu/ml/datasets/Optical+Recognition+of+Handwritten+Digits). This demonstrates using a table with a single array feature column for classification. You could do something similar with a vector column.
 
-```sql
+```postgresql
 -- load the sklearn digits dataset
 SELECT pgml.load_dataset('digits');
 
@@ -46,7 +46,7 @@ We currently support classification algorithms from [scikit-learn](https://sciki
 
 #### Examples
 
-```sql
+```postgresql
 SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'xgboost', hyperparams => '{"n_estimators": 10}');
 SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'xgboost_random_forest', hyperparams => '{"n_estimators": 10}');
 SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'lightgbm', hyperparams => '{"n_estimators": 1}');
@@ -66,7 +66,7 @@ SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'catboost', hyperpar
 
 #### Examples
 
-```sql
+```postgresql
 SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'ada_boost');
 SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'bagging');
 SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'extra_trees', hyperparams => '{"n_estimators": 10}');
@@ -85,7 +85,7 @@ SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'hist_gradient_boost
 
 #### Examples
 
-```sql
+```postgresql
 SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'svm');
 SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'nu_svm');
 SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'linear_svm');
@@ -103,7 +103,7 @@ SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'linear_svm');
 
 #### Examples
 
-```sql
+```postgresql
 SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'ridge');
 SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'stochastic_gradient_descent');
 SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'perceptron');
@@ -118,6 +118,6 @@ SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'passive_aggressive'
 
 #### Examples
 
-```sql
+```postgresql
 SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'gaussian_process', hyperparams => '{"max_iter_predict": 100, "warm_start": true}');
 ```

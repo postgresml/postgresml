@@ -48,7 +48,7 @@ At first, the column is empty. To generate embeddings, we can use the PostgresML
 {% tabs %}
 {% tab title="SQL" %}
 
-```sql
+```postgresql
 UPDATE
     usa_house_prices
 SET embedding = pgml.embed(
@@ -72,7 +72,7 @@ That's it. We just created 5,000 embeddings of the values stored in the address 
 {% tabs %}
 {% tab title="SQL" %}
 
-```sql
+```postgresql
 SELECT
     address,
     (embedding::real[])[1:5] 
@@ -115,7 +115,7 @@ For example, if we wanted to find three closest matching addresses to `1 Infinit
 {% tabs %}
 {% tab title="SQL" %}
 
-```sql
+```postgresql
 SELECT
     address
 FROM usa_house_prices
@@ -206,7 +206,7 @@ CREATE INDEX
 {% tabs %}
 {% tab title="SQL" %}
 
-```sql
+```postgresql
 EXPLAIN SELECT
     address
 FROM usa_house_prices

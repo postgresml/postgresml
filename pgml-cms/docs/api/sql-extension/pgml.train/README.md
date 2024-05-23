@@ -12,7 +12,7 @@ The training function is at the heart of PostgresML. It's a powerful single mech
 
 Most parameters are optional and have configured defaults. The `project_name` parameter is required and is an easily recognizable identifier to organize your work.
 
-```sql
+```postgresql
 pgml.train(
     project_name TEXT,
     task TEXT DEFAULT NULL,
@@ -48,7 +48,7 @@ pgml.train(
 
 !!! example
 
-```sql
+```postgresql
 SELECT * FROM pgml.train(
     project_name => 'My Classification Project', 
     task => 'classification', 
@@ -67,7 +67,7 @@ The first time it's called, the function will also require a `relation_name` and
 
 !!! tip
 
-```sql
+```postgresql
 SELECT * FROM pgml.train(
     'My Classification Project',
     algorithm => 'xgboost'

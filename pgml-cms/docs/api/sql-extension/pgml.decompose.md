@@ -8,7 +8,7 @@ Matrix decomposition reduces the number of dimensions in a vector, to improve re
 
 ## API
 
-```sql
+```postgresql
 pgml.decompose(
     project_name TEXT, -- project name
     vector REAL[]      -- features to decompose
@@ -24,6 +24,6 @@ pgml.decompose(
 
 ## Example
 
-```sql
+```postgresql
 SELECT pgml.decompose('My PCA', ARRAY[0.1, 2.0, 5.0]);
 ```

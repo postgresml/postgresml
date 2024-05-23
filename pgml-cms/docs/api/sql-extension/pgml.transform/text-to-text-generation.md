@@ -4,7 +4,7 @@ Text-to-text generation methods, such as T5, are neural network architectures de
 
 _Translation_
 
-```sql
+```postgresql
 SELECT pgml.transform(
     task => '{
         "task" : "text2text-generation"
@@ -25,7 +25,7 @@ _Result_
 
 Similar to other tasks, we can specify a model for text-to-text generation.
 
-```sql
+```postgresql
 SELECT pgml.transform(
     task => '{
         "task" : "text2text-generation",

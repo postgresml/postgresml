@@ -10,7 +10,7 @@ The `pgml.embed()` function generates [embeddings](/docs/use-cases/embeddings/) 
 
 ## API
 
-```sql
+```postgresql
 pgml.embed(
     transformer TEXT,
     "text" TEXT,
@@ -34,10 +34,10 @@ Creating an embedding from text is as simple as calling the function with the te
 {% tab title="SQL" %}
 
 ```postgresql
-SELECT * FROM pgml.embed(
-  'intfloat/e5-small',
+SELECT pgml.embed(
+  'intfloat/e5-small-v2',
   'No, that''s not true, that''s impossible.'
-) AS star_wars_embedding;
+);
 ```
 
 {% endtab %}
@@ -47,27 +47,20 @@ SELECT * FROM pgml.embed(
 
 SQL functions can be used as part of a query to insert, update, or even automatically generate column values of any table:
 
-{% tabs %}
-{% tab title="SQL" %}
-
 ```postgresql
 CREATE TABLE star_wars_quotes (
   quote TEXT NOT NULL,
   embedding vector(384) GENERATED ALWAYS AS (
-    pgml.embed('intfloat/e5-small', quote)
+    pgml.embed('intfloat/e5-small-v2', quote)
   ) STORED
 );
 
-INSERT INTO
-  star_wars_quotes (quote)
+INSERT INTO star_wars_quotes (quote)
 VALUES
-('I find your lack of faith disturbing'),
-('I''ve got a bad feeling about this.'),
-('Do or do not, there is no try.');
+    ('I find your lack of faith disturbing'),
+    ('I''ve got a bad feeling about this.'),
+    ('Do or do not, there is no try.');
 ```
-
-{% endtab %}
-{% endtabs %}
 
 In this example, we're using [generated columns](https://www.postgresql.org/docs/current/ddl-generated-columns.html) to automatically create an embedding of the `quote` column every time the column value is updated.
 
@@ -75,24 +68,14 @@ In this example, we're using [generated columns](https://www.postgresql.org/docs
 
 Once you have embeddings, you can use them in queries to find text with similar semantic meaning:
 
-{% tabs %}
-{% tab title="SQL" %}
-
 ```postgresql
-SELECT
-  quote
-FROM
-  star_wars_quotes
-ORDER BY
-  pgml.embed(
-    'intfloat/e5-small',
+SELECT quote
+FROM star_wars_quotes
+ORDER BY pgml.embed(
+    'intfloat/e5-small-v2',
     'Feel the force!',
-  ) <=> embedding
-  DESC
+  ) <=> embedding DESC
 LIMIT 1;
 ```
-
-{% endtab %}
-{% endtabs %}
 
 This query will return the quote with the most similar meaning to `'Feel the force!'` by generating an embedding of that quote and comparing it to all other embeddings in the table, using vector cosine similarity as the measure of distance.

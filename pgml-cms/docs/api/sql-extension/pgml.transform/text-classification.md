@@ -15,7 +15,7 @@ Sentiment analysis is a type of natural language processing technique which anal
 {% tabs %}
 {% tab title="SQL" %}
 
-```sql
+```postgresql
 SELECT pgml.transform(
     task   => 'text-classification',
     inputs => ARRAY[
@@ -50,7 +50,7 @@ For example, if you want to use a RoBERTa model trained on around 40,000 English
 {% tabs %}
 {% tab title="SQL" %}
 
-```sql
+```postgresql
 SELECT pgml.transform(
     task  => '{
       "task": "text-classification", 
@@ -86,7 +86,7 @@ By selecting a model that has been specifically designed for a particular subjec
 {% tabs %}
 {% tab title="SQL" %}
 
-```sql
+```postgresql
 SELECT pgml.transform(
     task => '{
       "task": "text-classification", 
@@ -131,7 +131,7 @@ If you want to use an NLI model, you can find them on the Hugging Face. When sea
 {% tabs %}
 {% tab title="SQL" %}
 
-```sql
+```postgresql
 SELECT pgml.transform(
     task => '{
       "task": "text-classification", 
@@ -164,7 +164,7 @@ If you want to use an QNLI model, you can find them on the Hugging Face, by look
 {% tabs %}
 {% tab title="SQL" %}
 
-```sql
+```postgresql
 SELECT pgml.transform(
     task => '{
       "task": "text-classification", 
@@ -197,7 +197,7 @@ If you want to use an QQP model, you can find them on Hugging Face, by looking f
 {% tabs %}
 {% tab title="SQL" %}
 
-```sql
+```postgresql
 SELECT pgml.transform(
     task => '{
      "task": "text-classification", 
@@ -230,7 +230,7 @@ If you want to use a grammatical correctness model, you can find them on the Hug
 {% tabs %}
 {% tab title="SQL" %}
 
-```sql
+```postgresql
 SELECT pgml.transform(
     task => '{
       "task": "text-classification", 

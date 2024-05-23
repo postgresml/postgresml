@@ -50,7 +50,7 @@ archive_command = 'pgbackrest --stanza=main archive-push %p'
 
 Postgres requires that a user with replication permissions is used for replicas to connect to the primary. To create this user, login as a superuser and run:
 
-```sql
+```postgresql
 CREATE ROLE replication_user PASSWORD '<secure password>' LOGIN REPLICATION;
 ```
 

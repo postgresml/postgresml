@@ -55,8 +55,8 @@
 
 * [Embeddings](guides/embeddings/README.md)
   * [In-database Generation](guides/embeddings/in-database-generation.md)
-  * [Dimensionality Reduction]()
-  * [Re-ranking nearest neighbors]()
+  * [Dimensionality Reduction](uides/embeddings/dimensionality-reduction.md)
+  * [Re-ranking nearest neighbors](uides/embeddings/re-ranking-nearest-neighbors.md)
   * [Indexing w/ pgvector]()
   * [Aggregation](guides/embeddings/vector-aggregation.md)
   * [Similarity](guides/embeddings/vector-similarity.md)

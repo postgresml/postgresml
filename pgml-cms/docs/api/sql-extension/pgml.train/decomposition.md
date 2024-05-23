@@ -6,7 +6,7 @@ Models can be trained using `pgml.train` on unlabeled data to identify important
 
 This example trains models on the sklearn digits dataset -- which is a copy of the test set of the [UCI ML hand-written digits datasets](https://archive.ics.uci.edu/ml/datasets/Optical+Recognition+of+Handwritten+Digits). This demonstrates using a table with a single array feature column for principal component analysis. You could do something similar with a vector column.
 
-```sql
+```postgresql
 SELECT pgml.load_dataset('digits');
 
 -- create an unlabeled table of the images for unsupervised learning
@@ -37,6 +37,6 @@ All decomposition algorithms implemented by PostgresML are online versions. You 
 
 ### Examples
 
-```sql
+```postgresql
 SELECT * FROM pgml.train('Handwritten Digit Clusters', algorithm => 'pca', hyperparams => '{"n_components": 10}');
 ```

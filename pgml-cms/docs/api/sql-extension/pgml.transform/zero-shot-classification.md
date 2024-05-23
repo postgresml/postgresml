@@ -10,7 +10,7 @@ In the example provided below, we will demonstrate how to classify a given sente
 
 Look for models with `mnli` to use a zero-shot classification model on the :hugs: Hugging Face model hub.
 
-```sql
+```postgresql
 SELECT pgml.transform(
     inputs => ARRAY[
         'I have a problem with my iphone that needs to be resolved asap!!'

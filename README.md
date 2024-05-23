@@ -65,7 +65,7 @@ PostgresML is a machine learning extension for PostgreSQL that enables you to pe
 
 *SQL query*
 
-```sql
+```postgresql
 SELECT pgml.transform(
     'translation_en_to_fr',
     inputs => ARRAY[
@@ -76,7 +76,7 @@ SELECT pgml.transform(
 ```
 *Result*
 
-```sql
+```postgresql
                          french                                 
 ------------------------------------------------------------
 
@@ -89,7 +89,7 @@ SELECT pgml.transform(
 **Sentiment Analysis**
 *SQL query*
 
-```sql
+```postgresql
 SELECT pgml.transform(
     task   => 'text-classification',
     inputs => ARRAY[
@@ -99,7 +99,7 @@ SELECT pgml.transform(
 ) AS positivity;
 ```
 *Result*
-```sql
+```postgresql
                     positivity
 ------------------------------------------------------
 [
@@ -117,7 +117,7 @@ SELECT pgml.transform(
 **Training a classification model**
 
 *Training*
-```sql
+```postgresql
 SELECT * FROM pgml.train(
     'Handwritten Digit Image Classifier',
     algorithm => 'xgboost',
@@ -128,7 +128,7 @@ SELECT * FROM pgml.train(
 ```
 
 *Inference*
-```sql
+```postgresql
 SELECT pgml.predict(
     'My Classification Project', 
     ARRAY[0.1, 2.0, 5.0]
@@ -203,7 +203,7 @@ PostgresML integrates 🤗 Hugging Face Transformers to bring state-of-the-art N
 
 You can call different NLP tasks and customize using them using the following SQL query.
 
-```sql
+```postgresql
 SELECT pgml.transform(
     task   => TEXT OR JSONB,     -- Pipeline initializer arguments
     inputs => TEXT[] OR BYTEA[], -- inputs for inference
@@ -220,7 +220,7 @@ Text classification involves assigning a label or category to a given text. Comm
 Sentiment analysis is a type of natural language processing technique that involves analyzing a piece of text to determine the sentiment or emotion expressed within it. It can be used to classify a text as positive, negative, or neutral, and has a wide range of applications in fields such as marketing, customer service, and political analysis.
 
 *Basic usage*
-```sql
+```postgresql
 SELECT pgml.transform(
     task   => 'text-classification',
     inputs => ARRAY[
@@ -242,7 +242,7 @@ The default <a href="https://huggingface.co/distilbert-base-uncased-finetuned-ss
 
 To use one of the over 19,000 models available on Hugging Face, include the name of the desired model and `text-classification` task as a JSONB object in the SQL query. For example, if you want to use a RoBERTa <a href="https://huggingface.co/models?pipeline_tag=text-classification" target="_blank">model</a> trained on around 40,000 English tweets and that has POS (positive), NEG (negative), and NEU (neutral) labels for its classes, include this information in the JSONB object when making your query.
 
-```sql
+```postgresql
 SELECT pgml.transform(
     inputs => ARRAY[
         'I love how amazingly simple ML has become!', 
@@ -265,7 +265,7 @@ SELECT pgml.transform(
 
 By selecting a model that has been specifically designed for a particular industry, you can achieve more accurate and relevant text classification. An example of such a model is <a href="https://huggingface.co/ProsusAI/finbert" target="_blank">FinBERT</a>, a pre-trained NLP model that has been optimized for analyzing sentiment in financial text. FinBERT was created by training the BERT language model on a large financial corpus, and fine-tuning it to specifically classify financial sentiment. When using FinBERT, the model will provide softmax outputs for three different labels: positive, negative, or neutral.
 
-```sql
+```postgresql
 SELECT pgml.transform(
     inputs => ARRAY[
         'Stocks rallied and the British pound gained.', 
@@ -295,7 +295,7 @@ The GLUE dataset is the benchmark dataset for evaluating NLI models. There are d
 
 If you want to use an NLI model, you can find them on the :hugs: Hugging Face model hub. Look for models with "mnli".
 
-```sql
+```postgresql
 SELECT pgml.transform(
     inputs => ARRAY[
         'A soccer game with multiple males playing. Some men are playing a sport.'
@@ -316,7 +316,7 @@ The QNLI task involves determining whether a given question can be answered by t
 
 If you want to use an QNLI model, you can find them on the :hugs: Hugging Face model hub. Look for models with "qnli".
 
-```sql
+```postgresql
 SELECT pgml.transform(
     inputs => ARRAY[
         'Where is the capital of France?, Paris is the capital of France.'
@@ -339,7 +339,7 @@ The Quora Question Pairs model is designed to evaluate whether two given questio
 
 If you want to use an QQP model, you can find them on the :hugs: Hugging Face model hub. Look for models with `qqp`.
 
-```sql
+```postgresql
 SELECT pgml.transform(
     inputs => ARRAY[
         'Which city is the capital of France?, Where is the capital of France?'
@@ -362,7 +362,7 @@ Linguistic Acceptability is a task that involves evaluating the grammatical corr
 
 If you want to use a grammatical correctness model, you can find them on the :hugs: Hugging Face model hub. Look for models with `cola`.
 
-```sql
+```postgresql
 SELECT pgml.transform(
     inputs => ARRAY[
         'I will walk to home when I went through the bus.'
@@ -388,7 +388,7 @@ In the example provided below, we will demonstrate how to classify a given sente
 
 Look for models with `mnli` to use a zero-shot classification model on the :hugs: Hugging Face model hub.
 
-```sql
+```postgresql
 SELECT pgml.transform(
     inputs => ARRAY[
         'I have a problem with my iphone that needs to be resolved asap!!'
@@ -421,7 +421,7 @@ Token classification is a task in natural language understanding, where labels a
 ### Named Entity Recognition
 Named Entity Recognition (NER) is a task that involves identifying named entities in a text. These entities can include the names of people, locations, or organizations. The task is completed by labeling each token with a class for each named entity and a class named "0" for tokens that don't contain any entities. In this task, the input is text, and the output is the annotated text with named entities.
 
-```sql
+```postgresql
 SELECT pgml.transform(
     inputs => ARRAY[
         'I am Omar and I live in New York City.'
@@ -443,7 +443,7 @@ SELECT pgml.transform(
 PoS tagging is a task that involves identifying the parts of speech, such as nouns, pronouns, adjectives, or verbs, in a given text. In this task, the model labels each word with a specific part of speech.
 
 Look for models with `pos` to use a zero-shot classification model on the :hugs: Hugging Face model hub.
-```sql
+```postgresql
 select pgml.transform(
 	inputs => array [
   	'I live in Amsterdam.'
@@ -470,7 +470,7 @@ Translation is the task of converting text written in one language into another 
 
 You have the option to select from over 2000 models available on the Hugging Face <a href="https://huggingface.co/models?pipeline_tag=translation" target="_blank">hub</a> for translation.
 
-```sql
+```postgresql
 select pgml.transform(
     inputs => array[
             	'How are you?'
@@ -491,7 +491,7 @@ Summarization involves creating a condensed version of a document that includes 
 
 ![summarization](pgml-cms/docs/images/summarization.png)
 
-```sql
+```postgresql
 select pgml.transform(
 	task => '{"task": "summarization", 
               "model": "sshleifer/distilbart-cnn-12-6"
@@ -509,7 +509,7 @@ select pgml.transform(
 ```
 You can control the length of summary_text by passing `min_length` and `max_length` as arguments to the SQL query.
 
-```sql
+```postgresql
 select pgml.transform(
 	task => '{"task": "summarization", 
               "model": "sshleifer/distilbart-cnn-12-6"
@@ -535,7 +535,7 @@ Question Answering models are designed to retrieve the answer to a question from
 
 ![question answering](pgml-cms/docs/images/question-answering.png)
 
-```sql
+```postgresql
 SELECT pgml.transform(
     'question-answering',
     inputs => ARRAY[
@@ -564,7 +564,7 @@ Text generation is the task of producing new text, such as filling in incomplete
 
 ![text generation](pgml-cms/docs/images/text-generation.png)
 
-```sql
+```postgresql
 SELECT pgml.transform(
     task => 'text-generation',
     inputs => ARRAY[
@@ -584,7 +584,7 @@ SELECT pgml.transform(
 
 To use a specific model from :hugs: model hub, pass the model name along with task name in task.
 
-```sql
+```postgresql
 SELECT pgml.transform(
     task => '{
         "task" : "text-generation",
@@ -603,7 +603,7 @@ SELECT pgml.transform(
 ```
 To make the generated text longer, you can include the argument `max_length` and specify the desired maximum length of the text.
 
-```sql
+```postgresql
 SELECT pgml.transform(
     task => '{
         "task" : "text-generation",
@@ -625,7 +625,7 @@ SELECT pgml.transform(
 ```
 If you want the model to generate more than one output, you can specify the number of desired output sequences by including the argument `num_return_sequences` in the arguments.
 
-```sql
+```postgresql
 SELECT pgml.transform(
     task => '{
         "task" : "text-generation",
@@ -651,7 +651,7 @@ SELECT pgml.transform(
 ```
 Text generation typically utilizes a greedy search algorithm that selects the word with the highest probability as the next word in the sequence. However, an alternative method called beam search can be used, which aims to minimize the possibility of overlooking hidden high probability word combinations. Beam search achieves this by retaining the num_beams most likely hypotheses at each step and ultimately selecting the hypothesis with the highest overall probability. We set `num_beams > 1` and `early_stopping=True` so that generation is finished when all beam hypotheses reached the EOS token.
 
-```sql
+```postgresql
 SELECT pgml.transform(
     task => '{
         "task" : "text-generation",
@@ -681,7 +681,7 @@ However, the randomness of the sampling method can also result in less coherent 
 You can pass `do_sample = True` in the arguments to use sampling methods. It is recommended to alter `temperature` or `top_p` but not both.
 
 *Temperature*
-```sql
+```postgresql
 SELECT pgml.transform(
     task => '{
         "task" : "text-generation",
@@ -702,7 +702,7 @@ SELECT pgml.transform(
 ```
 *Top p*
 
-```sql
+```postgresql
 SELECT pgml.transform(
     task => '{
         "task" : "text-generation",
@@ -726,7 +726,7 @@ Text-to-text generation methods, such as T5, are neural network architectures de
 ![text-to-text](pgml-cms/docs/images/text-to-text-generation.png)
 
 *Translation*
-```sql
+```postgresql
 SELECT pgml.transform(
     task => '{
         "task" : "text2text-generation"
@@ -745,7 +745,7 @@ SELECT pgml.transform(
 ```
 Similar to other tasks, we can specify a model for text-to-text generation.
 
-```sql
+```postgresql
 SELECT pgml.transform(
     task => '{
         "task" : "text2text-generation",
@@ -762,7 +762,7 @@ SELECT pgml.transform(
 Fill-mask refers to a task where certain words in a sentence are hidden or "masked", and the objective is to predict what words should fill in those masked positions. Such models are valuable when we want to gain statistical insights about the language used to train the model.
 ![fill mask](pgml-cms/docs/images/fill-mask.png)
 
-```sql
+```postgresql
 SELECT pgml.transform(
     task => '{
         "task" : "fill-mask"
@@ -794,7 +794,7 @@ Using a vector database involves three key steps: creating embeddings, indexing 
 To create embeddings for your data, you first need to choose a transformer that can generate embeddings from your input data. Some popular transformer options include BERT, GPT-2, and T5. Once you've selected a transformer, you can use it to generate embeddings for your data.
 
 In the following section, we will demonstrate how to use PostgresML to generate embeddings for a dataset of tweets commonly used in sentiment analysis. To generate the embeddings, we will use the `pgml.embed` function, which will generate an embedding for each tweet in the dataset. These embeddings will then be inserted into a table called tweet_embeddings.
-```sql
+```postgresql
 SELECT pgml.load_dataset('tweet_eval', 'sentiment');
 
 SELECT * 
@@ -831,13 +831,13 @@ The index is being created on the embedding column in the tweet_embeddings table
 
 By creating an index on the embedding column, the database can quickly search for and retrieve records that are similar to a given query vector. This can be useful for a variety of machine learning applications, such as similarity search or recommendation systems.
 
-```sql
+```postgresql
 CREATE INDEX ON tweet_embeddings USING ivfflat (embedding vector_cosine_ops);
 ```
 ## Step 3: Querying the index using embeddings for your queries
 Once your embeddings have been indexed, you can use them to perform queries against your database. To do this, you'll need to provide a query embedding that represents the query you want to perform. The index will then return the closest matching embeddings from your database, based on the similarity between the query embedding and the stored embeddings.
 
-```sql
+```postgresql
 WITH query AS (
     SELECT pgml.embed('distilbert-base-uncased', 'Star Wars christmas special is on Disney')::vector AS embedding
 )
@@ -876,7 +876,7 @@ In this section, we will provide a step-by-step walkthrough for fine-tuning a La
 ### 1. Loading the Dataset
 
 To begin, create a table to store your dataset. In this example, we use the 'imdb' dataset from Hugging Face. IMDB dataset contains three splits: train (25K rows), test (25K rows) and unsupervised (50K rows). In train and test splits, negative class has label 0 and positive class label 1. All rows in unsupervised split has a label of -1. 
-```sql
+```postgresql
 SELECT pgml.load_dataset('imdb');
 ```
 
@@ -888,7 +888,7 @@ We will create a view of the dataset by performing the following operations:
 - Shuffled view of the dataset to ensure randomness in the distribution of data.
 - Remove all the unsupervised splits that have label = -1.
 
-```sql
+```postgresql
 CREATE VIEW pgml.imdb_shuffled_view AS
 SELECT
     label,
@@ -910,7 +910,7 @@ Before splitting the data into training and test sets, it's essential to perform
 
 To analyze the distribution of labels in the shuffled dataset, you can use the following SQL query:
 
-```sql
+```postgresql
 -- Count the occurrences of each label in the shuffled dataset
 pgml=# SELECT
     class,
@@ -931,7 +931,7 @@ This query provides insights into the distribution of labels, helping you unders
 #### 3.2 Sample Records
 To get a glimpse of the data, you can retrieve a sample of records from the shuffled dataset:
 
-```sql
+```postgresql
 -- Retrieve a sample of records from the shuffled dataset
 pgml=# SELECT LEFT(text,100) AS text, class
 FROM pgml.imdb_shuffled_view
@@ -957,7 +957,7 @@ Feel free to explore other aspects of the data, such as the distribution of text
 
 Create views for training and test data by splitting the shuffled dataset. In this example, 80% is allocated for training, and 20% for testing. We will use `pgml.imdb_test_view` in [section 6](#6-inference-using-fine-tuned-model) for batch predictions using the finetuned model.
 
-```sql
+```postgresql
 -- Create a view for training data
 CREATE VIEW pgml.imdb_train_view AS
 SELECT *
@@ -975,7 +975,7 @@ OFFSET (SELECT COUNT(*) * 0.8 FROM pgml.imdb_shuffled_view);
 
 Now, fine-tune the Language Model for text classification using the created training view. In the following sections, you will see a detailed explanation of different parameters used during fine-tuning. Fine-tuned model is pushed to your public Hugging Face Hub periodically. A new repository will be created under your username using your project name (`imdb_review_sentiment` in this case). You can also choose to push the model to a private repository by setting `hub_private_repo: true` in training arguments.
 
-```sql
+```postgresql
 SELECT pgml.tune(
     'imdb_review_sentiment',
     task => 'text-classification',
@@ -1122,7 +1122,7 @@ Now, that we have fine-tuned model on Hugging Face Hub, we can use [`pgml.transf
 **Real-time predictions**
 
 Here is an example pgml.transform call for real-time predictions on the newly minted LLM fine-tuned on IMDB review dataset.
-```sql
+```postgresql
  SELECT pgml.transform(
   task   => '{
     "task": "text-classification",
@@ -1143,7 +1143,7 @@ Time: 175.264 ms
 
 **Batch predictions**
 
-```sql
+```postgresql
 pgml=# SELECT
     LEFT(text, 100) AS truncated_text,
     class,
@@ -1179,14 +1179,14 @@ Sometimes, it's necessary to restart the training process from a previously trai
 
 Specify the name of the existing model you want to use as a starting point. This is achieved by setting the `model_name` parameter in the `pgml.tune` function. In the example below, it is set to 'santiadavani/imdb_review_sentiement'.
 
-```sql
+```postgresql
 model_name => 'santiadavani/imdb_review_sentiement',
 ```
 
 ### Adjust Hyperparameters
 Fine-tune hyperparameters as needed for the restarted training process. This might include modifying learning rates, batch sizes, or training epochs. In the example below, hyperparameters such as learning rate, batch sizes, and epochs are adjusted.
 
-```sql
+```postgresql
 "training_args": {
     "learning_rate": 2e-5,
     "per_device_train_batch_size": 16,
@@ -1201,7 +1201,7 @@ Fine-tune hyperparameters as needed for the restarted training process. This mig
 ### Ensure Consistent Dataset Configuration
 Confirm that the dataset configuration remains consistent, including specifying the same text and class columns as in the previous training. This ensures compatibility between the existing model and the restarted training process.
 
-```sql
+```postgresql
 "dataset_args": {
     "text_column": "text",
     "class_column": "class"
@@ -1211,7 +1211,7 @@ Confirm that the dataset configuration remains consistent, including specifying 
 ### Run the pgml.tune Function
 Execute the `pgml.tune` function with the updated parameters to initiate the training restart. The function will leverage the existing model and adapt it based on the adjusted hyperparameters and dataset configuration.
 
-```sql
+```postgresql
 SELECT pgml.tune(
     'imdb_review_sentiement',
     task => 'text-classification',
@@ -1250,7 +1250,7 @@ However, in certain scenarios, pushing the model to a central repository and pul
 ### 1. Load and Shuffle the Dataset
 In this section, we begin by loading the FinGPT sentiment analysis dataset using the `pgml.load_dataset` function. The dataset is then processed and organized into a shuffled view (pgml.fingpt_sentiment_shuffled_view), ensuring a randomized order of records. This step is crucial for preventing biases introduced by the original data ordering and enhancing the training process.
 
-```sql
+```postgresql
 -- Load the dataset
 SELECT pgml.load_dataset('FinGPT/fingpt-sentiment-train');
 
@@ -1262,7 +1262,7 @@ SELECT * FROM pgml."FinGPT/fingpt-sentiment-train" ORDER BY RANDOM();
 ### 2. Explore Class Distribution
 Once the dataset is loaded and shuffled, we delve into understanding the distribution of sentiment classes within the data. By querying the shuffled view, we obtain valuable insights into the number of instances for each sentiment class. This exploration is essential for gaining a comprehensive understanding of the dataset and its inherent class imbalances.
 
-```sql
+```postgresql
 -- Explore class distribution
 SELECTpgml=# SELECT
     output,
@@ -1288,7 +1288,7 @@ ORDER BY output;
 ### 3. Create Training and Test Views
 To facilitate the training process, we create distinct views for training and testing purposes. The training view (pgml.fingpt_sentiment_train_view) contains 80% of the shuffled dataset, enabling the model to learn patterns and associations. Simultaneously, the test view (pgml.fingpt_sentiment_test_view) encompasses the remaining 20% of the data, providing a reliable evaluation set to assess the model's performance.
 
-```sql
+```postgresql
 -- Create a view for training data (e.g., 80% of the shuffled records)
 CREATE VIEW pgml.fingpt_sentiment_train_view AS
 SELECT *
@@ -1306,7 +1306,7 @@ OFFSET (SELECT COUNT(*) * 0.8 FROM pgml.fingpt_sentiment_shuffled_view);
 ### 4. Fine-Tune the Model for 9 Classes
 In the final section, we kick off the fine-tuning process using the `pgml.tune` function. The model will be internally configured for sentiment analysis with 9 classes. The training is executed on the 80% of the train view and evaluated on the remaining 20% of the train view. The test view is reserved for evaluating the model's accuracy after training is completed. Please note that the option `hub_private_repo: true` is used to push the model to a private Hugging Face repository. 
 
-```sql
+```postgresql
 -- Fine-tune the model for 9 classes without HUB token
 SELECT pgml.tune(
     'fingpt_sentiement',
@@ -1387,7 +1387,7 @@ What makes the conversation task truly remarkable is its remarkable versatility.
 ### Fine-tuning Llama2-7b model using LoRA
 In this section, we will explore how to fine-tune the Llama2-7b-chat large language model for the financial sentiment data discussed in the previous [section](#text-classification-9-classes) utilizing the pgml.tune function and employing the LoRA approach.  LoRA is a technique that enables efficient fine-tuning of large language models by only updating a small subset of the model's weights during fine-tuning, while keeping the majority of the weights frozen. This approach can significantly reduce the computational requirements and memory footprint compared to traditional full model fine-tuning.
 
-```sql
+```postgresql
 SELECT pgml.tune(
     'fingpt-llama2-7b-chat',
     task => 'conversation',

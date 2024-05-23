@@ -4,7 +4,7 @@ description: The key concepts that make up PostgresML.
 
 # Overview
 
-PostgresML is a complete MLOps platform built on PostgreSQL. Our operating principle is:
+PostgresML is a complete MLOps platform built inside PostgreSQL. Our operating principle is:
 
 > _Move models to the database, rather than constantly moving data to the models._
 

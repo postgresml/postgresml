@@ -14,7 +14,7 @@ Vector normalization converts a vector into a unit vector — that is, a vector 
 
 Assume you've created a table in your database that stores embeddings generated using [pgml.embed()](../../api/sql-extension/pgml.embed.md), although you can normalize any vector.
 
-```sql
+```postgresql
 CREATE TABLE documents (
    id SERIAL PRIMARY KEY,
    body TEXT,
@@ -24,7 +24,7 @@ CREATE TABLE documents (
 
 Example of inserting text and its corresponding embedding
 
-```sql
+```postgresql
 INSERT INTO documents (body)
 VALUES -- embedding vectors are automatically generated
     ('Example text data'),
@@ -34,7 +34,7 @@ VALUES -- embedding vectors are automatically generated
 
 You could create a new table from your documents and their embeddings, that uses normalized embeddings.  
 
-```sql
+```postgresql
 CREATE TABLE documents_normalized_vectors AS 
 SELECT 
     id AS document_id, 
@@ -44,7 +44,7 @@ FROM documents;
 
 Another valid approach would be to just store the normalized embedding in the documents table.
 
-```sql
+```postgresql
 CREATE TABLE documents (
    id SERIAL PRIMARY KEY,
    body TEXT,
@@ -57,26 +57,26 @@ CREATE TABLE documents (
 
 - **L1 Normalization (Manhattan Norm)**: This function scales the vector so that the sum of the absolute values of its components is equal to 1. It's useful when differences in magnitude are important but the components represent independent dimensions.
     
-    ```sql
+    ```postgresql
     SELECT pgml.normalize_l1(embedding) FROM documents;
     ```
   
 - **L2 Normalization (Euclidean Norm)**: Scales the vector so that the sum of the squares of its components is equal to 1. This is particularly important for cosine similarity calculations in machine learning.
 
-    ```sql
+    ```postgresql
     SELECT pgml.normalize_l2(embedding) FROM documents;
     ```
   
 - **Max Normalization**: Scales the vector such that the maximum absolute value of any component is 1. This normalization is less common but can be useful when the maximum value represents a bounded capacity.
 
-    ```sql
+    ```postgresql
     SELECT pgml.normalize_max(embedding) FROM documents;
     ```
 
 ## Querying and Using Normalized Vectors
    After normalization, you can use these vectors for various applications, such as similarity searches, clustering, or as input for further machine learning models within PostgresML.
 
-```sql
+```postgresql
 -- Querying for similarity using l2 normalized dot product, which is equivalent to cosine similarity
 WITH normalized_vectors AS (
    SELECT id, pgml.normalize_l2(embedding) AS norm_vector
