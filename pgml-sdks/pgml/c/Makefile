@@ -1,5 +1,5 @@
 BINARY_NAME=pgml
-HEADER=include/${BINARY_NAME}.h
+HEADER=${BINARY_NAME}.h
 PGML_LIB=../target/debug/
 
 bindings:
@@ -7,11 +7,12 @@ bindings:
 	RUST_TOOLCHAIN=$(dirname $(rustup +nightly which rustc)) cbindgen --config cbindgen.toml --output ${HEADER} ../
 
 build: bindings
-	gcc -Wall -o build/example -Iinclude/ -L${PGML_LIB} -l ${BINARY_NAME} example/main.c
+	gcc -Wall -o ./example -Iinclude/ -L${PGML_LIB} -l ${BINARY_NAME} example.c
 
 run: build
-	LD_LIBRARY_PATH=${PGML_LIB} ./build/example
+	LD_LIBRARY_PATH=${PGML_LIB} ./example
 
 clean:
 	rm ${HEADER}
+	rm -rf ./example
 
