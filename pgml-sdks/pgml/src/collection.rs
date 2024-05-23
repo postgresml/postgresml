@@ -518,7 +518,6 @@ impl Collection {
         documents: Vec<Json>,
         args: Option<Json>,
     ) -> anyhow::Result<()> {
-        eprintln!("IN THE UPSERT DOCUMENTS FUNCTION");
         // The flow for this function
         // 1. Create the collection if it does not exist
         // 2. Get all pipelines where ACTIVE = TRUE
