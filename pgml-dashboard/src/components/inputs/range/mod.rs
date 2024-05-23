@@ -32,11 +32,11 @@ impl From<&str> for InterpolationType {
 #[template(path = "inputs/range/template.html")]
 pub struct Range {
     color: String,
-    min: i32,
-    max: i32,
+    min: i64,
+    max: i64,
     interpolation_type: InterpolationType,
     target: Target,
-    initial_value: i32,
+    initial_value: i64,
 }
 
 impl Range {
@@ -56,12 +56,12 @@ impl Range {
         self
     }
 
-    pub fn min(mut self, min: i32) -> Self {
+    pub fn min(mut self, min: i64) -> Self {
         self.min = min;
         self
     }
 
-    pub fn max(mut self, max: i32) -> Self {
+    pub fn max(mut self, max: i64) -> Self {
         self.max = max;
         self
     }
@@ -76,7 +76,7 @@ impl Range {
         self
     }
 
-    pub fn initial_value(mut self, initial_value: i32) -> Self {
+    pub fn initial_value(mut self, initial_value: i64) -> Self {
         self.initial_value = initial_value;
         self
     }
