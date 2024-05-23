@@ -41,5 +41,10 @@ int main() {
     printf("Token -> %s\n", res);
   }
 
+  // cleanup
+  pgml_transformerpipelinec_delete(t_pipeline);
+  pgml_pipelinec_delete(pipeline);
+  pgml_collectionc_delete(collection);
+
   return 0;
 }

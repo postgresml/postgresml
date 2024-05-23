@@ -54,8 +54,6 @@ pub fn generate_c_alias(parsed: DeriveInput) -> proc_macro::TokenStream {
         }
     };
 
-    eprintln!("\n\n{expanded}\n\n");
-
     proc_macro::TokenStream::from(expanded)
 }
 
@@ -168,8 +166,6 @@ pub fn generate_c_methods(
             }
         };
 
-        eprintln!("\n\n{}\n\n", method);
-
         methods.push(method);
     }
 
@@ -182,7 +178,6 @@ pub fn generate_c_methods(
         }
     };
 
-    eprintln!("\n\n{destructor}\n\n");
     methods.push(destructor);
 
     proc_macro::TokenStream::from(quote! {
