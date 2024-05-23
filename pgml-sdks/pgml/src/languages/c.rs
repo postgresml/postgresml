@@ -19,10 +19,8 @@ unsafe impl CustomInto<*mut JsonC> for Json {
     }
 }
 
-#[repr(C)]
 pub struct GeneralJsonIteratorC {
-    pub wrapped:
-        *mut std::iter::Peekable<Box<dyn Iterator<Item = Result<Json, anyhow::Error>> + Send>>,
+    wrapped: *mut std::iter::Peekable<Box<dyn Iterator<Item = Result<Json, anyhow::Error>> + Send>>,
 }
 
 unsafe impl CustomInto<*mut GeneralJsonIteratorC> for GeneralJsonIterator {
@@ -34,13 +32,15 @@ unsafe impl CustomInto<*mut GeneralJsonIteratorC> for GeneralJsonIterator {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn GeneralJsonIteratorC_done(iterator: *mut GeneralJsonIteratorC) -> bool {
+pub unsafe extern "C" fn pgml_generaljsoniteratorc_done(
+    iterator: *mut GeneralJsonIteratorC,
+) -> bool {
     let c = Box::leak(Box::from_raw(iterator));
     (*c.wrapped).peek().is_none()
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn GeneralJsonIteratorC_next(
+pub unsafe extern "C" fn pgml_generaljsoniteratorc_next(
     iterator: *mut GeneralJsonIteratorC,
 ) -> *mut JsonC {
     let c = Box::leak(Box::from_raw(iterator));
@@ -51,9 +51,8 @@ pub unsafe extern "C" fn GeneralJsonIteratorC_next(
 type PeekableStream =
     futures::stream::Peekable<Pin<Box<dyn Stream<Item = Result<Json, anyhow::Error>> + Send>>>;
 
-#[repr(C)]
 pub struct GeneralJsonAsyncIteratorC {
-    pub wrapped: *mut PeekableStream,
+    wrapped: *mut PeekableStream,
 }
 
 unsafe impl CustomInto<*mut GeneralJsonAsyncIteratorC> for GeneralJsonAsyncIterator {
@@ -66,7 +65,7 @@ unsafe impl CustomInto<*mut GeneralJsonAsyncIteratorC> for GeneralJsonAsyncItera
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn GeneralJsonAsyncIteratorC_done(
+pub unsafe extern "C" fn pgml_generaljsonasynciteratorc_done(
     iterator: *mut GeneralJsonAsyncIteratorC,
 ) -> bool {
     crate::get_or_set_runtime().block_on(async move {
@@ -79,7 +78,7 @@ pub unsafe extern "C" fn GeneralJsonAsyncIteratorC_done(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn GeneralJsonAsyncIteratorC_next(
+pub unsafe extern "C" fn pgml_generaljsonasynciteratorc_next(
     iterator: *mut GeneralJsonAsyncIteratorC,
 ) -> *mut JsonC {
     crate::get_or_set_runtime().block_on(async move {

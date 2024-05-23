@@ -4,7 +4,9 @@ PGML_LIB=../target/debug/
 
 bindings:
 	cargo b --features c
-	RUST_TOOLCHAIN=$(dirname $(rustup +nightly which rustc)) cbindgen --config cbindgen.toml --output ${HEADER} ../
+	rustup default nightly
+	cbindgen --config cbindgen.toml --output ${HEADER} ../
+	rustup default stable
 
 build: bindings
 	gcc -Wall -o ./example -Iinclude/ -L${PGML_LIB} -l ${BINARY_NAME} example.c

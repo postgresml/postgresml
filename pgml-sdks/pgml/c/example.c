@@ -36,8 +36,8 @@ int main() {
   // Test the TransformerPipeline
   TransformerPipelineC * t_pipeline = pgml_transformerpipelinec_new("text-generation", "meta-llama/Meta-Llama-3-8B-Instruct", NULL, NULL);
   GeneralJsonAsyncIteratorC * t_pipeline_iter = pgml_transformerpipelinec_transform_stream(t_pipeline, "\"AI is going to\"", "{\"max_new_tokens\": 100}", NULL);
-  while (!GeneralJsonAsyncIteratorC_done(t_pipeline_iter)) {
-    char * res = GeneralJsonAsyncIteratorC_next(t_pipeline_iter);
+  while (!pgml_generaljsonasynciteratorc_done(t_pipeline_iter)) {
+    char * res = pgml_generaljsonasynciteratorc_next(t_pipeline_iter);
     printf("Token -> %s\n", res);
   }
 
