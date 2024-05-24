@@ -12,7 +12,7 @@ We currently support regression algorithms from [scikit-learn](https://scikit-le
 
 This example trains models on the sklean [diabetes dataset](https://scikit-learn.org/stable/modules/generated/sklearn.datasets.load\_diabetes.html#sklearn.datasets.load\_diabetes). This example uses multiple input features to predict a single output variable.
 
-```sql
+```postgresql
 -- load the dataset
 SELECT pgml.load_dataset('diabetes');
 
@@ -41,7 +41,7 @@ LIMIT 10;
 
 #### Examples
 
-```sql
+```postgresql
 SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'xgboost', hyperparams => '{"n_estimators": 10}');
 SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'xgboost_random_forest', hyperparams => '{"n_estimators": 10}');
 SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'lightgbm', hyperparams => '{"n_estimators": 1}');
@@ -61,7 +61,7 @@ SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'catboost', hyperp
 
 #### Examples
 
-```sql
+```postgresql
 SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'ada_boost', hyperparams => '{"n_estimators": 5}');
 SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'bagging', hyperparams => '{"n_estimators": 5}');
 SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'extra_trees', hyperparams => '{"n_estimators": 5}');
@@ -80,7 +80,7 @@ SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'hist_gradient_boo
 
 #### Examples
 
-```sql
+```postgresql
 SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'svm', hyperparams => '{"max_iter": 100}');
 SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'nu_svm', hyperparams => '{"max_iter": 10}');
 SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'linear_svm', hyperparams => '{"max_iter": 100}');
@@ -108,7 +108,7 @@ SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'linear_svm', hype
 
 #### Examples
 
-```sql
+```postgresql
 SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'linear');
 SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'ridge');
 SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'lasso');
@@ -135,7 +135,7 @@ SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'quantile');
 
 #### Examples
 
-```sql
+```postgresql
 SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'kernel_ridge');
 SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'gaussian_process');
 ```

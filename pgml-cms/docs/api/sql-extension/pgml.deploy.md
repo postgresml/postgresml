@@ -12,7 +12,7 @@ A model is automatically deployed and used for predictions if its key metric (_R
 
 ## API
 
-```sql
+```postgresql
 pgml.deploy(
     project_name TEXT,
     strategy TEXT DEFAULT 'best_score',
@@ -46,7 +46,7 @@ The default deployment behavior allows any algorithm to qualify. It's automatica
 
 #### SQL
 
-```sql
+```postgresql
 SELECT * FROM pgml.deploy(
    'Handwritten Digit Image Classifier',
     strategy => 'best_score'
@@ -55,7 +55,7 @@ SELECT * FROM pgml.deploy(
 
 #### Output
 
-```sql
+```postgresql
               project               |  strategy  | algorithm
 ------------------------------------+------------+-----------
  Handwritten Digit Image Classifier | best_score | xgboost
@@ -68,7 +68,7 @@ Deployment candidates can be restricted to a specific algorithm by including the
 
 #### SQL
 
-```sql
+```postgresql
 SELECT * FROM pgml.deploy(
     project_name => 'Handwritten Digit Image Classifier', 
     strategy => 'best_score', 
@@ -78,7 +78,7 @@ SELECT * FROM pgml.deploy(
 
 #### Output
 
-```sql
+```postgresql
             project_name            |    strategy    | algorithm
 ------------------------------------+----------------+----------------
  Handwritten Digit Image Classifier | classification | svm
@@ -91,7 +91,7 @@ In case the new model isn't performing well in production, it's easy to rollback
 
 #### Rollback
 
-```sql
+```postgresql
 SELECT * FROM pgml.deploy(
 	'Handwritten Digit Image Classifier',
 	strategy => 'rollback'
@@ -100,7 +100,7 @@ SELECT * FROM pgml.deploy(
 
 #### Output
 
-```sql
+```postgresql
              project               | strategy | algorithm
 ------------------------------------+----------+-----------
  Handwritten Digit Image Classifier | rollback | linear
@@ -111,7 +111,7 @@ SELECT * FROM pgml.deploy(
 
 Rollbacks are actually new deployments, so issuing two rollbacks in a row will leave you back with the original model, making rollback safely undoable.
 
-```sql
+```postgresql
 SELECT * FROM pgml.deploy(
 	'Handwritten Digit Image Classifier',
 	strategy => 'rollback'
@@ -120,7 +120,7 @@ SELECT * FROM pgml.deploy(
 
 #### Output
 
-```sql
+```postgresql
               project               | strategy | algorithm
 ------------------------------------+----------+-----------
  Handwritten Digit Image Classifier | rollback | xgboost
@@ -133,13 +133,13 @@ In the case you need to deploy an exact model that is not the `most_recent` or `
 
 #### SQL
 
-```sql
+```postgresql
 SELECT * FROM pgml.deploy(12);
 ```
 
 #### Output
 
-```sql
+```postgresql
               project               | strategy | algorithm
 ------------------------------------+----------+-----------
  Handwritten Digit Image Classifier | specific | xgboost

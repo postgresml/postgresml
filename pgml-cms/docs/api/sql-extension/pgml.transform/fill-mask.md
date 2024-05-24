@@ -11,7 +11,7 @@ Fill-Mask is a task where certain words in a sentence are hidden or "masked", an
 {% tabs %}
 {% tab title="SQL" %}
 
-```sql
+```postgresql
 SELECT pgml.transform(
     task => '{
         "task" : "fill-mask"

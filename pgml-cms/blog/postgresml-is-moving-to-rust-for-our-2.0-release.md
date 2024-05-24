@@ -27,7 +27,7 @@ Python is generally touted as fast enough for machine learning, and is the de fa
 
 To illustrate our motivation, we'll create a test set of 10,000 random embeddings with 128 dimensions, and store them in a table. Our first benchmark will simulate semantic ranking, by computing the dot product against every member of the test set, sorting the results and returning the top match.
 
-```sql
+```postgresql
 -- Generate 10,000 embeddings with 128 dimensions as FLOAT4[] type.
 CREATE TABLE embeddings AS
 SELECT ARRAY_AGG(random())::FLOAT4[] AS vector
@@ -39,7 +39,7 @@ Spoiler alert: idiomatic Rust is about 10x faster than native SQL, embedded PL/p
 
 {% tabs %}
 {% tab title="SQL" %}
-```sql
+```postgresql
 CREATE OR REPLACE FUNCTION dot_product_sql(a FLOAT4[], b FLOAT4[])
 	RETURNS FLOAT4
 	LANGUAGE sql IMMUTABLE STRICT PARALLEL SAFE AS
@@ -49,7 +49,7 @@ $$
 $$;
 ```
 
-```sql
+```postgresql
 WITH test AS (
 	SELECT ARRAY_AGG(random())::FLOAT4[] AS vector
 	FROM generate_series(1, 128) i
@@ -62,7 +62,7 @@ LIMIT 1;
 {% endtab %}
 
 {% tab title="PL/pgSQL" %}
-```sql
+```postgresql
 CREATE OR REPLACE FUNCTION dot_product_plpgsql(a FLOAT4[], b FLOAT4[])
 	RETURNS FLOAT4
 	LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE AS
@@ -74,7 +74,7 @@ $$
 $$;
 ```
 
-```sql
+```postgresql
 WITH test AS (
 	SELECT ARRAY_AGG(random())::FLOAT4[] AS vector
 	FROM generate_series(1, 128) i
@@ -87,7 +87,7 @@ LIMIT 1;
 {% endtab %}
 
 {% tab title="Python" %}
-```sql
+```postgresql
 CREATE OR REPLACE FUNCTION dot_product_python(a FLOAT4[], b FLOAT4[])
 	RETURNS FLOAT4
 	LANGUAGE plpython3u IMMUTABLE STRICT PARALLEL SAFE AS
@@ -96,7 +96,7 @@ $$
 $$;
 ```
 
-```sql
+```postgresql
 WITH test AS (
 	SELECT ARRAY_AGG(random())::FLOAT4[] AS vector
 	FROM generate_series(1, 128) i
@@ -109,7 +109,7 @@ LIMIT 1;
 {% endtab %}
 
 {% tab title="NumPy" %}
-```sql
+```postgresql
 CREATE OR REPLACE FUNCTION dot_product_numpy(a FLOAT4[], b FLOAT4[])
 	RETURNS FLOAT4
 	LANGUAGE plpython3u IMMUTABLE STRICT PARALLEL SAFE AS
@@ -119,7 +119,7 @@ $$
 $$;
 ```
 
-```sql
+```postgresql
 WITH test AS (
 	SELECT ARRAY_AGG(random())::FLOAT4[] AS vector
 	FROM generate_series(1, 128) i
@@ -144,7 +144,7 @@ fn dot_product_rust(vector: Vec<f32>, other: Vec<f32>) -> f32 {
 }
 ```
 
-```sql
+```postgresql
 WITH test AS (
 	SELECT ARRAY_AGG(random())::FLOAT4[] AS vector
 	FROM generate_series(1, 128) i
@@ -203,7 +203,7 @@ The results are somewhat staggering. We didn't spend any time intentionally opti
 
 ## Preserving Backward Compatibility
 
-```sql
+```postgresql
 SELECT pgml.train(
   project_name => 'Handwritten Digit Classifier',
   task => 'classification',
@@ -213,7 +213,7 @@ SELECT pgml.train(
 );
 ```
 
-```sql
+```postgresql
 SELECT pgml.predict('Handwritten Digit Classifier', image)
 FROM pgml.digits;
 ```

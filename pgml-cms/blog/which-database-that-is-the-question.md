@@ -57,7 +57,7 @@ Most importantly though, Postgres allows you to understand your data and your bu
 
 Understanding your business is good, but what if you could improve it too? Most are tempted to throw spaghetti against the wall (and that's okay), but machine learning allows for a more scientific approach. Traditionally, ML has been tough to use with modern data architectures: using key-value databases makes data virtually inaccessible in bulk. With PostgresML though, you can train an XGBoost model directly on your orders table with a single SQL query:
 
-```sql
+```postgresql
 SELECT pgml.train(
 	'Orders Likely To Be Returned', -- name of your model
 	'regression', -- objective (regression or classification)

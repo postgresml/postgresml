@@ -10,7 +10,7 @@ Many machine learning algorithms can benefit from calculating predictions in one
 
 The API for batch predictions is very similar to individual predictions, and only requires two arguments: the project name and the _aggregated_ features used for predictions.
 
-```sql
+```postgresql
 pgml.predict_batch(
     project_name TEXT,
     features REAL[]
@@ -26,7 +26,7 @@ pgml.predict_batch(
 
 !!! example
 
-```sql
+```postgresql
 SELECT pgml.predict_batch(
     'My First PostgresML Project', 
     array_agg(ARRAY[0.1, 2.0, 5.0])
@@ -44,7 +44,7 @@ Batch predictions have to be fetched in a subquery or a CTE because they are usi
 
 \=== "SQL"
 
-```sql
+```postgresql
 WITH predictions AS (
 	SELECT pgml.predict_batch(
 		'My Classification Project',
@@ -62,7 +62,7 @@ LIMIT 10;
 
 \=== "Output"
 
-```sql
+```postgresql
  prediction | target 
 ------------+--------
           0 |      0
@@ -88,7 +88,7 @@ To perform a join on batch predictions, it's necessary to have a uniquely identi
 
 **Example**
 
-```sql
+```postgresql
 WITH predictions AS (
 	SELECT
 		--

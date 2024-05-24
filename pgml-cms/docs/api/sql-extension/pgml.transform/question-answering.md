@@ -11,7 +11,7 @@ Question answering models are designed to retrieve the answer to a question from
 {% tabs %}
 {% tab title="SQL" %}
 
-```sql
+```postgresql
 SELECT pgml.transform(
     'question-answering',
     inputs => ARRAY[

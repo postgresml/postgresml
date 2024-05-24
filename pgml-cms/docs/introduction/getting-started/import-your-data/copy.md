@@ -73,6 +73,6 @@ We took our export command and changed `TO` to `FROM`, and that's it. Make sure 
 
 If your data changed, repeat this process again. To avoid duplicate entries in your table, you can truncate (or delete) all rows beforehand:
 
-```sql
+```postgresql
 TRUNCATE your_table;
 ```

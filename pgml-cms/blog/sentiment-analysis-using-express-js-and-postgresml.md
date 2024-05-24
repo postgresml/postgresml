@@ -65,7 +65,7 @@ We also have three endpoints to hit:
 * `app.get(“/", async (req, res, next)` which returns all the notes for that day and the daily summary.&#x20;
 * `app.post(“/add", async (req, res, next)` which accepts a new note entry and performs a sentiment analysis. We simplify the score by converting it to 1, 0, -1 for positive, neutral, negative and save it in our notes table.
 
-```sql
+```postgresql
 WITH note AS (
   SELECT pgml.transform(
     inputs => ARRAY['${req.body.note}'],
@@ -88,7 +88,7 @@ INSERT INTO notes (note, score) VALUES ('${req.body.note}', (SELECT score FROM s
 
 * `app.get(“/analyze”, async (req, res, next)` which takes the daily entries, produces a summary and total sentiment score, and places that into our days table.
 
-```sql
+```postgresql
 WITH day AS (
   SELECT 
     note,

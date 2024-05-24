@@ -51,6 +51,67 @@
     * [Semantic Search](api/client-sdk/tutorials/semantic-search.md)
     * [Semantic Search Using Instructor Model](api/client-sdk/tutorials/semantic-search-1.md)
 
+## Guides
+
+* [Embeddings](guides/embeddings/README.md)
+  * [In-database Generation](guides/embeddings/in-database-generation.md)
+  * [Dimensionality Reduction](guides/embeddings/dimensionality-reduction.md)
+  * [Aggregation](guides/embeddings/vector-aggregation.md)
+  * [Similarity](guides/embeddings/vector-similarity.md)
+  * [Normalization](guides/embeddings/vector-normalization.md) 
+  <!-- * [Indexing w/ pgvector](guides/embeddings/indexing-w-pgvector.md) -->
+  <!-- * [Re-ranking nearest neighbors](guides/embeddings/re-ranking-nearest-neighbors.md) -->
+  <!-- * [Proprietary Models](guides/embeddings/proprietary-models.md) --> 
+* [Search](guides/improve-search-results-with-machine-learning.md)
+* [Chatbots](guides/chatbots/README.md)
+  * [Example Application](use-cases/chatbots.md)
+* [Supervised Learning](guides/supervised-learning.md)
+* [OpenSourceAI](guides/opensourceai.md)
+* [Natural Language Processing](guides/natural-language-processing.md)
+
+<!--
+* [Search]()
+  * [Keyword Search]()
+  * [Vector Search]()
+  * [Hybrid Search]()
+  * [Ranking]()
+* [Transformers & LLMs]()
+  * [Text Generation]()
+  * [Prompt Engineering]()
+  * [Unified RAG]()
+* [Personalization]()
+* [Recommendations]()
+* [Forecasting]()
+  * [Time series]()
+  * [Events]()
+* [Fraud Detection]()
+* [Incentive Optimization]()
+* [Machine Learning]()
+  * [Feature Engineering]()
+  * [Regression]()
+  * [Classification]()
+  * [Clustering]()
+  * [Matrix Decomposition]()
+* [Natural Language Processing]()
+  * [Tokenization]()
+  * [Chunking]()
+  * [Text Generation]()
+  * [Sentiment Analysis]()
+  * [Summarization]()
+
+## Reference
+
+* [SQL]()
+  * [Explain plans]()
+  * [Composition]()
+* [LLMs]()
+  * [LLama]() 
+  * [GPT]()
+  * [Facon]()
+* [Glossary]()
+
+-->
+  
 ## Product
 
 * [Cloud database](product/cloud-database/README.md)
@@ -63,21 +124,6 @@
   * [Installation](product/pgcat/installation.md)
   * [Configuration](product/pgcat/configuration.md)
 
-## Use Cases
-
-* [OpenSourceAI](use-cases/opensourceai.md)
-* [Chatbots](use-cases/chatbots/README.md)
-  * [Example Application](use-cases/chatbots.md)
-* [Search](use-cases/improve-search-results-with-machine-learning.md)
-* [Embeddings](use-cases/embeddings/README.md)
-  * [Generating LLM embeddings with open source models](use-cases/embeddings/generating-llm-embeddings-with-open-source-models-in-postgresml.md)
-  * [Tuning vector recall while generating query embeddings in the database](use-cases/embeddings/tuning-vector-recall-while-generating-query-embeddings-in-the-database.md)
-  * [Personalize embedding results with application data in your database](use-cases/embeddings/personalize-embedding-results-with-application-data-in-your-database.md)
-* [Supervised Learning](use-cases/supervised-learning.md)
-* [Natural Language Processing](use-cases/natural-language-processing.md)
-* [Fraud Detection](use-cases/fraud-detection.md)
-* [Recommendation Engine](use-cases/recommendation-engine.md)
-* [Time-series Forecasting](use-cases/time-series-forecasting.md)
 
 ## Resources
 

@@ -619,7 +619,7 @@ pub fn embed_batch(
 /// Returns `true` if the GPU cache was successfully cleared, `false` otherwise.
 /// # Example
 ///
-/// ```sql
+/// ```postgresql
 /// SELECT pgml.clear_gpu_cache(memory_usage => 0.5);
 /// ```
 #[cfg(all(feature = "python", not(feature = "use_as_lib")))]

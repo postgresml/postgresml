@@ -8,7 +8,7 @@ description: A machine learning approach that uses labeled data
 
 A large part of the machine learning workflow is acquiring, cleaning, and preparing data for training algorithms. Naturally, we think Postgres is a great place to store your data. For the purpose of this example, we'll load a toy dataset, the classic handwritten digits image collection, from scikit-learn.
 
-```sql
+```postgresql
 SELECT * FROM pgml.load_dataset('digits');
 ```
 
@@ -25,7 +25,7 @@ This `NOTICE` can safely be ignored. PostgresML attempts to do a clean reload by
 
 PostgresML loaded the Digits dataset into the `pgml.digits` table. You can examine the 2D arrays of image data, as well as the label in the `target` column:
 
-```sql
+```postgresql
 SELECT
     target,
     image
@@ -48,7 +48,7 @@ target |                                                                        
 
 Now that we've got data, we're ready to train a model using an algorithm. We'll start with the default `linear` algorithm to demonstrate the basics. See the [Algorithms](../../../docs/training/algorithm\_selection/) for a complete list of available algorithms.
 
-```sql
+```postgresql
 SELECT * FROM pgml.train(
     'Handwritten Digit Image Classifier',
     'classification',
@@ -85,7 +85,7 @@ The output gives us information about the training run, including the `deployed`
 
 Now we can inspect some of the artifacts a training run creates.
 
-```sql
+```postgresql
 SELECT * FROM pgml.overview;
 ```
 
@@ -105,7 +105,7 @@ The `pgml.predict()` function is the key value proposition of PostgresML. It pro
 
 The API for predictions is very simple and only requires two arguments: the project name and the features used for prediction.
 
-```sql
+```postgresql
 select pgml.predict (
 	project_name TEXT,
 	features REAL[]
@@ -154,7 +154,7 @@ LIMIT 25;
 
 If you've already been through the [Training Overview](../../../docs/training/overview/), you can see the results of those efforts:
 
-```sql
+```postgresql
 SELECT
     target,
     pgml.predict('Handwritten Digit Image Classifier', image) AS prediction
@@ -182,7 +182,7 @@ LIMIT 10;
 
 Since it's so easy to train multiple algorithms with different hyperparameters, sometimes it's a good idea to know which deployed model is used to make predictions. You can find that out by querying the `pgml.deployed_models` view:
 
-```sql
+```postgresql
 SELECT * FROM pgml.deployed_models;
 ```
 
@@ -201,7 +201,7 @@ Take a look at [Deploying Models](../../../docs/predictions/deployments/) docume
 
 You may also specify a model\_id to predict rather than a project name, to use a particular training run. You can find model ids by querying the `pgml.models` table.
 
-```sql
+```postgresql
 SELECT models.id, models.algorithm, models.metrics
 FROM pgml.models
 JOIN pgml.projects 
@@ -220,7 +220,7 @@ recision": 0.9175060987472534, "score_time": 0.019625699147582054}
 
 For example, making predictions with `model_id = 1`:
 
-```sql
+```postgresql
 SELECT
     target,
     pgml.predict(1, image) AS prediction

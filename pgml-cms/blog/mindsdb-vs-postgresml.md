@@ -94,7 +94,7 @@ For both implementations, we can just pass in our data as part of the query for 
 
 !!! code\_block time="4769.337 ms"
 
-```sql
+```postgresql
 SELECT pgml.transform(
     inputs => ARRAY[
         'I am so excited to benchmark deep learning models in SQL. I can not wait to see the results!'
@@ -124,7 +124,7 @@ The first time `transform` is run with a particular model name, it will download
 
 !!! code\_block time="45.094 ms"
 
-```sql
+```postgresql
 SELECT pgml.transform(
     inputs => ARRAY[
         'I don''t really know if 5 seconds is fast or slow for deep learning. How much time is spent downloading vs running the model?'
@@ -154,7 +154,7 @@ SELECT pgml.transform(
 
 !!! code\_block time="165.036 ms"
 
-```sql
+```postgresql
 SELECT pgml.transform(
     inputs => ARRAY[
         'Are GPUs really worth it? Sometimes they are more expensive than the rest of the computer combined.'
@@ -209,7 +209,7 @@ psql postgres://mindsdb:123@127.0.0.1:55432
 
 And turn timing on to see how long it takes to run the same query:
 
-```sql
+```postgresql
 \timing on
 ```
 

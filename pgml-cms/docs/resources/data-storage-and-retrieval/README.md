@@ -73,7 +73,7 @@ If you're writing your own application to ingest large amounts of data into Post
 
 Querying data stored in tables is what makes PostgresML so powerful. Postgres has one of the most comprehensive querying languages of all databases we've worked with so, for our example, we won't have any trouble calculating some statistics:
 
-```sql
+```postgresql
 SELECT
     count(*),
     avg("Avg. Area Income"),
@@ -97,7 +97,7 @@ The SQL language is expressive and allows to select, filter and aggregate any nu
 
 Because databases store data permanently, adding more data to Postgres can be done in many ways. The simplest and most common way is to just insert it into a table you already have. Using the same example dataset, we can add a new row with just one query:
 
-```sql
+```postgresql
 INSERT INTO usa_house_prices (
   "Avg. Area Income",
   "Avg. Area House Age",
@@ -159,7 +159,7 @@ Looking at the USA House Prices dataset, we can find its natural key pretty easi
 
 To ensure that our table reflects this, let's add a unique index:
 
-```sql
+```postgresql
 CREATE UNIQUE INDEX ON usa_house_prices USING btree("Address");
 ```
 
@@ -182,7 +182,7 @@ Once the dataset gets large enough, and we're talking millions of rows, it's no 
 
 Postgres automatically uses indexes when possible and optimal to do so. From our example, if we filter the dataset by the "Address" column, Postgres will use the index we created and return a result quickly:
 
-```sql
+```postgresql
 SELECT
     "Avg. Area House Age",
     "Address"

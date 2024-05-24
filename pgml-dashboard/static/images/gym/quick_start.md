@@ -25,7 +25,7 @@ Once you have your PostgresML instance running, we'll be ready to get started.
 
 The first part of machine learning is getting your data in a format you can use. That's usually the hardest part, but thankfully we have a few example datasets we can use. To load one of them, navigate to the IDE tab and run this query:
 
-```sql
+```postgresql
 SELECT * FROM pgml.load_dataset('diabetes');
 ```
 
@@ -46,7 +46,7 @@ To load them into PostgresML, use the same function above with the desired datas
 The SQL editor you just used can run arbitrary queries on the PostgresML instance. For example,
 if we want to see what dataset we just loaded looks like, we can run:
 
-```sql
+```postgresql
 SELECT * FROM pgml.diabetes LIMIT 5;
 ```
 
@@ -78,7 +78,7 @@ PostgresML organizes itself into projects. A project is just a name for model(s)
 
 Using the IDE, run:
 
-```sql
+```postgresql
 SELECT * FROM pgml.train(
 	'My First Project',
 	task => 'regression',
@@ -106,7 +106,7 @@ Inference is the act of predicting labels that we haven't necessarily used in tr
 
 Let's try and predict some new values. Using the IDE, run:
 
-```sql
+```postgresql
 SELECT pgml.predict(
 	'My First Project',
 	ARRAY[
@@ -130,7 +130,7 @@ You should see something like this:
 
 The `prediction` column represents the possible value of the `target` column given the new features we just passed into the `pgml.predict()` function. You can just as easily predict multiple points and compare them to the actual labels in the dataset:
 
-```sql
+```postgresql
 SELECT
 	pgml.predict('My First Project 2', ARRAY[
 		age, sex, bmi, bp, s1, s3, s3, s4, s5, s6
@@ -151,7 +151,7 @@ As you can see, we automatically performed some analysis on the data. Visualizin
 
 XGBoost is a good algorithm, but what if there are better ones? Let's try training a few more using the IDE. Run these one at a time:
 
-```sql
+```postgresql
 -- Simple linear regression.
 SELECT * FROM pgml.train(
 	'My First Project',

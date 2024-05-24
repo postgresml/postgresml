@@ -45,6 +45,8 @@ sentence-transformers
 rouge
 sacrebleu
 sacremoses
+evaluate
+trl
 
 # Utils
 datasets

@@ -69,9 +69,6 @@
     pre {
         margin: 0px;
     }
-    pre[data-controller="copy"] {
-        padding-top: 2rem !important;
-    }
 
     div.code-block {
         border: none !important;
@@ -84,7 +81,6 @@
 
     .execution-time {
         border-top: 2px solid #{$gray-100};
-        border-bottom: 2px solid #{$gray-100};
         background-color: #{$gray-600};
         padding: 12px 12px;
         margin: 0px !important;

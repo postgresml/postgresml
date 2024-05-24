@@ -10,7 +10,7 @@ description: >-
 
 The `pgml.predict()` function is the key value proposition of PostgresML. It provides online predictions using the best, automatically deployed model for a project. The API for predictions is very simple and only requires two arguments: the project name and the features used for prediction.
 
-```sql
+```postgresql
 select pgml.predict (
     project_name TEXT,
     features REAL[]
@@ -26,7 +26,7 @@ select pgml.predict (
 
 ### Regression Example
 
-```sql
+```postgresql
 SELECT pgml.predict(
     'My Classification Project', 
     ARRAY[0.1, 2.0, 5.0]
@@ -37,7 +37,7 @@ where `ARRAY[0.1, 2.0, 5.0]` is the same type of features used in training, in t
 
 !!! example
 
-```sql
+```postgresql
 SELECT *,
     pgml.predict(
         'Buy it Again',
@@ -59,7 +59,7 @@ LIMIT 25;
 
 If you've already been through the [pgml.train](../pgml.train "mention") examples, you can see the predictive results of those models:
 
-```sql
+```postgresql
 SELECT
     target,
     pgml.predict('Handwritten Digit Image Classifier', image) AS prediction
@@ -67,7 +67,7 @@ FROM pgml.digits
 LIMIT 10;
 ```
 
-```sql
+```postgresql
  target | prediction
 --------+------------
       0 |          0
@@ -87,11 +87,11 @@ LIMIT 10;
 
 Since it's so easy to train multiple algorithms with different hyperparameters, sometimes it's a good idea to know which deployed model is used to make predictions. You can find that out by querying the `pgml.deployed_models` view:
 
-```sql
+```postgresql
 SELECT * FROM pgml.deployed_models;
 ```
 
-```sql
+```postgresql
  id |                name                |      task      | algorithm | runtime |        deployed_at
 ----+------------------------------------+----------------+-----------+---------+----------------------------
   4 | Handwritten Digit Image Classifier | classification | xgboost   | rust    | 2022-10-11 13:06:26.473489
@@ -106,7 +106,7 @@ Take a look at [pgml.deploy.md](../pgml.deploy.md "mention") for more details.
 
 You may also specify a model\_id to predict rather than a project name, to use a particular training run. You can find model ids by querying the `pgml.models` table.
 
-```sql
+```postgresql
 SELECT models.id, models.algorithm, models.metrics
 FROM pgml.models
 JOIN pgml.projects 
@@ -114,7 +114,7 @@ JOIN pgml.projects
 WHERE projects.name = 'Handwritten Digit Image Classifier';
 ```
 
-```sql
+```postgresql
  id | algorithm |                                                                                                         metrics
 
 ----+-----------+-------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -125,7 +125,7 @@ recision": 0.9175060987472534, "score_time": 0.019625699147582054}
 
 For example, making predictions with `model_id = 1`:
 
-```sql
+```postgresql
 SELECT
     target,
     pgml.predict(1, image) AS prediction

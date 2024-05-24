@@ -6,7 +6,7 @@ description: Task of producing new text
 
 Text generation is the task of producing new text, such as filling in incomplete sentences or paraphrasing existing text. It has various use cases, including code generation and story generation. Completion generation models can predict the next word in a text sequence, while text-to-text generation models are trained to learn the mapping between pairs of texts, such as translating between languages. Popular models for text generation include GPT-based models, T5, T0, and BART. These models can be trained to accomplish a wide range of tasks, including text classification, summarization, and translation.
 
-```sql
+```postgresql
 SELECT pgml.transform(
     task => 'text-generation',
     inputs => ARRAY[
@@ -29,7 +29,7 @@ _Result_
 
 To use a specific model from :hugging: model hub, pass the model name along with task name in task.
 
-```sql
+```postgresql
 SELECT pgml.transform(
     task => '{
         "task" : "text-generation",
@@ -53,7 +53,7 @@ _Result_
 
 To make the generated text longer, you can include the argument `max_length` and specify the desired maximum length of the text.
 
-```sql
+```postgresql
 SELECT pgml.transform(
     task => '{
         "task" : "text-generation",
@@ -80,7 +80,7 @@ _Result_
 
 If you want the model to generate more than one output, you can specify the number of desired output sequences by including the argument `num_return_sequences` in the arguments.
 
-```sql
+```postgresql
 SELECT pgml.transform(
     task => '{
         "task" : "text-generation",
@@ -111,7 +111,7 @@ _Result_
 
 Text generation typically utilizes a greedy search algorithm that selects the word with the highest probability as the next word in the sequence. However, an alternative method called beam search can be used, which aims to minimize the possibility of overlooking hidden high probability word combinations. Beam search achieves this by retaining the num\_beams most likely hypotheses at each step and ultimately selecting the hypothesis with the highest overall probability. We set `num_beams > 1` and `early_stopping=True` so that generation is finished when all beam hypotheses reached the EOS token.
 
-```sql
+```postgresql
 SELECT pgml.transform(
     task => '{
         "task" : "text-generation",
@@ -143,7 +143,7 @@ You can pass `do_sample = True` in the arguments to use sampling methods. It is 
 
 ### _Temperature_
 
-```sql
+```postgresql
 SELECT pgml.transform(
     task => '{
         "task" : "text-generation",
@@ -167,7 +167,7 @@ _Result_
 
 ### _Top p_
 
-```sql
+```postgresql
 SELECT pgml.transform(
     task => '{
         "task" : "text-generation",

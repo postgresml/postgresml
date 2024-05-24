@@ -62,7 +62,7 @@ All system statistics are stored together in this one structure.
 
 !!! code\_block
 
-```sql
+```postgresql
 SELECT * FROM pg_stat_sysinfo
  WHERE metric = 'load_average'
    AND at BETWEEN '2023-04-07 19:20:09.3'
@@ -97,7 +97,7 @@ In the case of the load average, we could handle this situation by having a tabl
 
 !!! code\_block
 
-```sql
+```postgresql
 CREATE TABLE load_average (
     at          timestamptz NOT NULL DEFAULT now(),
     "1m"        float4 NOT NULL,
@@ -112,7 +112,7 @@ This structure is fine for `load_average` but wouldn't work for CPU, disk, RAM o
 
 !!! code\_block
 
-```sql
+```postgresql
 CREATE TABLE load_average (
     at          timestamptz NOT NULL DEFAULT now(),
     "1m"        float4 NOT NULL,
@@ -132,7 +132,7 @@ This has the disadvantage of baking in a lot of keys and the overall structure o
 
 !!! code\_block
 
-```sql
+```postgresql
 CREATE TABLE load_average (
     at          timestamptz NOT NULL DEFAULT now(),
     "1m"        float4 NOT NULL,

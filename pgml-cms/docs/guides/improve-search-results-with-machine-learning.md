@@ -14,7 +14,7 @@ Our search application will start with a **documents** table. Our documents have
 
 !!! code\_block time="10.493 ms"
 
-```sql
+```postgresql
 CREATE TABLE documents (
   id BIGSERIAL PRIMARY KEY,
   title TEXT,
@@ -32,7 +32,7 @@ We can add new documents to our _text corpus_ with the standard SQL `INSERT` sta
 
 !!! code\_block time="3.417 ms"
 
-```sql
+```postgresql
 INSERT INTO documents (title, body) VALUES 
   ('This is a title', 'This is the body of the first document.'),
   ('This is another title', 'This is the body of the second document.'),
@@ -57,7 +57,7 @@ You can configure the grammatical rules in many advanced ways, but we'll use the
 
 !!! code\_block time="0.651 ms"
 
-```sql
+```postgresql
 SELECT * 
 FROM documents
 WHERE to_tsvector('english', body) @@ to_tsquery('english', 'second');
@@ -87,7 +87,7 @@ The first step is to store the `tsvector` in the table, so we don't have to gene
 
 !!! code\_block time="17.883 ms"
 
-```sql
+```postgresql
 ALTER TABLE documents
 ADD COLUMN title_and_body_text tsvector
 GENERATED ALWAYS AS (to_tsvector('english', title || ' ' || body )) STORED;
@@ -103,7 +103,7 @@ One nice aspect of generated columns is that they will backfill the data for exi
 
 !!! code\_block time="5.145 ms"
 
-```sql
+```postgresql
 CREATE INDEX documents_title_and_body_text_index 
 ON documents 
 USING GIN (title_and_body_text);
@@ -119,7 +119,7 @@ And now, we'll demonstrate a slightly more complex `tsquery`, that requires both
 
 !!! code\_block time="3.673 ms"
 
-```sql
+```postgresql
 SELECT * 
 FROM documents
 WHERE title_and_body_text @@ to_tsquery('english', 'another & second');
@@ -149,7 +149,7 @@ With multiple query terms OR `|` together, the `ts_rank` will add the numerators
 
 !!! code\_block time="0.561 ms"
 
-```sql
+```postgresql
 SELECT ts_rank(title_and_body_text, to_tsquery('english', 'second | title')), *   
 FROM documents 
 ORDER BY ts_rank DESC;
@@ -179,7 +179,7 @@ A quick improvement we could make to our search query would be to differentiate 
 
 !!! code\_block time="0.561 ms"
 
-```sql
+```postgresql
 SELECT 
   ts_rank(title, to_tsquery('english', 'second | title')) AS title_rank,
   ts_rank(body, to_tsquery('english', 'second | title')) AS body_rank,
@@ -208,7 +208,7 @@ First things first, we need to record some user clicks on our search results. We
 
 !!! code\_block time="0.561 ms"
 
-```sql
+```postgresql
 CREATE TABLE search_result_clicks (
   title_rank REAL,
   body_rank REAL,
@@ -228,7 +228,7 @@ I've made up 4 example searches, across our 3 documents, and recorded the `ts_ra
 
 !!! code\_block time="2.161 ms"
 
-```sql
+```postgresql
 INSERT INTO search_result_clicks 
   (title_rank, body_rank, clicked) 
 VALUES
@@ -267,7 +267,7 @@ Here goes some machine learning:
 
 !!! code\_block time="6.867 ms"
 
-```sql
+```postgresql
 SELECT * FROM pgml.train(
   project_name => 'Search Ranking',
   task => 'regression',
@@ -314,7 +314,7 @@ Once a model is trained, you can use `pgml.predict` to use it on new inputs. `pg
 
 !!! code\_block time="3.119 ms"
 
-```sql
+```postgresql
 SELECT 
   clicked, 
   pgml.predict('Search Ranking', array[title_rank, body_rank]) 
@@ -367,7 +367,7 @@ It's nice to organize the query into logical steps, and we can use **Common Tabl
 
 !!! code\_block time="2.118 ms"
 
-```sql
+```postgresql
 WITH first_pass_ranked_documents AS (
   SELECT
     -- Compute the ts_rank for the title and body text of each document 

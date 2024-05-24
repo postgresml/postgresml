@@ -31,7 +31,7 @@ There are 3 steps to preprocessing data:
 
 These preprocessing steps may be specified on a per-column basis to the [train()](./) function. By default, PostgresML does minimal preprocessing on training data, and will raise an error during analysis if NULL values are encountered without a preprocessor. All types other than `TEXT` are treated as quantitative variables and cast to floating point representations before passing them to the underlying algorithm implementations.
 
-```sql
+```postgresql
 SELECT pgml.train(
     project_name => 'preprocessed_model', 
     task => 'classification', 
@@ -60,7 +60,7 @@ In some cases, it may make sense to use multiple steps for a single column. For 
 
 A model that has been trained with preprocessors should use a Postgres tuple for prediction, rather than a `FLOAT4[]`. Tuples may contain multiple different types (like `TEXT` and `BIGINT`), while an ARRAY may only contain a single type. You can use parenthesis around values to create a Postgres tuple.
 
-```sql
+```postgresql
 SELECT pgml.predict('preprocessed_model', ('jan', 'nimbus', 0.5, 7));
 ```
 
@@ -79,7 +79,7 @@ Encoding categorical variables is an O(N log(M)) where N is the number of rows, 
 
 Target encoding is a relatively efficient way to represent a categorical variable. The average value of the target is computed for each category in the training data set. It is reasonable to `scale` target encoded variables using the same method as other variables.
 
-```sql
+```postgresql
 preprocess => '{
     "clouds": {"encode": "target" }
 }'
@@ -131,7 +131,7 @@ preprocess => '{
 | `max`    | the maximum value of the variable in the training data set                           |
 | `zero`   | replaces all missing values with 0.0                                                 |
 
-```sql
+```postgresql
 preprocess => '{
     "temp": {"impute": "mean"}
 }'
@@ -149,7 +149,7 @@ Scaling all variables to a standardized range can help make sure that no feature
 | `max_abs`  | Scales data from -1.0 to +1.0. Data will not be centered around 0, unless abs(min) == abs(max).                      |
 | `robust`   | Scales data as a factor of the first and third quartiles. This method may handle outliers more robustly than others. |
 
-```sql
+```postgresql
 preprocess => '{
     "temp": {"scale": "standard"}
 }'

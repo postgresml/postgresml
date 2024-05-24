@@ -162,7 +162,7 @@ Data used for training and inference is available [here](https://static.postgres
 
 PostgresML model is trained with:
 
-```sql
+```postgresql
 SELECT * FROM pgml.train(
 	project_name => 'r2',
 	algorithm => 'xgboost',

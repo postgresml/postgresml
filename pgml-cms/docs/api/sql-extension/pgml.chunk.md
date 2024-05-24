@@ -8,7 +8,7 @@ Chunks are pieces of documents split using some specified splitter. This is typi
 
 ## API
 
-```sql
+```postgresql
 pgml.chunk(
     splitter TEXT,    -- splitter name
     text TEXT,        -- text to embed
@@ -18,21 +18,21 @@ pgml.chunk(
 
 ## Example
 
-```sql
+```postgresql
 SELECT pgml.chunk('recursive_character', 'test');
 ```
 
-```sql
+```postgresql
 SELECT pgml.chunk('recursive_character', 'test', '{"chunk_size": 1000, "chunk_overlap": 40}'::jsonb);
 ```
 
-```sql
+```postgresql
 SELECT pgml.chunk('markdown', '# Some test');
 ```
 
 Note that the input text for those splitters is so small it isn't splitting it at all, a real world example would look more like:
 
-```sql
+```postgresql
 SELECT pgml.chunk('recursive_character', content) FROM documents;
 ```
 

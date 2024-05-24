@@ -262,8 +262,6 @@ impl SyntaxHighlighterAdapter for SyntaxHighlighter {
     fn build_pre_tag(&self, _attributes: &HashMap<String, String>) -> String {
         String::from("<pre data-controller=\"copy\"><div class=\"code-toolbar\">
                 <span data-action=\"click->copy#codeCopy\" class=\"material-symbols-outlined btn-code-toolbar\">content_copy</span>
-                <span class=\"material-symbols-outlined btn-code-toolbar\" disabled>link</span>
-                <span class=\"material-symbols-outlined btn-code-toolbar\" disabled>edit</span>
             </div>")
     }
 

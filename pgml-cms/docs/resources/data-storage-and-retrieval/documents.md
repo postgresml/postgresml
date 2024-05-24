@@ -8,7 +8,7 @@ In Postgres, documents are normally stored in regular tables using the `JSONB` d
 
 If you're used to document databases like Mongo or Couch, you can replicate the same format and API in Postgres with just a single table:
 
-```sql
+```postgresql
 CREATE TABLE documents (
     id BIGSERIAL PRIMARY KEY,
     document JSONB
@@ -19,7 +19,7 @@ CREATE TABLE documents (
 
 To insert a document into our table, you can just use a regular insert query:
 
-```sql
+```postgresql
 INSERT INTO documents (
     document
 ) VALUES ('{"hello": "world", "values": [1, 2, 3, 4]}')
@@ -32,7 +32,7 @@ This query will insert the document `{"hello": "world"}` and return its ID to th
 
 To get a document by it's ID, you can just select it from the same table, for example:
 
-```sql
+```postgresql
 SELECT document FROM documents WHERE id = 1;
 ```
 
@@ -52,7 +52,7 @@ The `id` column is a primary key, which gives it an index automatically. Any fet
 
 For example, if we want to fetch all documents that have a key `hello` and the value of that key `world`, we can do so:
 
-```sql
+```postgresql
 SELECT
     id,
     document->>'values'
@@ -63,7 +63,7 @@ WHERE
 
 or if we wanted to fetch the first value inside an array stored in a `values` key, we can:
 
-```sql
+```postgresql
 SELECT
     document #>> '{values, 0}'
 FROM documents
@@ -77,13 +77,13 @@ WHERE
 
 Most key/value databases expect its users to only use primary keys for retrieval. In the real world, things are not always that easy. Postgres makes very few assumptions about how its users interact with JSON data, and allows indexing its top level data structure for fast access:
 
-```sql
+```postgresql
 CREATE INDEX ON documents USING gin(document jsonb_path_ops);
 ```
 
 When searching the documents for matches, Postgres will now use a much faster GIN index and give us results quickly:
 
-```sql
+```postgresql
 SELECT
     * 
 FROM
