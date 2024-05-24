@@ -102,35 +102,6 @@ pub(crate) struct CollectionDatabaseData {
     pub project_info: ProjectInfo,
 }
 
-// #[repr(C)]
-// pub struct CollectionC {
-//     pub collection: *mut Collection,
-// }
-
-// #[no_mangle]
-// pub unsafe extern "C" fn new_collection(name: *const std::ffi::c_char) -> *mut CollectionC {
-//     let name = std::ffi::CStr::from_ptr(name).to_str().unwrap();
-//     println!("Nice one Silas: {}", name);
-//     let collection = Box::into_raw(Box::new(Collection::new(name, None).unwrap()));
-//     Box::into_raw(Box::new(CollectionC { collection }))
-// }
-
-// #[no_mangle]
-// pub unsafe extern "C" fn free_collection(collection: *mut CollectionC) {
-//     if collection.is_null() {
-//         return;
-//     }
-//     drop(Box::from_raw(collection));
-// }
-
-// #[no_mangle]
-// pub unsafe extern "C" fn test_collection(collection: *mut CollectionC) {
-//     let collection: *mut Collection = (*collection).collection;
-//     let collection: Collection = (*collection).clone();
-//     println!("Nice one Silas x two: {}", collection.name);
-//     println!("test");
-// }
-
 /// A collection of documents
 #[derive(alias, Debug, Clone)]
 pub struct Collection {

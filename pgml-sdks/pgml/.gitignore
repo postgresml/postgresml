@@ -169,6 +169,4 @@ scratch.sql
 scratch.py
 
 # Some SDK specific things
-expanded.rs
-test
 pgml.h
