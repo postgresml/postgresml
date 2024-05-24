@@ -8,12 +8,12 @@ use sailfish::TemplateOnce;
 pub struct RangeGroupPricingCalc {
     interpolation_type: InterpolationType,
     include_slider: bool,
-    min: i32,
-    max: i32,
+    min: i64,
+    max: i64,
     target: StimulusTarget,
     label: String,
     name: String,
-    initial_value: i32,
+    initial_value: i64,
 }
 
 impl RangeGroupPricingCalc {
@@ -40,12 +40,12 @@ impl RangeGroupPricingCalc {
         self
     }
 
-    pub fn min(mut self, min: i32) -> Self {
+    pub fn min(mut self, min: i64) -> Self {
         self.min = min;
         self
     }
 
-    pub fn max(mut self, max: i32) -> Self {
+    pub fn max(mut self, max: i64) -> Self {
         self.max = max;
         self
     }
@@ -65,7 +65,7 @@ impl RangeGroupPricingCalc {
         self
     }
 
-    pub fn initial_value(mut self, initial_value: i32) -> Self {
+    pub fn initial_value(mut self, initial_value: i64) -> Self {
         self.initial_value = initial_value;
         self
     }

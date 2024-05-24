@@ -15,7 +15,6 @@ export default class extends Controller {
   initialize() {}
 
   connect() {
-    // console.log("range connected", this.initialValue)
     this.rangeTarget.value =
       this.interpolationTypeValue === "exponential"
         ? this.exponentialInterpolationSolveX(this.initialValue)
@@ -52,7 +51,7 @@ export default class extends Controller {
 
   exponentialInterpolation(value) {
     if (value < 1) {
-      return 0;
+      return this.minValue;
     }
 
     let minValue = this.minValue > 1 ? this.minValue : 1;
@@ -72,7 +71,6 @@ export default class extends Controller {
     let numerator = Math.log(value / minValue);
     let denominator = Math.log(this.maxValue / minValue);
     let out = (numerator / denominator) * 100;
-    // console.log(numerator, denominator, out, Number(out.toPrecision(3)))
     return parseInt(Number(out.toPrecision(3)));
   }
 
@@ -82,7 +80,6 @@ export default class extends Controller {
   }
 
   linearInterpolationSolveX(value) {
-    // console.log("linear solve x ", value, this.minValue, this.maxValue)
     let out = ((value - this.minValue) / (this.maxValue - this.minValue)) * 100;
     return parseInt(Number(out.toPrecision(3)));
   }
