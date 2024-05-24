@@ -171,6 +171,8 @@ FROM documents_with_embeddings, query
 ORDER BY distance_l2;
 ```
 
+!!!
+
 !!! results
 
 ```postgresql
