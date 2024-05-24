@@ -20,7 +20,7 @@ pgml.embed(
 
 | Argument | Description | Example |
 |----------|-------------|---------|
-| transformer | The name of a Hugging Face embedding model. | `intfloat/e5-large-v2` |
+| transformer | The name of a Hugging Face embedding model. | `intfloat/e5-small-v2` |
 | text | The text to embed. This can be a string or the name of a column from a PostgreSQL table. | `'I am your father, Luke'` |
 | kwargs | Additional arguments that are passed to the model during inference. | |
 

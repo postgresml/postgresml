@@ -11,7 +11,7 @@ SELECT pgml.embed('mixedbread-ai/mxbai-embed-large-v1', 'test', '{"prompt": "tes
 SELECT pgml.transform_stream(
   task   => '{
     "task": "text-generation",
-    "model": "TheBloke/zephyr-7B-beta-GPTQ",
+    "model": "meta-llama/Meta-Llama-3-8B-Instruct",
     "model_type": "mistral",
     "revision": "main",
     "device_map": "auto"
