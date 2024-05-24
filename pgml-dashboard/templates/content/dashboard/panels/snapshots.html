@@ -1,3 +1,4 @@
+<% use crate::utils::urls; %>
 <turbo-frame id="snapshots">
   <div class="notebook">
     <section>
@@ -5,7 +6,7 @@
       <ol class="object_list snapshot_list">
         <% for snapshot in snapshots { %>
         <li>
-          <a href="/dashboard?tab=Snapshot&id=<%= snapshot.id %>" data-turbo-frame="_top">
+          <a href="<%- urls::deployment_snapshot_by_id(snapshot.id) %>"  data-turbo-frame="_top">
             <span><%= snapshot.relation_name %> </span>
             <span><%= snapshot.table_size %></span>
             <span><time datetime="<% snapshot.created_at; %>"><% snapshot.created_at; %></time></span>

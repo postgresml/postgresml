@@ -5,7 +5,7 @@ div[data-controller="star"] {
     left: 0;
     transform: translate(-50%, -50%);
 
-    #star-wrapper {
+    .star-wrapper {
         position: relative;
         width: 120px;
         height: 120px;
@@ -22,7 +22,7 @@ div[data-controller="star"] {
         animation:spin 35s linear infinite;
     }
 
-    #star-content {
+    .star-content {
         position: absolute;
         top: 0;
         left: 0;

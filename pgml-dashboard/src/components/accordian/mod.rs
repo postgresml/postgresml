@@ -11,6 +11,7 @@ pub struct Accordian {
     html_contents: Vec<String>,
     html_titles: Vec<String>,
     selected: usize,
+    small_titles: bool,
 }
 
 impl Accordian {
@@ -19,6 +20,7 @@ impl Accordian {
             html_contents: Vec::new(),
             html_titles: Vec::new(),
             selected: 0,
+            small_titles: false,
         }
     }
 
@@ -29,6 +31,11 @@ impl Accordian {
 
     pub fn html_titles<S: ToString>(mut self, html_titles: Vec<S>) -> Self {
         self.html_titles = html_titles.into_iter().map(|s| s.to_string()).collect();
+        self
+    }
+
+    pub fn small_titles(mut self, small_titles: bool) -> Self {
+        self.small_titles = small_titles;
         self
     }
 }

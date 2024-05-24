@@ -1,3 +1,4 @@
+<% use crate::utils::urls; %>
 <turbo-frame id="upload">
   <div class="notebook">
     <section>
@@ -7,7 +8,7 @@
       
       <%- sql.render_once().unwrap() %>
       <h2><span class="material-symbols-outlined">table_rows</span>Next Steps</h2>
-      <p>Your data has been saved in <strong><%= table_name %></strong> table. You can explore the data in a <a href="/dashboard/notebooks/">notebook</a>:</p>
+      <p>Your data has been saved in <strong><%= table_name %></strong> table. You can explore the data in a <a href="<%- urls::deployment_notebooks() %>" data-turbo-frame="_top">notebook</a>:</p>
       <div class="markdown-body">
         <pre><code class="language-sql">SELECT * FROM <%= table_name %> LIMIT 10</code></pre>
       </div>
@@ -18,7 +19,7 @@
       CAST(<%= column %> AS FLOAT4)<% if iter.peek().is_some() { %>,<% } %> <% } %>
     FROM public.<%= table_name %></code></pre>
       </div>
-      <p>You can now run experiments and build models using <a href="/dashboard/notebooks">Notebooks</a>:</p>
+      <p>You can now run experiments and build models using <a href="<%- urls::deployment_notebooks() %>" data-turbo-frame="_top">Notebooks</a>:</p>
       <div class="markdown-body">
         <pre><code class="language-sql">SELECT * FROM <%= table_name %>_view
     LIMIT 10</code></pre>

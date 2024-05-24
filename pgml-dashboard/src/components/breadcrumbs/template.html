@@ -1,14 +1,28 @@
+<%
+  use crate::utils::config;
+  use crate::utils::urls;
+
+  let home_uri = if config::standalone_dashboard() {
+    urls::deployment_notebooks()
+  } else {
+    "/deployments".to_string()
+  };
+%>
+
 <nav>
   <nav aria-label="breadcrumb z-1">
     <ol class="breadcrumb">
-      <!-- not quite ready for this yet -->
-      <!-- <li class="breadcrumb-item body-regular-text <% if links.is_empty() {%>active<% } %>">
-        <a class="d-flex" href="/deployments">
-          <span class="material-symbols-outlined">
-            roofing
-          </span>
+      <li class="breadcrumb-item body-regular-text <% if links.is_empty() {%>active<% } %>">
+        <a class="d-flex gap-2 align-items-center" href="<%- home_uri %>">
+          <span class="icon-owl icomoon"></span>
+          Home
         </a>
-      </li> -->
+      </li>
+
+      <% if !links.is_empty() {%>
+      <div class="vr my-1 mx-2"></div>
+      <% } %>
+
       <% for link in links {
         let active = if link.active {
           "active"

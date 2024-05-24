@@ -157,8 +157,36 @@
     }
   }
 
-  .docs-content-max-width-container {
+.docs-content-max-width-container {
     max-width: $docs-content-max-width;
 
     margin: 0px auto;
-  }
+}
+
+.web-app-content-area {
+    @include media-breakpoint-up(lg) {
+        margin-left: $left-nav-w-collapsed
+    }
+}
+
+.psychedelic-pink-bg {
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    @include media-breakpoint-up(md) {
+        background-image: url("/dashboard/static/images/newsletter_subscribe_background_desktop.png");
+    }
+    background-image: url("/dashboard/static/images/newsletter_subscribe_background_mobile.png");
+    background-color: #{$pink};
+}
+
+#ai-dev-summit-tip-container {
+    .admonition-title {
+        display: none
+    }
+
+    .admonition-tip {
+        padding: 1.75rem;
+        text-align: center;
+    }
+}

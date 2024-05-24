@@ -1,5 +1,5 @@
 div[data-controller="icons-checkmark"] {
-  .active {
+  .blue {
     .first {
       stop-color: #3EDCFF;
     }
@@ -8,12 +8,39 @@ div[data-controller="icons-checkmark"] {
     }
   }
 
-  .inactive {
+  .green {
+    .first {
+      stop-color: #44FFDD;
+    }
+    .second {
+      stop-color: #05C168;
+    }
+  }
+
+  .orange {
+    .first {
+      stop-color: #FFB444;
+    }
+    .second {
+      stop-color: #FF6644;
+    }
+  }
+
+  .white {
     .first {
       stop-color: #{$gray-100};
     }
     .second {
       stop-color: #{$gray-100};
+    }
+  }
+
+  .purple {
+    .first {
+      stop-color: #5337FF;
+    }
+    .second {
+      stop-color: #A175FF;
     }
   }
 

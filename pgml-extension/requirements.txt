@@ -52,3 +52,5 @@ trl
 datasets
 orjson
 langchain
+evaluate
+trl

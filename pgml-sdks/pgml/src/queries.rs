@@ -30,8 +30,8 @@ CREATE TABLE IF NOT EXISTS %s (
   id serial8 PRIMARY KEY,
   created_at timestamp NOT NULL DEFAULT now(),
   source_uuid uuid NOT NULL,
-  document jsonb NOT NULL,
   version jsonb NOT NULL DEFAULT '{}'::jsonb,
+  document jsonb NOT NULL,
   UNIQUE (source_uuid)
 );
 "#;
@@ -217,9 +217,9 @@ ON CONFLICT (chunk_id) DO UPDATE SET ts = EXCLUDED.ts;
 pub const GENERATE_EMBEDDINGS_FOR_CHUNK_IDS: &str = r#"
 INSERT INTO %s (chunk_id, embedding) 
 SELECT 
-  id, 
+  unnest(array_agg(id)), 
   pgml.embed(
-    text => chunk, 
+    inputs => array_agg(chunk), 
     transformer => $1, 
     kwargs => $2 
   ) 

@@ -5,6 +5,7 @@ pub use crate::components::{self, cms::index_link::IndexLink, NavLink, StaticNav
 use crate::Notification;
 use components::notifications::marketing::{AlertBanner, FeatureBanner};
 
+use crate::models::Cluster;
 use sailfish::TemplateOnce;
 use sqlx::postgres::types::PgMoney;
 use sqlx::types::time::PrimitiveDateTime;
@@ -117,22 +118,21 @@ pub struct WebAppBase<'a> {
     pub breadcrumbs: Vec<NavLink<'a>>,
     pub head: Head,
     pub dropdown_nav: StaticNav,
-    pub account_management_nav: StaticNav,
-    pub upper_left_nav: StaticNav,
-    pub lower_left_nav: StaticNav,
+    pub product_left_nav: StaticNav,
     pub body_components: Vec<Component>,
+    pub cluster: Cluster,
 }
 
 impl<'a> WebAppBase<'a> {
     pub fn new(title: &str, context: &crate::Context) -> Self {
         let head = Head::new().title(title).context(&context.head_items);
+        let cluster = context.cluster.clone();
 
         WebAppBase {
             head,
+            cluster,
             dropdown_nav: context.dropdown_nav.clone(),
-            account_management_nav: context.account_management_nav.clone(),
-            upper_left_nav: context.upper_left_nav.clone(),
-            lower_left_nav: context.lower_left_nav.clone(),
+            product_left_nav: context.product_left_nav.clone(),
             ..Default::default()
         }
     }
@@ -144,12 +144,12 @@ impl<'a> WebAppBase<'a> {
 
     pub fn disable_upper_nav(&mut self) -> &mut Self {
         let links: Vec<StaticNavLink> = self
-            .upper_left_nav
+            .product_left_nav
             .links
             .iter()
             .map(|item| item.to_owned().disabled(true))
             .collect();
-        self.upper_left_nav = StaticNav { links };
+        self.product_left_nav = StaticNav { links };
         self
     }
 

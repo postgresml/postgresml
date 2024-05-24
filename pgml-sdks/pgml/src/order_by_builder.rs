@@ -7,6 +7,14 @@ pub(crate) struct OrderByBuilder<'a> {
     column_name: &'a str,
 }
 
+fn str_to_order(order: &str) -> anyhow::Result<Order> {
+    match order {
+        "asc" | "ASC" => Ok(Order::Asc),
+        "desc" | "DESC" => Ok(Order::Desc),
+        _ => anyhow::bail!("Invalid `order_by`. Please refer to examples in the documentation for correct `order_by` syntax"),
+    }
+}
+
 fn build_recursive_access(key: &str, value: &serde_json::Value) -> anyhow::Result<(String, Order)> {
     if value.is_object() {
         let (new_key, new_value) = value
@@ -14,19 +22,15 @@ fn build_recursive_access(key: &str, value: &serde_json::Value) -> anyhow::Resul
             .unwrap()
             .iter()
             .next()
-            .context("Invalid order by")?;
+            .context("Invalid `order_by`. Please refer to examples in the documentation for correct `order_by` syntax")?;
         let (path, order) = build_recursive_access(new_key, new_value)?;
         let path = format!("{},{}", key, path);
         Ok((path, order))
     } else if value.is_string() {
-        let order = match value.as_str().unwrap() {
-            "asc" | "ASC" => Order::Asc,
-            "desc" | "DESC" => Order::Desc,
-            _ => return Err(anyhow::anyhow!("Invalid order by")),
-        };
+        let order = str_to_order(value.as_str().unwrap())?;
         Ok((key.to_string(), order))
     } else {
-        Err(anyhow::anyhow!("Invalid order by"))
+        Err(anyhow::anyhow!("Invalid `order_by`. Please refer to examples in the documentation for correct `order_by` syntax"))
     }
 }
 
@@ -42,17 +46,22 @@ impl<'a> OrderByBuilder<'a> {
     pub fn build(self) -> anyhow::Result<Vec<(SimpleExpr, Order)>> {
         self.filter
             .as_object()
-            .context("Invalid order by")?
+            .context("`order_by` must be an object")?
             .iter()
             .map(|(k, v)| {
-                if let Ok((path, order)) = build_recursive_access(k, v) {
+                if k.starts_with("COLUMN_") {
+                    Ok((
+                        Expr::cust(k.replace("COLUMN_", "")),
+                        str_to_order(v.as_str().context("Invalid `order_by`. Please refer to examples in the documentation for correct `order_by` syntax")?)?,
+                    ))
+                } else if let Ok((path, order)) = build_recursive_access(k, v) {
                     let expr = Expr::cust(format!(
                         "\"{}\".\"{}\"#>'{{{}}}'",
                         self.table_name, self.column_name, path
                     ));
                     Ok((expr, order))
                 } else {
-                    Err(anyhow::anyhow!("Invalid order by"))
+                    Err(anyhow::anyhow!("Invalid `order_by`. Please refer to examples in the documentation for correct `order_by` syntax"))
                 }
             })
             .collect()
