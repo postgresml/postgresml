@@ -21,124 +21,123 @@ PostgresML allows in-database execution of matrix decomposition techniques, enab
 
 ## Step-by-Step Guide to Using Matrix Decomposition
 
-1. **Preparing the data**  
-   We'll create a set of embeddings using modern embedding model with 384 dimensions.
-
-   ```postgresql
-   CREATE TABLE documents_with_embeddings (
-   id SERIAL PRIMARY KEY,
-   body TEXT,
-   embedding FLOAT[] GENERATED ALWAYS AS (pgml.normalize_l2(pgml.embed('intfloat/e5-small-v2', body))) STORED
-   );
-   ```
-    
-   !!! generic
-    
-   !!! code_block time="46.823"
-    
-   ```postgresql
-   INSERT INTO documents_with_embeddings (body)
-   VALUES -- embedding vectors are automatically generated
-       ('Example text data'),
-       ('Another example document'),
-       ('Some other thing');
-   ```
-    
-   !!!
-    
-   !!! results
-    
-   ```postgresql
-   INSERT 0 3
-   ```
-    
-   !!!
-    
-   !!!
-
-2. 
-
-Ensure that your data is loaded into the Postgres database and is in a suitable format for decomposition. For example, we'll treat the if you have embeddings stored in a table:
+### Preparing the data  
+We'll create a set of embeddings using modern embedding model with 384 dimensions.
 
 ```postgresql
-SELECT pgml.load_dataset('digits');
+CREATE TABLE documents_with_embeddings (
+id SERIAL PRIMARY KEY,
+body TEXT,
+embedding FLOAT[] GENERATED ALWAYS AS (pgml.normalize_l2(pgml.embed('intfloat/e5-small-v2', body))) STORED
+);
+```
+ 
+!!! generic
+ 
+!!! code_block time="46.823"
+ 
+```postgresql
+INSERT INTO documents_with_embeddings (body)
+VALUES -- embedding vectors are automatically generated
+    ('Example text data'),
+    ('Another example document'),
+    ('Some other thing'),
+    ('We need a few more documents'),
+    ('At least as many documents as dimensions in the reduction'),
+    ('Which normally isn''t a problem'),
+    ('Unless you''re typing out a bunch of demo data');
+```
+ 
+!!!
+ 
+!!! results
+ 
+```postgresql
+INSERT 0 3
+```
+ 
+!!!
+ 
+!!!
+
+
+!!! generic 
+
+!!! code_block time="14.259ms"
+
+```postgresql
+CREATE VIEW just_embeddings AS
+SELECT embedding
+FROM documents_with_embeddings;
 ```
 
--- create an unlabeled table of the images for unsupervised learning
-CREATE VIEW pgml.digit_vectors AS
-SELECT image FROM pgml.digits;
+!!!
 
--- view the dataset
-SELECT left(image::text, 40) || ',...}' FROM pgml.digit_vectors LIMIT 10;
+!!! results
 
--- train a simple model to cluster the data
-SELECT * FROM pgml.train('Handwritten Digit Components', 'decomposition', 'pgml.digit_vectors', hyperparams => '{"n_components": 3}');
+```postgresql
+ CREATE VIEW
+```
 
--- check out the compenents
-SELECT target, pgml.decompose('Handwritten Digit Components', image) AS pca
-FROM pgml.digits
-LIMIT 10;
+!!!
 
+!!!
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-```sql
-SELECT * FROM embeddings_table;
-## Introduction
-
-## Principal Component Analysis
-
-
-# Decomposition
+### Decomposition
 
 Models can be trained using `pgml.train` on unlabeled data to identify important features within the data. To decompose a dataset into it's principal components, we can use the table or a view. Since decomposition is an unsupervised algorithm, we don't need a column that represents a label as one of the inputs to `pgml.train`.
 
-## Example
+Train a simple model to find reduce dimensions for 384, to the 3:
 
-This example trains models on the sklearn digits dataset -- which is a copy of the test set of the [UCI ML hand-written digits datasets](https://archive.ics.uci.edu/ml/datasets/Optical+Recognition+of+Handwritten+Digits). This demonstrates using a table with a single array feature column for principal component analysis. You could do something similar with a vector column.
+!!! generic
+
+!!! code_block time="48.087 ms"
 
 ```postgresql
-SELECT pgml.load_dataset('digits');
+SELECT * FROM pgml.train('Embedding Components', 'decomposition', 'just_embeddings', hyperparams => '{"n_components": 3}');
+```
 
--- create an unlabeled table of the images for unsupervised learning
-CREATE VIEW pgml.digit_vectors AS
-SELECT image FROM pgml.digits;
+!!!
 
--- view the dataset
-SELECT left(image::text, 40) || ',...}' FROM pgml.digit_vectors LIMIT 10;
+!!! results
 
--- train a simple model to cluster the data
-SELECT * FROM pgml.train('Handwritten Digit Components', 'decomposition', 'pgml.digit_vectors', hyperparams => '{"n_components": 3}');
+```postgresql
+INFO:  Metrics: {"cumulative_explained_variance": 0.69496775, "fit_time": 0.008234134, "score_time": 0.001717504}
+INFO:  Deploying model id: 2
 
--- check out the compenents
-SELECT target, pgml.decompose('Handwritten Digit Components', image) AS pca
-FROM pgml.digits
+       project        |     task      | algorithm | deployed
+----------------------+---------------+-----------+----------
+ Embedding Components | decomposition | pca       | t
+```
+
+!!!
+
+!!!
+
+Note that the input vectors have been reduced from 384 dimensions to 3 that explain 69% of the variance across all samples. That's a more than 100x size reduction, while preserving 69% of the information. These 3 dimensions may be plenty for a course grained first pass ranking with a vector database distance function, like cosine similarity. You can then choose to use the full embeddings, or some other reduction, or the raw text with a reranker model to improve final relevance over the baseline with all the extra time you have now that you've reduced the cost of initial nearest neighbor recall 100x.
+
+You can check out the components for any vector in this space using the reduction model:
+
+!!! generic
+
+!!! code_block time="14.259ms"
+
+```postgresql
+SELECT pgml.decompose('Embedding Components', embedding) AS pca
+FROM just_embeddings
 LIMIT 10;
 ```
 
-Note that the input vectors have been reduced from 64 dimensions to 3, which explain nearly half of the variance across all samples.
+!!!
 
-## Algorithms
-
-All decomposition algorithms implemented by PostgresML are online versions. You may use the [pgml.decompose](../../../api/sql-extension/pgml.decompose "mention") function to decompose novel data points after the model has been trained.
-
-| Algorithm                 | Reference                                                                                                           |
-|---------------------------|---------------------------------------------------------------------------------------------------------------------|
-| `pca` | [PCA](https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html) |
-
-### Examples
+!!! results
 
 ```postgresql
-SELECT * FROM pgml.train('Handwritten Digit Clusters', algorithm => 'pca', hyperparams => '{"n_components": 10}');
+ CREATE VIEW
 ```
+
+!!!
+
+!!!
+
+Exercise for the reader: Where is the sweet spot for number of dimensions, yet preserving say, 99% of the relevance data? How much of the cumulative explained variance do you need to preserve 100% to return the top N results for the reranker, if you feed the reranker top K using cosine similarity or another vector distance function?
