@@ -22,10 +22,7 @@ pipeline = pgml.Pipeline(
                 "model": "recursive_character",
             },
             "semantic_search": {
-                "model": "hkunlp/instructor-base",
-                "parameters": {
-                    "instruction": "Represent the Wikipedia document for retrieval: "
-                },
+                "model": "intfloat/e5-small-v2",
             },
         },
     },

@@ -1267,10 +1267,7 @@ impl SiteSearch {
                             "configuration": "english"
                         },
                         "semantic_search": {
-                            "model": "hkunlp/instructor-base",
-                            "parameters": {
-                                "instruction": "Represent the Wikipedia document for retrieval: "
-                            },
+                            "model": "intfloat/e5-small-v2",
                         }
                     },
                     "contents": {
@@ -1281,10 +1278,7 @@ impl SiteSearch {
                             "configuration": "english"
                         },
                         "semantic_search": {
-                            "model": "hkunlp/instructor-base",
-                            "parameters": {
-                                "instruction": "Represent the Wikipedia document for retrieval: "
-                            },
+                            "model": "intfloat/e5-small-v2",
                         }
                     }
                 })

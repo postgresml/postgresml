@@ -70,7 +70,7 @@ impl Default for Model {
 impl Model {
     /// Creates a new [Model]
     pub fn new(name: Option<String>, source: Option<String>, parameters: Option<Json>) -> Self {
-        let name = name.unwrap_or("intfloat/e5-small".to_string());
+        let name = name.unwrap_or("intfloat/e5-small-v2".to_string());
         let parameters = parameters.unwrap_or(Json(serde_json::json!({})));
         let source = source.unwrap_or("pgml".to_string());
         let runtime: ModelRuntime = source.as_str().into();

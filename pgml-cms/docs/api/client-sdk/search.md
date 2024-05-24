@@ -10,17 +10,14 @@ This section will assume we have previously ran the following code:
 const pipeline = pgml.newPipeline("test_pipeline", {
   abstract: {
     semantic_search: {
-      model: "intfloat/e5-small",
+      model: "intfloat/e5-small-v2",
     },
     full_text_search: { configuration: "english" },
   },
   body: {
     splitter: { model: "recursive_character" },
     semantic_search: {
-      model: "hkunlp/instructor-base",
-      parameters: {
-        instruction: "Represent the Wikipedia document for retrieval: ",
-      }
+      model: "intfloat/e5-small-v2",
     },
   },
 });
@@ -36,17 +33,14 @@ pipeline = Pipeline(
     {
         "abstract": {
             "semantic_search": {
-                "model": "intfloat/e5-small",
+                "model": "intfloat/e5-small-v2",
             },
             "full_text_search": {"configuration": "english"},
         },
         "body": {
             "splitter": {"model": "recursive_character"},
             "semantic_search": {
-                "model": "hkunlp/instructor-base",
-                "parameters": {
-                    "instruction": "Represent the Wikipedia document for retrieval: ",
-                },
+                "model": "intfloat/e5-small-v2",
             },
         },
     },

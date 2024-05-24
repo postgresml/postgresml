@@ -4,7 +4,7 @@ description: Example for Semantic Search
 
 # Semantic Search Using Instructor Model
 
-This tutorial demonstrates using the `pgml` SDK to create a collection, add documents, build a pipeline for vector search, make a sample query, and archive the collection when finished.  In this tutorial we use [hkunlp/instructor-base](https://huggingface.co/hkunlp/instructor-base), a more advanced embeddings model that takes parameters when doing embedding and recall.
+This tutorial demonstrates using the `pgml` SDK to create a collection, add documents, build a pipeline for vector search, make a sample query, and archive the collection when finished.  In this tutorial we use [intfloat/e5-small-v2](https://huggingface.co/intfloat/e5-small-v2).
 
 [Link to full JavaScript implementation](https://github.com/postgresml/postgresml/blob/master/pgml-sdks/pgml/javascript/examples/question_answering.js)
 
@@ -71,7 +71,7 @@ A pipeline encapsulating a model and splitter is created and added to the collec
     text: {
       splitter: { model: "recursive_character" },
       semantic_search: {
-        model: "intfloat/e5-small",
+        model: "intfloat/e5-small-v2",
       },
     },
   });
@@ -88,10 +88,7 @@ A pipeline encapsulating a model and splitter is created and added to the collec
             "text": {
                 "splitter": {"model": "recursive_character"},
                 "semantic_search": {
-                    "model": "hkunlp/instructor-base",
-                    "parameters": {
-                        "instruction": "Represent the Wikipedia document for retrieval: "
-                    },
+                    "model": "intfloat/e5-small-v2",
                 },
             }
         },

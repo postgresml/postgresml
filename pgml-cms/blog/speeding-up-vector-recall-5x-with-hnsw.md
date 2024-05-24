@@ -45,7 +45,7 @@ Let's run that query again:
 ```postgresql
 WITH request AS (
   SELECT pgml.embed(
-    'intfloat/e5-large',
+    'intfloat/e5-small-v2',
     'query: Best 1980''s scifi movie'
   )::vector(1024) AS embedding
 )
@@ -100,7 +100,7 @@ Now let's try the query again utilizing the new HNSW index we created.
 ```postgresql
 WITH request AS (
   SELECT pgml.embed(
-    'intfloat/e5-large',
+    'intfloat/e5-small-v2',
     'query: Best 1980''s scifi movie'
   )::vector(1024) AS embedding
 )

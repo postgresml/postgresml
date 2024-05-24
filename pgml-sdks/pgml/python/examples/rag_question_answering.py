@@ -23,7 +23,7 @@ async def main():
         {
             "text": {
                 "splitter": {"model": "recursive_character"},
-                "semantic_search": {"model": "intfloat/e5-small"},
+                "semantic_search": {"model": "intfloat/e5-small-v2"},
             }
         },
     )

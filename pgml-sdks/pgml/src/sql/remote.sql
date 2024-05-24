@@ -20,12 +20,12 @@
 
   SELECT * FROM dblink(
     '{db_name}',
-    'SELECT pgml.embed(''intfloat/e5-small'', ''test postgresml embedding'') AS embedding'
+    'SELECT pgml.embed(''intfloat/e5-small-v2'', ''test postgresml embedding'') AS embedding'
   ) AS t(embedding real[386]);
 
   CREATE FUNCTION pgml_embed_e5_small(text) RETURNS real[386] AS $$
     SELECT * FROM dblink(
       '{db_name}',
-      'SELECT pgml.embed(''intfloat/e5-small'', ''' || $1 || ''') AS embedding'
+      'SELECT pgml.embed(''intfloat/e5-small-v2'', ''' || $1 || ''') AS embedding'
     ) AS t(embedding real[386]);
   $$ LANGUAGE SQL;

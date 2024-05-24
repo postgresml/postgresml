@@ -14,7 +14,7 @@ BEGIN
     INTO curr_val;
 
     -- Use the correct syntax to call pgml.embed and store the result
-    PERFORM embed FROM pgml.embed('intfloat/e5-large', curr_val);
+    PERFORM embed FROM pgml.embed('intfloat/e5-small-v2', curr_val);
 
     curr_id := curr_id + batch_size;
     EXIT WHEN curr_id >= total_records;
@@ -26,7 +26,7 @@ BEGIN
     INTO curr_val;
 
     -- Use the correct syntax to call pgml.embed and store the result
-    PERFORM embed FROM pgml.embed('intfloat/e5-large', curr_val);
+    PERFORM embed FROM pgml.embed('intfloat/e5-small-v2', curr_val);
 
 END;
 $$;

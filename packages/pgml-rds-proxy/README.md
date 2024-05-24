@@ -76,7 +76,7 @@ SELECT
 FROM
     dblink(
         'postgresml',
-        'SELECT * FROM pgml.embed(''intfloat/e5-small'', ''embed this text'') AS embedding'
+        'SELECT * FROM pgml.embed(''intfloat/e5-small-v2'', ''embed this text'') AS embedding'
 ) AS t1(embedding real[386]);
 ```
 

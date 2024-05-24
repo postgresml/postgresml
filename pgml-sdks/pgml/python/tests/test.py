@@ -95,12 +95,16 @@ async def test_can_search():
     pipeline = pgml.Pipeline(
         "test_p_p_tcs_0",
         {
+<<<<<<< Updated upstream
             "title": {
                 "semantic_search": {
                     "model": "intfloat/e5-small-v2",
                     "parameters": {"prompt": "passage: "},
                 }
             },
+=======
+            "title": {"semantic_search": {"model": "intfloat/e5-small-v2"}},
+>>>>>>> Stashed changes
             "body": {
                 "splitter": {"model": "recursive_character"},
                 "semantic_search": {
@@ -148,18 +152,26 @@ async def test_can_vector_search():
         "test_p_p_tcvs_0",
         {
             "title": {
+<<<<<<< Updated upstream
                 "semantic_search": {
                     "model": "intfloat/e5-small-v2",
                     "parameters": {"prompt": "passage: "},
                 },
+=======
+                "semantic_search": {"model": "intfloat/e5-small-v2"},
+>>>>>>> Stashed changes
                 "full_text_search": {"configuration": "english"},
             },
             "text": {
                 "splitter": {"model": "recursive_character"},
+<<<<<<< Updated upstream
                 "semantic_search": {
                     "model": "intfloat/e5-small-v2",
                     "parameters": {"prompt": "passage: "},
                 },
+=======
+                "semantic_search": {"model": "intfloat/e5-small-v2"},
+>>>>>>> Stashed changes
             },
         },
     )

@@ -137,7 +137,7 @@ We can find a customer that our embeddings model feels is close to the sentiment
 ```postgresql
 WITH request AS (
   SELECT pgml.embed(
-    'intfloat/e5-large',
+    'intfloat/e5-small-v2',
     'query: I love all Star Wars, but Empire Strikes Back is particularly amazing'
   )::vector(1024) AS embedding
 )
@@ -214,7 +214,7 @@ Now we can write our personalized SQL query. It's nearly the same as our query f
 -- create a request embedding on the fly
 WITH request AS (
   SELECT pgml.embed(
-    'intfloat/e5-large',
+    'intfloat/e5-small-v2',
     'query: Best 1980''s scifi movie'
   )::vector(1024) AS embedding
 ),

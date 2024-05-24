@@ -10,7 +10,7 @@ const main = async () => {
     text: {
       splitter: { model: "recursive_character" },
       semantic_search: {
-        model: "intfloat/e5-small",
+        model: "intfloat/e5-small-v2",
       },
     },
   });
