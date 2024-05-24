@@ -214,8 +214,9 @@ FROM documents;
 
 !!!
 
-You can see the near 2.5x speedup when generating 3 embeddings in a batch, because the model weights only need to be streamed from GPU RAM to the processors a single time. You should consider batch sizes from 10-100 embeddings at a time when do bulk operations to improve throughput and reduce costs. 
+You can see the near 2.5x speedup when generating 3 embeddings in a batch, because the model weights only need to be streamed from GPU RAM to the processors a single time. You should consider batch sizes from 10-100 embeddings at a time when do bulk operations to improve throughput and reduce costs.
 
 ## Scalability
 
 PostgresML serverless instances have access to multiple GPUs that be used simultaneously across different PostgreSQL connections. For large jobs, you may want to create multiple worker threads/processes that operate across your dataset in batches on their own Postgres Connection.
+

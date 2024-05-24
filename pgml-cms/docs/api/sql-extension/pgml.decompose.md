@@ -4,7 +4,7 @@ description: Decompose an input vector into it's principal components
 
 # pgml.decompose()
 
-Matrix decomposition reduces the number of dimensions in a vector, to improve relevance and reduce computation required.
+Matrix decomposition reduces the number of dimensions in a vector, to improve relevance and reduce computation required. 
 
 ## API
 
@@ -17,10 +17,10 @@ pgml.decompose(
 
 ### Parameters
 
-| Parameter      | Example                         | Description                                              |
-|----------------|---------------------------------|----------------------------------------------------------|
-| `project_name` | `'My First PostgresML Project'` | The project name used to train models in `pgml.train()`. |
-| `vector`       | `ARRAY[0.1, 0.45, 1.0]`         | The feature vector to transform.                         |
+| Parameter      | Example                         | Description                                                             |
+|----------------|---------------------------------|-------------------------------------------------------------------------|
+| `project_name` | `'My First PostgresML Project'` | The project name used to train a decomposition model in `pgml.train()`. |
+| `vector`       | `ARRAY[0.1, 0.45, 1.0]`         | The feature vector to transform.                                        |
 
 ## Example
 

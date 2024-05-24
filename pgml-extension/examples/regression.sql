@@ -81,7 +81,7 @@ SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'random_forest', h
 -- gradient boosting
 SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'xgboost', hyperparams => '{"n_estimators": 10}');
 SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'catboost', hyperparams => '{"n_estimators": 10}');
---SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'xgboost_random_forest', hyperparams => '{"n_estimators": 10}');
+-- SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'xgboost_random_forest', hyperparams => '{"n_estimators": 10}');
 -- SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'lightgbm', hyperparams => '{"n_estimators": 1}');
 -- Histogram Gradient Boosting is too expensive for normal tests on even a toy dataset
 -- SELECT * FROM pgml.train('Diabetes Progression', algorithm => 'hist_gradient_boosting', hyperparams => '{"max_iter": 10}');
@@ -125,11 +125,3 @@ SELECT * FROM pgml.deploy('Diabetes Progression', 'best_score', 'svm');
 SELECT target, pgml.predict('Diabetes Progression', ARRAY[age, sex, bmi, bp, s1, s2, s3, s4, s5, s6]) AS prediction
 FROM pgml.diabetes 
 LIMIT 10;
-
-begin;
-delete from pgml.models;
-delete from pgml.projects;
-delete from pgml.snapshots;
-delete from pgml.files;
-delete from pgml.deployments;
-commit;
