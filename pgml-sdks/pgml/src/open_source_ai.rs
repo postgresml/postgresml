@@ -43,17 +43,6 @@ fn try_model_nice_name_to_model_name_and_parameters(
             .into(),
         )),
 
-        "meta-llama/Meta-Llama-3-8B-Instruct" => Some((
-            "meta-llama/Meta-Llama-3-8B-Instruct",
-            serde_json::json!({
-              "task": "conversational",
-              "model": "meta-llama/Meta-Llama-3-8B-Instruct",
-              "device_map": "auto",
-              "torch_dtype": "bfloat16"
-            })
-            .into(),
-        )),
-
         "TheBloke/Llama-2-7B-Chat-GPTQ" => Some((
             "TheBloke/Llama-2-7B-Chat-GPTQ",
             serde_json::json!({
