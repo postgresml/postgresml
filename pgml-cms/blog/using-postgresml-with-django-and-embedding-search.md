@@ -39,20 +39,20 @@ Our Django application has only one model, the `TodoItem`. It comes with a descr
 ```python
 embedding = models.GeneratedField(
     expression=EmbedSmallExpression("description"),
-    output_field=VectorField(dimensions=384),
+    output_field=VectorField(dimensions=768),
     db_persist=True,
 )    
 ```
 
 This little code snippet contains quite a bit of functionality. First, we use a `GeneratedField` which is a database column that's automatically populated with data from the database. The application doesn't need to input anything when a model instance is created. This is a very powerful technique to ensure data durability and accuracy.
 
-Secondly, the generated column is using a `VectorField`. This comes from the `pgvector.django` package and defines a `vector(384)` column: a vector with 384 dimensions.
+Secondly, the generated column is using a `VectorField`. This comes from the `pgvector.django` package and defines a `vector(768)` column: a vector with 768 dimensions.
 
 Lastly, the `expression` argument tells Django how to generate this field inside the database. Since PostgresML doesn't (yet) come with a Django plugin, we had to write the expression class ourselves. Thankfully, Django makes this very easy:
 
 ```python
 class EmbedSmallExpression(models.Expression):
-    output_field = VectorField(null=False, blank=False, dimensions=384)
+    output_field = VectorField(null=False, blank=False, dimensions=768)
 
     def __init__(self, field):
         self.embedding_field = field
@@ -70,7 +70,7 @@ Djago Rest Framework provides the bulk of the implementation. We just added a `M
 ```python
 results = TodoItem.objects.annotate(
     similarity=RawSQL(
-        "pgml.embed('Alibaba-NLP/gte-base-en-v1.5', %s)::vector(384) &#x3C;=> embedding",
+        "pgml.embed('Alibaba-NLP/gte-base-en-v1.5', %s)::vector(768) &#x3C;=> embedding",
         [query],
     )
 ).order_by("similarity")
@@ -113,7 +113,7 @@ In return, you'll get your to-do item alongside the embedding of the `descriptio
 }
 ```
 
-The embedding contains 384 floating point numbers; we removed most of them in this blog post to make sure it fits on the page.
+The embedding contains 768 floating point numbers; we removed most of them in this blog post to make sure it fits on the page.
 
 You can try creating multiple to-do items for fun and profit. If the description is changed, so will the embedding, demonstrating how the `Alibaba-NLP/gte-base-en-v1.5` model understands the semantic meaning of your text.
 
