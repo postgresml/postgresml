@@ -62,7 +62,7 @@ Here is a simple example using zephyr-7b-beta, one of the best 7 billion paramet
 const pgml = require("pgml");
 const client = pgml.newOpenSourceAI();
 const results = client.chat_completions_create(
-  "HuggingFaceH4/zephyr-7b-beta",
+  "meta-llama/Meta-Llama-3-8B-Instruct",
   [
     {
       role: "system",
@@ -83,7 +83,7 @@ console.log(results);
 import pgml
 client = pgml.OpenSourceAI()
 results = client.chat_completions_create(
-    "HuggingFaceH4/zephyr-7b-beta",
+    "meta-llama/Meta-Llama-3-8B-Instruct",
     [
         {
             "role": "system",
@@ -114,7 +114,7 @@ print(results)
   ],
   "created": 1701291672,
   "id": "abf042d2-9159-49cb-9fd3-eef16feb246c",
-  "model": "HuggingFaceH4/zephyr-7b-beta",
+  "model": "meta-llama/Meta-Llama-3-8B-Instruct",
   "object": "chat.completion",
   "system_fingerprint": "eecec9d4-c28b-5a27-f90b-66c3fb6cee46",
   "usage": {
@@ -234,7 +234,7 @@ We also have asynchronous versions of the `chat_completions_create` and `chat_co
 const pgml = require("pgml");
 const client = pgml.newOpenSourceAI();
 const results = await client.chat_completions_create_async(
-  "HuggingFaceH4/zephyr-7b-beta",
+  "meta-llama/Meta-Llama-3-8B-Instruct",
   [
     {
       role: "system",
@@ -255,7 +255,7 @@ console.log(results);
 import pgml
 client = pgml.OpenSourceAI()
 results = await client.chat_completions_create_async(
-    "HuggingFaceH4/zephyr-7b-beta",
+    "meta-llama/Meta-Llama-3-8B-Instruct",
     [
         {
             "role": "system",
@@ -284,7 +284,7 @@ results = await client.chat_completions_create_async(
   ],
   "created": 1701291672,
   "id": "abf042d2-9159-49cb-9fd3-eef16feb246c",
-  "model": "HuggingFaceH4/zephyr-7b-beta",
+  "model": "meta-llama/Meta-Llama-3-8B-Instruct",
   "object": "chat.completion",
   "system_fingerprint": "eecec9d4-c28b-5a27-f90b-66c3fb6cee46",
   "usage": {
@@ -328,7 +328,7 @@ while (!result.done) {
 import pgml
 client = pgml.OpenSourceAI()
 results = await client.chat_completions_create_stream_async(
-    "HuggingFaceH4/zephyr-7b-beta",
+    "meta-llama/Meta-Llama-3-8B-Instruct",
     [
         {
             "role": "system",
@@ -389,6 +389,8 @@ We have truncated the output to two items
 
 We have tested the following models and verified they work with the OpenSourceAI:
 
+* meta-llama/Meta-Llama-3-8B-Instruct
+* meta-llama/Meta-Llama-3-70B-Instruct
 * Phind/Phind-CodeLlama-34B-v2
 * HuggingFaceH4/zephyr-7b-beta
 * deepseek-ai/deepseek-llm-7b-chat
@@ -399,7 +401,6 @@ We have tested the following models and verified they work with the OpenSourceAI
 * Open-Orca/Mistral-7B-OpenOrca
 * teknium/OpenHermes-2.5-Mistral-7B
 * mistralai/Mistral-7B-Instruct-v0.1
-* HuggingFaceH4/zephyr-7b-beta
 
 Any model on hugging face should work with our OpenSourceAI. Here is an example of using one of the more popular quantized models from [TheBloke](https://huggingface.co/TheBloke).
 

@@ -75,7 +75,7 @@ vars:
   splitter_name: "recursive_character"
   splitter_parameters: {"chunk_size": 100, "chunk_overlap": 20}
   task: "embedding"
-  model_name: "intfloat/e5-base"
+  model_name: "intfloat/e5-small-v2"
   query_string: 'Lorem ipsum 3'
   limit: 2
 ```
@@ -84,7 +84,7 @@ Here's a summary of the key parameters:
 - `splitter_name`: Specifies the name of the splitter, set as "recursive_character".
 - `splitter_parameters`: Defines the parameters for the splitter, such as a chunk size of 100 and a chunk overlap of 20.
 - `task`: Indicates the task being performed, specified as "embedding".
-- `model_name`: Specifies the name of the model to be used, set as "intfloat/e5-base".
+- `model_name`: Specifies the name of the model to be used, set as "intfloat/e5-small-v2".
 - `query_stringd`: Provides a query string, set as 'Lorem ipsum 3'.
 - `limit`: Specifies a limit of 2, indicating the maximum number of results to be processed.
 
