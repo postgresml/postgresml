@@ -127,9 +127,7 @@ cp .env.template .env
 ```bash
 OPENAI_API_KEY=<OPENAI_API_KEY>
 DATABASE_URL=<POSTGRES_DATABASE_URL starts with postgres://>
-MODEL=hkunlp/instructor-xl
-MODEL_PARAMS={"instruction": "Represent the document for retrieval: "}
-QUERY_PARAMS={"instruction": "Represent the question for retrieving supporting documents: "}
+MODEL=Alibaba-NLP/gte-base-en-v1.5
 SYSTEM_PROMPT=<> # System prompt used for OpenAI chat completion
 BASE_PROMPT=<> # Base prompt used for OpenAI chat completion for each turn
 SLACK_BOT_TOKEN=<SLACK_BOT_TOKEN> # Slack bot token to run Slack chat service
@@ -332,7 +330,7 @@ Once the discord app is running, you can interact with the chatbot on Discord as
 
 ### PostgresML vs. Hugging Face + Pinecone
 
-To evaluate query latency, we performed an experiment with 10,000 Wikipedia documents from the SQuAD dataset. Embeddings were generated using the intfloat/e5-large model.
+To evaluate query latency, we performed an experiment with 10,000 Wikipedia documents from the SQuAD dataset. Embeddings were generated using the Alibaba-NLP/gte-base-en-v1.5 model.
 
 For PostgresML, we used a GPU-powered serverless database running on NVIDIA A10G GPUs with client in us-west-2 region. For HuggingFace, we used their inference API endpoint running on NVIDIA A10G GPUs in us-east-1 region and a client in the same us-east-1 region. Pinecone was used as the vector search index for HuggingFace embeddings.
 

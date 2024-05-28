@@ -80,7 +80,7 @@ const pipeline = pgml.newPipeline("sample_pipeline", {
   text: {
     splitter: { model: "recursive_character" },
     semantic_search: {
-      model: "intfloat/e5-small",
+      model: "Alibaba-NLP/gte-base-en-v1.5",
     },
   },
 });
@@ -98,7 +98,7 @@ pipeline = Pipeline(
         "text": {
             "splitter": { "model": "recursive_character" },
             "semantic_search": {
-                "model": "intfloat/e5-small",
+                "model": "Alibaba-NLP/gte-base-en-v1.5",
             },
         },
     },
@@ -111,7 +111,7 @@ await collection.add_pipeline(pipeline)
 
 The pipeline configuration is a key/value object, where the key is the name of a column in a document, and the value is the action the SDK should perform on that column. 
 
-In this example, the documents contain a column called `text` which we are instructing the SDK to chunk the contents of using the recursive character splitter, and to embed those chunks using the Hugging Face `intfloat/e5-small` embeddings model.
+In this example, the documents contain a column called `text` which we are instructing the SDK to chunk the contents of using the recursive character splitter, and to embed those chunks using the Hugging Face `Alibaba-NLP/gte-base-en-v1.5` embeddings model.
 
 ### Add documents
 

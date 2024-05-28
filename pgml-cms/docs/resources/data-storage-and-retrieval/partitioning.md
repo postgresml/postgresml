@@ -272,7 +272,7 @@ To perform an ANN search using the indexes we created, we don't have to do anyth
 SELECT
     review_body,
     review_embedding_e5_large <=> pgml.embed(
-        'intfloat/e5-large',
+        'Alibaba-NLP/gte-base-en-v1.5',
         'this chair was amazing'
     )::vector(1024) AS cosine_distance
 FROM amazon_reviews_with_embedding

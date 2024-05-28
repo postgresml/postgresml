@@ -177,7 +177,7 @@ ALTER TABLE bulk_access_users
 ADD COLUMN embedding vector(384);
 
 UPDATE bulk_access_users
-SET embedding = pgml.embed('intfloat/e5-small', email);
+SET embedding = pgml.embed('Alibaba-NLP/gte-base-en-v1.5', email);
 ```
 
 {% endtab %}

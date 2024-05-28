@@ -20,7 +20,7 @@ async def main():
     data = load_dataset("squad", split="train")
     data = data.to_pandas()
     data = data.drop_duplicates(subset=["context"])
-    model_id = await collection.register_model(model_name="intfloat/e5-large")
+    model_id = await collection.register_model(model_name="Alibaba-NLP/gte-base-en-v1.5")
     run_times = []
     for query in data["context"][0:100]:
         start = time()

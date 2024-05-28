@@ -58,7 +58,7 @@ class EmbedSmallExpression(models.Expression):
         self.embedding_field = field
 
     def as_sql(self, compiler, connection, template=None):
-        return f"pgml.embed('intfloat/e5-small', {self.embedding_field})", None
+        return f"pgml.embed('Alibaba-NLP/gte-base-en-v1.5', {self.embedding_field})", None
 ```
 
 And that's it! In just a few lines of code, we're generating and storing high quality embeddings automatically in our database. No additional setup is required, and all the AI complexity is taken care of by PostgresML.
@@ -70,7 +70,7 @@ Djago Rest Framework provides the bulk of the implementation. We just added a `M
 ```python
 results = TodoItem.objects.annotate(
     similarity=RawSQL(
-        "pgml.embed('intfloat/e5-small', %s)::vector(384) &#x3C;=> embedding",
+        "pgml.embed('Alibaba-NLP/gte-base-en-v1.5', %s)::vector(384) &#x3C;=> embedding",
         [query],
     )
 ).order_by("similarity")
@@ -115,7 +115,7 @@ In return, you'll get your to-do item alongside the embedding of the `descriptio
 
 The embedding contains 384 floating point numbers; we removed most of them in this blog post to make sure it fits on the page.
 
-You can try creating multiple to-do items for fun and profit. If the description is changed, so will the embedding, demonstrating how the `intfloat/e5-small` model understands the semantic meaning of your text.
+You can try creating multiple to-do items for fun and profit. If the description is changed, so will the embedding, demonstrating how the `Alibaba-NLP/gte-base-en-v1.5` model understands the semantic meaning of your text.
 
 ### Searching
 

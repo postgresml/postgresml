@@ -31,8 +31,8 @@ Using a SQL function for interacting with open-source models makes things really
 
 ```postgresql
 SELECT pgml.embed(
-  'intfloat/e5-small', 
-  'This text will be embedded using the intfloat/e5-small model.'
+  'Alibaba-NLP/gte-base-en-v1.5', 
+  'This text will be embedded using the Alibaba-NLP/gte-base-en-v1.5 model.'
 ) AS embedding;
 ```
 

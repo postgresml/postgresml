@@ -195,9 +195,8 @@ splitter_params = os.environ.get(
 )
 
 splitter = Splitter(splitter_name, splitter_params)
-model_name = "hkunlp/instructor-xl"
-model_embedding_instruction = "Represent the %s document for retrieval: " % (bot_topic)
-model_params = {"instruction": model_embedding_instruction}
+model_name = "Alibaba-NLP/gte-base-en-v1.5"
+model_params = {}
 
 model = Model(model_name, "pgml", model_params)
 pipeline = Pipeline(args.collection_name + "_pipeline", model, splitter)
