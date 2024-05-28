@@ -45,7 +45,7 @@ CREATE TABLE documents_with_embeddings
 (
     id        serial PRIMARY KEY,
     body      text,
-    embedding float[] GENERATED ALWAYS AS (pgml.normalize_l2(pgml.embed('Alibaba-NLP/gte-base-en-v1.5', body))) STORED
+    embedding float[] GENERATED ALWAYS AS (pgml.normalize_l2(pgml.embed('intfloat/e5-small-v2', body))) STORED
 );
 ```
 
