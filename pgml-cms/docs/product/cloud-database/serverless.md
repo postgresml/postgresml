@@ -16,9 +16,23 @@ Once logged in, select "New Database" from the left menu and choose the Serverle
 <figure><img src="../../.gitbook/assets/image (2).png" alt=""><figcaption><p>Choose the Serverless plan</p></figcaption></figure>
 
 
+### Serverless Pricing 
+Storage is charged per GB/mo, and all requests by CPU or GPU millisecond of compute required to perform them.
+
+#### Vector & Relational Database
+| NAME | PRICING |
+| :--- | ---: |
+| Tables & Index Storage | $0.20 GB per month |
+| Retrieval, Filtering, Ranking & other Queries | $7.50 per hour |
+| Embeddings | Included w/ Queries |
+| LLMs | Included w/ Queries |
+| Fine Tuning | Included w/ Queries |
+| Machine Learning | Included w/ Queries |
+
+
 ### Serverless Models
 
-The Serverless PostgresML database has a predefined set of state-of-the-art large language models that should satisfy most use cases:
+Serverless AI engines come with predefined models and a flexible pricing structure
 
 #### Embedding Models
 | NAME | PARAMETERS (M) | MAX INPUT TOKENS | DIMENSIONS | STRENGTHS |
