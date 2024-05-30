@@ -1,7 +1,7 @@
 ---
 description: >-
   Building LLM infrastructure presents a series of tradeoffs that aren't obvious at the outset, even for seasoned teams. This is our journey to high-performance LLMs at scale. 
-featured: false
+featured: true
 tags: [engineering]
 image: ".gitbook/assets/serverless_llms.png"
 ---
