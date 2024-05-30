@@ -50,7 +50,7 @@ const pipeline = pgml.newPipeline("my_pipeline", {
   text: {
     splitter: { model: "recursive_character" },
     semantic_search: {
-      model: "intfloat/e5-small",
+      model: "intfloat/e5-small-v2",
     },
   },
 });
@@ -90,7 +90,7 @@ pipeline = Pipeline(
         "text": {
             "splitter": {"model": "recursive_character"},
             "semantic_search": {
-                "model": "intfloat/e5-small",
+                "model": "intfloat/e5-small-v2",
             },
         },
     },

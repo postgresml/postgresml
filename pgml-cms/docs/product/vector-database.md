@@ -52,7 +52,7 @@ At first, the column is empty. To generate embeddings, we can use the PostgresML
 UPDATE
     usa_house_prices
 SET embedding = pgml.embed(
-    'intfloat/e5-small',
+    'intfloat/e5-small-v2',
     address
 );
 ```
@@ -121,7 +121,7 @@ SELECT
 FROM usa_house_prices
 ORDER BY 
     embedding <=> pgml.embed(
-        'intfloat/e5-small', 
+        'intfloat/e5-small-v2', 
         '1 Infinite Loop'
     )::vector(384)
 LIMIT 3;
@@ -212,7 +212,7 @@ EXPLAIN SELECT
 FROM usa_house_prices
 ORDER BY 
     embedding <=> pgml.embed(
-        'intfloat/e5-small',
+        'intfloat/e5-small-v2',
         '1 Infinite Loop'
     )::vector(384)
 LIMIT 3;

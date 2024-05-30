@@ -73,7 +73,7 @@ A pipeline encapsulating a model and splitter is created and added to the collec
     text: {
       splitter: { model: "recursive_character" },
       semantic_search: {
-        model: "intfloat/e5-small",
+        model: "intfloat/e5-small-v2",
       },
     },
   });
@@ -89,7 +89,7 @@ A pipeline encapsulating a model and splitter is created and added to the collec
         {
             "text": {
                 "splitter": {"model": "recursive_character"},
-                "semantic_search": {"model": "intfloat/e5-small"},
+                "semantic_search": {"model": "intfloat/e5-small-v2"},
             }
         },
     )

@@ -23,7 +23,7 @@ async def main():
         {
             "text": {
                 "splitter": {"model": "recursive_character"},
-                "semantic_search": {"model": "intfloat/e5-small"},
+                "semantic_search": {"model": "intfloat/e5-small-v2"},
             }
         },
     )
@@ -80,7 +80,7 @@ async def main():
 
     # Using OpenSource LLMs for Chat Completion
     client = OpenSourceAI()
-    chat_completion_model = "HuggingFaceH4/zephyr-7b-beta"
+    chat_completion_model = "meta-llama/Meta-Llama-3-8B-Instruct"
     console.print("Generating response using %s LLM..."%chat_completion_model)
     response = client.chat_completions_create(
         model=chat_completion_model,

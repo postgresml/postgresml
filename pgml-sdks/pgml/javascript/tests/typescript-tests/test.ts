@@ -74,7 +74,11 @@ it("can create builtins", () => {
 
 it("can search", async () => {
   let pipeline = pgml.newPipeline("test_j_p_cs", {
+<<<<<<< Updated upstream
     title: { semantic_search: { model: "intfloat/e5-small-v2", parameters: { prompt: "passage: " } } },
+=======
+    title: { semantic_search: { model: "intfloat/e5-small-v2" } },
+>>>>>>> Stashed changes
     body: {
       splitter: { model: "recursive_character" },
       semantic_search: {
@@ -115,7 +119,11 @@ it("can search", async () => {
 it("can vector search", async () => {
   let pipeline = pgml.newPipeline("1", {
     title: {
+<<<<<<< Updated upstream
       semantic_search: { model: "intfloat/e5-small-v2", parameters: { prompt: "passage: " } },
+=======
+      semantic_search: { model: "intfloat/e5-small-v2" },
+>>>>>>> Stashed changes
       full_text_search: { configuration: "english" },
     },
     body: {

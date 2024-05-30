@@ -43,11 +43,11 @@ fn try_model_nice_name_to_model_name_and_parameters(
             .into(),
         )),
 
-        "HuggingFaceH4/zephyr-7b-beta" => Some((
-            "HuggingFaceH4/zephyr-7b-beta",
+        "meta-llama/Meta-Llama-3-8B-Instruct" => Some((
+            "meta-llama/Meta-Llama-3-8B-Instruct",
             serde_json::json!({
               "task": "conversational",
-              "model": "HuggingFaceH4/zephyr-7b-beta",
+              "model": "meta-llama/Meta-Llama-3-8B-Instruct",
               "device_map": "auto",
               "torch_dtype": "bfloat16"
             })

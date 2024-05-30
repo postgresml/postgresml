@@ -372,10 +372,14 @@ mod tests {
                 json!({
                     "title": {
                         "semantic_search": {
+<<<<<<< Updated upstream
                             "model": "intfloat/e5-small-v2",
                             "parameters": {
                                 "prompt": "passage: "
                             }
+=======
+                            "model": "intfloat/e5-small-v2"
+>>>>>>> Stashed changes
                         }
                     },
                     "body": {
@@ -388,9 +392,12 @@ mod tests {
                         },
                         "semantic_search": {
                             "model": "intfloat/e5-small-v2",
+<<<<<<< Updated upstream
                             "parameters": {
                                 "prompt": "passage: "
                             }
+=======
+>>>>>>> Stashed changes
                         },
                         "full_text_search": {
                             "configuration": "english"
@@ -533,10 +540,14 @@ mod tests {
                 json!({
                     "title": {
                         "semantic_search": {
+<<<<<<< Updated upstream
                             "model": "intfloat/e5-small-v2",
                             "parameters": {
                                 "prompt": "passage: "
                             }
+=======
+                            "model": "intfloat/e5-small-v2"
+>>>>>>> Stashed changes
                         }
                     },
                     "body": {
@@ -545,9 +556,12 @@ mod tests {
                         },
                         "semantic_search": {
                             "model": "intfloat/e5-small-v2",
+<<<<<<< Updated upstream
                             "parameters": {
                                 "prompt": "passage: "
                              }
+=======
+>>>>>>> Stashed changes
                         },
                         "full_text_search": {
                             "configuration": "english"
@@ -619,10 +633,14 @@ mod tests {
                 json!({
                     "title": {
                         "semantic_search": {
+<<<<<<< Updated upstream
                             "model": "intfloat/e5-small-v2",
                             "parameters": {
                                 "prompt": "passage: "
                             }
+=======
+                            "model": "intfloat/e5-small-v2"
+>>>>>>> Stashed changes
                         }
                     }
                 })
@@ -667,10 +685,14 @@ mod tests {
                 json!({
                     "title": {
                         "semantic_search": {
+<<<<<<< Updated upstream
                             "model": "intfloat/e5-small-v2",
                             "parameters": {
                                 "prompt": "passage: "
                             }
+=======
+                            "model": "intfloat/e5-small-v2"
+>>>>>>> Stashed changes
                         }
                     },
                     "body": {
@@ -679,9 +701,12 @@ mod tests {
                         },
                         "semantic_search": {
                             "model": "intfloat/e5-small-v2",
+<<<<<<< Updated upstream
                             "parameters": {
                                 "prompt": "passage: "
                             }
+=======
+>>>>>>> Stashed changes
                         },
                         "full_text_search": {
                             "configuration": "english"
@@ -724,10 +749,14 @@ mod tests {
                 json!({
                     "title": {
                         "semantic_search": {
+<<<<<<< Updated upstream
                             "model": "intfloat/e5-small-v2",
                             "parameters": {
                                 "prompt": "passage: "
                             }
+=======
+                            "model": "intfloat/e5-small-v2"
+>>>>>>> Stashed changes
                         }
                     },
                     "body": {
@@ -736,9 +765,12 @@ mod tests {
                         },
                         "semantic_search": {
                             "model": "intfloat/e5-small-v2",
+<<<<<<< Updated upstream
                             "parameters": {
                                 "prompt": "passage: "
                             }
+=======
+>>>>>>> Stashed changes
                         },
                         "full_text_search": {
                             "configuration": "english"
@@ -827,10 +859,14 @@ mod tests {
                 json!({
                     "title": {
                         "semantic_search": {
+<<<<<<< Updated upstream
                             "model": "intfloat/e5-small-v2",
                             "parameters": {
                                 "prompt": "passage: "
                             }
+=======
+                            "model": "intfloat/e5-small-v2"
+>>>>>>> Stashed changes
                         },
                         "full_text_search": {
                             "configuration": "english"
@@ -939,9 +975,12 @@ mod tests {
                     "title": {
                         "semantic_search": {
                             "model": "intfloat/e5-small-v2",
+<<<<<<< Updated upstream
                             "parameters": {
                                 "prompt": "passage: "
                             },
+=======
+>>>>>>> Stashed changes
                             "hnsw": {
                                 "m": 100,
                                 "ef_construction": 200
@@ -991,10 +1030,14 @@ mod tests {
                 json!({
                     "title": {
                         "semantic_search": {
+<<<<<<< Updated upstream
                             "model": "intfloat/e5-small-v2",
                             "parameters": {
                                 "prompt": "passage: "
                             }
+=======
+                            "model": "intfloat/e5-small-v2"
+>>>>>>> Stashed changes
                         },
                         "full_text_search": {
                             "configuration": "english"
@@ -1005,6 +1048,7 @@ mod tests {
                             "model": "recursive_character"
                         },
                         "semantic_search": {
+<<<<<<< Updated upstream
                             "model": "intfloat/e5-small-v2",
                             "parameters": {
                                 "prompt": "passage: "
@@ -1015,6 +1059,9 @@ mod tests {
                             "parameters": {
                                 "prompt": "passage: "
                             }
+=======
+                            "model": "intfloat/e5-small-v2"
+>>>>>>> Stashed changes
                         },
                         "full_text_search": {
                             "configuration": "english"
@@ -1022,10 +1069,14 @@ mod tests {
                     },
                     "notes": {
                        "semantic_search": {
+<<<<<<< Updated upstream
                             "model": "intfloat/e5-small-v2",
                             "parameters": {
                                 "prompt": "passage: "
                             }
+=======
+                            "model": "intfloat/e5-small-v2"
+>>>>>>> Stashed changes
                         }
                     }
                 })
@@ -1055,9 +1106,12 @@ mod tests {
                     },
                     "body": {
                         "query": "This is the body test",
+<<<<<<< Updated upstream
                         "parameters": {
                             "prompt": "query: ",
                         },
+=======
+>>>>>>> Stashed changes
                         "boost": 1.01
                     },
                     "notes": {
@@ -1151,10 +1205,14 @@ mod tests {
                 json!({
                     "title": {
                         "semantic_search": {
+<<<<<<< Updated upstream
                             "model": "intfloat/e5-small-v2",
                             "parameters": {
                                 "prompt": "passage: "
                             }
+=======
+                            "model": "intfloat/e5-small-v2"
+>>>>>>> Stashed changes
                         }
                     },
                     "body": {
@@ -1239,10 +1297,14 @@ mod tests {
                 json!({
                     "title": {
                         "semantic_search": {
+<<<<<<< Updated upstream
                             "model": "intfloat/e5-small-v2",
                             "parameters": {
                                 "prompt": "passage: "
                             }
+=======
+                            "model": "intfloat/e5-small-v2"
+>>>>>>> Stashed changes
                         },
                         "full_text_search": {
                             "configuration": "english"
@@ -1253,10 +1315,14 @@ mod tests {
                             "model": "recursive_character"
                         },
                         "semantic_search": {
+<<<<<<< Updated upstream
                             "model": "intfloat/e5-small-v2",
                             "parameters": {
                                 "prompt": "passage: "
                             }
+=======
+                            "model": "intfloat/e5-small-v2"
+>>>>>>> Stashed changes
                         },
                     },
                 })
@@ -1271,9 +1337,12 @@ mod tests {
                         "fields": {
                             "title": {
                                 "query": "Test document: 2",
+<<<<<<< Updated upstream
                                 "parameters": {
                                     "prompt": "passage: "
                                 },
+=======
+>>>>>>> Stashed changes
                                 "full_text_filter": "test",
                                 "boost": 1.2
                             },
@@ -1325,10 +1394,14 @@ mod tests {
                 json!({
                     "title": {
                         "semantic_search": {
+<<<<<<< Updated upstream
                             "model": "intfloat/e5-small-v2",
                             "parameters": {
                                 "prompt": "passage: "
                             }
+=======
+                            "model": "intfloat/e5-small-v2"
+>>>>>>> Stashed changes
                         },
                         "full_text_search": {
                             "configuration": "english"
@@ -1396,10 +1469,14 @@ mod tests {
                 json!({
                     "text": {
                         "semantic_search": {
+<<<<<<< Updated upstream
                             "model": "intfloat/e5-small-v2",
                             "parameters": {
                                 "prompt": "passage: "
                             }
+=======
+                            "model": "intfloat/e5-small-v2"
+>>>>>>> Stashed changes
                         },
                         "full_text_search": {
                             "configuration": "english"
@@ -2109,10 +2186,14 @@ mod tests {
                 json!({
                         "title": {
                             "semantic_search": {
+<<<<<<< Updated upstream
                                 "model": "intfloat/e5-small-v2",
                             "parameters": {
                                 "prompt": "passage: "
                             }
+=======
+                                "model": "intfloat/e5-small-v2"
+>>>>>>> Stashed changes
                             },
                             "full_text_search": {
                                 "configuration": "english"
@@ -2123,10 +2204,14 @@ mod tests {
                                 "model": "recursive_character"
                             },
                             "semantic_search": {
+<<<<<<< Updated upstream
                                 "model": "intfloat/e5-small-v2",
                             "parameters": {
                                 "prompt": "passage: "
                             }
+=======
+                                "model": "intfloat/e5-small-v2"
+>>>>>>> Stashed changes
                             },
                             "full_text_search": {
                                 "configuration": "english"
@@ -2134,10 +2219,14 @@ mod tests {
                         },
                         "notes": {
                            "semantic_search": {
+<<<<<<< Updated upstream
                                 "model": "intfloat/e5-small-v2",
                             "parameters": {
                                 "prompt": "passage: "
                             }
+=======
+                                "model": "intfloat/e5-small-v2"
+>>>>>>> Stashed changes
                             }
                         }
                 })
