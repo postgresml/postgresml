@@ -1,8 +1,9 @@
 # Serverless databases
 
-A Serverless PostgresML database can be created in less than 5 seconds and provides immediate access to modern GPU acceleration, the entire HuggingFace library of LLMs, and dozens of supervised learning algorithms like XGBoost, LightGBM, Catboost, and everything from Scikit-learn.
+A Serverless PostgresML database can be created in less than 5 seconds and provides immediate access to modern GPU acceleration, a predefined set of state-of-the-art large language models that should satisfy most use cases, and dozens of supervised learning algorithms like XGBoost, LightGBM, Catboost, and everything from Scikit-learn.
+With a Serverless database, storage and compute resources dynamically adapt to your application's needs, ensuring it can scale down or handle peak loads without overprovisioning.
 
-Serverless databases start at $0 and have a generous free tier. A free tier user will be able to access the GPUs and 5GB of disk storage for their hobby projects, or to just try PostgresML for the first time, without having to provide a credit card. The free tier has no other limits and can be used to power personal projects without having to worry about being shut down or scaled down.
+Serverless databases are billed on a pay-per-use basis and we offer $100 in free credits to get you started!
 
 ### Create a Serverless database
 
@@ -14,24 +15,43 @@ Once logged in, select "New Database" from the left menu and choose the Serverle
 
 <figure><img src="../../.gitbook/assets/image (2).png" alt=""><figcaption><p>Choose the Serverless plan</p></figcaption></figure>
 
-### Configuring the database
 
-Serverless databases have three (3) configuration options: GPU Cache, Storage, and GPU Concurrency.
+### Serverless Pricing 
+Storage is charged per GB/mo, and all requests by CPU or GPU millisecond of compute required to perform them.
 
-<figure><img src="../../.gitbook/assets/image (3).png" alt=""><figcaption><p>The three (3) configuration options for a Serverless database</p></figcaption></figure>
+#### Vector & Relational Database
+| NAME | PRICING |
+| :--- | ---: |
+| Tables & Index Storage | $0.20 GB per month |
+| Retrieval, Filtering, Ranking & other Queries | $7.50 per hour |
+| Embeddings | Included w/ Queries |
+| LLMs | Included w/ Queries |
+| Fine Tuning | Included w/ Queries |
+| Machine Learning | Included w/ Queries |
 
-#### GPU Cache
 
-GPU Cache is the amount of GPU memory that will be reserved and guaranteed for your database to use in case you want to use GPU accelerated LLMs. Models like Llama 2, Mistral, and GPT-3 require a GPU to generate text at a reasonable speed, usable in production applications. This setting, if set to the correct amount of GPU RAM required by the such models, will ensure that the model you use remains in the GPU cache for as long as you need it.
+### Serverless Models
 
-If you don't provision any GPU Cache capacity, you can still use GPU acceleration for running LLMs and other models. However, this capacity won't be guaranteed and if we need to evict your model from the cache to serve another request, we may have to do so, and you'll have to wait until that request is complete to use your model again.
+Serverless AI engines come with predefined models and a flexible pricing structure
 
-#### Storage
+#### Embedding Models
+| NAME | PARAMETERS (M) | MAX INPUT TOKENS | DIMENSIONS | STRENGTHS |
+| --- | --- | --- | --- | --- | 
+| intfloat/e5-large-v2 | 33.4 | 512 | 384 | High quality, low latency |
+| mixedbread-ai/mxbai-embed-large-v1 | 334 | 512 | 1024 | High quality, higher latency |
+| Alibaba-NLP/gte-base-en-v1.5 | 137 | 8192 | 768 | Supports up to 8k input tokens, low latency |
+| Alibaba-NLP/gte-large-en-v1.5 | 434 | 8192 | 1024 | Supports up to 8k input tokens, higher latency |
 
-Disk storage is used by your database to store data in your tables. This storage metric only applies to PostgreSQL tables. Storage of LLM models used by your database is free. You can scale your storage up at any time, but you can't scale it down without deleting your data. The free tier includes 5GB of storage.
+#### Instruct Models
+| NAME | TOTAL PARAMETERS (M) | ACTIVE PARAMETERS (M) | CONTEXT SIZE | STRENGTHS |
+| --- | --- | --- | --- | --- | 
+| meta-llama/Meta-Llama-3-70B-Instruct | 70,000 | 70,000 | 8,000 | High quality |
+| meta-llama/Meta-Llama-3-8B-Instruct | 8,000 | 8,000 | 8,000 | High quality, low latency |
+| microsoft/Phi-3-mini-128k-instruct | 3,820 | 3,820 | 128,000 | Lowest latency |
+| mistralai/Mixtral-8x7B-Instruct-v0.1 | 56,000 | 12,900 | 32,768 | MOE high quality |
+| mistralai/Mistral-7B-Instruct-v0.2 | 7,000 | 7,000 | 32,768 | High quality, low latency |
 
-#### GPU Concurrency
-
-GPU Concurrency is the amount of concurrent queries (executed at the same time) that your serverless database can serve. If you're using LLMs, they will be loaded on one or more GPUs, so for the duration of the request, your database will have access to the entire GPU. However, if you need to execute more than one request at a time, which will happen if your application starts getting some more traffic in production, you might need to increase your GPU Concurrency to accommodate that new traffic.
-
-If you don't provision additional GPU Concurrency, requests that can't be served immediately with your current capacity will wait in a queue until your in-flight request completes and a GPU is available to serve them.
+#### Summarization Models
+| NAME | PARAMETERS (M) | CONTEXT SIZE | STRENGTHS |
+| --- | --- | --- | --- |
+| google/pegasus-xsum | 568 | 512 | Efficient summarization |
