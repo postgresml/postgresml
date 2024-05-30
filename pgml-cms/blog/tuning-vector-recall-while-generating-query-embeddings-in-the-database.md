@@ -124,7 +124,7 @@ We'll start with semantic search. Given a user query, e.g. "Best 1980's scifi mo
 ```postgresql
 WITH request AS (
   SELECT pgml.embed(
-    'intfloat/e5-large',
+    'Alibaba-NLP/gte-base-en-v1.5',
     'query: Best 1980''s scifi movie'
   )::vector(1024) AS embedding
 )
@@ -171,7 +171,7 @@ Generating a query plan more quickly and only computing the values once, may mak
 There's some good stuff happening in those query results, so let's break it down:
 
 * **It's fast** - We're able to generate a request embedding on the fly with a state-of-the-art model, and search 5M reviews in 152ms, including fetching the results back to the client 😍. You can't even generate an embedding from OpenAI's API in that time, much less search 5M reviews in some other database with it.
-* **It's good** - The `review_body` results are very similar to the "Best 1980's scifi movie" request text. We're using the `intfloat/e5-large` open source embedding model, which outperforms OpenAI's `text-embedding-ada-002` in most [quality benchmarks](https://huggingface.co/spaces/mteb/leaderboard).
+* **It's good** - The `review_body` results are very similar to the "Best 1980's scifi movie" request text. We're using the `Alibaba-NLP/gte-base-en-v1.5` open source embedding model, which outperforms OpenAI's `text-embedding-ada-002` in most [quality benchmarks](https://huggingface.co/spaces/mteb/leaderboard).
   * Qualitatively: the embeddings understand our request for `scifi` being equivalent to `Sci-Fi`, `sci-fi`, `SciFi`, and `sci fi`, as well as `1980's` matching `80s` and `80's` and is close to `seventies` (last place). We didn't have to configure any of this and the most enthusiastic for "best" is at the top, the least enthusiastic is at the bottom, so the model has appropriately captured "sentiment".
   * Quantitatively: the `cosine_similarity` of all results are high and tight, 0.90-0.95 on a scale from -1:1. We can be confident we recalled very similar results from our 5M candidates, even though it would take 485 times as long to check all of them directly.
 * **It's reliable** - The model is stored in the database, so we don't need to worry about managing a separate service. If you repeat this query over and over, the timings will be extremely consistent, because we don't have to deal with things like random network congestion.
@@ -254,7 +254,7 @@ Now we can quickly search for movies by what people have said about them:
 ```postgresql
 WITH request AS (
   SELECT pgml.embed(
-    'intfloat/e5-large',
+    'Alibaba-NLP/gte-base-en-v1.5',
     'Best 1980''s scifi movie'
   )::vector(1024) AS embedding
 )
@@ -312,7 +312,7 @@ SET ivfflat.probes = 300;
 ```postgresql
 WITH request AS (
   SELECT pgml.embed(
-    'intfloat/e5-large',
+    'Alibaba-NLP/gte-base-en-v1.5',
     'Best 1980''s scifi movie'
   )::vector(1024) AS embedding
 )
@@ -401,7 +401,7 @@ SET ivfflat.probes = 1;
 ```postgresql
 WITH request AS (
   SELECT pgml.embed(
-    'intfloat/e5-large',
+    'Alibaba-NLP/gte-base-en-v1.5',
     'query: Best 1980''s scifi movie'
   )::vector(1024) AS embedding
 )
@@ -457,7 +457,7 @@ SQL is a very expressive language that can handle a lot of complexity. To keep t
 -- create a request embedding on the fly
 WITH request AS (
   SELECT pgml.embed(
-    'intfloat/e5-large',
+    'Alibaba-NLP/gte-base-en-v1.5',
     'query: Best 1980''s scifi movie'
   )::vector(1024) AS embedding
 ),

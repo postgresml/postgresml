@@ -428,7 +428,7 @@ import asyncio
 wiki_wiki = wikipediaapi.Wikipedia("Chatbot Tutorial Project", "en")
 
 # Use the default model for embedding and default splitter for splitting
-model = Model() # The default model is intfloat/e5-small
+model = Model() # The default model is Alibaba-NLP/gte-base-en-v1.5
 splitter = Splitter() # The default splitter is recursive_character
 
 # Construct a pipeline for ingesting documents, splitting them into chunks, and then embedding them

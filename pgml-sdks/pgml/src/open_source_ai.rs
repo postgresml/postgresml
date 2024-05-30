@@ -43,17 +43,6 @@ fn try_model_nice_name_to_model_name_and_parameters(
             .into(),
         )),
 
-        "HuggingFaceH4/zephyr-7b-beta" => Some((
-            "HuggingFaceH4/zephyr-7b-beta",
-            serde_json::json!({
-              "task": "conversational",
-              "model": "HuggingFaceH4/zephyr-7b-beta",
-              "device_map": "auto",
-              "torch_dtype": "bfloat16"
-            })
-            .into(),
-        )),
-
         "TheBloke/Llama-2-7B-Chat-GPTQ" => Some((
             "TheBloke/Llama-2-7B-Chat-GPTQ",
             serde_json::json!({

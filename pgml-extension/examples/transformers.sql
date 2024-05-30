@@ -2,16 +2,16 @@
 -- \set ON_ERROR_STOP true
 \timing on
 
-SELECT pgml.embed('intfloat/e5-small', 'hi mom');
-SELECT pgml.embed('intfloat/e5-small', 'hi mom', '{"device": "cuda"}');
-SELECT pgml.embed('intfloat/e5-small', 'hi mom', '{"device": "cpu"}');
+SELECT pgml.embed('Alibaba-NLP/gte-base-en-v1.5', 'hi mom');
+SELECT pgml.embed('Alibaba-NLP/gte-base-en-v1.5', 'hi mom', '{"device": "cuda"}');
+SELECT pgml.embed('Alibaba-NLP/gte-base-en-v1.5', 'hi mom', '{"device": "cpu"}');
 SELECT pgml.embed('hkunlp/instructor-xl', 'hi mom', '{"instruction": "Encode it with love"}');
 SELECT pgml.embed('mixedbread-ai/mxbai-embed-large-v1', 'test', '{"prompt": "test prompt: "}');
 
 SELECT pgml.transform_stream(
   task   => '{
     "task": "text-generation",
-    "model": "TheBloke/zephyr-7B-beta-GPTQ",
+    "model": "meta-llama/Meta-Llama-3-8B-Instruct",
     "model_type": "mistral",
     "revision": "main",
     "device_map": "auto"

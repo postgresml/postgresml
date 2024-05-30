@@ -14,7 +14,7 @@ async def main():
 
     collection_name = "squad_collection_benchmark"
     collection = await db.create_or_get_collection(collection_name)
-    model_id = await collection.register_model(model_name="intfloat/e5-large")
+    model_id = await collection.register_model(model_name="Alibaba-NLP/gte-base-en-v1.5")
     await collection.generate_embeddings(model_id=model_id)
 
 if __name__ == "__main__":
