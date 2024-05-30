@@ -1,0 +1,14 @@
+[package]
+name = "pgml"
+version = "0.1.0"
+edition = "2021"
+
+
+[lib]
+name = "pgml"
+path = "src/lib.rs"
+crate-type = ["dylib"]
+
+
+[dependencies]
+rustler = "0.33.0"
