@@ -178,9 +178,6 @@ pub fn serverless_models_turboframe(style: String) -> ResponseOk {
 #[get("/serverless_pricing/turboframe?<style>")]
 pub fn serverless_pricing_turboframe(style: String) -> ResponseOk {
     let comp = ServerlessPricing::new().set_style_type(&style);
-    let test = ServerlessPricingTurbo::new(comp.into()).render_once().unwrap();
-    println!("{:?}", test);
-    let comp = ServerlessPricing::new().set_style_type(&style);
     ResponseOk(ServerlessPricingTurbo::new(comp.into()).render_once().unwrap())
 }
 
