@@ -4,5 +4,13 @@
 // src/components/tables/large
 pub mod large;
 
+// src/components/tables/serverless_models
+pub mod serverless_models;
+pub use serverless_models::ServerlessModels;
+
+// src/components/tables/serverless_pricing
+pub mod serverless_pricing;
+pub use serverless_pricing::ServerlessPricing;
+
 // src/components/tables/small
 pub mod small;

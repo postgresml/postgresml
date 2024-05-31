@@ -1,0 +1,46 @@
+<% 
+  use crate::components::tables::small::*;
+  use pgml_components::Component;
+
+
+  let heading_style = if style_type == "product" {
+    "text-gradient-green h6 fw-semibold mb-0 "
+  } else {
+    "text-white h6 fw-semibold mb-0"
+  };
+%>
+
+<div data-controller="tables-serverless-models">
+  <h4 class="<%- heading_style %>">Embedding Models</h4>
+  <div class="mb-5">
+    <%+ Table::new(&[
+    "Name",
+    "Parameters (M)",
+    "Max input tokens",
+    "Dimensions",
+    "Strengths",
+  ], &embedding_models) %>
+  </div>
+
+  <h4 class="<%- heading_style %>">Instruct Models</h4>
+  <div class="mb-5">
+    <%+ Table::new(&[
+    "Name",
+    "Parameters (M)",
+    "Active Parameters (M)",
+    "Context size",
+    "Strengths",
+  ], &instruct_models) %>
+  </div>
+
+  <h4 class="<%- heading_style %>">Summarization Models</h4>
+  <div class="mb-5">
+    <%+ Table::new(&[
+    "Name",
+    "Parameters (M)",
+    "Context size",
+    "Strengths",
+  ], &summarization_models) %>
+  </div>
+</div>
+

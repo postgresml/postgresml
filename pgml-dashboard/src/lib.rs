@@ -25,6 +25,8 @@ use guards::Cluster;
 use responses::{Error, ResponseOk};
 use templates::{components::StaticNav, *};
 
+use crate::components::tables::serverless_models::{ServerlessModels, ServerlessModelsTurbo};
+use crate::components::tables::serverless_pricing::{ServerlessPricing, ServerlessPricingTurbo};
 use crate::utils::cookies::Notifications;
 use crate::utils::urls;
 use std::collections::hash_map::DefaultHasher;
@@ -167,6 +169,21 @@ pub enum NotificationLevel {
     Feature3,
 }
 
+#[get("/serverless_models/turboframe?<style>")]
+pub fn serverless_models_turboframe(style: String) -> ResponseOk {
+    let comp = ServerlessModels::new().set_style_type(&style);
+    ResponseOk(ServerlessModelsTurbo::new(comp.into()).render_once().unwrap())
+}
+
+#[get("/serverless_pricing/turboframe?<style>")]
+pub fn serverless_pricing_turboframe(style: String) -> ResponseOk {
+    let comp = ServerlessPricing::new().set_style_type(&style);
+    let test = ServerlessPricingTurbo::new(comp.into()).render_once().unwrap();
+    println!("{:?}", test);
+    let comp = ServerlessPricing::new().set_style_type(&style);
+    ResponseOk(ServerlessPricingTurbo::new(comp.into()).render_once().unwrap())
+}
+
 // Reroute old style query style dashboard links.
 #[get("/?<tab>&<id>")]
 pub async fn dashboard(tab: Option<&str>, id: Option<i64>) -> Redirect {
@@ -246,7 +263,13 @@ pub fn remove_banner(id: String, alert: bool, cookies: &CookieJar<'_>, context: 
 }
 
 pub fn routes() -> Vec<Route> {
-    routes![dashboard, remove_banner, playground]
+    routes![
+        dashboard,
+        remove_banner,
+        playground,
+        serverless_models_turboframe,
+        serverless_pricing_turboframe
+    ]
 }
 
 pub async fn migrate(pool: &PgPool) -> anyhow::Result<()> {

@@ -19,39 +19,14 @@ Once logged in, select "New Database" from the left menu and choose the Serverle
 ### Serverless Pricing 
 Storage is charged per GB/mo, and all requests by CPU or GPU millisecond of compute required to perform them.
 
-#### Vector & Relational Database
-| NAME | PRICING |
-| :--- | ---: |
-| Tables & Index Storage | $0.20 GB per month |
-| Retrieval, Filtering, Ranking & other Queries | $7.50 per hour |
-| Embeddings | Included w/ Queries |
-| LLMs | Included w/ Queries |
-| Fine Tuning | Included w/ Queries |
-| Machine Learning | Included w/ Queries |
-
+<turbo-frame id="serverless-pricing-turboframe" src="/dashboard/serverless_pricing/turboframe?style=marketing">
+Loading our current pricing model...
+</turbo-frame>
 
 ### Serverless Models
 
 Serverless AI engines come with predefined models and a flexible pricing structure
 
-#### Embedding Models
-| NAME | PARAMETERS (M) | MAX INPUT TOKENS | DIMENSIONS | STRENGTHS |
-| --- | --- | --- | --- | --- | 
-| intfloat/e5-large-v2 | 33.4 | 512 | 384 | High quality, low latency |
-| mixedbread-ai/mxbai-embed-large-v1 | 334 | 512 | 1024 | High quality, higher latency |
-| Alibaba-NLP/gte-base-en-v1.5 | 137 | 8192 | 768 | Supports up to 8k input tokens, low latency |
-| Alibaba-NLP/gte-large-en-v1.5 | 434 | 8192 | 1024 | Supports up to 8k input tokens, higher latency |
-
-#### Instruct Models
-| NAME | TOTAL PARAMETERS (M) | ACTIVE PARAMETERS (M) | CONTEXT SIZE | STRENGTHS |
-| --- | --- | --- | --- | --- | 
-| meta-llama/Meta-Llama-3-70B-Instruct | 70,000 | 70,000 | 8,000 | High quality |
-| meta-llama/Meta-Llama-3-8B-Instruct | 8,000 | 8,000 | 8,000 | High quality, low latency |
-| microsoft/Phi-3-mini-128k-instruct | 3,820 | 3,820 | 128,000 | Lowest latency |
-| mistralai/Mixtral-8x7B-Instruct-v0.1 | 56,000 | 12,900 | 32,768 | MOE high quality |
-| mistralai/Mistral-7B-Instruct-v0.2 | 7,000 | 7,000 | 32,768 | High quality, low latency |
-
-#### Summarization Models
-| NAME | PARAMETERS (M) | CONTEXT SIZE | STRENGTHS |
-| --- | --- | --- | --- |
-| google/pegasus-xsum | 568 | 512 | Efficient summarization |
+<turbo-frame id="serverless-models-turboframe" src="/dashboard/serverless_models/turboframe?style=marketing">
+Loading our current serverless models offered...
+</turbo-frame>
