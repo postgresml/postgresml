@@ -12,7 +12,7 @@ import numpy
 import orjson
 from rouge import Rouge
 from sacrebleu.metrics import BLEU
-from sentence_transformers import SentenceTransformer
+from sentence_transformers import SentenceTransformer, CrossEncoder
 from sklearn.metrics import (
     mean_squared_error,
     r2_score,
@@ -498,6 +498,33 @@ def transform(task, args, inputs, stream=False):
     if stream:
         return pipe.stream(inputs, **args)
     return orjson.dumps(pipe(inputs, **args), default=orjson_default).decode()
+
+
+def create_cross_encoder(transformer):
+    return CrossEncoder(transformer)
+
+
+def rank_using(model, query, documents, kwargs):
+    if isinstance(kwargs, str):
+        kwargs = orjson.loads(kwargs)
+
+    # The score is a numpy float32 before we convert it
+    return [
+        {"score": x.pop("score").item(), **x}
+        for x in model.rank(query, documents, **kwargs)
+    ]
+
+
+def rank(transformer, query, documents, kwargs):
+    kwargs = orjson.loads(kwargs)
+
+    if transformer not in __cache_sentence_transformer_by_name:
+        __cache_sentence_transformer_by_name[transformer] = create_cross_encoder(
+            transformer
+        )
+    model = __cache_sentence_transformer_by_name[transformer]
+
+    return rank_using(model, query, documents, kwargs)
 
 
 def create_embedding(transformer):
