@@ -1252,7 +1252,7 @@ pub struct SiteSearch {
 impl SiteSearch {
     pub async fn new() -> anyhow::Result<Self> {
         let collection = pgml::Collection::new(
-            env!("CMS_HASH"),
+            &format!("{}-1", env!("CMS_HASH")),
             Some(
                 std::env::var("SITE_SEARCH_DATABASE_URL")
                     .context("Please set the `SITE_SEARCH_DATABASE_URL` environment variable")?,
@@ -1267,7 +1267,7 @@ impl SiteSearch {
                             "configuration": "english"
                         },
                         "semantic_search": {
-                            "model": "Alibaba-NLP/gte-base-en-v1.5",
+                            "model": "mixedbread-ai/mxbai-embed-large-v1",
                         }
                     },
                     "contents": {
@@ -1278,7 +1278,7 @@ impl SiteSearch {
                             "configuration": "english"
                         },
                         "semantic_search": {
-                            "model": "Alibaba-NLP/gte-base-en-v1.5",
+                            "model": "mixedbread-ai/mxbai-embed-large-v1",
                         }
                     }
                 })
@@ -1319,14 +1319,14 @@ impl SiteSearch {
                     "title": {
                         "query": query,
                         "parameters": {
-                            "instruction": "Represent the Wikipedia question for retrieving supporting documents: "
+                            "prompt": "Represent this sentence for searching relevant passages: "
                         },
                         "boost": 10.0
                     },
                     "contents": {
                         "query": query,
                         "parameters": {
-                            "instruction": "Represent the Wikipedia question for retrieving supporting documents: "
+                            "prompt": "Represent this sentence for searching relevant passages: "
                         },
                         "boost": 1.0
                     }
