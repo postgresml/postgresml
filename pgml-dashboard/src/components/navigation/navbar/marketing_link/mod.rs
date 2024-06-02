@@ -8,6 +8,9 @@ pub struct MarketingLink {
     name: String,
     link: Option<NavLink>,
     links: Vec<NavLink>,
+    links_col2: Vec<NavLink>,
+    title_col1: Option<String>,
+    title_col2: Option<String>,
 }
 
 impl MarketingLink {
@@ -15,7 +18,10 @@ impl MarketingLink {
         MarketingLink {
             name: String::from("Link Name"),
             links: Vec::new(),
+            links_col2: Vec::new(),
             link: None,
+            title_col1: None,
+            title_col2: None,
         }
     }
 
@@ -32,6 +38,21 @@ impl MarketingLink {
 
     pub fn link(mut self, link: NavLink) -> MarketingLink {
         self.link = Some(link);
+        self
+    }
+
+    pub fn links_col2(mut self, links: Vec<NavLink>) -> MarketingLink {
+        self.links_col2 = links;
+        self
+    }
+
+    pub fn title_col1(mut self, title: &str) -> MarketingLink {
+        self.title_col1 = Some(title.to_owned());
+        self
+    }
+
+    pub fn title_col2(mut self, title: &str) -> MarketingLink {
+        self.title_col2 = Some(title.to_owned());
         self
     }
 }
