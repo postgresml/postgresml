@@ -7,6 +7,7 @@ use anyhow::{anyhow, bail, Context, Result};
 use pgrx::*;
 use pyo3::prelude::*;
 use pyo3::types::{PyBool, PyDict, PyFloat, PyInt, PyList, PyString, PyTuple};
+use serde::Deserialize;
 use serde_json::Value;
 
 use crate::create_pymodule;
@@ -66,8 +67,10 @@ impl FromPyObject<'_> for Json {
             if ob.is_none() {
                 return Ok(Self(serde_json::Value::Null));
             }
-            eprintln!("\n\nTHE OBJ: {:?}\n\n", ob.get_type());
-            Err(anyhow::anyhow!("Unsupported type for JSON conversion"))?
+            Err(anyhow::anyhow!(
+                "Unsupported type for JSON conversion: {:?}",
+                ob.get_type()
+            ))?
         }
     }
 }
@@ -106,9 +109,21 @@ pub fn embed(transformer: &str, inputs: Vec<&str>, kwargs: &serde_json::Value) -
     })
 }
 
-pub fn rank(transformer: &str, query: &str, documents: Vec<&str>, kwargs: &serde_json::Value) -> Result<Vec<Value>> {
+#[derive(Deserialize)]
+pub struct RankResult {
+    pub corpus_id: i64,
+    pub score: f64,
+    pub text: Option<String>,
+}
+
+pub fn rank(
+    transformer: &str,
+    query: &str,
+    documents: Vec<&str>,
+    kwargs: &serde_json::Value,
+) -> Result<Vec<RankResult>> {
     let kwargs = serde_json::to_string(kwargs)?;
-    Python::with_gil(|py| -> Result<Vec<Value>> {
+    Python::with_gil(|py| -> Result<Vec<RankResult>> {
         let embed: Py<PyAny> = get_module!(PY_MODULE).getattr(py, "rank").format_traceback(py)?;
         let output = embed
             .call1(
@@ -125,7 +140,12 @@ pub fn rank(transformer: &str, query: &str, documents: Vec<&str>, kwargs: &serde
             )
             .format_traceback(py)?;
         let out: Vec<Json> = output.extract(py).format_traceback(py)?;
-        Ok(out.into_iter().map(|x| x.into()).collect())
+        out.into_iter()
+            .map(|x| {
+                let x: RankResult = serde_json::from_value(x.0)?;
+                Ok(x)
+            })
+            .collect()
     })
 }
 

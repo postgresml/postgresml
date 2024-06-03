@@ -610,15 +610,14 @@ pub fn embed_batch(
 
 #[cfg(all(feature = "python", not(feature = "use_as_lib")))]
 #[pg_extern(immutable, parallel_safe, name = "rank")]
-// pub fn rank(transformer: &str, query: &str, documents: Vec<&str>, kwargs: default!(JsonB, "'{}'")) -> Vec<pgrx::JsonB> {
 pub fn rank(
     transformer: &str,
     query: &str,
     documents: Vec<&str>,
     kwargs: default!(JsonB, "'{}'"),
-) -> SetOfIterator<'static, pgrx::JsonB> {
+) -> TableIterator<'static, (name!(corpus_id, i64), name!(score, f64), name!(text, Option<String>))> {
     match crate::bindings::transformers::rank(transformer, query, documents, &kwargs.0) {
-        Ok(output) => SetOfIterator::new(output.into_iter().map(pgrx::JsonB)),
+        Ok(output) => TableIterator::new(output.into_iter().map(|x| (x.corpus_id, x.score, x.text))),
         Err(e) => error!("{e}"),
     }
 }
