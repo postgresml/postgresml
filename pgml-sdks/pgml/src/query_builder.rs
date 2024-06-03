@@ -12,6 +12,9 @@ use crate::{pipeline::Pipeline, types::Json, Collection};
 #[cfg(feature = "python")]
 use crate::{pipeline::PipelinePython, types::JsonPython};
 
+#[cfg(feature = "c")]
+use crate::{languages::c::JsonC, pipeline::PipelineC};
+
 #[derive(alias, Clone, Debug)]
 pub struct QueryBuilder {
     collection: Collection,
@@ -19,7 +22,7 @@ pub struct QueryBuilder {
     pipeline: Option<Pipeline>,
 }
 
-#[alias_methods(limit, filter, vector_recall, to_full_string, fetch_all)]
+#[alias_methods(limit, filter, vector_recall, to_full_string, fetch_all(skip = "C"))]
 impl QueryBuilder {
     pub fn new(collection: Collection) -> Self {
         let query = json!({

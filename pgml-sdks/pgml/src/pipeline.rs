@@ -19,6 +19,9 @@ use crate::{
 #[cfg(feature = "python")]
 use crate::types::JsonPython;
 
+#[cfg(feature = "c")]
+use crate::languages::c::JsonC;
+
 type ParsedSchema = HashMap<String, FieldAction>;
 
 #[derive(Deserialize)]

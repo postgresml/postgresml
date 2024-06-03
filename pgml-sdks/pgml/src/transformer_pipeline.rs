@@ -16,6 +16,9 @@ use crate::{get_or_initialize_pool, types::Json};
 #[cfg(feature = "python")]
 use crate::types::{GeneralJsonAsyncIteratorPython, JsonPython};
 
+#[cfg(feature = "c")]
+use crate::{languages::c::GeneralJsonAsyncIteratorC, languages::c::JsonC};
+
 #[alias_methods(new, transform, transform_stream)]
 impl TransformerPipeline {
     /// Creates a new [TransformerPipeline]

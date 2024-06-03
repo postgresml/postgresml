@@ -52,3 +52,4 @@ serde_with = "3.8.1"
 default = []
 python = ["dep:pyo3", "dep:pyo3-asyncio"]
 javascript = ["dep:neon"]
+c = []

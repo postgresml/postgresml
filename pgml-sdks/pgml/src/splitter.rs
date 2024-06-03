@@ -11,6 +11,9 @@ use crate::{
 #[cfg(feature = "python")]
 use crate::types::JsonPython;
 
+#[cfg(feature = "c")]
+use crate::languages::c::JsonC;
+
 #[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub(crate) struct SplitterDatabaseData {

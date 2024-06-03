@@ -11,6 +11,9 @@ use crate::{
 #[cfg(feature = "python")]
 use crate::types::JsonPython;
 
+#[cfg(feature = "c")]
+use crate::languages::c::JsonC;
+
 /// A few notes on the following enums:
 /// - Sqlx does provide type derivation for enums, but it's not very good
 /// - Queries using these enums require a number of additional queries to get their oids and

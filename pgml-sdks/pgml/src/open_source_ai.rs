@@ -13,6 +13,12 @@ use crate::{
 #[cfg(feature = "python")]
 use crate::types::{GeneralJsonAsyncIteratorPython, GeneralJsonIteratorPython, JsonPython};
 
+#[cfg(feature = "c")]
+use crate::{
+    languages::c::JsonC,
+    languages::c::{GeneralJsonAsyncIteratorC, GeneralJsonIteratorC},
+};
+
 /// A drop in replacement for OpenAI
 #[derive(alias, Debug, Clone)]
 pub struct OpenSourceAI {

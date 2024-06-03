@@ -8,6 +8,9 @@ use crate::{get_or_initialize_pool, types::Json};
 #[cfg(feature = "python")]
 use crate::types::JsonPython;
 
+#[cfg(feature = "c")]
+use crate::languages::c::JsonC;
+
 #[derive(Clone, Debug)]
 enum BindValue {
     String(String),

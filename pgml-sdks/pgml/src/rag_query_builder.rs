@@ -311,7 +311,7 @@ pub async fn build_rag_query(
                     [role_expr, cm.content_expr],
                 )
             });
-            let inputs_expr = Expr::cust_with_exprs(format!("{dollar_string}"), prompt_exprs);
+            let inputs_expr = Expr::cust_with_exprs(dollar_string, prompt_exprs);
 
             if stream {
                 Expr::cust_with_exprs(

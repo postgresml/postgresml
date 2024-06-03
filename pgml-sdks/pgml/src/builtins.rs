@@ -14,6 +14,9 @@ use crate::{get_or_initialize_pool, query_runner::QueryRunner, types::Json};
 #[cfg(feature = "python")]
 use crate::{query_runner::QueryRunnerPython, types::JsonPython};
 
+#[cfg(feature = "c")]
+use crate::{languages::c::JsonC, query_runner::QueryRunnerC};
+
 #[alias_methods(new, query, transform, embed, embed_batch)]
 impl Builtins {
     pub fn new(database_url: Option<String>) -> Self {
@@ -117,7 +120,7 @@ impl Builtins {
             .0
             .as_array()
             .with_context(|| "embed_batch takes an array of strings")?
-            .into_iter()
+            .iter()
             .map(|v| {
                 v.as_str()
                     .with_context(|| "only text embeddings are supported")

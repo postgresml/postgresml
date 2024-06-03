@@ -70,6 +70,9 @@ impl RAGStream {
     }
 }
 
+#[cfg(feature = "c")]
+use crate::{languages::c::JsonC, pipeline::PipelineC, query_builder::QueryBuilderC};
+
 /// Our project tasks
 #[derive(Debug, Clone)]
 pub enum ProjectTask {
