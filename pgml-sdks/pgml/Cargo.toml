@@ -4,8 +4,9 @@ version = "1.0.4"
 edition = "2021"
 authors = ["PosgresML <team@postgresml.org>"]
 homepage = "https://postgresml.org/"
-repository = ""
+repository = "https://github.com/postgresml/postgresml"
 license = "MIT"
+description = "The official pgml Rust SDK"
 keywords = ["postgres", "machine learning", "vector databases", "embeddings"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -14,8 +15,7 @@ name = "pgml"
 crate-type = ["lib", "cdylib"]
 
 [dependencies]
-# rust_bridge = {path = "../rust-bridge/rust-bridge", version = "0.1.0", optional = true }
-rust_bridge = {git = "https://github.com/postgresml/postgresml", version = "0.1.0", optional = true }
+rust_bridge = {path = "../rust-bridge/rust-bridge", version = "0.1.0", optional = true }
 sqlx = { version = "0.7.3", features = [ "runtime-tokio-rustls", "postgres", "json", "time", "uuid"] }
 serde_json = "1.0.9"
 anyhow = "1.0.9"

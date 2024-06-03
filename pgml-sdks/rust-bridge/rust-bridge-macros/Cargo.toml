@@ -2,6 +2,8 @@
 name = "rust_bridge_macros"
 version = "0.1.0"
 edition = "2021"
+license = "MIT"
+description = "The macros for the rust_bridge crate"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
