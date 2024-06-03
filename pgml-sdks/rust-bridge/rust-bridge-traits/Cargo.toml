@@ -2,6 +2,7 @@
 name = "rust_bridge_traits"
 version = "0.1.0"
 edition = "2021"
+license = "MIT"
 
 [dependencies]
 neon = { version = "0.10", default-features = false, features = ["napi-6"] }
