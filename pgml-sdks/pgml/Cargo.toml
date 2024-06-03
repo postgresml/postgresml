@@ -14,8 +14,7 @@ name = "pgml"
 crate-type = ["lib", "cdylib"]
 
 [dependencies]
-# rust_bridge = {path = "../rust-bridge/rust-bridge", version = "0.1.0", optional = true }
-rust_bridge = {git = "https://github.com/postgresml/postgresml", version = "0.1.0", optional = true }
+rust_bridge = {path = "../rust-bridge/rust-bridge", version = "0.1.0", optional = true }
 sqlx = { version = "0.7.3", features = [ "runtime-tokio-rustls", "postgres", "json", "time", "uuid"] }
 serde_json = "1.0.9"
 anyhow = "1.0.9"
