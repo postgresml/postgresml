@@ -169,8 +169,8 @@ impl<'a> WebAppBase<'a> {
     ///
     /// * `component` - The component to add to the head.
     ///
-    pub fn add_head_component(mut self, component: Component) -> Self {
-        self.head = self.head.add_component(component);
+    pub fn add_head_component(&mut self, component: Component) -> &mut Self {
+        self.head = self.head.clone().add_component(component);
         self
     }
 
