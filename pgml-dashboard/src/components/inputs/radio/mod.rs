@@ -24,8 +24,8 @@ impl RadioOption {
         }
     }
 
-    pub fn checked(mut self) -> Self {
-        self.checked = true;
+    pub fn checked(mut self, checked: bool) -> Self {
+        self.checked = checked;
         self
     }
 
@@ -53,7 +53,7 @@ impl Default for Radio {
             "test-radio",
             &[
                 RadioOption::new("Enabled (recommended)".into(), 1),
-                RadioOption::new("Disabled".into(), 0).checked(),
+                RadioOption::new("Disabled".into(), 0).checked(true),
             ],
         )
     }

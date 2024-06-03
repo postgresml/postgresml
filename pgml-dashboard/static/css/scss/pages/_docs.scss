@@ -1,16 +1,38 @@
 .docs {
+    color: #{$white};
+
     div.results {
         overflow-x: auto;
-        margin: 24px 24px;
+        margin: 0;
+        padding: 0;
+        border-top: 2px solid white;
 
         .code-toolbar {
-            display: none;
+            display: none !important;
         }
 
         pre {
-            background-color: #{$gray-500};
-            code {
-                background-color: #{$gray-500};
+            padding: 0 !important;
+            border: none;
+            margin: 0;
+        }
+
+        .overflow-auto {
+            margin: 0;
+        }
+
+        table {
+            margin: 0;
+            border-spacing: 0;
+            background-color: #{$gray-900};
+
+            tr {
+                padding: 0 0.5rem;
+            }
+
+            td, th {
+                border: 1px solid #{$gray-800};
+                padding: 0.1rem 0.5rem;
             }
         }
 
@@ -30,13 +52,15 @@
                 border-start-end-radius: 0px;
             }
         }
+
+        > * {
+            margin: 0.5rem 1rem;
+        }
     }
 
     div.code-block {
         overflow-x: auto;
-        border: 2px solid $slate-tint-1000;
-        border-radius: 8px;
-        margin: 24px 0px;
+        border-bottom: 2px solid white;
 
         .title {
             background-color: #{$gray-700};
@@ -48,6 +72,8 @@
 
         pre {
             margin: 0px;
+            border: none;
+            padding: 0px !important;
         }
 
         &.with-title {
@@ -87,30 +113,62 @@
     }
 
     table {
-        top: -1rem;
-        margin-bottom: 0;
-        white-space: nowrap;
-        color: #{$gray-100};
-        th {
-            font-weight: 800;
-        }
-        tr:hover > * {
-            color: #{$gray-100};
-            background-color: rgba(50, 54, 58, 0.3);
+        @extend .table-sm;
+        color: #{$white};
+    
+        tbody {
+            tr {
+                font-weight: #{$font-weight-normal} !important;
+                &:hover {
+                    color: #{$white};
+                    background-color: transparent;
+                }
+            }
         }
     }
 
     pre {
         background-color: #{$gray-600};
         border-radius: #{$border-radius};
+        padding: 0;
+        position: relative;
 
         code {
             border: none;
             white-space: inherit;
+            padding: 0;
+        }
+
+        .code-toolbar {
+            display: none;
+            z-index: 1;
+            border: 2px solid white;
+            border-bottom-left-radius: 8px;
+            border-top-right-radius: 8px;
+            right: -2px;
+            top: -2px;
+        }
+
+        .cm-gutters {
+            background: $gray-800;
+        }
+
+        .cm-activeLineGutter {
+            background: $gray-800;
+        }
+
+        .cm-content {
+            padding: 0.75rem;
         }
     }
 
-    code {
+    pre:hover {
+        .code-toolbar {
+            display: flex;
+        }
+    }
+
+    code, .code-multi-line {
         @extend .rounded-1;
 
         color: #{$gray-100};
@@ -118,6 +176,7 @@
         border: 1px solid #{$slate-tint-1000};
         padding: 2px;
         white-space: nowrap;
+        font-size: 0.875em;
     }
 
     img {
@@ -182,15 +241,11 @@
     // Codemirror overrideds
     .cm-editor {
         background: inherit;
-
-        // default no line numbers. 
-        .cm-gutters {
-            display: none;
-        }
     }
 
     .cm-gutters {
         background: inherit;
+        border-right: 1px solid #{$white};
     }
     
     .code-highlight {

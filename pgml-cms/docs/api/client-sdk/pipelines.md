@@ -32,10 +32,7 @@ const pipeline = pgml.newPipeline("test_pipeline", {
   body: {
     splitter: { model: "recursive_character" },
     semantic_search: {
-      model: "hkunlp/instructor-base",
-      parameters: {
-        instruction: "Represent the Wikipedia document for retrieval: ",
-      }
+      model: "Alibaba-NLP/gte-base-en-v1.5",
     },
   },
 });
@@ -53,10 +50,7 @@ pipeline = Pipeline(
         "body": {
             "splitter": {"model": "recursive_character"},
             "semantic_search": {
-                "model": "hkunlp/instructor-base",
-                "parameters": {
-                    "instruction": "Represent the Wikipedia document for retrieval: ",
-                },
+                "model": "Alibaba-NLP/gte-base-en-v1.5",
             },
         },
     },
@@ -76,10 +70,7 @@ const pipeline = pgml.newPipeline("test_pipeline", {
   body: {
     splitter: { model: "recursive_character" },
     semantic_search: {
-      model: "hkunlp/instructor-base",
-      parameters: {
-        instruction: "Represent the Wikipedia document for retrieval: ",
-      }
+      model: "Alibaba-NLP/gte-base-en-v1.5",
     },
   },
 });
@@ -94,10 +85,7 @@ pipeline = Pipeline(
         "body": {
             "splitter": {"model": "recursive_character"},
             "semantic_search": {
-                "model": "hkunlp/instructor-base",
-                "parameters": {
-                    "instruction": "Represent the Wikipedia document for retrieval: ",
-                },
+                "model": "Alibaba-NLP/gte-base-en-v1.5",
             },
         },
     },
@@ -151,7 +139,7 @@ const pipeline = pgml.newPipeline("test_pipeline", {
   body: {
     splitter: { model: "recursive_character" },
     semantic_search: {
-      model: "intfloat/e5-small",
+      model: "Alibaba-NLP/gte-base-en-v1.5",
       hnsw: {
         m: 100,
         ef_construction: 200
@@ -170,7 +158,7 @@ pipeline = Pipeline(
         "body": {
             "splitter": {"model": "recursive_character"},
             "semantic_search": {
-                "model": "intfloat/e5-small",
+                "model": "Alibaba-NLP/gte-base-en-v1.5",
                 "hnsw": {"m": 100, "ef_construction": 200},
             },
         },

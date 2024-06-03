@@ -5,13 +5,24 @@
 pub mod checkbox;
 pub use checkbox::Checkbox;
 
+// src/components/inputs/labels
+pub mod labels;
+
 // src/components/inputs/radio
 pub mod radio;
 pub use radio::Radio;
 
+// src/components/inputs/range
+pub mod range;
+pub use range::Range;
+
 // src/components/inputs/range_group
 pub mod range_group;
 pub use range_group::RangeGroup;
+
+// src/components/inputs/range_group_pricing_calc
+pub mod range_group_pricing_calc;
+pub use range_group_pricing_calc::RangeGroupPricingCalc;
 
 // src/components/inputs/range_group_v_2
 pub mod range_group_v_2;

@@ -225,8 +225,10 @@ fn train_joint(
     };
 
     // fix up default algorithm for clustering
-    let algorithm = if algorithm == Algorithm::linear && project.task == Task::cluster {
+    let algorithm = if algorithm == Algorithm::linear && project.task == Task::clustering {
         Algorithm::kmeans
+    } else if algorithm == Algorithm::linear && project.task == Task::decomposition {
+        Algorithm::pca
     } else {
         algorithm
     };
@@ -482,6 +484,13 @@ fn predict_batch(project_name: &str, features: Vec<f32>) -> SetOfIterator<'stati
     ))
 }
 
+#[pg_extern(immutable, parallel_safe, strict, name = "decompose")]
+fn decompose(project_name: &str, vector: Vec<f32>) -> Vec<f32> {
+    let model_id = Project::get_deployed_model_id(project_name);
+    let model = unwrap_or_error!(Model::find_cached(model_id));
+    unwrap_or_error!(model.decompose(&vector))
+}
+
 #[pg_extern(immutable, parallel_safe, strict, name = "predict")]
 fn predict_row(project_name: &str, row: pgrx::datum::AnyElement) -> f32 {
     predict_model_row(Project::get_deployed_model_id(project_name), row)
@@ -580,17 +589,21 @@ fn load_dataset(
 #[cfg(all(feature = "python", not(feature = "use_as_lib")))]
 #[pg_extern(immutable, parallel_safe, name = "embed")]
 pub fn embed(transformer: &str, text: &str, kwargs: default!(JsonB, "'{}'")) -> Vec<f32> {
-    embed_batch(transformer, Vec::from([text]), kwargs)
-        .first()
-        .unwrap()
-        .to_vec()
+    match crate::bindings::transformers::embed(transformer, vec![text], &kwargs.0) {
+        Ok(output) => output.first().unwrap().to_vec(),
+        Err(e) => error!("{e}"),
+    }
 }
 
 #[cfg(all(feature = "python", not(feature = "use_as_lib")))]
 #[pg_extern(immutable, parallel_safe, name = "embed")]
-pub fn embed_batch(transformer: &str, inputs: Vec<&str>, kwargs: default!(JsonB, "'{}'")) -> Vec<Vec<f32>> {
+pub fn embed_batch(
+    transformer: &str,
+    inputs: Vec<&str>,
+    kwargs: default!(JsonB, "'{}'"),
+) -> SetOfIterator<'static, Vec<f32>> {
     match crate::bindings::transformers::embed(transformer, inputs, &kwargs.0) {
-        Ok(output) => output,
+        Ok(output) => SetOfIterator::new(output.into_iter()),
         Err(e) => error!("{e}"),
     }
 }
@@ -606,7 +619,7 @@ pub fn embed_batch(transformer: &str, inputs: Vec<&str>, kwargs: default!(JsonB,
 /// Returns `true` if the GPU cache was successfully cleared, `false` otherwise.
 /// # Example
 ///
-/// ```sql
+/// ```postgresql
 /// SELECT pgml.clear_gpu_cache(memory_usage => 0.5);
 /// ```
 #[cfg(all(feature = "python", not(feature = "use_as_lib")))]

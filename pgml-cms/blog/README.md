@@ -4,6 +4,7 @@ description: recent blog posts
 
 # Home
 
+* [meet-us-at-the-2024-ai-dev-summit-conference](meet-us-at-the-2024-ai-dev-summit-conference.md "mention")
 * [introducing-the-openai-switch-kit-move-from-closed-to-open-source-ai-in-minutes.md](introducing-the-openai-switch-kit-move-from-closed-to-open-source-ai-in-minutes.md "mention")
 * [speeding-up-vector-recall-5x-with-hnsw.md](speeding-up-vector-recall-5x-with-hnsw.md "mention")
 * [how-to-improve-search-results-with-machine-learning.md](how-to-improve-search-results-with-machine-learning.md "mention")

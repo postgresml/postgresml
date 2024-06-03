@@ -122,14 +122,14 @@ LIMIT 5;
 
 PostgresML provides a simple interface to generate embeddings from text in your database. You can use the [`pgml.embed`](https://postgresml.org/docs/guides/transformers/embeddings) function to generate embeddings for a column of text. The function takes a transformer name and a text value. The transformer will automatically be downloaded and cached on your connection process for reuse. You can see a list of potential good candidate models to generate embeddings on the [Massive Text Embedding Benchmark leaderboard](https://huggingface.co/spaces/mteb/leaderboard).
 
-Since our corpus of documents (movie reviews) are all relatively short and similar in style, we don't need a large model. [`intfloat/e5-small`](https://huggingface.co/intfloat/e5-small) will be a good first attempt. The great thing about PostgresML is you can always regenerate your embeddings later to experiment with different embedding models.
+Since our corpus of documents (movie reviews) are all relatively short and similar in style, we don't need a large model. [`Alibaba-NLP/gte-base-en-v1.5`](https://huggingface.co/Alibaba-NLP/gte-base-en-v1.5) will be a good first attempt. The great thing about PostgresML is you can always regenerate your embeddings later to experiment with different embedding models.
 
-It takes a couple of minutes to download and cache the `intfloat/e5-small` model to generate the first embedding. After that, it's pretty fast.
+It takes a couple of minutes to download and cache the `Alibaba-NLP/gte-base-en-v1.5` model to generate the first embedding. After that, it's pretty fast.
 
 Note how we prefix the text we want to embed with either `passage:` or `query:` , the e5 model requires us to prefix our data with `passage:` if we're generating embeddings for our corpus and `query:` if we want to find semantically similar content.
 
 ```postgresql
-SELECT pgml.embed('intfloat/e5-small', 'passage: hi mom');
+SELECT pgml.embed('Alibaba-NLP/gte-base-en-v1.5', 'passage: hi mom');
 ```
 
 This is a pretty powerful function, because we can pass any arbitrary text to any open source model, and it will generate an embedding for us. We can benchmark how long it takes to generate an embedding for a single review, using client-side timings in Postgres:
@@ -142,12 +142,12 @@ Aside from using this function with strings passed from a client, we can use it 
 
 !!! generic
 
-!!! code\_block time="54.820 ms"
+!!! code_block time="54.820 ms"
 
 ```postgresql
 SELECT
     review_body,
-    pgml.embed('intfloat/e5-small', 'passage: ' || review_body)
+    pgml.embed('Alibaba-NLP/gte-base-en-v1.5', 'passage: ' || review_body)
 FROM pgml.amazon_us_reviews
 LIMIT 1;
 ```
@@ -156,7 +156,7 @@ LIMIT 1;
 
 !!! results
 
-```
+```postgressql
 CREATE INDEX
 ```
 
@@ -171,7 +171,7 @@ Time to generate an embedding increases with the length of the input text, and v
 ```postgresql
 SELECT
     review_body,
-    pgml.embed('intfloat/e5-small', 'passage: ' || review_body) AS embedding
+    pgml.embed('Alibaba-NLP/gte-base-en-v1.5', 'passage: ' || review_body) AS embedding
 FROM pgml.amazon_us_reviews
 LIMIT 1000;
 ```
@@ -190,7 +190,7 @@ We can also do a quick sanity check to make sure we're really getting value out 
 SELECT
     reviqew_body,
     pgml.embed(
-        'intfloat/e5-small',
+        'Alibaba-NLP/gte-base-en-v1.5',
         'passage: ' || review_body,
         '{"device": "cpu"}'
     ) AS embedding
@@ -216,8 +216,6 @@ For comparison, it would cost about $299 to use OpenAI's cheapest embedding mode
 | GPU       | 17ms    | $72  | 6 hours   |
 | OpenAI    | 300ms   | $299 | millennia |
 
-\\
-
 You can also find embedding models that outperform OpenAI's `text-embedding-ada-002` model across many different tests on the [leaderboard](https://huggingface.co/spaces/mteb/leaderboard). It's always best to do your own benchmarking with your data, models, and hardware to find the best fit for your use case.
 
 > _HTTP requests to a different datacenter cost more time and money for lower reliability than co-located compute and storage._
@@ -225,6 +223,12 @@ You can also find embedding models that outperform OpenAI's `text-embedding-ada-
 ## Instructor embedding models
 
 The current leading model is `hkunlp/instructor-xl`. Instructor models take an additional `instruction` parameter which includes context for the embeddings use case, similar to prompts before text generation tasks.
+
+!!! note
+
+    "Alibaba-NLP/gte-base-en-v1.5" surpassed the quality of instructor-xl, and should be used instead, but we've left this documentation available for existing users 
+
+!!!
 
 Instructions can provide a "classification" or "topic" for the text:
 
@@ -327,7 +331,7 @@ BEGIN
 
         UPDATE pgml.amazon_us_reviews
         SET review_embedding_e5_large = pgml.embed(
-                'intfloat/e5-large',
+                'Alibaba-NLP/gte-base-en-v1.5',
                 'passage: ' || review_body
             )
         WHERE id BETWEEN i AND i + 10

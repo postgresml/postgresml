@@ -29,22 +29,20 @@ fn try_model_nice_name_to_model_name_and_parameters(
     model_name: &str,
 ) -> Option<(&'static str, Json)> {
     match model_name {
+        "meta-llama/Meta-Llama-3-8B-Instruct" => Some((
+            "meta-llama/Meta-Llama-3-8B-Instruct",
+            serde_json::json!({
+                "task": "conversationa",
+                "model": "meta-llama/Meta-Llama-3-8B-Instruct"
+            })
+            .into(),
+        )),
+
         "mistralai/Mistral-7B-Instruct-v0.1" => Some((
             "mistralai/Mistral-7B-Instruct-v0.1",
             serde_json::json!({
               "task": "conversational",
               "model": "mistralai/Mistral-7B-Instruct-v0.1",
-              "device_map": "auto",
-              "torch_dtype": "bfloat16"
-            })
-            .into(),
-        )),
-
-        "HuggingFaceH4/zephyr-7b-beta" => Some((
-            "HuggingFaceH4/zephyr-7b-beta",
-            serde_json::json!({
-              "task": "conversational",
-              "model": "HuggingFaceH4/zephyr-7b-beta",
               "device_map": "auto",
               "torch_dtype": "bfloat16"
             })
@@ -207,7 +205,7 @@ impl OpenSourceAI {
             Ok((
                 TransformerPipeline::new(
                     "conversational",
-                    Some(model_name.to_string()),
+                    model_name,
                     Some(model.clone()),
                     self.database_url.clone(),
                 ),
@@ -227,7 +225,7 @@ mistralai/Mistral-7B-v0.1
             Ok((
                 TransformerPipeline::new(
                     "conversational",
-                    Some(real_model_name.to_string()),
+                    real_model_name,
                     Some(parameters.clone()),
                     self.database_url.clone(),
                 ),
@@ -258,7 +256,9 @@ mistralai/Mistral-7B-v0.1
         let md5_digest = md5::compute(to_hash.as_bytes());
         let fingerprint = uuid::Uuid::from_slice(&md5_digest.0)?;
 
-        let mut args = serde_json::json!({ "max_new_tokens": max_tokens, "temperature": temperature, "do_sample": true, "num_return_sequences": n });
+        // TODO: Add n
+
+        let mut args = serde_json::json!({ "max_tokens": max_tokens, "temperature": temperature });
         if let Some(t) = chat_template
             .or_else(|| try_get_model_chat_template(&model_name).map(|s| s.to_string()))
         {
@@ -346,7 +346,9 @@ mistralai/Mistral-7B-v0.1
         let md5_digest = md5::compute(to_hash.as_bytes());
         let fingerprint = uuid::Uuid::from_slice(&md5_digest.0)?;
 
-        let mut args = serde_json::json!({ "max_new_tokens": max_tokens, "temperature": temperature, "do_sample": true, "num_return_sequences": n });
+        // TODO: Add n
+
+        let mut args = serde_json::json!({ "max_tokens": max_tokens, "temperature": temperature });
         if let Some(t) = chat_template
             .or_else(|| try_get_model_chat_template(&model_name).map(|s| s.to_string()))
         {
@@ -426,7 +428,7 @@ mod tests {
     #[test]
     fn can_open_source_ai_create() -> anyhow::Result<()> {
         let client = OpenSourceAI::new(None);
-        let results = client.chat_completions_create(Json::from_serializable("HuggingFaceH4/zephyr-7b-beta"), vec![
+        let results = client.chat_completions_create(Json::from_serializable("meta-llama/Meta-Llama-3-8B-Instruct"), vec![
           serde_json::json!({"role": "system", "content": "You are a friendly chatbot who always responds in the style of a pirate"}).into(),
           serde_json::json!({"role": "user", "content": "How many helicopters can a human eat in one sitting?"}).into(),
         ], Some(10), None, Some(3), None)?;
@@ -437,7 +439,7 @@ mod tests {
     #[sqlx::test]
     fn can_open_source_ai_create_async() -> anyhow::Result<()> {
         let client = OpenSourceAI::new(None);
-        let results = client.chat_completions_create_async(Json::from_serializable("HuggingFaceH4/zephyr-7b-beta"), vec![
+        let results = client.chat_completions_create_async(Json::from_serializable("meta-llama/Meta-Llama-3-8B-Instruct"), vec![
           serde_json::json!({"role": "system", "content": "You are a friendly chatbot who always responds in the style of a pirate"}).into(),
           serde_json::json!({"role": "user", "content": "How many helicopters can a human eat in one sitting?"}).into(),
         ], Some(10), None, Some(3), None).await?;
@@ -448,7 +450,7 @@ mod tests {
     #[sqlx::test]
     fn can_open_source_ai_create_stream_async() -> anyhow::Result<()> {
         let client = OpenSourceAI::new(None);
-        let mut stream = client.chat_completions_create_stream_async(Json::from_serializable("HuggingFaceH4/zephyr-7b-beta"), vec![
+        let mut stream = client.chat_completions_create_stream_async(Json::from_serializable("meta-llama/Meta-Llama-3-8B-Instruct"), vec![
           serde_json::json!({"role": "system", "content": "You are a friendly chatbot who always responds in the style of a pirate"}).into(),
           serde_json::json!({"role": "user", "content": "How many helicopters can a human eat in one sitting?"}).into(),
         ], Some(10), None, Some(3), None).await?;
@@ -461,7 +463,7 @@ mod tests {
     #[test]
     fn can_open_source_ai_create_stream() -> anyhow::Result<()> {
         let client = OpenSourceAI::new(None);
-        let iterator = client.chat_completions_create_stream(Json::from_serializable("HuggingFaceH4/zephyr-7b-beta"), vec![
+        let iterator = client.chat_completions_create_stream(Json::from_serializable("meta-llama/Meta-Llama-3-8B-Instruct"), vec![
           serde_json::json!({"role": "system", "content": "You are a friendly chatbot who always responds in the style of a pirate"}).into(),
           serde_json::json!({"role": "user", "content": "How many helicopters can a human eat in one sitting?"}).into(),
         ], Some(10), None, Some(3), None)?;

@@ -230,12 +230,15 @@ dependencies = [
  "itertools 0.12.0",
  "lazy_static",
  "lazycell",
+ "log",
+ "prettyplease",
  "proc-macro2",
  "quote 1.0.35",
  "regex",
  "rustc-hash",
  "shlex",
  "syn 2.0.46",
+ "which",
 ]
 
 [[package]]
@@ -1743,7 +1746,7 @@ dependencies = [
 
 [[package]]
 name = "pgml"
-version = "2.8.3"
+version = "2.8.5"
 dependencies = [
  "anyhow",
  "blas",
@@ -3406,7 +3409,7 @@ dependencies = [
 [[package]]
 name = "xgboost"
 version = "0.2.0"
-source = "git+https://github.com/postgresml/rust-xgboost?branch=master#7a9235727cfcd1270289d7541ff8841dadb897ad"
+source = "git+https://github.com/postgresml/rust-xgboost?branch=master#a11d05d486395dcc059abf9106af84f70b2f5291"
 dependencies = [
  "derive_builder 0.12.0",
  "indexmap 2.1.0",
@@ -3419,9 +3422,9 @@ dependencies = [
 [[package]]
 name = "xgboost-sys"
 version = "0.2.0"
-source = "git+https://github.com/postgresml/rust-xgboost?branch=master#7a9235727cfcd1270289d7541ff8841dadb897ad"
+source = "git+https://github.com/postgresml/rust-xgboost?branch=master#a11d05d486395dcc059abf9106af84f70b2f5291"
 dependencies = [
- "bindgen 0.68.1",
+ "bindgen 0.69.4",
  "cmake",
  "libc",
 ]

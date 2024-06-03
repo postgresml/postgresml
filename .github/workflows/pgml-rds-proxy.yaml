@@ -1,0 +1,24 @@
+name: Build and release pgml-rds-proxy Docker image
+
+on:
+  workflow_dispatch:
+jobs:
+  publish-proxy-docker-image:
+    strategy:
+      matrix:
+        os: ["buildjet-4vcpu-ubuntu-2204"]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: packages/pgml-rds-proxy
+    steps:
+      - uses: actions/checkout@v2
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push Docker image
+        run: |
+          bash build-docker-image.sh

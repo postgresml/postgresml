@@ -72,7 +72,7 @@ pub fn generate_python_alias(parsed: DeriveInput) -> proc_macro::TokenStream {
     let expanded = quote! {
         #[cfg(feature = "python")]
         #[pyo3::pyclass(name = #wrapped_type_name)]
-        #[derive(Clone, Debug)]
+        #[derive(Clone)]
         pub struct #name_ident {
             pub wrapped: std::boxed::Box<#wrapped_type_ident>
         }

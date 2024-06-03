@@ -20,10 +20,7 @@ async def main():
             "text": {
                 "splitter": {"model": "recursive_character"},
                 "semantic_search": {
-                    "model": "hkunlp/instructor-base",
-                    "parameters": {
-                        "instruction": "Represent the Wikipedia document for retrieval: "
-                    },
+                    "model": "Alibaba-NLP/gte-base-en-v1.5",
                 },
             }
         },

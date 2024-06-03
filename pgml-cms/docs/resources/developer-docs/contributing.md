@@ -115,16 +115,15 @@ CREATE EXTENSION pgml;
 That's it, PostgresML is ready. You can validate the installation by running:
 
 
-
 {% tabs %}
 {% tab title="SQL" %}
-```sql
+```postgresql
 SELECT pgml.version();
 ```
 {% endtab %}
 
 {% tab title="Output" %}
-```sql
+```postgresql
 postgres=# select pgml.version();
       version
 -------------------
@@ -136,7 +135,7 @@ postgres=# select pgml.version();
 
 Basic extension usage:
 
-```sql
+```postgresql
 SELECT * FROM pgml.load_dataset('diabetes');
 SELECT * FROM pgml.train('Project name', 'regression', 'pgml.diabetes', 'target', 'xgboost');
 SELECT target, pgml.predict('Project name', ARRAY[age, sex, bmi, bp, s1, s2, s3, s4, s5, s6]) FROM pgml.diabetes LIMIT 10;
@@ -213,7 +212,6 @@ cargo watch --exec run
 ```
 
 The website can be packaged for distribution. You'll need to copy the static files along with the `target/release` directory to your server.
-
 
 ## General
 

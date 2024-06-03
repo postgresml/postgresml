@@ -10,7 +10,7 @@ pub struct TransformerPipeline {
     database_url: Option<String>,
 }
 
-use crate::types::GeneralJsonAsyncIterator;
+use crate::types::{CustomU64Convertor, GeneralJsonAsyncIterator};
 use crate::{get_or_initialize_pool, types::Json};
 
 #[cfg(feature = "python")]
@@ -28,22 +28,18 @@ impl TransformerPipeline {
     /// * `model` - The model to use
     /// * `args` - The arguments to pass to the task
     /// * `database_url` - The database url to use. If None, the `PGML_DATABASE_URL` environment variable will be used
-    pub fn new(
-        task: &str,
-        model: Option<String>,
-        args: Option<Json>,
-        database_url: Option<String>,
-    ) -> Self {
+    pub fn new(task: &str, model: &str, args: Option<Json>, database_url: Option<String>) -> Self {
         let mut args = args.unwrap_or_default();
         let a = args.as_object_mut().expect("args must be an object");
         a.insert("task".to_string(), task.to_string().into());
-        if let Some(m) = model {
-            a.insert("model".to_string(), m.into());
-        }
+        a.insert("model".to_string(), model.into());
+
         // We must convert any floating point values to integers or our extension will get angry
-        if let Some(v) = a.remove("gpu_layers") {
-            let int_v = v.as_f64().expect("gpu_layers must be an integer") as i64;
-            a.insert("gpu_layers".to_string(), int_v.into());
+        for field in ["gpu_layers"] {
+            if let Some(v) = a.remove(field) {
+                let x: u64 = CustomU64Convertor(v).into();
+                a.insert(field.to_string(), x.into());
+            }
         }
 
         Self {
@@ -60,7 +56,21 @@ impl TransformerPipeline {
     #[instrument(skip(self))]
     pub async fn transform(&self, inputs: Vec<Json>, args: Option<Json>) -> anyhow::Result<Json> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
-        let args = args.unwrap_or_default();
+        let mut args = args.unwrap_or_default();
+        let a = args.as_object_mut().context("args must be an object")?;
+
+        // Backwards compatible
+        if let Some(x) = a.remove("max_new_tokens") {
+            a.insert("max_tokens".to_string(), x);
+        }
+
+        // We must convert any floating point values to integers or our extension will get angry
+        for field in ["max_tokens", "n"] {
+            if let Some(v) = a.remove(field) {
+                let x: u64 = CustomU64Convertor(v).into();
+                a.insert(field.to_string(), x.into());
+            }
+        }
 
         // We set the task in the new constructor so we can unwrap here
         let results = if self.task["task"].as_str().unwrap() == "conversational" {
@@ -103,8 +113,23 @@ impl TransformerPipeline {
         batch_size: Option<i32>,
     ) -> anyhow::Result<GeneralJsonAsyncIterator> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
-        let args = args.unwrap_or_default();
         let batch_size = batch_size.unwrap_or(1);
+
+        let mut args = args.unwrap_or_default();
+        let a = args.as_object_mut().context("args must be an object")?;
+
+        // Backwards compatible
+        if let Some(x) = a.remove("max_new_tokens") {
+            a.insert("max_tokens".to_string(), x);
+        }
+
+        // We must convert any floating point values to integers or our extension will get angry
+        for field in ["max_tokens", "n"] {
+            if let Some(v) = a.remove(field) {
+                let x: u64 = CustomU64Convertor(v).into();
+                a.insert(field.to_string(), x.into());
+            }
+        }
 
         let mut transaction = pool.begin().await?;
         // We set the task in the new constructor so we can unwrap here
@@ -181,29 +206,7 @@ mod tests {
     #[sqlx::test]
     async fn transformer_pipeline_can_transform() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let t = TransformerPipeline::new(
-            "translation_en_to_fr",
-            Some("t5-base".to_string()),
-            None,
-            None,
-        );
-        let results = t
-            .transform(
-                vec![
-                    serde_json::Value::String("How are you doing today?".to_string()).into(),
-                    serde_json::Value::String("How are you doing today?".to_string()).into(),
-                ],
-                None,
-            )
-            .await?;
-        assert!(results.as_array().is_some());
-        Ok(())
-    }
-
-    #[sqlx::test]
-    async fn transformer_pipeline_can_transform_with_default_model() -> anyhow::Result<()> {
-        internal_init_logger(None, None).ok();
-        let t = TransformerPipeline::new("translation_en_to_fr", None, None, None);
+        let t = TransformerPipeline::new("translation_en_to_fr", "t5-base", None, None);
         let results = t
             .transform(
                 vec![
@@ -222,13 +225,8 @@ mod tests {
         internal_init_logger(None, None).ok();
         let t = TransformerPipeline::new(
             "text-generation",
-            Some("TheBloke/zephyr-7B-beta-GPTQ".to_string()),
-            Some(
-                serde_json::json!({
-                  "model_type": "mistral", "revision": "main", "device_map": "auto"
-                })
-                .into(),
-            ),
+            "meta-llama/Meta-Llama-3-8B-Instruct",
+            None,
             None,
         );
         let mut stream = t

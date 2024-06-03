@@ -16,7 +16,7 @@ The [Helsinki-NLP](https://huggingface.co/Helsinki-NLP) organization provides mo
 
 The [kde4](https://huggingface.co/datasets/kde4) dataset contains many language pairs. Subsets can be loaded into your Postgres instance with a call to `pgml.load_dataset`, or you may wish to create your own fine tuning dataset with vocabulary specific to your domain.
 
-```sql
+```postgresql
 SELECT pgml.load_dataset('kde4', kwargs => '{"lang1": "en", "lang2": "es"}');
 ```
 
@@ -24,13 +24,13 @@ You can view the newly loaded data in your Postgres database:
 
 \=== "SQL"
 
-```sql
+```postgresql
 SELECT * FROM pgml.kde4 LIMIT 5;
 ```
 
 \=== "Result"
 
-```sql
+```postgresql
 id  |
 translation
 
@@ -49,7 +49,7 @@ This HuggingFace dataset stores the data as language key pairs in a JSON documen
 
 \=== "SQL"
 
-```sql
+```postgresql
 CREATE OR REPLACE VIEW kde4_en_to_es AS
 SELECT translation->>'en' AS "en", translation->>'es' AS "es"
 FROM pgml.kde4
@@ -58,7 +58,7 @@ LIMIT 10;
 
 \=== "Result"
 
-```sql
+```postgresql
 CREATE VIEW
 ```
 
@@ -68,13 +68,13 @@ Now, we can see the data in more normalized form. The exact column names don't m
 
 \=== "SQL"
 
-```sql
+```postgresql
 SELECT * FROM kde4_en_to_es LIMIT 10;
 ```
 
 \=== "Result"
 
-```sql
+```postgresql
                                             en                                            |                                                   es
 
 --------------------------------------------------------------------------------------------+--------------------------------------------------------------------------
@@ -100,7 +100,7 @@ o de traducción de Babelfish.
 
 Tuning is very similar to training with PostgresML, although we specify a `model_name` to download from Hugging Face instead of the base `algorithm`.
 
-```sql
+```postgresql
 SELECT pgml.tune(
     'Translate English to Spanish',
     task => 'translation',
@@ -130,7 +130,7 @@ Translations use the `pgml.generate` API since they return `TEXT` rather than nu
 
 \=== "SQL"
 
-```sql
+```postgresql
 
 SELECT pgml.generate('Translate English to Spanish', 'I love SQL')
 AS spanish;
@@ -138,7 +138,7 @@ AS spanish;
 
 \=== "Result"
 
-```sql
+```postgresql
     spanish
 ----------------
 Me encanta SQL
@@ -165,7 +165,7 @@ Once our model has been fine tuned on the dataset, it'll be saved and deployed w
 
 The IMDB dataset has 50,000 examples of user reviews with positive or negative viewing experiences as the labels, and is split 50/50 into training and evaluation datasets.
 
-```sql
+```postgresql
 SELECT pgml.load_dataset('imdb');
 ```
 
@@ -173,13 +173,13 @@ You can view the newly loaded data in your Postgres database:
 
 \=== "SQL"
 
-```sql
+```postgresql
 SELECT * FROM pgml.imdb LIMIT 1;
 ```
 
 \=== "Result"
 
-```sql
+```postgresql
                                                                                                                                                             text                                                                                                                                           | label
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------
  This has to be the funniest stand up comedy I have ever seen. Eddie Izzard is a genius, he picks in Brits, Americans and everyone in between. His style is completely natural and completely hilarious. I doubt that anyone could sit through this and not laugh their a** off. Watch, enjoy, it's funny. |     1
@@ -192,7 +192,7 @@ SELECT * FROM pgml.imdb LIMIT 1;
 
 Tuning has a nearly identical API to training, except you may pass the name of a [model published on Hugging Face](https://huggingface.co/models) to start with, rather than training an algorithm from scratch.
 
-```sql
+```postgresql
 SELECT pgml.tune(
     'IMDB Review Sentiment',
     task => 'text-classification',
@@ -215,14 +215,14 @@ SELECT pgml.tune(
 
 \=== "SQL"
 
-```sql
+```postgresql
 SELECT pgml.predict('IMDB Review Sentiment', 'I love SQL')
 AS sentiment;
 ```
 
 \=== "Result"
 
-```sql
+```postgresql
 sentiment
 -----------
 1
@@ -237,14 +237,14 @@ The default for predict in a classification problem classifies the statement as 
 
 \=== "SQL"
 
-```sql
+```postgresql
 SELECT pgml.predict_proba('IMDB Review Sentiment', 'I love SQL')
 AS sentiment;
 ```
 
 \=== "Result"
 
-```sql
+```postgresql
                 sentiment
 -------------------------------------------
 [0.06266672909259796, 0.9373332858085632]
@@ -267,7 +267,7 @@ At a high level, summarization uses similar techniques to translation. Both use 
 
 [BillSum](https://huggingface.co/datasets/billsum) is a dataset with training examples that summarize US Congressional and California state bills. You can pass `kwargs` specific to loading datasets, in this case we'll restrict the dataset to California samples:
 
-```sql
+```postgresql
 SELECT pgml.load_dataset('billsum', kwargs => '{"split": "ca_test"}');
 ```
 
@@ -275,7 +275,7 @@ You can view the newly loaded data in your Postgres database:
 
 \=== "SQL"
 
-```sql
+```postgresql
 SELECT * FROM pgml.billsum LIMIT 1;
 ```
 
@@ -362,14 +362,14 @@ This act provides for a tax levy within the meaning of Article IV of the Constit
 
 This dataset has 3 fields, but summarization transformers only take a single input to produce their output. We can create a view that simply omits the `title` from the training data:
 
-```sql
+```postgresql
 CREATE OR REPLACE VIEW billsum_training_data
 AS SELECT "text", summary FROM pgml.billsum;
 ```
 
 Or, it might be interesting to concat the title to the text field to see how relevant it actually is to the bill. If the title of a bill is the first sentence, and doesn't appear in summary, it may indicate that it's a poorly chosen title for the bill:
 
-```sql
+```postgresql
 CREATE OR REPLACE VIEW billsum_training_data
 AS SELECT title || '\n' || "text" AS "text", summary FROM pgml.billsum 
 LIMIT 10;
@@ -379,7 +379,7 @@ LIMIT 10;
 
 Tuning has a nearly identical API to training, except you may pass the name of a [model published on Hugging Face](https://huggingface.co/models) to start with, rather than training an algorithm from scratch.
 
-```sql
+```postgresql
 SELECT pgml.tune(
     'Legal Summarization',
     task => 'summarization',
@@ -403,13 +403,13 @@ SELECT pgml.tune(
 
 \=== "SQL"
 
-```sql
+```postgresql
 SELECT pgml.predict('IMDB Review Sentiment', 'I love SQL') AS sentiment;
 ```
 
 \=== "Result"
 
-```sql
+```postgresql
 sentiment
 -----------
 1
@@ -424,13 +424,13 @@ The default for predict in a classification problem classifies the statement as 
 
 \=== "SQL"
 
-```sql
+```postgresql
 SELECT pgml.predict_proba('IMDB Review Sentiment', 'I love SQL') AS sentiment;
 ```
 
 \=== "Result"
 
-```sql
+```postgresql
                 sentiment
 -------------------------------------------
 [0.06266672909259796, 0.9373332858085632]
@@ -447,7 +447,7 @@ See the [task documentation](https://huggingface.co/tasks/text-classification) f
 
 ### Text Generation
 
-```sql
+```postgresql
 SELECT pgml.load_dataset('bookcorpus', "limit" => 100);
 
 SELECT pgml.tune(

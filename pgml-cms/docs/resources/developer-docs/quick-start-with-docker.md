@@ -108,7 +108,7 @@ To generate an embedding, all you have to do is use the `pgml.embed(model_name, 
 
 ```postgresql
 SELECT pgml.embed(
-    'intfloat/e5-small',
+    'Alibaba-NLP/gte-base-en-v1.5',
     'passage: PostgresML is so easy!'
 );
 ```
@@ -119,7 +119,7 @@ SELECT pgml.embed(
 
 ```
 postgres=# SELECT pgml.embed(
-    'intfloat/e5-small',
+    'Alibaba-NLP/gte-base-en-v1.5',
     'passage: PostgresML is so easy!'
 );
 

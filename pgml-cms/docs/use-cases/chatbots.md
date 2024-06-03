@@ -45,9 +45,7 @@ wget https://raw.githubusercontent.com/postgresml/postgresml/master/pgml-apps/pg
 ```bash
 OPENAI_API_KEY=<OPENAI_API_KEY>
 DATABASE_URL=<POSTGRES_DATABASE_URL starts with postgres://>
-MODEL=hkunlp/instructor-xl
-MODEL_PARAMS={"instruction": "Represent the Wikipedia document for retrieval: "}
-QUERY_PARAMS={"instruction": "Represent the Wikipedia question for retrieving supporting documents: "}
+MODEL=Alibaba-NLP/gte-base-en-v1.5
 SYSTEM_PROMPT="You are an assistant to answer questions about an open source software named PostgresML. Your name is PgBot. You are based out of San Francisco, California."
 BASE_PROMPT="Given relevant parts of a document and a question, create a final answer.\ 
                 Include a SQL query in the answer wherever possible. \

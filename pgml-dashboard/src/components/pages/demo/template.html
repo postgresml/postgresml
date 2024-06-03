@@ -1,4 +1,4 @@
-<% use crate::components::tables::small::*; %>
+<% use crate::components::tables::{small as small_table, large as large_table}; %>
 <% use crate::components::headings::{Green, Blue, Gray}; %>
 <% use crate::components::inputs::text::EditableHeader; %>
 <% use crate::components::inputs::text::{Input, search::{Search, search::SearchOptions}}; %>
@@ -8,17 +8,53 @@
 <% use crate::components::inputs::select::{Select, Option}; %>
 <% use crate::components::inputs::{SwitchV2, Radio, Checkbox}; %>
 <% use crate::components::cards::{Rgb, Secondary, Primary}; %>
+<% use crate::components::inputs::labels::WithTooltip; %>
 
 <div class="container" data-controller="pages-demo">
   <div class="py-5">
-    <%+ Table::new(&["Model", "Performance", "Cost"], &[
-      Row::new(&[
-        "intfloat/e5-small".into(),
+    <%+ small_table::Table::new(&["Model", "Performance", "Cost"], &[
+      small_table::Row::new(&[
+        "intfloat/e5-small-v2".into(),
         "5ms/embedding".into(),
         "$0.0000000001/embedding".into(),
       ]).into(),
-      Row::new(&[
-        "intfloat/e5-large".into(),
+      small_table::Row::new(&[
+        "Alibaba-NLP/gte-base-en-v1.5".into(),
+        "5ms/embedding".into(),
+        "$0.0000000001/embedding".into(),
+      ]).into(),
+      small_table::Row::new(&[
+        "Alibaba-NLP/gte-large-en-v1.5".into(),
+        "10ms/embedding".into(),
+        "$0.0000000002/embedding".into(),
+      ]).into(),
+      small_table::Row::new(&[
+        "mixedbread-ai/mxbai-embed-large-v1".into(),
+        "10ms/embedding".into(),
+        "$0.0000000002/embedding".into(),
+      ]).into(),
+    ]) %>
+  </div>
+
+  <div class="py-5">
+    <%+ large_table::Table::new(&["Model", "Performance", "Cost"], &[
+      large_table::Row::new(&[
+        "intfloat/e5-small-v2".into(),
+        "5ms/embedding".into(),
+        "$0.0000000001/embedding".into(),
+      ]).into(),
+      large_table::Row::new(&[
+        "Alibaba-NLP/gte-base-en-v1.5".into(),
+        "5ms/embedding".into(),
+        "$0.0000000001/embedding".into(),
+      ]).into(),
+      large_table::Row::new(&[
+        "Alibaba-NLP/gte-large-en-v1.5".into(),
+        "10ms/embedding".into(),
+        "$0.0000000002/embedding".into(),
+      ]).into(),
+      large_table::Row::new(&[
+        "mixedbread-ai/mxbai-embed-large-v1".into(),
         "10ms/embedding".into(),
         "$0.0000000002/embedding".into(),
       ]).into(),
@@ -59,8 +95,14 @@
   </div>
 
   <div class="py-5">
+    <% 
+      let label = WithTooltip::new("Name".into())
+        .tooltip("Your full name.")
+        .icon("info");
+    %>
+
     <%+ Input::new()
-      .label("What is your name?".into())
+      .label(label.into())
       .icon("person")
       .placeholder("Enter your name")
       .name("name")
@@ -200,5 +242,24 @@
         <%+ Checkbox::new("Take full width checkbox", "block") %>
       </div>
     </div>
+  </div>
+
+  <div class="py-5">
+    <%+ WithTooltip::new("Model".into())
+        .tooltip("A model is great, but two is better.")
+        .icon("help_outline") %>
+  </div>
+
+  <div class="py-5">
+    <%+ WithTooltip::new("Model".into())
+        .tooltip_html("A model is great<br>, but<br> two<br> is better.")
+        .icon("help_outline") %>
+  </div>
+
+  <div class="py-5 d-flex gap-2">
+    <button class="btn btn-primary-web-app">Primary button</button>
+    <button class="btn btn-primary-web-app" disabled>Primary disabled</button>
+    <button class="btn btn-secondary-web-app">Secondary button</button>
+    <button class="btn btn-secondary-web-app" disabled>Secondary button</button>
   </div>
 </div>

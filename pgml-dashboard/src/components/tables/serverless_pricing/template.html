@@ -1,0 +1,21 @@
+<% 
+  use crate::components::tables::small::*;
+
+  let heading_style = if style_type == "product" {
+    "text-gradient-green"
+  } else {
+    "text-white"
+  };
+%>
+
+<div data-controller="tables-serverless-pricing" class="overflow-scroll">
+  <h4 class="h6 fw-semibold <%- heading_style %>">
+    Vector & Relational Database
+  </h4>
+  <div>
+    <%+ Table::new(&[
+      "Name",
+      "Pricing",
+    ], &pricing) %>
+  </div>
+</div>

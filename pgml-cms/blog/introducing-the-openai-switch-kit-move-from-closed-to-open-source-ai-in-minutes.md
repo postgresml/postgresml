@@ -44,7 +44,7 @@ The Switch Kit is an open-source AI SDK that provides a drop in replacement for 
 const pgml = require("pgml");
 const client = pgml.newOpenSourceAI();
 const results = client.chat_completions_create(
-      "HuggingFaceH4/zephyr-7b-beta",
+      "meta-llama/Meta-Llama-3-8B-Instruct",
       [
           {
               role: "system",
@@ -65,7 +65,7 @@ console.log(results);
 import pgml
 client = pgml.OpenSourceAI()
 results = client.chat_completions_create(
-    "HuggingFaceH4/zephyr-7b-beta",
+    "meta-llama/Meta-Llama-3-8B-Instruct",
     [
         {
             "role": "system",
@@ -96,7 +96,7 @@ print(results)
   ],
   "created": 1701291672,
   "id": "abf042d2-9159-49cb-9fd3-eef16feb246c",
-  "model": "HuggingFaceH4/zephyr-7b-beta",
+  "model": "meta-llama/Meta-Llama-3-8B-Instruct",
   "object": "chat.completion",
   "system_fingerprint": "eecec9d4-c28b-5a27-f90b-66c3fb6cee46",
   "usage": {
@@ -113,7 +113,7 @@ We don't charge per token, so OpenAI “usage” metrics are not particularly re
 
 !!!
 
-The above is an example using our open-source AI SDK with zephyr-7b-beta, an incredibly popular and highly efficient 7 billion parameter model.
+The above is an example using our open-source AI SDK with Meta-Llama-3-8B-Instruct, an incredibly popular and highly efficient 8 billion parameter model.
 
 Notice there is near one to one relation between the parameters and return type of OpenAI’s `chat.completions.create` and our `chat_completion_create`.
 

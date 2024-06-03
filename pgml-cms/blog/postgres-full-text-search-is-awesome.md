@@ -54,7 +54,7 @@ These queries can execute in milliseconds on large production-sized corpora with
 
 The following full blown example is for demonstration purposes only of a 3rd generation search engine. You can test it for real in the PostgresML Gym to build up a complete understanding.
 
-```sql
+```postgresql
 WITH query AS (
   -- construct a query context with arguments that would typically be
   -- passed in from the application layer
@@ -104,7 +104,5 @@ LIMIT 100;
 ```
 
 If you'd like to play through an interactive notebook to generate models for search relevance in a Postgres database, try it in the Gym. An exercise for the curious reader, would be to combine all three scores above into a single algebraic function for ranking, and then into a fourth learned model...
-
-
 
 Many thanks and ❤️ to all those who are supporting this endeavor. We’d love to hear feedback from the broader ML and Engineering community about applications and other real world scenarios to help prioritize our work.

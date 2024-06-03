@@ -25,7 +25,7 @@ You can select the data type for torch tensors in PostgresML by setting the `tor
 
 !!! code\_block time="4584.906 ms"
 
-```sql
+```postgresql
 SELECT pgml.transform(
     task => '{
         "model": "tiiuae/falcon-7b-instruct",
@@ -86,7 +86,7 @@ PostgresML will automatically use GPTQ or GGML when a HuggingFace model has one 
 
 !!! code\_block time="281.213 ms"
 
-```sql
+```postgresql
 SELECT pgml.transform(
     task => '{
       "task": "text-generation",
@@ -117,7 +117,7 @@ SELECT pgml.transform(
 
 !!! code\_block time="252.213 ms"
 
-```sql
+```postgresql
 SELECT pgml.transform(
     task => '{
       "task": "text-generation",
@@ -148,7 +148,7 @@ SELECT pgml.transform(
 
 !!! code\_block time="279.888 ms"
 
-```sql
+```postgresql
 SELECT pgml.transform(
     task => '{
       "task": "text-generation",
@@ -185,7 +185,7 @@ We can specify the CPU by passing a `"device": "cpu"` argument to the `task`.
 
 !!! code\_block time="266.997 ms"
 
-```sql
+```postgresql
 SELECT pgml.transform(
     task => '{
       "task": "text-generation",
@@ -217,7 +217,7 @@ SELECT pgml.transform(
 
 !!! code\_block time="33224.136 ms"
 
-```sql
+```postgresql
 SELECT pgml.transform(
     task => '{
       "task": "text-generation",
@@ -255,7 +255,7 @@ HuggingFace and these libraries have a lot of great models. Not all of these mod
 
 !!! code\_block time="3411.324 ms"
 
-```sql
+```postgresql
 SELECT pgml.transform(
     task => '{
       "task": "text-generation",
@@ -287,7 +287,7 @@ SELECT pgml.transform(
 
 !!! code\_block time="4198.817 ms"
 
-```sql
+```postgresql
 SELECT pgml.transform(
     task => '{
       "task": "text-generation",
@@ -319,7 +319,7 @@ SELECT pgml.transform(
 
 !!! code\_block time="4198.817 ms"
 
-```sql
+```postgresql
 SELECT pgml.transform(
     task => '{
       "task": "text-generation",
@@ -353,7 +353,7 @@ Many of these models are published with multiple different quantization methods 
 
 !!! code\_block time="6498.597"
 
-```sql
+```postgresql
 SELECT pgml.transform(
     task => '{
       "task": "text-generation",
@@ -391,7 +391,7 @@ Shoutout to [Tostino](https://github.com/Tostino/) for the extended example belo
 
 !!! code\_block time="3784.565"
 
-```sql
+```postgresql
 SELECT pgml.transform(
     task => '{
       "task": "text-generation",

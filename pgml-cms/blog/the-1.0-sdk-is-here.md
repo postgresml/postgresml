@@ -50,7 +50,7 @@ const pipeline = pgml.newPipeline("my_pipeline", {
   text: {
     splitter: { model: "recursive_character" },
     semantic_search: {
-      model: "intfloat/e5-small",
+      model: "Alibaba-NLP/gte-base-en-v1.5",
     },
   },
 });
@@ -90,7 +90,7 @@ pipeline = Pipeline(
         "text": {
             "splitter": {"model": "recursive_character"},
             "semantic_search": {
-                "model": "intfloat/e5-small",
+                "model": "Alibaba-NLP/gte-base-en-v1.5",
             },
         },
     },
@@ -119,7 +119,7 @@ print(results)
 
 The SQL for the vector\_search is actually just:
 
-```sql
+```postgresql
 WITH "pipeline" (
     "schema"
 ) AS (

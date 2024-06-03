@@ -1,3 +1,4 @@
+use anyhow::Context;
 use rust_bridge::{alias, alias_methods};
 use sqlx::Row;
 use tracing::instrument;
@@ -16,7 +17,7 @@ use crate::{query_runner::QueryRunnerPython, types::JsonPython};
 #[cfg(feature = "c")]
 use crate::{languages::c::JsonC, query_runner::QueryRunnerC};
 
-#[alias_methods(new, query, transform)]
+#[alias_methods(new, query, transform, embed, embed_batch)]
 impl Builtins {
     pub fn new(database_url: Option<String>) -> Self {
         Self { database_url }
@@ -90,6 +91,55 @@ impl Builtins {
         let results = results.first().unwrap().get::<serde_json::Value, _>(0);
         Ok(Json(results))
     }
+
+    /// Run the built-in `pgml.embed()` function.
+    ///
+    /// # Arguments
+    ///
+    /// * `model` - The model to use.
+    /// * `text` - The text to embed.
+    ///
+    pub async fn embed(&self, model: &str, text: &str) -> anyhow::Result<Json> {
+        let pool = get_or_initialize_pool(&self.database_url).await?;
+        let query = sqlx::query("SELECT embed FROM pgml.embed($1, $2)");
+        let result = query.bind(model).bind(text).fetch_one(&pool).await?;
+        let result = result.get::<Vec<f32>, _>(0);
+        let result = serde_json::to_value(result)?;
+        Ok(Json(result))
+    }
+
+    /// Run the built-in `pgml.embed()` function, but with handling for batch inputs and outputs.
+    ///
+    /// # Arguments
+    ///
+    /// * `model` - The model to use.
+    /// * `texts` - The texts to embed.
+    ///
+    pub async fn embed_batch(&self, model: &str, texts: Json) -> anyhow::Result<Json> {
+        let texts = texts
+            .0
+            .as_array()
+            .with_context(|| "embed_batch takes an array of strings")?
+            .iter()
+            .map(|v| {
+                v.as_str()
+                    .with_context(|| "only text embeddings are supported")
+                    .unwrap()
+                    .to_string()
+            })
+            .collect::<Vec<String>>();
+        let pool = get_or_initialize_pool(&self.database_url).await?;
+        let query = sqlx::query("SELECT embed AS embed_batch FROM pgml.embed($1, $2)");
+        let results = query
+            .bind(model)
+            .bind(texts)
+            .fetch_all(&pool)
+            .await?
+            .into_iter()
+            .map(|embeddings| embeddings.get::<Vec<f32>, _>(0))
+            .collect::<Vec<Vec<f32>>>();
+        Ok(Json(serde_json::to_value(results)?))
+    }
 }
 
 #[cfg(test)]
@@ -111,10 +161,37 @@ mod tests {
     async fn can_transform() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
         let builtins = Builtins::new(None);
-        let task = Json::from(serde_json::json!("translation_en_to_fr"));
+        let task = Json::from(serde_json::json!({
+            "task": "text-generation",
+            "model": "meta-llama/Meta-Llama-3-8B-Instruct"
+        }));
         let inputs = vec!["test1".to_string(), "test2".to_string()];
         let results = builtins.transform(task, inputs, None).await?;
         assert!(results.as_array().is_some());
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn can_embed() -> anyhow::Result<()> {
+        internal_init_logger(None, None).ok();
+        let builtins = Builtins::new(None);
+        let results = builtins.embed("intfloat/e5-small-v2", "test").await?;
+        assert!(results.as_array().is_some());
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn can_embed_batch() -> anyhow::Result<()> {
+        internal_init_logger(None, None).ok();
+        let builtins = Builtins::new(None);
+        let results = builtins
+            .embed_batch(
+                "intfloat/e5-small-v2",
+                Json(serde_json::json!(["test", "test2",])),
+            )
+            .await?;
+        assert!(results.as_array().is_some());
+        assert_eq!(results.as_array().unwrap().len(), 2);
         Ok(())
     }
 }

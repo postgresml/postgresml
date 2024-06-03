@@ -12,12 +12,17 @@ function createToast(message) {
   toastElement.appendChild(toastBodyElement);
 
   const container = document.getElementById("toast-container");
-  container.appendChild(toastElement);
 
-  // remove from DOM when no longer needed
-  toastElement.addEventListener("hidden.bs.toast", (e) => e.target.remove());
+  if (container) {
+    container.appendChild(toastElement);
 
-  return toastElement;
+    // remove from DOM when no longer needed
+    toastElement.addEventListener("hidden.bs.toast", (e) => e.target.remove());
+
+    return toastElement;
+  } else {
+    return null;
+  }
 }
 
 function showToast(toastElement, config) {

@@ -56,6 +56,4 @@ Meanwhile, denormalized datasets:
 
 We think it’s worth attempting to move the machine learning process and modern data architectures beyond the status quo. To that end, we’re building the PostgresML Gym, a free offering, to provide a test bed for real world ML experimentation, in a Postgres database. Your personal Gym will include the PostgresML dashboard, several tutorial notebooks to get you started, and access to your own personal PostgreSQL database, supercharged with our machine learning extension.
 
-
-
 Many thanks and ❤️ to all those who are supporting this endeavor. We’d love to hear feedback from the broader ML and Engineering community about applications and other real world scenarios to help prioritize our work.

@@ -1,4 +1,8 @@
-# Configuration
+---
+description: PgCat configuration settings & recommended default values.
+---
+
+# PgCat configuration
 
 PgCat offers many features out of the box, and comes with good default values for most of its configuration options, but some minimal configuration is required before PgCat can start serving PostgreSQL traffic.
 

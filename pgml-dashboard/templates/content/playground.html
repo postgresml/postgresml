@@ -12,6 +12,8 @@ use crate::components::cards::marketing::Slider as SliderCard;
 use crate::components::icons::Checkmark;
 use crate::components::Slider;
 use crate::components::pagination::Pagination;
+use crate::components::inputs::{range::Range, RangeGroupPricingCalc};
+use crate::components::tables::ServerlessModels;
 %>
 
 <div class="min-height: 100vh;" data-controller="playground">
@@ -37,12 +39,36 @@ use crate::components::pagination::Pagination;
   <div class="mb-5">
     <%+ GithubIcon::new() %>
   </div>
-  <div>
-    <div class="disabled">
-      <%+ Checkmark::new().active() %>
+
+  <div class="row">
+    <h5>Checkmarks</h5>
+    <div class="row">
+      <h6 class="col">normal</h6>
+      <h6 class="col">in disabled container</h6>
+      <h6 class="col">disabled attribute</h6>
     </div>
-    <%+ Checkmark::new().disabled() %>
-    <%+ Checkmark::new().inactive() %>
+    <div class="col">
+      <%+ Checkmark::new().color("white") %>
+      <%+ Checkmark::new().color("blue") %>
+      <%+ Checkmark::new().color("green") %>
+      <%+ Checkmark::new().color("orange") %>
+      <%+ Checkmark::new().color("purple") %>
+    </div>
+    <div class="disabled col">
+      <%+ Checkmark::new().color("white") %>
+      <%+ Checkmark::new().color("blue") %>
+      <%+ Checkmark::new().color("green") %>
+      <%+ Checkmark::new().color("orange") %>
+      <%+ Checkmark::new().color("purple") %>
+    </div>
+    <div class="col">
+      <%+ Checkmark::new().color("white").disabled() %>
+      <%+ Checkmark::new().color("blue").disabled() %>
+      <%+ Checkmark::new().color("green").disabled() %>
+      <%+ Checkmark::new().color("orange").disabled() %>
+      <%+ Checkmark::new().color("purple").disabled() %>
+    </div>
+    <h5>Twitter</h5>
     <%+ Checkmark::new().twitter() %>
   </div>
   <div class="mb-3">
@@ -258,6 +284,10 @@ use crate::components::pagination::Pagination;
     </div>
   </div>
 
+  <%+ Range::new() %>
+
+  <%+ RangeGroupPricingCalc::new() %>
+
 </div>
 
 <div style="margin-bottom: 14rem;">
@@ -287,4 +317,12 @@ use crate::components::pagination::Pagination;
       ])
   )%>
 </div>
+
+<div style="margin-bottom: 14rem;">
+  <%+ ServerlessModels::new() %>
+</div>
+
+<turbo-frame id="serverless-models" src="/dashboard/serverless_models/turboframe">
+  Getting models
+<turbo-frame>
 

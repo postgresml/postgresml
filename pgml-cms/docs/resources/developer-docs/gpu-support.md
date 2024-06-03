@@ -26,7 +26,7 @@ GPU setup for XGBoost is covered in the [documentation](https://xgboost.readthed
 
 !!! example
 
-```sql
+```postgresql
 pgml.train(
     'GPU project', 
     algorithm => 'xgboost', 
@@ -42,7 +42,7 @@ GPU setup for LightGBM is covered in the [documentation](https://lightgbm.readth
 
 !!! example
 
-```sql
+```postgresql
 pgml.train(
     'GPU project', 
     algorithm => 'lightgbm', 

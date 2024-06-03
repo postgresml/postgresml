@@ -200,7 +200,7 @@ impl<'a> From<&str> for CodeFence<'a> {
             "bash"
         } else if options.starts_with("python") {
             "python"
-        } else if options.starts_with("javascript") {
+        } else if options.starts_with("javascript") || options.eq_ignore_ascii_case("js") {
             "javascript"
         } else if options.starts_with("postgresql") {
             "postgresql"
@@ -262,8 +262,6 @@ impl SyntaxHighlighterAdapter for SyntaxHighlighter {
     fn build_pre_tag(&self, _attributes: &HashMap<String, String>) -> String {
         String::from("<pre data-controller=\"copy\"><div class=\"code-toolbar\">
                 <span data-action=\"click->copy#codeCopy\" class=\"material-symbols-outlined btn-code-toolbar\">content_copy</span>
-                <span class=\"material-symbols-outlined btn-code-toolbar\" disabled>link</span>
-                <span class=\"material-symbols-outlined btn-code-toolbar\" disabled>edit</span>
             </div>")
     }
 
@@ -513,15 +511,35 @@ pub fn get_toc<'a>(root: &'a AstNode<'a>) -> anyhow::Result<Vec<TocLink>> {
                         return Ok(false);
                     }
                 };
-                if let NodeValue::Text(text) = &sibling.data.borrow().value {
-                    let index = match header_count.get(text) {
+
+                let text = if let NodeValue::Text(text) = &sibling.data.borrow().value {
+                    Some(text.clone())
+                } else if let NodeValue::Link(_link) = &sibling.data.borrow().value {
+                    let text = sibling
+                        .children()
+                        .into_iter()
+                        .map(|child| {
+                            if let NodeValue::Text(text) = &child.data.borrow().value {
+                                text.clone()
+                            } else {
+                                "".to_string()
+                            }
+                        })
+                        .join("");
+                    Some(text)
+                } else {
+                    None
+                };
+
+                if let Some(text) = text {
+                    let index = match header_count.get(&text) {
                         Some(index) => index + 1,
                         _ => 0,
                     };
 
                     header_count.insert(text.clone(), index);
 
-                    links.push(TocLink::new(text, index).level(header.level));
+                    links.push(TocLink::new(&text, index).level(header.level));
                     return Ok(false);
                 }
             }
@@ -1234,7 +1252,7 @@ pub struct SiteSearch {
 impl SiteSearch {
     pub async fn new() -> anyhow::Result<Self> {
         let collection = pgml::Collection::new(
-            env!("CMS_HASH"),
+            &format!("{}-1", env!("CMS_HASH")),
             Some(
                 std::env::var("SITE_SEARCH_DATABASE_URL")
                     .context("Please set the `SITE_SEARCH_DATABASE_URL` environment variable")?,
@@ -1249,10 +1267,7 @@ impl SiteSearch {
                             "configuration": "english"
                         },
                         "semantic_search": {
-                            "model": "hkunlp/instructor-base",
-                            "parameters": {
-                                "instruction": "Represent the Wikipedia document for retrieval: "
-                            },
+                            "model": "mixedbread-ai/mxbai-embed-large-v1",
                         }
                     },
                     "contents": {
@@ -1263,10 +1278,7 @@ impl SiteSearch {
                             "configuration": "english"
                         },
                         "semantic_search": {
-                            "model": "hkunlp/instructor-base",
-                            "parameters": {
-                                "instruction": "Represent the Wikipedia document for retrieval: "
-                            },
+                            "model": "mixedbread-ai/mxbai-embed-large-v1",
                         }
                     }
                 })
@@ -1307,14 +1319,14 @@ impl SiteSearch {
                     "title": {
                         "query": query,
                         "parameters": {
-                            "instruction": "Represent the Wikipedia question for retrieving supporting documents: "
+                            "prompt": "Represent this sentence for searching relevant passages: "
                         },
                         "boost": 10.0
                     },
                     "contents": {
                         "query": query,
                         "parameters": {
-                            "instruction": "Represent the Wikipedia question for retrieving supporting documents: "
+                            "prompt": "Represent this sentence for searching relevant passages: "
                         },
                         "boost": 1.0
                     }
@@ -1359,6 +1371,10 @@ impl SiteSearch {
         let documents: Vec<Document> = documents
             .into_iter()
             .filter(|f| {
+                if f.ignore() {
+                    return false;
+                }
+
                 !EXCLUDED_DOCUMENT_PATHS
                     .iter()
                     .any(|p| f.path == config::cms_dir().join(p))

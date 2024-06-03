@@ -3,12 +3,19 @@
   use crate::templates::components::PostgresLogo;
   use crate::components::navigation::navbar::marketing_link::MarketingLink;
   use crate::components::static_nav_link::StaticNavLink;
+  use pgml_components::Component;
 
-  let solutions_links = vec![
+  let solutions_use_cases_links = vec![
+    StaticNavLink::new("Search".to_string(), "/docs/guides/improve-search-results-with-machine-learning".to_string()).icon("feature_search"),
     StaticNavLink::new("Chatbots".to_string(), "/chatbot".to_string()).icon("smart_toy"),
-    StaticNavLink::new("Site Search".to_string(), "/test2".to_string()).icon("manage_search").disabled(true),
-    StaticNavLink::new("Fraud Detection".to_string(), "/test2".to_string()).icon("e911_emergency").disabled(true),
-    StaticNavLink::new("Forecasting".to_string(), "/test2".to_string()).icon("avg_pace").disabled(true),
+  ];
+
+  let solutions_tasks_links = vec![
+    StaticNavLink::new("RAG".to_string(), "/test2".to_string()).icon("manage_search").disabled(true),
+    StaticNavLink::new("NLP".to_string(), "/docs/guides/natural-language-processing".to_string()).icon("description"),
+    StaticNavLink::new("Supervised Learning".to_string(), "/docs/guides/supervised-learning".to_string()).icon("model_training"),
+    StaticNavLink::new("Embeddings".to_string(), "/docs/api/sql-extension/pgml.embed".to_string()).icon("subtitles"),
+    StaticNavLink::new("Vector Database".to_string(), "/docs/product/vector-database".to_string()).icon("open_with"),
   ];
 
   let company_links = vec![
@@ -17,21 +24,45 @@
     StaticNavLink::new("Contact".to_string(), "/contact".to_string()).icon("alternate_email")
   ];
 
-  struct MobileNavs {
-    collapse: String, 
-    links: Vec<StaticNavLink>
+  struct DrawerNav {
+    collapse_name: String, 
+    links: Vec<Component>,
+    to_expand: Vec<String>
   }
 
-  let mobile_nav_items = vec![
-    MobileNavs {
-      collapse: "solutions-collapse".to_string(),
-      links: solutions_links.clone()
-    },
-    MobileNavs {
-      collapse: "company-collapse".to_string(),
-      links: company_links.clone()
-    }
-  ];
+  let drawer = |item: DrawerNav| {
+    let collapse_name = item.collapse_name;
+
+    let links = item.links.iter().map(|link| {
+      link.clone().render_once().unwrap()
+    }).collect::<Vec<String>>().join("\n");
+
+    let to_expand = item.to_expand.join(" ");
+
+    format!(r#"
+      <div class="nav-item collapse-horizontal {collapse_name} collapse drawer-submenu {to_expand}">
+        <ul class="sub-menu-dropdown mb-5 d-flex flex-column gap-3">
+          <a class="btn btn-tertiary-web-app" data-bs-toggle="collapse" data-bs-target=".{collapse_name}">
+            <span class="material-symbols-outlined icon-back-btn">
+              arrow_back
+            </span>
+            Back
+          </a>
+          {links}
+        </ul>
+      </div>
+    "#)
+  };
+
+  let link_to_drawer = |name: &str, target: &str| {
+      format!(r##"
+      <li class="nav-item d-flex align-items-center d-flex d-xl-none">
+        <a class="nav-link p-0 fw-semibold" href="#" data-bs-toggle="collapse" data-bs-target=".{target}">{name}</a>
+      </li>
+      "##)
+  };
+
+  let close_mobile_main_nav_items = vec!["solutions-collapse", "company-collapse"];
 %>
 
   <div class="sticky-top-nav" data-controller="navigation-navbar-marketing">
@@ -57,18 +88,19 @@
 
         <div class="collapse navbar-collapse drawer-submenu-container navbarSupportedContent" id="navbarSupportedContent">
           <!-- Main Menu -->
-          <div class="nav-item w-100 d-xl-flex flex-column flex-xl-row align-items-xl-center collapse collapse-horizontal drawer-submenu <% for item in &mobile_nav_items {%> <%- item.collapse %><% } %> show">
+          <div class="nav-item w-100 d-xl-flex flex-column flex-xl-row align-items-xl-center collapse collapse-horizontal drawer-submenu <% for item in close_mobile_main_nav_items {%> <%- item %><% } %> solutions-collapse show">
             <ul class="navbar-nav flex-grow-1 gap-4 me-auto my-4 my-xl-0">
 
               <% if !standalone_dashboard { %>
                 <div class="d-none d-xl-flex">
                   <%+ MarketingLink::new()
                       .name("Solutions")
-                      .links(solutions_links.clone()) %>
+                      .links(solutions_tasks_links.clone())
+                      .title_col1("ml & ai tasks")
+                      .links_col2(solutions_use_cases_links.clone())
+                      .title_col2("use cases") %>
                 </div>
-                <li class="nav-item d-flex align-items-center d-flex d-xl-none">
-                  <a class="nav-link p-0 fw-semibold" href="#" data-bs-toggle="collapse" data-bs-target=".solutions-collapse">Solutions</a>
-                </li>
+                <%- link_to_drawer("Solutions", "solutions-collapse") %>
 
                 <%+ MarketingLink::new().link(StaticNavLink::new("Pricing".to_string(), "/pricing".to_string())) %>
               <% } %>
@@ -82,9 +114,7 @@
                       .name("Company")
                       .links(company_links.clone()) %>
                 </div>
-                <li class="nav-item d-flex align-items-center d-flex d-xl-none">
-                  <a class="nav-link p-0 fw-semibold" href="#" data-bs-toggle="collapse" data-bs-target=".company-collapse">Company</a>
-                </li>
+                <%- link_to_drawer("Company", "company-collapse") %>
               <% } %>
 
               <li class="nav-item d-none d-xl-flex align-items-center">
@@ -133,27 +163,60 @@
             </ul>
           </div>
 
-
           <!-- subnavs for less than large screens -->
-          <% for item in mobile_nav_items { %>
-          <div class="nav-item collapse-horizontal <%- item.collapse %> collapse drawer-submenu">
-            <ul class="sub-menu-dropdown mb-5 d-flex flex-column gap-3">
-              <a class="btn btn-tertiary-web-app" data-bs-toggle="collapse" data-bs-target=".<%- item.collapse%>">
-                <span class="material-symbols-outlined icon-back-btn">
-                  arrow_back
-                </span>
-                Back
-              </a>
-              <% for link in item.links { %>
-                <%+ MarketingLink::new().link(
-                  StaticNavLink::new(link.name.to_string(), link.href.to_string())
-                  .disabled(link.disabled)
-                ) %>
-              <% } %>
-            </ul>
-          </div>
-          <% } %>
-        </div>
+          <%- drawer(
+            DrawerNav {
+              collapse_name: "company-collapse".to_string(),
+              links: 
+                company_links.iter().map(|link| {
+                  MarketingLink::new().link(
+                        StaticNavLink::new(link.name.to_string(), link.href.to_string())
+                        .disabled(link.disabled))
+                        .into()
+                }).collect::<Vec<Component>>(),
+              to_expand: vec![]
+            }
+          ) %>
+
+          <%- drawer(
+            DrawerNav {
+              collapse_name: "solutions-tasks-collapse".to_string(),
+              links: 
+                solutions_tasks_links.iter().map(|link| {
+                  MarketingLink::new().link(
+                        StaticNavLink::new(link.name.to_string(), link.href.to_string())
+                        .disabled(link.disabled))
+                        .into()
+                }).collect::<Vec<Component>>(),
+              to_expand: vec![]
+            }
+          ) %>
+
+          <%- drawer(
+            DrawerNav {
+              collapse_name: "solutions-use-cases-collapse".to_string(),
+              links: 
+                solutions_use_cases_links.iter().map(|link| {
+                  MarketingLink::new().link(
+                        StaticNavLink::new(link.name.to_string(), link.href.to_string())
+                        .disabled(link.disabled))
+                        .into()
+                }).collect::<Vec<Component>>(),
+              to_expand: vec![]
+            }
+          ) %>
+
+          <%- drawer(
+            DrawerNav {
+              collapse_name: "solutions-collapse".to_string(),
+              links: 
+                vec![
+                  Component::from(link_to_drawer("Tasks", "solutions-tasks-collapse")),
+                  Component::from(link_to_drawer("Use Cases", "solutions-use-cases-collapse"))
+                ],
+              to_expand: vec!["solutions-tasks-collapse".to_string(), "solutions-use-cases-collapse".to_string()]
+            }
+          ) %>
 
       </div>
     </nav>

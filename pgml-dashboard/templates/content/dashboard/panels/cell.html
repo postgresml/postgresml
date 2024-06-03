@@ -1,3 +1,4 @@
+<% use crate::utils::urls; %>
 <turbo-frame id="cell_<%= cell.id %>" data-notebook-id="<%= notebook.id %>" data-cell-id="<%= cell.id %>" data-cell-type="<%= cell.cell_type %>">
   <% if cell.deleted_at.is_some()  { %>
   <% } else { %>
@@ -14,7 +15,7 @@
   >
     <% if !edit && !cell.code() { %>
     <a
-      href="/dashboard/notebooks/<%= notebook.id %>/cell/<%= cell.id %>/edit"
+      href="<%- urls::deployment_notebooks() %>/<%= notebook.id %>/cell/<%= cell.id %>/edit"
       class="stretched-link"
     ></a>
     <% } %>
@@ -30,7 +31,7 @@
         <div class="pe-4" data-cell-number="<%= cell.cell_number %>"><%= cell.cell_number %></div>
         <div class="flex-grow-1 overflow-x-hidden">
           <% if cell.code() || edit { %>
-          <form action="/dashboard/notebooks/<%= notebook.id %>/cell/<%= cell.id %>/edit" method="post" data-cell-play-id="<%= cell.id %>" data-action="notebook-cell#play">
+          <form action="<%- urls::deployment_notebooks() %>/<%= notebook.id %>/cell/<%= cell.id %>/edit" method="post" data-cell-play-id="<%= cell.id %>" data-action="notebook-cell#play">
             <textarea name="contents" data-notebook-cell-target="editor" data-type="<%= cell.cell_type_display() %>"><%= cell.contents %></textarea>
             <input type="hidden" name="cell_type" value="<%= cell.cell_type %>" data-notebook-cell-target="cellType">
           </form>
@@ -46,14 +47,14 @@
 
       <!-- Controls called via JS -->
       <!-- Load the cell from the backend -->
-      <a class="hidden" href="/dashboard/notebooks/<%= notebook.id %>/cell/<%= cell.id %>" data-notebook-target="loadCell"></a>
+      <a class="hidden" href="<%- urls::deployment_notebooks() %>/<%= notebook.id %>/cell/<%= cell.id %>" data-notebook-target="loadCell"></a>
 
       <!-- Cancel cell execution -->
-      <form action="/dashboard/notebooks/<%= notebook.id %>/cell/<%= cell.id %>/cancel" method="post" data-cell-stop-id="<%= cell.id %>">
+      <form action="<%- urls::deployment_notebooks() %>/<%= notebook.id %>/cell/<%= cell.id %>/cancel" method="post" data-cell-stop-id="<%= cell.id %>">
       </form>
 
       <!-- Delete the cell -->
-      <form action="/dashboard/notebooks/<%= notebook.id %>/cell/<%= cell.id %>/delete" method="post" data-cell-delete-id="<%= cell.id %>">
+      <form action="<%- urls::deployment_notebooks() %>/<%= notebook.id %>/cell/<%= cell.id %>/delete" method="post" data-cell-delete-id="<%= cell.id %>">
       </form>
       <!-- /Controls called via JS -->
 

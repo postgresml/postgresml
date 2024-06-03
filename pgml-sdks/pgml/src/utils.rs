@@ -5,10 +5,6 @@ use std::fs;
 use std::path::Path;
 use std::time::Duration;
 
-use serde::de::{self, Visitor};
-use serde::Deserializer;
-use std::fmt;
-
 /// A more type flexible version of format!
 #[macro_export]
 macro_rules! query_builder {
@@ -99,41 +95,4 @@ pub fn get_file_contents(path: &Path) -> anyhow::Result<String> {
         _ => fs::read_to_string(path)
             .with_context(|| format!("Error reading file: {}", path.display()))?,
     })
-}
-
-struct U64Visitor;
-impl<'de> Visitor<'de> for U64Visitor {
-    type Value = u64;
-
-    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        formatter.write_str("some number")
-    }
-
-    fn visit_i32<E>(self, value: i32) -> Result<Self::Value, E>
-    where
-        E: de::Error,
-    {
-        Ok(value as u64)
-    }
-
-    fn visit_u64<E>(self, value: u64) -> Result<Self::Value, E>
-    where
-        E: de::Error,
-    {
-        Ok(value)
-    }
-
-    fn visit_f64<E>(self, value: f64) -> Result<Self::Value, E>
-    where
-        E: de::Error,
-    {
-        Ok(value as u64)
-    }
-}
-
-pub fn deserialize_u64<'de, D>(deserializer: D) -> Result<Option<u64>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    deserializer.deserialize_u64(U64Visitor).map(Some)
 }

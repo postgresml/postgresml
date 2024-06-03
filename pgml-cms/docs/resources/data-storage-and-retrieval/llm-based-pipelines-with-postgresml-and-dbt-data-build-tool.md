@@ -2,8 +2,6 @@
 
 In the realm of data analytics and machine learning, text processing and large language models (LLMs) have become pivotal in deriving insights from textual data. Efficient data pipelines play a crucial role in enabling streamlined workflows for processing and analyzing text. This blog explores the synergy between PostgresML and dbt, showcasing how they empower organizations to build efficient data pipelines that leverage large language models for text processing, unlocking valuable insights and driving data-driven decision-making.
 
-
-
 ## PostgresML
 
 PostgresML, an open-source machine learning extension for PostgreSQL, is designed to handle text processing tasks using large language models. Its motivation lies in harnessing the power of LLMs within the familiar PostgreSQL ecosystem. By integrating LLMs directly into the database, PostgresML eliminates the need for data movement and offers scalable and secure text processing capabilities. This native integration enhances data governance, security, and ensures the integrity of text data throughout the pipeline.
@@ -103,7 +101,7 @@ vars:
   splitter_name: "recursive_character"
   splitter_parameters: {"chunk_size": 100, "chunk_overlap": 20}
   task: "embedding"
-  model_name: "intfloat/e5-base"
+  model_name: "intfloat/e5-small-v2"
   query_string: 'Lorem ipsum 3'
   limit: 2
 ```
@@ -113,7 +111,7 @@ Here's a summary of the key parameters:
 * `splitter_name`: Specifies the name of the splitter, set as "recursive\_character".
 * `splitter_parameters`: Defines the parameters for the splitter, such as a chunk size of 100 and a chunk overlap of 20.
 * `task`: Indicates the task being performed, specified as "embedding".
-* `model_name`: Specifies the name of the model to be used, set as "intfloat/e5-base".
+* `model_name`: Specifies the name of the model to be used, set as "intfloat/e5-small-v2".
 * `query_string`: Provides a query string, set as 'Lorem ipsum 3'.
 * `limit`: Specifies a limit of 2, indicating the maximum number of results to be processed.
 

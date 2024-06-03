@@ -1,4 +1,5 @@
-<turbo-frame id="models" src="/dashboard/models" target="_top">
+<% use crate::utils::urls; %>
+<turbo-frame id="models" src="<%- urls::deployment_models_turboframe() %>" target="_top">
     <div class="d-flex justify-content-center align-items-center py-5">Loading models, one moment...</div>
 </turbo-frame>
 

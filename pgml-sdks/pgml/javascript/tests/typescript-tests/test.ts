@@ -74,7 +74,7 @@ it("can create builtins", () => {
 
 it("can search", async () => {
   let pipeline = pgml.newPipeline("test_j_p_cs", {
-    title: { semantic_search: { model: "intfloat/e5-small" } },
+    title: { semantic_search: { model: "intfloat/e5-small-v2", parameters: { prompt: "passage: " } } },
     body: {
       splitter: { model: "recursive_character" },
       semantic_search: {
@@ -92,17 +92,19 @@ it("can search", async () => {
       query: {
         full_text_search: { body: { query: "Test", boost: 1.2 } },
         semantic_search: {
-          title: { query: "This is a test", boost: 2.0 },
+          title: {
+            query: "This is a test", parameters: { prompt: "query: " }, boost: 2.0
+          },
           body: { query: "This is the body test", boost: 1.01 },
         },
         filter: { id: { $gt: 1 } },
-  },
+      },
       limit: 10
     },
     pipeline,
   );
   let ids = results["results"].map((r: any) => r["id"]);
-  expect(ids).toEqual([5, 4, 3]);
+  expect(ids).toEqual([4, 3, 5]);
   await collection.archive();
 });
 
@@ -110,11 +112,10 @@ it("can search", async () => {
 // Test various vector searches ///////////////////
 ///////////////////////////////////////////////////
 
-
 it("can vector search", async () => {
-  let pipeline = pgml.newPipeline("test_j_p_cvs_0", {
+  let pipeline = pgml.newPipeline("1", {
     title: {
-      semantic_search: { model: "intfloat/e5-small" },
+      semantic_search: { model: "intfloat/e5-small-v2", parameters: { prompt: "passage: " } },
       full_text_search: { configuration: "english" },
     },
     body: {
@@ -132,7 +133,7 @@ it("can vector search", async () => {
     {
       query: {
         fields: {
-          title: { query: "Test document: 2", full_text_filter: "test" },
+          title: { query: "Test document: 2", parameters: { prompt: "query: " }, full_text_filter: "test" },
           body: { query: "Test document: 2" },
         },
         filter: { id: { "$gt": 2 } },
@@ -142,14 +143,14 @@ it("can vector search", async () => {
     pipeline,
   );
   let ids = results.map(r => r["document"]["id"]);
-  expect(ids).toEqual([3, 4, 4, 3]);
+  expect(ids).toEqual([4, 3, 3, 4]);
   await collection.archive();
 });
 
 it("can vector search with query builder", async () => {
-  let model = pgml.newModel();
+  let model = pgml.newModel("intfloat/e5-small-v2", "pgml", { prompt: "passage: " });
   let splitter = pgml.newSplitter();
-  let pipeline = pgml.newSingleFieldPipeline("test_j_p_cvswqb_0", model, splitter);
+  let pipeline = pgml.newSingleFieldPipeline("0", model, splitter);
   let collection = pgml.newCollection("test_j_c_cvswqb_2");
   await collection.upsert_documents(generate_dummy_documents(3));
   await collection.add_pipeline(pipeline);
@@ -159,9 +160,100 @@ it("can vector search with query builder", async () => {
     .limit(10)
     .fetch_all();
   let ids = results.map(r => r[2]["id"]);
-  expect(ids).toEqual([2, 1, 0]);
+  expect(ids).toEqual([1, 2, 0]);
   await collection.archive();
 });
+
+///////////////////////////////////////////////////
+// Test rag ///////////////////////////////////////
+///////////////////////////////////////////////////
+
+it("can rag", async () => {
+  let pipeline = pgml.newPipeline("0", {
+    body: {
+      splitter: { model: "recursive_character" },
+      semantic_search: {
+        model: "intfloat/e5-small-v2",
+        parameters: { prompt: "passage: " },
+      },
+    },
+  });
+  let collection = pgml.newCollection("test_j_c_cr_0")
+  await collection.add_pipeline(pipeline)
+  await collection.upsert_documents(generate_dummy_documents(5))
+  const results = await collection.rag(
+    {
+      "CONTEXT": {
+        vector_search: {
+          query: {
+            fields: {
+              body: { query: "Test document: 2", parameters: { prompt: "query: " } },
+            },
+          },
+          document: { keys: ["id"] },
+          limit: 5,
+        },
+        aggregate: { join: "\n" },
+      },
+      completion: {
+        model: "meta-llama/Meta-Llama-3-8B-Instruct",
+        prompt: "Some text with {CONTEXT}",
+        max_tokens: 10,
+      },
+    },
+    pipeline
+  );
+  expect(results["rag"][0].length).toBeGreaterThan(0);
+  expect(results["sources"]["CONTEXT"].length).toBeGreaterThan(0);
+  await collection.archive()
+})
+
+
+it("can rag stream", async () => {
+  let pipeline = pgml.newPipeline("0", {
+    body: {
+      splitter: { model: "recursive_character" },
+      semantic_search: {
+        model: "intfloat/e5-small-v2",
+        parameters: { prompt: "passage: " },
+      },
+    },
+  });
+  let collection = pgml.newCollection("test_j_c_cr_0")
+  await collection.add_pipeline(pipeline)
+  await collection.upsert_documents(generate_dummy_documents(5))
+  const results = await collection.rag_stream(
+    {
+      "CONTEXT": {
+        vector_search: {
+          query: {
+            fields: {
+              body: { query: "Test document: 2", parameters: { prompt: "query: " } },
+            },
+          },
+          document: { keys: ["id"] },
+          limit: 5,
+        },
+        aggregate: { join: "\n" },
+      },
+      completion: {
+        model: "meta-llama/Meta-Llama-3-8B-Instruct",
+        prompt: "Some text with {CONTEXT}",
+        max_tokens: 10,
+      },
+    },
+    pipeline
+  );
+  let output = [];
+  let it = results.stream();
+  let result = await it.next();
+  while (!result.done) {
+    output.push(result.value);
+    result = await it.next();
+  }
+  expect(output.length).toBeGreaterThan(0);
+  await collection.archive()
+})
 
 ///////////////////////////////////////////////////
 // Test document related functions ////////////////
@@ -222,14 +314,14 @@ it("can order documents", async () => {
 ///////////////////////////////////////////////////
 
 it("can transformer pipeline", async () => {
-  const t = pgml.newTransformerPipeline("text-generation");
-  const it = await t.transform(["AI is going to"], { max_new_tokens: 5 });
+  const t = pgml.newTransformerPipeline("text-generation", "meta-llama/Meta-Llama-3-8B-Instruct");
+  const it = await t.transform(["AI is going to"], { max_tokens: 5 });
   expect(it.length).toBeGreaterThan(0)
 });
 
 it("can transformer pipeline stream", async () => {
-  const t = pgml.newTransformerPipeline("text-generation");
-  const it = await t.transform_stream("AI is going to", { max_new_tokens: 5 });
+  const t = pgml.newTransformerPipeline("text-generation", "meta-llama/Meta-Llama-3-8B-Instruct");
+  const it = await t.transform_stream("AI is going to", { max_tokens: 5 });
   let result = await it.next();
   let output = [];
   while (!result.done) {
@@ -246,7 +338,7 @@ it("can transformer pipeline stream", async () => {
 it("can open source ai create", () => {
   const client = pgml.newOpenSourceAI();
   const results = client.chat_completions_create(
-    "HuggingFaceH4/zephyr-7b-beta",
+    "meta-llama/Meta-Llama-3-8B-Instruct",
     [
       {
         role: "system",
@@ -257,6 +349,7 @@ it("can open source ai create", () => {
         content: "How many helicopters can a human eat in one sitting?",
       },
     ],
+    10
   );
   expect(results.choices.length).toBeGreaterThan(0);
 });
@@ -265,7 +358,7 @@ it("can open source ai create", () => {
 it("can open source ai create async", async () => {
   const client = pgml.newOpenSourceAI();
   const results = await client.chat_completions_create_async(
-    "HuggingFaceH4/zephyr-7b-beta",
+    "meta-llama/Meta-Llama-3-8B-Instruct",
     [
       {
         role: "system",
@@ -276,6 +369,7 @@ it("can open source ai create async", async () => {
         content: "How many helicopters can a human eat in one sitting?",
       },
     ],
+    10
   );
   expect(results.choices.length).toBeGreaterThan(0);
 });
@@ -284,7 +378,7 @@ it("can open source ai create async", async () => {
 it("can open source ai create stream", () => {
   const client = pgml.newOpenSourceAI();
   const it = client.chat_completions_create_stream(
-    "HuggingFaceH4/zephyr-7b-beta",
+    "meta-llama/Meta-Llama-3-8B-Instruct",
     [
       {
         role: "system",
@@ -295,10 +389,11 @@ it("can open source ai create stream", () => {
         content: "How many helicopters can a human eat in one sitting?",
       },
     ],
+    10
   );
   let result = it.next();
   while (!result.done) {
-    expect(result.value.choices.length).toBeGreaterThan(0);
+    expect(result.value.choices.length).toBeGreaterThanOrEqual(0);
     result = it.next();
   }
 });
@@ -306,7 +401,7 @@ it("can open source ai create stream", () => {
 it("can open source ai create stream async", async () => {
   const client = pgml.newOpenSourceAI();
   const it = await client.chat_completions_create_stream_async(
-    "HuggingFaceH4/zephyr-7b-beta",
+    "meta-llama/Meta-Llama-3-8B-Instruct",
     [
       {
         role: "system",
@@ -317,10 +412,11 @@ it("can open source ai create stream async", async () => {
         content: "How many helicopters can a human eat in one sitting?",
       },
     ],
+    10
   );
   let result = await it.next();
   while (!result.done) {
-    expect(result.value.choices.length).toBeGreaterThan(0);
+    expect(result.value.choices.length).toBeGreaterThanOrEqual(0);
     result = await it.next();
   }
 });

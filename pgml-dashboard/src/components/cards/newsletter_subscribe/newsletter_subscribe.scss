@@ -1,15 +1,4 @@
 div[data-controller="cards-newsletter-subscribe"] {
-    .newsletter-subscribe-container {
-        background-position: center;
-        background-size: cover;
-        background-repeat: no-repeat;
-        @include media-breakpoint-up(md) {
-            background-image: url("/dashboard/static/images/newsletter_subscribe_background_desktop.png");
-        }
-        background-image: url("/dashboard/static/images/newsletter_subscribe_background_mobile.png");
-        background-color: #{$pink};
-    }
-
     .message {
         display: none;
 

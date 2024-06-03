@@ -21,8 +21,11 @@
 @import "../../src/components/icons/checkmark/checkmark.scss";
 @import "../../src/components/icons/twitter/twitter.scss";
 @import "../../src/components/inputs/checkbox/checkbox.scss";
+@import "../../src/components/inputs/labels/with_tooltip/with_tooltip.scss";
 @import "../../src/components/inputs/radio/radio.scss";
+@import "../../src/components/inputs/range/range.scss";
 @import "../../src/components/inputs/range_group/range_group.scss";
+@import "../../src/components/inputs/range_group_pricing_calc/range_group_pricing_calc.scss";
 @import "../../src/components/inputs/range_group_v_2/range_group_v_2.scss";
 @import "../../src/components/inputs/select/select.scss";
 @import "../../src/components/inputs/switch/switch.scss";
@@ -69,4 +72,6 @@
 @import "../../src/components/static_nav/static_nav.scss";
 @import "../../src/components/tables/large/row/row.scss";
 @import "../../src/components/tables/large/table/table.scss";
+@import "../../src/components/tables/serverless_models/serverless_models.scss";
+@import "../../src/components/tables/serverless_pricing/serverless_pricing.scss";
 @import "../../src/components/tables/small/table/table.scss";

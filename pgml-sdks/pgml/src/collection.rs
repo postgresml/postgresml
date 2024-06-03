@@ -3,22 +3,27 @@ use indicatif::MultiProgress;
 use itertools::Itertools;
 use regex::Regex;
 use rust_bridge::{alias, alias_methods};
+use sea_query::Alias;
 use sea_query::{Expr, NullOrdering, Order, PostgresQueryBuilder, Query};
 use sea_query_binder::SqlxBinder;
-use serde_json::json;
-use sqlx::Executor;
+use serde_json::{json, Value};
 use sqlx::PgConnection;
+use sqlx::{Executor, Pool, Postgres};
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::path::Path;
 use std::time::SystemTime;
 use std::time::UNIX_EPOCH;
+use tokio::task::JoinSet;
 use tracing::{instrument, warn};
 use walkdir::WalkDir;
 
 use crate::debug_sqlx_query;
 use crate::filter_builder::FilterBuilder;
+use crate::pipeline::FieldAction;
+use crate::rag_query_builder::build_rag_query;
 use crate::search_query_builder::build_search_query;
+use crate::types::GeneralJsonAsyncIterator;
 use crate::vector_search_query_builder::build_vector_search_query;
 use crate::{
     get_or_initialize_pool, models, order_by_builder,
@@ -31,7 +36,39 @@ use crate::{
 };
 
 #[cfg(feature = "python")]
-use crate::{pipeline::PipelinePython, query_builder::QueryBuilderPython, types::JsonPython};
+use crate::{
+    pipeline::PipelinePython,
+    query_builder::QueryBuilderPython,
+    types::{GeneralJsonAsyncIteratorPython, JsonPython},
+};
+
+/// A RAGStream Struct
+#[derive(alias)]
+#[allow(dead_code)]
+pub struct RAGStream {
+    general_json_async_iterator: Option<GeneralJsonAsyncIterator>,
+    sources: Json,
+}
+
+// Required that we implement clone for our rust-bridge macros but it will not be used
+impl Clone for RAGStream {
+    fn clone(&self) -> Self {
+        panic!("Cannot clone RAGStream")
+    }
+}
+
+#[alias_methods(stream, sources)]
+impl RAGStream {
+    pub fn stream(&mut self) -> anyhow::Result<GeneralJsonAsyncIterator> {
+        self.general_json_async_iterator
+            .take()
+            .context("Cannot call stream method more than once")
+    }
+
+    pub fn sources(&self) -> anyhow::Result<Json> {
+        panic!("Cannot get sources yet for RAG streaming")
+    }
+}
 
 #[cfg(feature = "c")]
 use crate::{languages::c::JsonC, pipeline::PipelineC, query_builder::QueryBuilderC};
@@ -127,6 +164,8 @@ pub struct Collection {
     add_search_event,
     vector_search,
     query,
+    rag,
+    rag_stream,
     exists,
     archive,
     upsert_directory,
@@ -315,6 +354,9 @@ impl Collection {
 
             let mp = MultiProgress::new();
             mp.println(format!("Added Pipeline {}, Now Syncing...", pipeline.name))?;
+
+            // TODO: Revisit this. If the pipeline is added but fails to sync, then it will be "out of sync" with the documents in the table
+            // This is rare, but could happen
             pipeline
                 .resync(project_info, pool.acquire().await?.as_mut())
                 .await?;
@@ -498,13 +540,16 @@ impl Collection {
         // -> Insert the document
         // -> Foreach pipeline check if we need to resync the document and if so sync the document
         // -> Commit the transaction
+        let mut args = args.unwrap_or_default();
+        let args = args.as_object_mut().context("args must be a JSON object")?;
+
         self.verify_in_database(false).await?;
         let mut pipelines = self.get_pipelines().await?;
 
         let pool = get_or_initialize_pool(&self.database_url).await?;
 
-        let mut parsed_schemas = vec![];
         let project_info = &self.database_data.as_ref().unwrap().project_info;
+        let mut parsed_schemas = vec![];
         for pipeline in &mut pipelines {
             let parsed_schema = pipeline
                 .get_parsed_schema(project_info, &pool)
@@ -512,13 +557,60 @@ impl Collection {
                 .expect("Error getting parsed schema for pipeline");
             parsed_schemas.push(parsed_schema);
         }
-        let mut pipelines: Vec<(Pipeline, _)> = pipelines.into_iter().zip(parsed_schemas).collect();
+        let pipelines: Vec<(Pipeline, HashMap<String, FieldAction>)> =
+            pipelines.into_iter().zip(parsed_schemas).collect();
 
-        let args = args.unwrap_or_default();
-        let args = args.as_object().context("args must be a JSON object")?;
+        let batch_size = args
+            .remove("batch_size")
+            .map(|x| x.try_to_u64())
+            .unwrap_or(Ok(100))?;
+
+        let parallel_batches = args
+            .get("parallel_batches")
+            .map(|x| x.try_to_u64())
+            .unwrap_or(Ok(1))? as usize;
 
         let progress_bar = utils::default_progress_bar(documents.len() as u64);
         progress_bar.println("Upserting Documents...");
+
+        let mut set = JoinSet::new();
+        for batch in documents.chunks(batch_size as usize) {
+            if set.len() >= parallel_batches {
+                set.join_next().await.unwrap()??;
+                progress_bar.inc(batch_size);
+            }
+
+            let local_self = self.clone();
+            let local_batch = batch.to_owned();
+            let local_args = args.clone();
+            let local_pipelines = pipelines.clone();
+            let local_pool = pool.clone();
+            set.spawn(async move {
+                local_self
+                    ._upsert_documents(local_batch, local_args, local_pipelines, local_pool)
+                    .await
+            });
+        }
+
+        while let Some(res) = set.join_next().await {
+            res??;
+            progress_bar.inc(batch_size);
+        }
+
+        progress_bar.println("Done Upserting Documents\n");
+        progress_bar.finish();
+
+        Ok(())
+    }
+
+    async fn _upsert_documents(
+        self,
+        batch: Vec<Json>,
+        args: serde_json::Map<String, Value>,
+        mut pipelines: Vec<(Pipeline, HashMap<String, FieldAction>)>,
+        pool: Pool<Postgres>,
+    ) -> anyhow::Result<()> {
+        let project_info = &self.database_data.as_ref().unwrap().project_info;
 
         let query = if args
             .get("merge")
@@ -541,111 +633,99 @@ impl Collection {
             )
         };
 
-        let batch_size = args
-            .get("batch_size")
-            .map(TryToNumeric::try_to_u64)
-            .unwrap_or(Ok(100))?;
+        let mut transaction = pool.begin().await?;
 
-        for batch in documents.chunks(batch_size as usize) {
-            let mut transaction = pool.begin().await?;
-
-            let mut query_values = String::new();
-            let mut binding_parameter_counter = 1;
-            for _ in 0..batch.len() {
-                query_values = format!(
-                    "{query_values}, (${}, ${}, ${})",
-                    binding_parameter_counter,
-                    binding_parameter_counter + 1,
-                    binding_parameter_counter + 2
-                );
-                binding_parameter_counter += 3;
-            }
-
-            let query = query.replace(
-                "{values_parameters}",
-                &query_values.chars().skip(1).collect::<String>(),
+        let mut query_values = String::new();
+        let mut binding_parameter_counter = 1;
+        for _ in 0..batch.len() {
+            query_values = format!(
+                "{query_values}, (${}, ${}, ${})",
+                binding_parameter_counter,
+                binding_parameter_counter + 1,
+                binding_parameter_counter + 2
             );
-            let query = query.replace(
-                "{binding_parameter}",
-                &format!("${binding_parameter_counter}"),
-            );
-
-            let mut query = sqlx::query_as(&query);
-
-            let mut source_uuids = vec![];
-            for document in batch {
-                let id = document
-                    .get("id")
-                    .context("`id` must be a key in document")?
-                    .to_string();
-                let md5_digest = md5::compute(id.as_bytes());
-                let source_uuid = uuid::Uuid::from_slice(&md5_digest.0)?;
-                source_uuids.push(source_uuid);
-
-                let start = SystemTime::now();
-                let timestamp = start
-                    .duration_since(UNIX_EPOCH)
-                    .expect("Time went backwards")
-                    .as_millis();
-
-                let versions: HashMap<String, serde_json::Value> = document
-                    .as_object()
-                    .context("document must be an object")?
-                    .iter()
-                    .try_fold(HashMap::new(), |mut acc, (key, value)| {
-                        let md5_digest = md5::compute(serde_json::to_string(value)?.as_bytes());
-                        let md5_digest = format!("{md5_digest:x}");
-                        acc.insert(
-                            key.to_owned(),
-                            serde_json::json!({
-                                "last_updated": timestamp,
-                                "md5": md5_digest
-                            }),
-                        );
-                        anyhow::Ok(acc)
-                    })?;
-                let versions = serde_json::to_value(versions)?;
-
-                query = query.bind(source_uuid).bind(document).bind(versions);
-            }
-
-            let results: Vec<(i64, Option<Json>)> = query
-                .bind(source_uuids)
-                .fetch_all(&mut *transaction)
-                .await?;
-
-            let dp: Vec<(i64, Json, Option<Json>)> = results
-                .into_iter()
-                .zip(batch)
-                .map(|((id, previous_document), document)| {
-                    (id, document.to_owned(), previous_document)
-                })
-                .collect();
-
-            for (pipeline, parsed_schema) in &mut pipelines {
-                let ids_to_run_on: Vec<i64> = dp
-                    .iter()
-                    .filter(|(_, document, previous_document)| match previous_document {
-                        Some(previous_document) => parsed_schema
-                            .iter()
-                            .any(|(key, _)| document[key] != previous_document[key]),
-                        None => true,
-                    })
-                    .map(|(document_id, _, _)| *document_id)
-                    .collect();
-                if !ids_to_run_on.is_empty() {
-                    pipeline
-                        .sync_documents(ids_to_run_on, project_info, &mut transaction)
-                        .await
-                        .expect("Failed to execute pipeline");
-                }
-            }
-
-            transaction.commit().await?;
-            progress_bar.inc(batch_size);
+            binding_parameter_counter += 3;
         }
-        progress_bar.println("Done Upserting Documents\n");
-        progress_bar.finish();
+
+        let query = query.replace(
+            "{values_parameters}",
+            &query_values.chars().skip(1).collect::<String>(),
+        );
+        let query = query.replace(
+            "{binding_parameter}",
+            &format!("${binding_parameter_counter}"),
+        );
+
+        let mut query = sqlx::query_as(&query);
+
+        let mut source_uuids = vec![];
+        for document in &batch {
+            let id = document
+                .get("id")
+                .context("`id` must be a key in document")?
+                .to_string();
+            let md5_digest = md5::compute(id.as_bytes());
+            let source_uuid = uuid::Uuid::from_slice(&md5_digest.0)?;
+            source_uuids.push(source_uuid);
+
+            let start = SystemTime::now();
+            let timestamp = start
+                .duration_since(UNIX_EPOCH)
+                .expect("Time went backwards")
+                .as_millis();
+
+            let versions: HashMap<String, serde_json::Value> = document
+                .as_object()
+                .context("document must be an object")?
+                .iter()
+                .try_fold(HashMap::new(), |mut acc, (key, value)| {
+                    let md5_digest = md5::compute(serde_json::to_string(value)?.as_bytes());
+                    let md5_digest = format!("{md5_digest:x}");
+                    acc.insert(
+                        key.to_owned(),
+                        serde_json::json!({
+                            "last_updated": timestamp,
+                            "md5": md5_digest
+                        }),
+                    );
+                    anyhow::Ok(acc)
+                })?;
+            let versions = serde_json::to_value(versions)?;
+
+            query = query.bind(source_uuid).bind(document).bind(versions);
+        }
+
+        let results: Vec<(i64, Option<Json>)> = query
+            .bind(source_uuids)
+            .fetch_all(&mut *transaction)
+            .await?;
+
+        let dp: Vec<(i64, Json, Option<Json>)> = results
+            .into_iter()
+            .zip(batch)
+            .map(|((id, previous_document), document)| (id, document.to_owned(), previous_document))
+            .collect();
+
+        for (pipeline, parsed_schema) in &mut pipelines {
+            let ids_to_run_on: Vec<i64> = dp
+                .iter()
+                .filter(|(_, document, previous_document)| match previous_document {
+                    Some(previous_document) => parsed_schema
+                        .iter()
+                        .any(|(key, _)| document[key] != previous_document[key]),
+                    None => true,
+                })
+                .map(|(document_id, _, _)| *document_id)
+                .collect();
+            if !ids_to_run_on.is_empty() {
+                pipeline
+                    .sync_documents(ids_to_run_on, project_info, &mut transaction)
+                    .await
+                    .expect("Failed to execute pipeline");
+            }
+        }
+
+        transaction.commit().await?;
         Ok(())
     }
 
@@ -659,8 +739,9 @@ impl Collection {
     ///     Each object must have a `field` key with the name of the field to order by, and a `direction`
     ///     key with the value `asc` or `desc`.
     ///   * `last_row_id` - The id of the last document returned
-    ///   * `offset` - The number of documents to skip before returning results.
-    ///   * `filter` - A JSON object specifying the filter to apply to the documents.
+    ///   * `offset` - The number of documents to skip before returning results
+    ///   * `filter` - A JSON object specifying the filter to apply to the documents
+    ///   * `keys` - a JSON array specifying the document keys to return
     ///
     /// # Example
     ///
@@ -694,8 +775,32 @@ impl Collection {
                 self.documents_table_name.to_table_tuple(),
                 SIden::Str("documents"),
             )
-            .expr(Expr::cust("*")) // Adds the * in SELECT * FROM
+            .columns([
+                SIden::Str("id"),
+                SIden::Str("created_at"),
+                SIden::Str("source_uuid"),
+                SIden::Str("version"),
+            ])
             .limit(limit);
+
+        if let Some(keys) = args.remove("keys") {
+            let document_queries = keys
+                .as_array()
+                .context("`keys` must be an array")?
+                .iter()
+                .map(|d| {
+                    let key = d.as_str().context("`key` value must be a string")?;
+                    anyhow::Ok(format!("'{key}', document #> '{{{key}}}'"))
+                })
+                .collect::<anyhow::Result<Vec<String>>>()?
+                .join(",");
+            query.expr_as(
+                Expr::cust(format!("jsonb_build_object({document_queries})")),
+                Alias::new("document"),
+            );
+        } else {
+            query.column(SIden::Str("document"));
+        }
 
         if let Some(order_by) = args.remove("order_by") {
             let order_by_builder =
@@ -1021,6 +1126,50 @@ impl Collection {
                 .into()
             })
             .collect())
+    }
+
+    #[instrument(skip(self))]
+    pub async fn rag(&self, query: Json, pipeline: &mut Pipeline) -> anyhow::Result<Json> {
+        let pool = get_or_initialize_pool(&self.database_url).await?;
+        let (built_query, values) = build_rag_query(query.clone(), self, pipeline, false).await?;
+        let mut results: Vec<(Json,)> = sqlx::query_as_with(&built_query, values)
+            .fetch_all(&pool)
+            .await?;
+        Ok(std::mem::take(&mut results[0].0))
+    }
+
+    #[instrument(skip(self))]
+    pub async fn rag_stream(
+        &self,
+        query: Json,
+        pipeline: &mut Pipeline,
+    ) -> anyhow::Result<RAGStream> {
+        let pool = get_or_initialize_pool(&self.database_url).await?;
+
+        let (built_query, values) = build_rag_query(query.clone(), self, pipeline, true).await?;
+
+        let mut transaction = pool.begin().await?;
+
+        sqlx::query_with(&built_query, values)
+            .execute(&mut *transaction)
+            .await?;
+
+        let s = futures::stream::try_unfold(transaction, move |mut transaction| async move {
+            let mut res: Vec<Json> = sqlx::query_scalar("FETCH 1 FROM c")
+                .fetch_all(&mut *transaction)
+                .await?;
+            if !res.is_empty() {
+                Ok(Some((std::mem::take(&mut res[0]), transaction)))
+            } else {
+                transaction.commit().await?;
+                Ok(None)
+            }
+        });
+
+        Ok(RAGStream {
+            general_json_async_iterator: Some(GeneralJsonAsyncIterator(Box::pin(s))),
+            sources: serde_json::json!({}).into(),
+        })
     }
 
     /// Archives a [Collection]

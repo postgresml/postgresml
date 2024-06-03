@@ -26,7 +26,7 @@ In Postgres, you can create a partition by range with just a few queries. Partit
 
 Let's start with the parent table:
 
-```sql
+```postgresql
 CREATE TABLE energy_consumption (
     "Datetime" TIMESTAMPTZ,
     "AEP_MW" REAL
@@ -35,7 +35,7 @@ CREATE TABLE energy_consumption (
 
 Now, let's add a couple child tables:
 
-```sql
+```postgresql
 CREATE TABLE energy_consumption_2004_2011
 PARTITION OF energy_consumption
 FOR VALUES FROM ('2004-01-01') TO ('2011-12-31');
@@ -74,7 +74,7 @@ Postgres allows to query each partition individually, which is nice if we know w
 
 To make reading this data user-friendly, Postgres allows us to query the parent table instead. As long as we specify the partition key, we are guaranteed to get the most efficient query plan possible:
 
-```sql
+```postgresql
 SELECT
     avg("AEP_MW")
 FROM energy_consumption
@@ -108,9 +108,9 @@ This reduces the number of rows Postgres has to scan by half. By adding more par
 
 Partitioning by hash, unlike by range, can be applied to any data type, including text. A hash function is executed on the partition key to create a reasonably unique number, and that number is then divided by the number of partitions to find the right child table for the row.
 
-To create a table partitioned by hash, the syntax is similar to partition by range. Let's use the USA House Prices dataset we used in [Vectors ](broken-reference)and [Tabular data](tabular-data.md), and split that table into two (2) roughly equal parts. Since we already have the `usa_house_prices` table, let's create a new one with the same columns, except this one will be partitioned:
+To create a table partitioned by hash, the syntax is similar to partition by range. Let's use the USA House Prices dataset we used in [Vectors](../../product/vector-database.md) and [Tabular data](README.md), and split that table into two (2) roughly equal parts. Since we already have the `usa_house_prices` table, let's create a new one with the same columns, except this one will be partitioned:
 
-```sql
+```postgresql
 CREATE TABLE usa_house_prices_partitioned (
   "Avg. Area Income" REAL NOT NULL,
   "Avg. Area House Age" REAL NOT NULL,
@@ -124,7 +124,7 @@ CREATE TABLE usa_house_prices_partitioned (
 
 Let's add two (2) partitions by hash. Hashing uses modulo arithmetic; when creating a child data table with these scheme, you need to specify the denominator and the remainder:
 
-```sql
+```postgresql
 CREATE TABLE usa_house_prices_partitioned_1
 PARTITION OF usa_house_prices_partitioned
 FOR VALUES WITH (modulus 2, remainder 0);
@@ -136,7 +136,7 @@ FOR VALUES WITH (modulus 2, remainder 1);
 
 Importing data into the new table can be done with just one query:
 
-```sql
+```postgresql
 INSERT INTO usa_house_prices_partitioned
 SELECT * FROM usa_houses_prices;
 ```
@@ -196,7 +196,7 @@ unpigz amazon_reviews_with_embeddings.csv.gz
 
 Let's get started by creating a partitioned table with three (3) child partitions. We'll be using hash partitioning on the `review_body` column which should produce three (3) roughly equally sized tables.
 
-```sql
+```postgresql
 CREATE TABLE amazon_reviews_with_embedding (
     review_body TEXT,
     review_embedding_e5_large VECTOR(1024)
@@ -232,7 +232,7 @@ If you're doing this with `psql`, open up three (3) terminal tabs, connect to yo
 
 {% tabs %}
 {% tab title="Tab 1" %}
-```sql
+```postgresql
 SET maintenance_work_mem TO '2GB';
 
 CREATE INDEX ON
@@ -242,7 +242,7 @@ USING hnsw(review_embedding_e5_large vector_cosine_ops);
 {% endtab %}
 
 {% tab title="Tab 2" %}
-```sql
+```postgresql
 SET maintenance_work_mem TO '2GB';
 
 CREATE INDEX ON
@@ -252,7 +252,7 @@ USING hnsw(review_embedding_e5_large vector_cosine_ops);
 {% endtab %}
 
 {% tab title="Tab 3" %}
-```sql
+```postgresql
 SET maintenance_work_mem TO '2GB';
 
 CREATE INDEX ON
@@ -268,11 +268,11 @@ This is an example of scaling vector search using partitions. We are increasing 
 
 To perform an ANN search using the indexes we created, we don't have to do anything special. Postgres will automatically scan all three (3) indexes for the closest matches and combine them into one result:
 
-```sql
+```postgresql
 SELECT
     review_body,
     review_embedding_e5_large <=> pgml.embed(
-        'intfloat/e5-large',
+        'Alibaba-NLP/gte-base-en-v1.5',
         'this chair was amazing'
     )::vector(1024) AS cosine_distance
 FROM amazon_reviews_with_embedding

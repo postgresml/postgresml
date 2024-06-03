@@ -8,7 +8,7 @@ use pyo3::{pyfunction, PyResult, Python};
 use crate::orm::*;
 
 #[pyfunction]
-fn r_insert_logs(project_id: i64, model_id: i64, logs: String) -> PyResult<String> {
+pub fn r_insert_logs(project_id: i64, model_id: i64, logs: String) -> PyResult<String> {
     let id_value = Spi::get_one_with_args::<i64>(
         "INSERT INTO pgml.logs (project_id, model_id, logs) VALUES ($1, $2, $3::JSONB) RETURNING id;",
         vec![
@@ -23,7 +23,7 @@ fn r_insert_logs(project_id: i64, model_id: i64, logs: String) -> PyResult<Strin
 }
 
 #[pyfunction]
-fn r_log(level: String, message: String) -> PyResult<String> {
+pub fn r_log(level: String, message: String) -> PyResult<String> {
     match level.as_str() {
         "info" => info!("{}", message),
         "warning" => warning!("{}", message),
@@ -78,12 +78,24 @@ pub mod xgboost;
 
 pub type Fit = fn(dataset: &Dataset, hyperparams: &Hyperparams) -> Result<Box<dyn Bindings>>;
 
+use std::any::Any;
+
+pub trait AToAny: 'static {
+    fn as_any(&self) -> &dyn Any;
+}
+
+impl<T: 'static> AToAny for T {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
+
 /// The Bindings trait that has to be implemented by all algorithm
 /// providers we use in PostgresML. We don't rely on Serde serialization,
 /// since scikit-learn estimators were originally serialized in pure Python as
-/// pickled objects, and neither xgboost or linfa estimators completely
+/// pickled objects, and neither xgboost nor linfa estimators completely
 /// implement serde.
-pub trait Bindings: Send + Sync + Debug {
+pub trait Bindings: Send + Sync + Debug + AToAny {
     /// Predict a set of datapoints.
     fn predict(&self, features: &[f32], num_features: usize, num_classes: usize) -> Result<Vec<f32>>;
 

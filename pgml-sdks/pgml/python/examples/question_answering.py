@@ -19,7 +19,7 @@ async def main():
         {
             "text": {
                 "splitter": {"model": "recursive_character"},
-                "semantic_search": {"model": "intfloat/e5-small"},
+                "semantic_search": {"model": "Alibaba-NLP/gte-base-en-v1.5"},
             }
         },
     )

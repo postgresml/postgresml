@@ -1,6 +1,6 @@
-# Installation
+# PostgresML installation
 
-A typical PostgresML deployment consists of two parts: the PostgreSQL extension, and the dashboard web app. The extension provides all the machine learning functionality, and can be used independently. The dashboard provides a system overview for easier management, and notebooks for writing experiments.
+The simplest PostgresML deployment consists of two parts: the PostgreSQL extension, and the dashboard web app. The extension provides all the machine learning functionality, and can be used independently. The dashboard provides a system overview for easier management, and SQL notebooks for writing experiments.
 
 ## Extension
 
@@ -10,13 +10,13 @@ The extension can be installed by compiling it from source, or if you're using U
 
 !!! tip
 
-If you're just looking to try PostgresML without installing it on your system, take a look at our Quick Start with Docker guide.
+If you're just looking to try PostgresML without installing it on your system, take a look at our [Quick Start with Docker](quick-start-with-docker) guide.
 
 !!!
 
 #### Get the source code
 
-To get the source code for PostgresML, you can clone our Github repository:
+To get the source code for PostgresML, clone our GitHub repository:
 
 ```bash
 git clone https://github.com/postgresml/postgresml
@@ -145,7 +145,7 @@ pgml_test=# SELECT pgml.version();
 We like and use pgvector a lot, as documented in our blog posts and examples, to store and search embeddings. You can install pgvector from source pretty easily:
 
 ```bash
-git clone --branch v0.5.0 https://github.com/pgvector/pgvector && \
+git clone --branch v0.6.0 https://github.com/pgvector/pgvector && \
 cd pgvector && \
 echo "trusted = true" >> vector.control && \
 make && \
@@ -184,15 +184,15 @@ CREATE EXTENSION
 
 !!! note
 
-If you're looking to use PostgresML in production, [try our cloud](https://postgresml.org/plans). We support serverless deployments with modern GPUs for startups of all sizes, and dedicated GPU hardware for larger teams that would like to tweak PostgresML to their needs.
+If you're looking to use PostgresML in production, [try our cloud](https://postgresml.org/signup). We support serverless deployments with modern GPUs and dedicated hardware if you would like to tweak PostgresML to your needs.
 
 !!!
 
 For Ubuntu, we compile and ship packages that include everything needed to install and run the extension. At the moment, only Ubuntu 22.04 (Jammy) is supported.
 
-#### Add our sources
+#### Add our repository
 
-Add our repository to your system sources:
+Add our repository to your system:
 
 ```bash
 echo "deb [trusted=yes] https://apt.postgresml.org $(lsb_release -cs) main" | \
@@ -204,12 +204,12 @@ sudo tee -a /etc/apt/sources.list
 Update your package lists and install PostgresML:
 
 ```bash
-export POSTGRES_VERSION=15
+export POSTGRES_VERSION=14
 sudo apt update && \
 sudo apt install postgresml-${POSTGRES_VERSION}
 ```
 
-The `postgresml-15` package includes all the necessary dependencies, including Python packages shipped inside a virtual environment. Your PostgreSQL server is configured automatically.
+The `postgresml-14` package includes all the necessary dependencies, including Python packages shipped inside a virtual environment. Your PostgreSQL server is configured automatically.
 
 We support PostgreSQL versions 11 through 15, so you can install the one matching your currently installed PostgreSQL version.
 
@@ -218,7 +218,7 @@ We support PostgreSQL versions 11 through 15, so you can install the one matchin
 If you prefer to manage your own Python environment and dependencies, you can install just the extension:
 
 ```bash
-export POSTGRES_VERSION=15
+export POSTGRES_VERSION=14
 sudo apt install postgresql-pgml-${POSTGRES_VERSION}
 ```
 
@@ -229,20 +229,20 @@ pgvector, the extension we use for storing and searching embeddings, needs to be
 To install pgvector from source, you can simply:
 
 ```bash
-git clone --branch v0.4.4 https://github.com/pgvector/pgvector && \
+git clone --branch v0.6.0 https://github.com/pgvector/pgvector && \
 cd pgvector && \
 echo "trusted = true" >> vector.control && \
 make && \
 make install
 ```
 
-### Other Linux
+### Other Linuxes
 
-PostgresML will compile and run on pretty much any modern Linux distribution. For a quick example, you can take a look at what we do to build the extension on [Ubuntu](../../../../.github/workflows/package-extension.yml), and modify those steps to work on your distribution.
+PostgresML will compile and run on pretty much any modern Linux distribution. For a quick example, you can take a look at what we do to build the extension on [Ubuntu](https://github.com/postgresml/postgresml/blob/master/.github/workflows/ubuntu-packages-and-docker-image.yml), and modify those steps to work on your distribution.
 
 #### Get the source code
 
-To get the source code for PostgresML, you can clone our Github repo:
+To get the source code for PostgresML, clone our GitHub repository:
 
 ```bash
 git clone https://github.com/postgresml/postgresml
@@ -253,7 +253,7 @@ git clone https://github.com/postgresml/postgresml
 You'll need the following packages installed first. The names are taken from Ubuntu (and other Debian based distros), so you'll need to change them to fit your distribution:
 
 ```
-export POSTGRES_VERSION=15
+export POSTGRES_VERSION=14
 
 build-essential
 clang
@@ -303,11 +303,11 @@ cargo pgrx install
 
 ## Dashboard
 
-The dashboard is a web app that can be run against any Postgres database which has the extension installed. There is a [Dockerfile](../../../../pgml-dashboard/Dockerfile/) included with the source code if you wish to run it as a container.
+The dashboard is a web app that can be run against any Postgres database which has the extension installed. There is a [Dockerfile](https://github.com/postgresml/postgresml/blob/master/pgml-dashboard/Dockerfile) included with the source code if you wish to run it as a container.
 
 ### Get the source code
 
-To get our source code, you can clone our Github repo (if you haven't already):
+To get our source code, you can clone our GitHub repository (if you haven't already):
 
 ```bash
 git clone clone https://github.com/postgresml/postgresml && \

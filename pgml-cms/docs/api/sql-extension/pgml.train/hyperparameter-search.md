@@ -12,7 +12,7 @@ The parameters passed to `pgml.train()` easily allow one to perform hyperparamet
 | `search_params` | `{"alpha": [0.1, 0.2, 0.5] }` |
 | `search_args`   | `{"n_iter": 10 }`             |
 
-```sql
+```postgresql
 SELECT * FROM pgml.train(
     'Handwritten Digit Image Classifier', 
     algorithm => 'xgboost', 

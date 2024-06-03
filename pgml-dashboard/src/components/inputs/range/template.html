@@ -1,0 +1,20 @@
+<div 
+  data-controller="inputs-range"
+  data-action="updateSlider->inputs-range#updateSlider"
+  data-inputs-range-interpolation-type-value="<%- interpolation_type.to_string() %>"
+  data-inputs-range-min-value="<%- min %>"
+  data-inputs-range-max-value="<%- max %>"
+  data-inputs-range-initial-value="<%- initial_value %>"
+  <%- target %>>
+  <div class="range-container <%- color %>">
+    <input class="form-range z-1 overlay-offset" 
+      type="range"
+      min="0"
+      max="100"
+      step="0.1"
+      data-action="inputs-range#sliderMoved mousedown->inputs-range#onGrab mouseup->inputs-range#onRelease" 
+      data-inputs-range-target="range">
+  
+    <div class="line w-100" data-inputs-range-target="line"></div>
+  </div>
+</div>

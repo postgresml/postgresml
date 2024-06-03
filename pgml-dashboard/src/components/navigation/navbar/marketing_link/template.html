@@ -1,18 +1,54 @@
 
+<%
+  use crate::components::static_nav_link::StaticNavLink as NavLink;
+
+  let col_title = |title: String| {format!(r#"
+    <div class="w-100 d-flex col-title text-uppercase legal-text fw-bold">{}</div>"#, title)
+  };
+
+  let list_item = |link: NavLink| {
+    let is_disabled = if link.disabled { "disabled" } else { "" };
+    let icon = link.icon.unwrap();
+    let href = link.href;
+    let name = link.name;
+    format!(r#"
+      <li class="d-flex gap-3 {is_disabled}">
+        <span class="material-symbols-outlined" style="width: 16px; height: 16px;">{icon}</span>
+        <a class="submenu-link" href="{href}">{name}</a>
+      </li>"#)
+  };
+%>
+
 <li class="nav-item d-flex align-items-center position-relative" data-controller="navigation-navbar-marketing-link">
   <div class="nav-item-container">
     <% if links.len() > 0 { %>
     <div class="nav-link p-0"><%- name %></div>
   
-    <div class="position-absolute w-100" style="height: 20px;">
-      <ul class="dropdown-list">
-        <% for link in links { %>
-        <li class="d-flex gap-3 <% if link.disabled { %>disabled<% } %>">
-          <span class="material-symbols-outlined" style="width: 16px; height: 16px;"><%- link.icon.unwrap() %></span>
-          <a class="submenu-link" href="<%- link.href %>"><%- link.name %></a>
-        </li>
+    <div class="position-absolute w-100 d-flex flex-row" style="height: 20px;">
+      <div class="dropdown-container gap-3">
+        <div>
+          <% if title_col1.is_some() {%>
+          <%- col_title(title_col1.unwrap()) %>
+          <% } %>
+          <ul class="dropdown-list">
+            <% for link in links { %>
+            <%- list_item(link) %>
+            <% } %>
+          </ul>
+        </div>
+        <% if !links_col2.is_empty() {%>
+        <div>
+          <% if title_col2.is_some() {%>
+          <%- col_title(title_col2.unwrap()) %>
+          <% } %>
+          <ul class="dropdown-list">
+            <% for link in links_col2 { %>
+            <%- list_item(link) %>
+            <% } %>
+          </ul>
+        </div>
         <% } %>
-      </ul>
+      </div>
     </div>
 
     <% } else { %>

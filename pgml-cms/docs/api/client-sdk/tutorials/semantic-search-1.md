@@ -4,18 +4,18 @@ description: Example for Semantic Search
 
 # Semantic Search Using Instructor Model
 
-This tutorial demonstrates using the `pgml` SDK to create a collection, add documents, build a pipeline for vector search, make a sample query, and archive the collection when finished.  In this tutorial we use [hkunlp/instructor-base](https://huggingface.co/hkunlp/instructor-base), a more advanced embeddings model that takes parameters when doing embedding and recall.
+This tutorial demonstrates using the `pgml` SDK to create a collection, add documents, build a pipeline for vector search, make a sample query, and archive the collection when finished.  In this tutorial we use [Alibaba-NLP/gte-base-en-v1.5](https://huggingface.co/Alibaba-NLP/gte-base-en-v1.5).
 
-[Link to full JavaScript implementation](../../../../../pgml-sdks/pgml/javascript/examples/question\_answering.js)
+[Link to full JavaScript implementation](https://github.com/postgresml/postgresml/blob/master/pgml-sdks/pgml/javascript/examples/question_answering.js)
 
-[Link to full Python implementation](../../../../../pgml-sdks/pgml/python/examples/question\_answering.py)
+[Link to full Python implementation](https://github.com/postgresml/postgresml/blob/master/pgml-sdks/pgml/python/examples/question_answering.py)
 
 ## Imports and Setup
 
 The SDK is imported and environment variables are loaded.
 
 {% tabs %}
-{% tab title="JavasScript" %}
+{% tab title="JavaScript" %}
 ```js
 const pgml = require("pgml");
 require("dotenv").config();
@@ -71,7 +71,7 @@ A pipeline encapsulating a model and splitter is created and added to the collec
     text: {
       splitter: { model: "recursive_character" },
       semantic_search: {
-        model: "intfloat/e5-small",
+        model: "Alibaba-NLP/gte-base-en-v1.5",
       },
     },
   });
@@ -88,10 +88,7 @@ A pipeline encapsulating a model and splitter is created and added to the collec
             "text": {
                 "splitter": {"model": "recursive_character"},
                 "semantic_search": {
-                    "model": "hkunlp/instructor-base",
-                    "parameters": {
-                        "instruction": "Represent the Wikipedia document for retrieval: "
-                    },
+                    "model": "Alibaba-NLP/gte-base-en-v1.5",
                 },
             }
         },

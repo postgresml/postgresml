@@ -12,7 +12,6 @@ This article is the third in a multipart series that will show you how to build 
 4. Optimizing semantic results with an XGBoost ranking model - coming soon!
 
 
-
 _Embeddings can be combined into personalized perspectives when stored as vectors in the database._
 
 ## Personalization
@@ -123,7 +122,7 @@ We can find a customer that our embeddings model feels is close to the sentiment
 ```postgresql
 WITH request AS (
   SELECT pgml.embed(
-    'intfloat/e5-large',
+    'Alibaba-NLP/gte-base-en-v1.5',
     'query: I love all Star Wars, but Empire Strikes Back is particularly amazing'
   )::vector(1024) AS embedding
 )
@@ -200,7 +199,7 @@ Now we can write our personalized SQL query. It's nearly the same as our query f
 -- create a request embedding on the fly
 WITH request AS (
   SELECT pgml.embed(
-    'intfloat/e5-large',
+    'Alibaba-NLP/gte-base-en-v1.5',
     'query: Best 1980''s scifi movie'
   )::vector(1024) AS embedding
 ),

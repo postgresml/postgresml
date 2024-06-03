@@ -109,21 +109,11 @@
     box-shadow: 8px 8px 24px rgba(163, 116, 253, 0.32);
 }
 
-.topnav-controlls {
+.top-nav-controls {
     &:hover, &.show, &[aria-expanded="true"] {
         &>span {
             color: #{$neon-tint-100};
         }
-
-        svg {
-            border-color: #{$neon-tint-100};
-        }
-
-    }
-
-    svg {
-        border: 2px solid #{$gray-700};
-        background-color: #{$gray-500};
     }
 
     path {
@@ -131,6 +121,25 @@
     }
     &::after {
         display: none;
+    }
+
+    svg {
+        * {
+            transform: rotate(0deg);
+            transform-origin: center;
+            transition: transform $animation-timer;
+        }
+    }
+
+    &:not(.collapsed) {
+        svg {
+            * {
+                stroke: #{$neon-tint-100};
+                transform-origin: center;
+                transform: rotate(180deg);
+                transition: transform $animation-timer;
+            }
+        }
     }
 }
 
@@ -145,3 +154,22 @@
     top: 5px;
     right: 0;
 }
+
+.icomoon {
+    /* use !important to prevent issues with browser extensions that change fonts */
+    font-family: 'icomoon' !important;
+    speak: never;
+    font-style: normal;
+    font-weight: normal;
+    font-variant: normal;
+    text-transform: none;
+    line-height: 1;
+  
+    /* Better Font Rendering =========== */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  .icon-owl:before {
+    content: "\e900";
+  }

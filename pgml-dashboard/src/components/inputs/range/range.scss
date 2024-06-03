@@ -1,0 +1,56 @@
+div[data-controller="inputs-range"] {
+  // This allows line overhang for rounding range edges.
+  .overlay-offset {
+    width: calc(100% - 4px);
+    margin-left: 2px;
+  }
+
+  .line {
+    width: 100%; 
+    height: 5px; 
+    position: absolute;
+    top: 11px;
+    border-radius: 1rem;
+  }
+
+  .grab-brightness {
+      filter: brightness(90%) !important;
+  }
+
+  .range-container {
+      position: relative; 
+
+      &:hover {
+          .line {
+              filter: brightness(110%);
+          }
+
+          .active-color {
+              filter: brightness(110%);
+          }
+      }
+  }
+
+  // Quick resize fix. This may become a global change later.
+  .input-group {
+      padding: 8px; 
+  }
+
+  @mixin color_dependent($color) {
+    .line {
+      background: linear-gradient(to right, #{$color} 5%, #{$form-range-track-color} 5%);
+    }
+
+    .form-range {
+      & {
+        color: #{$color};
+      }
+    }
+  }
+  .slate {
+    @include color_dependent($slate-shade-100);
+  }
+  .neon {
+    @include color_dependent($neon-shade-100);
+  }
+}

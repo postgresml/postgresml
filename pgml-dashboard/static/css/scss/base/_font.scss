@@ -152,4 +152,15 @@
     font-display: swap;
 }
 
+@font-face {
+    font-family: 'icomoon';
+    src:  url('/dashboard/static/fonts/.eot?fqmls6');
+    src:  url('/dashboard/static/fonts/icomoon.eot?fqmls6#iefix') format('embedded-opentype'),
+      url('/dashboard/static/fonts/icomoon.ttf?fqmls6') format('truetype'),
+      url('/dashboard/static/fonts/icomoon.woff?fqmls6') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: block;
+  }
+
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@100;300;400;500;700;900&family=Roboto+Mono:wght@100;300;400;500;700&display=swap');
