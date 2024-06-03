@@ -1,11 +1,13 @@
 use anyhow::Context;
 use futures::{stream::BoxStream, Stream, StreamExt};
 use itertools::Itertools;
-use rust_bridge::alias_manual;
 use sea_query::Iden;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::ops::{Deref, DerefMut};
+
+#[cfg(feature = "rust_bridge")]
+use rust_bridge::alias_manual;
 
 #[derive(Serialize, Deserialize)]
 pub struct CustomU64Convertor(pub Value);
@@ -31,7 +33,8 @@ impl From<CustomU64Convertor> for u64 {
 }
 
 /// A wrapper around `serde_json::Value`
-#[derive(alias_manual, sqlx::Type, Debug, Clone, Deserialize, PartialEq, Eq)]
+#[cfg_attr(feature = "rust_bridge", derive(alias_manual))]
+#[derive(sqlx::Type, Debug, Clone, Deserialize, PartialEq, Eq)]
 #[sqlx(transparent)]
 pub struct Json(pub serde_json::Value);
 
@@ -150,7 +153,7 @@ impl IntoTableNameAndSchema for String {
 }
 
 /// A wrapper around `BoxStream<'static, anyhow::Result<Json>>`
-#[derive(alias_manual)]
+#[cfg_attr(feature = "rust_bridge", derive(alias_manual))]
 pub struct GeneralJsonAsyncIterator(pub BoxStream<'static, anyhow::Result<Json>>);
 
 impl Stream for GeneralJsonAsyncIterator {
@@ -165,7 +168,7 @@ impl Stream for GeneralJsonAsyncIterator {
 }
 
 /// A wrapper around `Box<dyn Iterator<Item = anyhow::Result<Json>> + Send>`
-#[derive(alias_manual)]
+#[cfg_attr(feature = "rust_bridge", derive(alias_manual))]
 pub struct GeneralJsonIterator(pub Box<dyn Iterator<Item = anyhow::Result<Json>> + Send>);
 
 impl Iterator for GeneralJsonIterator {

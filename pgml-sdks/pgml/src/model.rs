@@ -1,4 +1,3 @@
-use rust_bridge::{alias, alias_methods};
 use sqlx::{Pool, Postgres};
 use tracing::instrument;
 
@@ -13,6 +12,9 @@ use crate::types::JsonPython;
 
 #[cfg(feature = "c")]
 use crate::languages::c::JsonC;
+
+#[cfg(feature = "rust_bridge")]
+use rust_bridge::{alias, alias_methods};
 
 /// A few notes on the following enums:
 /// - Sqlx does provide type derivation for enums, but it's not very good
@@ -55,7 +57,8 @@ pub(crate) struct ModelDatabaseData {
 }
 
 /// A model used for embedding, inference, etc...
-#[derive(alias, Debug, Clone)]
+#[cfg_attr(feature = "rust_bridge", derive(alias))]
+#[derive(Debug, Clone)]
 pub struct Model {
     pub(crate) name: String,
     pub(crate) runtime: ModelRuntime,
@@ -69,7 +72,7 @@ impl Default for Model {
     }
 }
 
-#[alias_methods(new, transform)]
+#[cfg_attr(feature = "rust_bridge", alias_methods(new, transform))]
 impl Model {
     /// Creates a new [Model]
     pub fn new(name: Option<String>, source: Option<String>, parameters: Option<Json>) -> Self {

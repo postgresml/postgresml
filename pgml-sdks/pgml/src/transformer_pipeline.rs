@@ -1,10 +1,13 @@
 use anyhow::Context;
-use rust_bridge::{alias, alias_methods};
 use sqlx::Row;
 use tracing::instrument;
 
+#[cfg(feature = "rust_bridge")]
+use rust_bridge::{alias, alias_methods};
+
 /// Provides access to builtin database methods
-#[derive(alias, Debug, Clone)]
+#[cfg_attr(feature = "rust_bridge", derive(alias))]
+#[derive(Debug, Clone)]
 pub struct TransformerPipeline {
     task: Json,
     database_url: Option<String>,
@@ -19,7 +22,10 @@ use crate::types::{GeneralJsonAsyncIteratorPython, JsonPython};
 #[cfg(feature = "c")]
 use crate::{languages::c::GeneralJsonAsyncIteratorC, languages::c::JsonC};
 
-#[alias_methods(new, transform, transform_stream)]
+#[cfg_attr(
+    feature = "rust_bridge",
+    alias_methods(new, transform, transform_stream)
+)]
 impl TransformerPipeline {
     /// Creates a new [TransformerPipeline]
     ///

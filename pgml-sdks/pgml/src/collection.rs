@@ -2,7 +2,6 @@ use anyhow::Context;
 use indicatif::MultiProgress;
 use itertools::Itertools;
 use regex::Regex;
-use rust_bridge::{alias, alias_methods};
 use sea_query::Alias;
 use sea_query::{Expr, NullOrdering, Order, PostgresQueryBuilder, Query};
 use sea_query_binder::SqlxBinder;
@@ -35,6 +34,12 @@ use crate::{
     utils,
 };
 
+#[cfg(feature = "rust_bridge")]
+use rust_bridge::{alias, alias_methods};
+
+#[cfg(feature = "c")]
+use crate::languages::c::GeneralJsonAsyncIteratorC;
+
 #[cfg(feature = "python")]
 use crate::{
     pipeline::PipelinePython,
@@ -43,7 +48,7 @@ use crate::{
 };
 
 /// A RAGStream Struct
-#[derive(alias)]
+#[cfg_attr(feature = "rust_bridge", derive(alias))]
 #[allow(dead_code)]
 pub struct RAGStream {
     general_json_async_iterator: Option<GeneralJsonAsyncIterator>,
@@ -57,7 +62,7 @@ impl Clone for RAGStream {
     }
 }
 
-#[alias_methods(stream, sources)]
+#[cfg_attr(feature = "rust_bridge", alias_methods(stream, sources))]
 impl RAGStream {
     pub fn stream(&mut self) -> anyhow::Result<GeneralJsonAsyncIterator> {
         self.general_json_async_iterator
@@ -140,7 +145,8 @@ pub(crate) struct CollectionDatabaseData {
 }
 
 /// A collection of documents
-#[derive(alias, Debug, Clone)]
+#[cfg_attr(feature = "rust_bridge", derive(alias))]
+#[derive(Debug, Clone)]
 pub struct Collection {
     pub(crate) name: String,
     pub(crate) database_url: Option<String>,
@@ -149,29 +155,32 @@ pub struct Collection {
     pub(crate) database_data: Option<CollectionDatabaseData>,
 }
 
-#[alias_methods(
-    new,
-    upsert_documents,
-    get_documents,
-    delete_documents,
-    get_pipelines,
-    get_pipeline,
-    add_pipeline,
-    remove_pipeline,
-    enable_pipeline,
-    disable_pipeline,
-    search,
-    add_search_event,
-    vector_search,
-    query,
-    rag,
-    rag_stream,
-    exists,
-    archive,
-    upsert_directory,
-    upsert_file,
-    generate_er_diagram,
-    get_pipeline_status
+#[cfg_attr(
+    feature = "rust_bridge",
+    alias_methods(
+        new,
+        upsert_documents,
+        get_documents,
+        delete_documents,
+        get_pipelines,
+        get_pipeline,
+        add_pipeline,
+        remove_pipeline,
+        enable_pipeline,
+        disable_pipeline,
+        search,
+        add_search_event,
+        vector_search,
+        query,
+        rag,
+        rag_stream,
+        exists,
+        archive,
+        upsert_directory,
+        upsert_file,
+        generate_er_diagram,
+        get_pipeline_status
+    )
 )]
 impl Collection {
     /// Creates a new [Collection]
