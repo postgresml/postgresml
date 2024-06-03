@@ -238,14 +238,6 @@ fn get_method_arguments(
     )
 }
 
-// Need:
-// - go function arguments
-// - go function argument prep for calling c function
-// - go conversion from c returned value - For custom types this is always a wrapper for everything else this is a primitve type
-// - c function arguments
-// - c function arguments prep for calling rust function
-// - arguments to call rust function with
-// - c conversion from rust returned value - This is done with the into trait
 fn get_c_types(
     argument_name: &str,
     ty: &SupportedType,
