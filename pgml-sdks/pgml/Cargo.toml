@@ -7,7 +7,7 @@ homepage = "https://postgresml.org/"
 repository = "https://github.com/postgresml/postgresml"
 license = "MIT"
 description = "The official pgml Rust SDK"
-keywords = ["postgres", "machine learning", "vector databases", "embeddings"]
+keywords = ["postgres", "embeddings"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]
