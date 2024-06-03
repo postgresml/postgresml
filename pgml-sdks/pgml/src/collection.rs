@@ -1137,6 +1137,65 @@ impl Collection {
             .collect())
     }
 
+    /// Performs rag on the [Collection]
+    ///
+    /// # Arguments
+    /// * `query` - The query to search for
+    /// * `pipeline` - The [Pipeline] to use for the search
+    ///
+    /// # Example
+    /// ```
+    /// use pgml::Collection;
+    /// use pgml::Pipeline;
+    /// use serde_json::json;
+    /// use anyhow::Result;
+    /// async fn run() -> anyhow::Result<()> {
+    ///    let mut collection = Collection::new("my_collection", None)?;
+    ///    let mut pipeline = Pipeline::new("my_pipeline", None)?;
+    ///    let results = collection.rag(json!({
+    ///       "CONTEXT": {
+    ///           "vector_search": {
+    ///               "query": {
+    ///                   "fields": {
+    ///                       "body": {
+    ///                           "query": "Test document: 2",
+    ///                           "parameters": {
+    ///                               "prompt": "query: "
+    ///                           }
+    ///                       },
+    ///                   },
+    ///               },
+    ///               "document": {
+    ///                   "keys": [
+    ///                       "id"
+    ///                   ]
+    ///               },
+    ///               "limit": 2
+    ///           },
+    ///           "aggregate": {
+    ///             "join": "\n"
+    ///           }
+    ///       },
+    ///       "CUSTOM": {
+    ///           "sql": "SELECT 'test'"
+    ///       },
+    ///       "chat": {
+    ///           "model": "meta-llama/Meta-Llama-3-8B-Instruct",
+    ///           "messages": [
+    ///               {
+    ///                   "role": "system",
+    ///                   "content": "You are a friendly and helpful chatbot"
+    ///               },
+    ///               {
+    ///                   "role": "user",
+    ///                   "content": "Some text with {CONTEXT} - {CUSTOM}",
+    ///               }
+    ///           ],
+    ///           "max_tokens": 10
+    ///       }
+    ///    }).into(), &mut pipeline).await?;
+    ///    Ok(())
+    /// }
     #[instrument(skip(self))]
     pub async fn rag(&self, query: Json, pipeline: &mut Pipeline) -> anyhow::Result<Json> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
@@ -1147,6 +1206,7 @@ impl Collection {
         Ok(std::mem::take(&mut results[0].0))
     }
 
+    /// Same as rag buit returns a stream of results
     #[instrument(skip(self))]
     pub async fn rag_stream(
         &self,
