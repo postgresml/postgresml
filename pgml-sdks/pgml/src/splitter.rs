@@ -1,4 +1,3 @@
-use rust_bridge::{alias, alias_methods};
 use sqlx::{postgres::PgConnection, Pool, Postgres};
 use tracing::instrument;
 
@@ -14,6 +13,9 @@ use crate::types::JsonPython;
 #[cfg(feature = "c")]
 use crate::languages::c::JsonC;
 
+#[cfg(feature = "rust_bridge")]
+use rust_bridge::{alias, alias_methods};
+
 #[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub(crate) struct SplitterDatabaseData {
@@ -22,7 +24,8 @@ pub(crate) struct SplitterDatabaseData {
 }
 
 /// A text splitter
-#[derive(alias, Debug, Clone)]
+#[cfg_attr(feature = "rust_bridge", derive(alias))]
+#[derive(Debug, Clone)]
 pub struct Splitter {
     pub(crate) name: String,
     pub(crate) parameters: Json,
@@ -35,7 +38,7 @@ impl Default for Splitter {
     }
 }
 
-#[alias_methods(new)]
+#[cfg_attr(feature = "rust_bridge", alias_methods(new))]
 impl Splitter {
     /// Creates a new [Splitter]
     ///

@@ -2,7 +2,6 @@ use anyhow::Context;
 use indicatif::MultiProgress;
 use itertools::Itertools;
 use regex::Regex;
-use rust_bridge::{alias, alias_methods};
 use sea_query::Alias;
 use sea_query::{Expr, NullOrdering, Order, PostgresQueryBuilder, Query};
 use sea_query_binder::SqlxBinder;
@@ -35,6 +34,12 @@ use crate::{
     utils,
 };
 
+#[cfg(feature = "rust_bridge")]
+use rust_bridge::{alias, alias_methods};
+
+#[cfg(feature = "c")]
+use crate::languages::c::GeneralJsonAsyncIteratorC;
+
 #[cfg(feature = "python")]
 use crate::{
     pipeline::PipelinePython,
@@ -43,7 +48,7 @@ use crate::{
 };
 
 /// A RAGStream Struct
-#[derive(alias)]
+#[cfg_attr(feature = "rust_bridge", derive(alias))]
 #[allow(dead_code)]
 pub struct RAGStream {
     general_json_async_iterator: Option<GeneralJsonAsyncIterator>,
@@ -57,7 +62,7 @@ impl Clone for RAGStream {
     }
 }
 
-#[alias_methods(stream, sources)]
+#[cfg_attr(feature = "rust_bridge", alias_methods(stream, sources))]
 impl RAGStream {
     pub fn stream(&mut self) -> anyhow::Result<GeneralJsonAsyncIterator> {
         self.general_json_async_iterator
@@ -140,7 +145,8 @@ pub(crate) struct CollectionDatabaseData {
 }
 
 /// A collection of documents
-#[derive(alias, Debug, Clone)]
+#[cfg_attr(feature = "rust_bridge", derive(alias))]
+#[derive(Debug, Clone)]
 pub struct Collection {
     pub(crate) name: String,
     pub(crate) database_url: Option<String>,
@@ -149,29 +155,32 @@ pub struct Collection {
     pub(crate) database_data: Option<CollectionDatabaseData>,
 }
 
-#[alias_methods(
-    new,
-    upsert_documents,
-    get_documents,
-    delete_documents,
-    get_pipelines,
-    get_pipeline,
-    add_pipeline,
-    remove_pipeline,
-    enable_pipeline,
-    disable_pipeline,
-    search,
-    add_search_event,
-    vector_search,
-    query,
-    rag,
-    rag_stream,
-    exists,
-    archive,
-    upsert_directory,
-    upsert_file,
-    generate_er_diagram,
-    get_pipeline_status
+#[cfg_attr(
+    feature = "rust_bridge",
+    alias_methods(
+        new,
+        upsert_documents,
+        get_documents,
+        delete_documents,
+        get_pipelines,
+        get_pipeline,
+        add_pipeline,
+        remove_pipeline,
+        enable_pipeline,
+        disable_pipeline,
+        search,
+        add_search_event,
+        vector_search,
+        query,
+        rag,
+        rag_stream,
+        exists,
+        archive,
+        upsert_directory,
+        upsert_file,
+        generate_er_diagram,
+        get_pipeline_status
+    )
 )]
 impl Collection {
     /// Creates a new [Collection]
@@ -1128,6 +1137,65 @@ impl Collection {
             .collect())
     }
 
+    /// Performs rag on the [Collection]
+    ///
+    /// # Arguments
+    /// * `query` - The query to search for
+    /// * `pipeline` - The [Pipeline] to use for the search
+    ///
+    /// # Example
+    /// ```
+    /// use pgml::Collection;
+    /// use pgml::Pipeline;
+    /// use serde_json::json;
+    /// use anyhow::Result;
+    /// async fn run() -> anyhow::Result<()> {
+    ///    let mut collection = Collection::new("my_collection", None)?;
+    ///    let mut pipeline = Pipeline::new("my_pipeline", None)?;
+    ///    let results = collection.rag(json!({
+    ///       "CONTEXT": {
+    ///           "vector_search": {
+    ///               "query": {
+    ///                   "fields": {
+    ///                       "body": {
+    ///                           "query": "Test document: 2",
+    ///                           "parameters": {
+    ///                               "prompt": "query: "
+    ///                           }
+    ///                       },
+    ///                   },
+    ///               },
+    ///               "document": {
+    ///                   "keys": [
+    ///                       "id"
+    ///                   ]
+    ///               },
+    ///               "limit": 2
+    ///           },
+    ///           "aggregate": {
+    ///             "join": "\n"
+    ///           }
+    ///       },
+    ///       "CUSTOM": {
+    ///           "sql": "SELECT 'test'"
+    ///       },
+    ///       "chat": {
+    ///           "model": "meta-llama/Meta-Llama-3-8B-Instruct",
+    ///           "messages": [
+    ///               {
+    ///                   "role": "system",
+    ///                   "content": "You are a friendly and helpful chatbot"
+    ///               },
+    ///               {
+    ///                   "role": "user",
+    ///                   "content": "Some text with {CONTEXT} - {CUSTOM}",
+    ///               }
+    ///           ],
+    ///           "max_tokens": 10
+    ///       }
+    ///    }).into(), &mut pipeline).await?;
+    ///    Ok(())
+    /// }
     #[instrument(skip(self))]
     pub async fn rag(&self, query: Json, pipeline: &mut Pipeline) -> anyhow::Result<Json> {
         let pool = get_or_initialize_pool(&self.database_url).await?;
@@ -1138,6 +1206,7 @@ impl Collection {
         Ok(std::mem::take(&mut results[0].0))
     }
 
+    /// Same as rag buit returns a stream of results
     #[instrument(skip(self))]
     pub async fn rag_stream(
         &self,

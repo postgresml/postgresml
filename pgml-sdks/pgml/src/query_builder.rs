@@ -3,11 +3,13 @@
 // No new things should be added here, instead add new items to collection.vector_search
 
 use anyhow::Context;
-use rust_bridge::{alias, alias_methods};
 use serde_json::json;
 use tracing::instrument;
 
 use crate::{pipeline::Pipeline, types::Json, Collection};
+
+#[cfg(feature = "rust_bridge")]
+use rust_bridge::{alias, alias_methods};
 
 #[cfg(feature = "python")]
 use crate::{pipeline::PipelinePython, types::JsonPython};
@@ -15,14 +17,18 @@ use crate::{pipeline::PipelinePython, types::JsonPython};
 #[cfg(feature = "c")]
 use crate::{languages::c::JsonC, pipeline::PipelineC};
 
-#[derive(alias, Clone, Debug)]
+#[cfg_attr(feature = "rust_bridge", derive(alias))]
+#[derive(Clone, Debug)]
 pub struct QueryBuilder {
     collection: Collection,
     query: Json,
     pipeline: Option<Pipeline>,
 }
 
-#[alias_methods(limit, filter, vector_recall, to_full_string, fetch_all(skip = "C"))]
+#[cfg_attr(
+    feature = "rust_bridge",
+    alias_methods(limit, filter, vector_recall, to_full_string, fetch_all(skip = "C"))
+)]
 impl QueryBuilder {
     pub fn new(collection: Collection) -> Self {
         let query = json!({

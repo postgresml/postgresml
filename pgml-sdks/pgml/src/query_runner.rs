@@ -1,4 +1,3 @@
-use rust_bridge::{alias, alias_methods};
 use sqlx::postgres::PgArguments;
 use sqlx::query::Query;
 use sqlx::{Postgres, Row};
@@ -11,6 +10,9 @@ use crate::types::JsonPython;
 #[cfg(feature = "c")]
 use crate::languages::c::JsonC;
 
+#[cfg(feature = "rust_bridge")]
+use rust_bridge::{alias, alias_methods};
+
 #[derive(Clone, Debug)]
 enum BindValue {
     String(String),
@@ -20,21 +22,25 @@ enum BindValue {
     Json(Json),
 }
 
-#[derive(alias, Clone, Debug)]
+#[cfg_attr(feature = "rust_bridge", derive(alias))]
+#[derive(Clone, Debug)]
 pub struct QueryRunner {
     query: String,
     bind_values: Vec<BindValue>,
     database_url: Option<String>,
 }
 
-#[alias_methods(
-    fetch_all,
-    execute,
-    bind_string,
-    bind_int,
-    bind_float,
-    bind_bool,
-    bind_json
+#[cfg_attr(
+    feature = "rust_bridge",
+    alias_methods(
+        fetch_all,
+        execute,
+        bind_string,
+        bind_int,
+        bind_float,
+        bind_bool,
+        bind_json
+    )
 )]
 impl QueryRunner {
     pub fn new(query: &str, database_url: Option<String>) -> Self {

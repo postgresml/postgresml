@@ -1,6 +1,5 @@
 use anyhow::Context;
 use futures::{Stream, StreamExt};
-use rust_bridge::{alias, alias_methods};
 use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 
@@ -9,6 +8,9 @@ use crate::{
     types::{GeneralJsonAsyncIterator, GeneralJsonIterator, Json},
     TransformerPipeline,
 };
+
+#[cfg(feature = "rust_bridge")]
+use rust_bridge::{alias, alias_methods};
 
 #[cfg(feature = "python")]
 use crate::types::{GeneralJsonAsyncIteratorPython, GeneralJsonIteratorPython, JsonPython};
@@ -20,7 +22,8 @@ use crate::{
 };
 
 /// A drop in replacement for OpenAI
-#[derive(alias, Debug, Clone)]
+#[cfg_attr(feature = "rust_bridge", derive(alias))]
+#[derive(Debug, Clone)]
 pub struct OpenSourceAI {
     database_url: Option<String>,
 }
@@ -166,12 +169,15 @@ impl Iterator for AsyncToSyncJsonIterator {
     }
 }
 
-#[alias_methods(
-    new,
-    chat_completions_create,
-    chat_completions_create_async,
-    chat_completions_create_stream,
-    chat_completions_create_stream_async
+#[cfg_attr(
+    feature = "rust_bridge",
+    alias_methods(
+        new,
+        chat_completions_create,
+        chat_completions_create_async,
+        chat_completions_create_stream,
+        chat_completions_create_stream_async
+    )
 )]
 impl OpenSourceAI {
     /// Creates a new [OpenSourceAI]

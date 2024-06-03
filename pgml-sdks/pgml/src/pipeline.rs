@@ -1,5 +1,4 @@
 use anyhow::Context;
-use rust_bridge::{alias, alias_methods};
 use serde::Deserialize;
 use serde_json::json;
 use sqlx::{Executor, PgConnection, Pool, Postgres, Transaction};
@@ -15,6 +14,9 @@ use crate::{
     splitter::Splitter,
     types::{DateTime, Json, TryToNumeric},
 };
+
+#[cfg(feature = "rust_bridge")]
+use rust_bridge::{alias, alias_methods};
 
 #[cfg(feature = "python")]
 use crate::types::JsonPython;
@@ -179,7 +181,8 @@ pub struct PipelineDatabaseData {
 }
 
 /// A pipeline that describes transformations to documents
-#[derive(alias, Debug, Clone)]
+#[cfg_attr(feature = "rust_bridge", derive(alias))]
+#[derive(Debug, Clone)]
 pub struct Pipeline {
     pub(crate) name: String,
     pub(crate) schema: Option<Json>,
@@ -205,7 +208,7 @@ fn json_to_schema(schema: &Json) -> anyhow::Result<ParsedSchema> {
         })
 }
 
-#[alias_methods(new)]
+#[cfg_attr(feature = "rust_bridge", alias_methods(new))]
 impl Pipeline {
     /// Creates a [Pipeline]
     ///

@@ -1,15 +1,11 @@
 use anyhow::Context;
-use rust_bridge::{alias, alias_methods};
 use sqlx::Row;
 use tracing::instrument;
 
-/// Provides access to builtin database methods
-#[derive(alias, Debug, Clone)]
-pub struct Builtins {
-    database_url: Option<String>,
-}
-
 use crate::{get_or_initialize_pool, query_runner::QueryRunner, types::Json};
+
+#[cfg(feature = "rust_bridge")]
+use rust_bridge::{alias, alias_methods};
 
 #[cfg(feature = "python")]
 use crate::{query_runner::QueryRunnerPython, types::JsonPython};
@@ -17,7 +13,17 @@ use crate::{query_runner::QueryRunnerPython, types::JsonPython};
 #[cfg(feature = "c")]
 use crate::{languages::c::JsonC, query_runner::QueryRunnerC};
 
-#[alias_methods(new, query, transform, embed, embed_batch)]
+/// Provides access to builtin database methods
+#[cfg_attr(feature = "rust_bridge", derive(alias))]
+#[derive(Debug, Clone)]
+pub struct Builtins {
+    database_url: Option<String>,
+}
+
+#[cfg_attr(
+    feature = "rust_bridge",
+    alias_methods(new, query, transform, embed, embed_batch)
+)]
 impl Builtins {
     pub fn new(database_url: Option<String>) -> Self {
         Self { database_url }
