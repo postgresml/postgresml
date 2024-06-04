@@ -12,16 +12,38 @@ The client SDK can be installed using standard package managers for JavaScript, 
 Installing the SDK into your project is as simple as:
 
 {% tabs %}
-{% tab title="JavaScript " %}
+{% tab title="JavaScript" %}
 ```bash
 npm i pgml
 ```
 {% endtab %}
 
-{% tab title="Python " %}
+{% tab title="Python" %}
 ```bash
 pip install pgml
 ```
+{% endtab %}
+
+{% tab title="Rust" %}
+```bash
+cargo add pgml
+```
+{% endtab %}
+
+{% tab title="C" %}
+
+First clone the `postgresml` repository and navigate to the `pgml-sdks/pgml/c` directory:
+```bash
+git clone https://github.com/postgresml/postgresml
+cd postgresml/pgml-sdks/pgml/c
+```
+
+Then build the bindings
+```bash
+make bindings
+```
+
+This will generate the `pgml.h` file and a `.so` on linux and `.dyblib` on MacOS.
 {% endtab %}
 {% endtabs %}
 
@@ -41,10 +63,10 @@ export PGML_DATABASE_URL=postgres://user:password@sql.cloud.postgresml.org:6432/
 
 ### Create a collection
 
-The SDK is written in asynchronous code, so you need to run it inside an async runtime. Both Python and JavaScript support async functions natively.
+The SDK is written in asynchronous code, so you need to run it inside an async runtime. Both Python, JavaScript and Rust support async functions natively.
 
 {% tabs %}
-{% tab title="JavaScript " %}
+{% tab title="JavaScript" %}
 ```javascript
 const pgml = require("pgml");
 
@@ -61,6 +83,28 @@ import asyncio
 
 async def main():
     collection = Collection("sample_collection")
+```
+{% endtab %}
+
+{% tab title="Rust" %}
+```rust
+use pgml::{Collection, Pipeline};
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let mut collection = Collection::new("sample_collection", None)?;
+}
+```
+{% endtab %}
+
+{% tab title="C" %}
+```c
+#include <stdio.h>
+#include "pgml.h"
+
+int main() {
+  CollectionC * collection = pgml_collectionc_new("sample_collection", NULL);
+}
 ```
 {% endtab %}
 {% endtabs %}
@@ -93,7 +137,7 @@ await collection.add_pipeline(pipeline);
 ```python
 # Add this code to the end of the main function from the above example.
 pipeline = Pipeline(
-    "test_pipeline",
+    "sample_pipeline",
     {
         "text": {
             "splitter": { "model": "recursive_character" },
@@ -105,6 +149,37 @@ pipeline = Pipeline(
 )
 
 await collection.add_pipeline(pipeline)
+```
+{% endtab %}
+
+{% tab title="Rust" %}
+```rust
+// Add this code to the end of the main function from the above example.
+let mut pipeline = Pipeline::new(
+    "sample_pipeline",
+    Some(
+        serde_json::json!({
+            "text": {
+                "splitter": { "model": "recursive_character" },
+                "semantic_search": {
+                    "model": "Alibaba-NLP/gte-base-en-v1.5",
+                },
+            },
+        })
+        .into(),
+    ),
+)?;
+
+collection.add_pipeline(&mut pipeline).await?;
+```
+{% endtab %}
+
+{% tab title="C" %}
+```c
+// Add this code to the end of the main function from the above example.
+PipelineC * pipeline = pgml_pipelinec_new("sample_pipeline", "{\"text\": {\"splitter\": {\"model\": \"recursive_character\"},\"semantic_search\": {\"model\": \"Alibaba-NLP/gte-base-en-v1.5\"}}}");
+
+pgml_collectionc_add_pipeline(collection, pipeline);
 ```
 {% endtab %}
 {% endtabs %}
@@ -153,9 +228,36 @@ documents = [
 await collection.upsert_documents(documents)
 ```
 {% endtab %}
-{% endtabs %}
 
-If the same document `id` is used, the SDK computes the difference between existing and new documents and only updates the chunks that have changed.
+{% tab title="Rust" %}
+```rust
+// Add this code to the end of the main function in the above example.
+let documents = vec![
+    serde_json::json!({
+        "id": "Document One",
+        "text": "document one contents...",
+    })
+    .into(),
+    serde_json::json!({
+        "id": "Document Two",
+        "text": "document two contents...",
+    })
+    .into(),
+];
+
+collection.upsert_documents(documents, None).await?;
+```
+{% endtab %}
+
+{% tab title="C" %}
+```c
+// Add this code to the end of the main function in the above example.
+char * documents_to_upsert[2] = {"{\"id\": \"Document One\", \"text\": \"document one contents...\"}", "{\"id\": \"Document Two\", \"text\": \"document two contents...\"}"};
+
+pgml_collectionc_upsert_documents(collection, documents_to_upsert, 2, NULL);
+```
+{% endtab %}
+{% endtabs %}
 
 ### Search documents
 
@@ -203,6 +305,47 @@ results = await collection.vector_search(
 print(results)
 ```
 {% endtab %}
+
+{% tab title="Rust" %}
+```rust
+// Add this code to the end of the main function in the above example.
+let results = collection
+    .vector_search(
+        serde_json::json!({
+            "query": {
+                "fields": {
+                    "text": {
+                        "query": "Something about a document...",
+                    },
+                },
+            },
+            "limit": 2,
+        })
+        .into(),
+        &mut pipeline,
+    )
+    .await?;
+
+println!("{:?}", results);
+
+Ok(())
+```
+{% endtab %}
+
+{% tab title="C" %}
+```c
+// Add this code to the end of the main function in the above example.
+r_size = 0;
+char** results = pgml_collectionc_vector_search(collection, "{\"query\": {\"fields\": {\"text\": {\"query\": \"Something about a document...\"}}}, \"limit\": 2}", pipeline, &r_size);
+printf("\n\nPrinting results:\n");
+for (i = 0; i < r_size; ++i) {
+  printf("Result %u -> %s\n", i, results[i]);
+}
+
+pgml_pipelinec_delete(pipeline);
+pgml_collectionc_delete(collection);
+```
+{% endtab %}
 {% endtabs %}
 
 We are using built-in vector search, powered by embeddings and the PostgresML [pgml.embed()](../sql-extension/pgml.embed) function, which embeds the `query` argument, compares it to the embeddings stored in the database, and returns the top two results, ranked by cosine similarity.
@@ -227,6 +370,8 @@ if __name__ == "__main__":
 ```
 {% endtab %}
 {% endtabs %}
+
+Note that `Rust` and `C` example do not require any additional code to run correctly.
 
 Once you run the example, you should see something like this in the terminal:
 
