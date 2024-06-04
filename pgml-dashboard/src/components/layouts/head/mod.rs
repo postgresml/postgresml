@@ -1,4 +1,4 @@
-use pgml_components::{component, Component};
+use pgml_components::component;
 use sailfish::TemplateOnce;
 
 #[derive(TemplateOnce, Default, Clone)]
@@ -10,7 +10,6 @@ pub struct Head {
     pub preloads: Vec<String>,
     pub context: Option<String>,
     pub canonical: Option<String>,
-    pub additional_components: Vec<Component>,
 }
 
 impl Head {
@@ -57,25 +56,6 @@ impl Head {
 
     pub fn context(mut self, context: &Option<String>) -> Head {
         self.context = context.to_owned();
-        self
-    }
-
-    /// Add a component to `<head>`.
-    ///
-    /// This can be anything, e.g. a `<script>` tag or a `<meta>` or just some HTML or text.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use pgml_components::Component;
-    /// use pgml_components::layouts::Head;
-    ///
-    /// let head = Head::new()
-    ///     .add_component(Component::from("<script>console.log('hello');</script>"));
-    /// ```
-    ///
-    pub fn add_component(mut self, component: Component) -> Self {
-        self.additional_components.push(component);
         self
     }
 }
