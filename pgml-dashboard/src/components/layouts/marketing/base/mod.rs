@@ -3,7 +3,7 @@ use crate::components::notifications::marketing::AlertBanner;
 use crate::guards::Cluster;
 use crate::models::User;
 use crate::Notification;
-use pgml_components::{component, Component};
+use pgml_components::component;
 use sailfish::TemplateOnce;
 use std::fmt;
 
@@ -70,15 +70,6 @@ impl Base {
 
         rsp.head = head;
         rsp
-    }
-
-    /// Add a component to the `<head>`.
-    ///
-    /// See [`Head::add_component`](crate::components::layouts::Head::add_component) for more information.
-    ///
-    pub fn add_head_component(mut self, component: Component) -> Self {
-        self.head = self.head.add_component(component);
-        self
     }
 
     pub fn footer(mut self, footer: String) -> Self {

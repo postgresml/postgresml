@@ -163,17 +163,6 @@ impl<'a> WebAppBase<'a> {
         self
     }
 
-    /// Add a component to head (`<head>`).
-    ///
-    /// # Arguments
-    ///
-    /// * `component` - The component to add to the head.
-    ///
-    pub fn add_head_component(&mut self, component: Component) -> &mut Self {
-        self.head = self.head.clone().add_component(component);
-        self
-    }
-
     pub fn render<T>(&mut self, template: T) -> String
     where
         T: sailfish::TemplateOnce,
