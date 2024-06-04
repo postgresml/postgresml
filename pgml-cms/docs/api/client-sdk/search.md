@@ -253,6 +253,10 @@ results = await collection.vector_search(
 ```
 {% endtab %}
 
+<<<<<<< HEAD
+=======
+{% endtab %}
+>>>>>>> 97398a2e (Periodic commit)
 {% tab title="Rust" %}
 ```rust
 let query = "What is the best database?";
@@ -363,6 +367,10 @@ results = await collection.vector_search(
 ```
 {% endtab %}
 
+<<<<<<< HEAD
+=======
+{% endtab %}
+>>>>>>> 97398a2e (Periodic commit)
 {% tab title="Rust" %}
 ```rust
 let results = collection
@@ -462,6 +470,10 @@ results = await collection.vector_search(
 ```
 {% endtab %}
 
+<<<<<<< HEAD
+=======
+{% endtab %}
+>>>>>>> 97398a2e (Periodic commit)
 {% tab title="Rust" %}
 ```rust
 let results = collection
