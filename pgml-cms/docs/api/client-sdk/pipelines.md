@@ -57,6 +57,48 @@ pipeline = Pipeline(
 )
 ```
 {% endtab %}
+
+{% tab title="Rust" %}
+```rust
+let mut pipeline = Pipeline::new(
+    "test_pipeline",
+    Some(
+        serde_json::json!({
+            "title": {
+                "full_text_search": {"configuration": "english"},
+            },
+            "body": {
+                "splitter": {"model": "recursive_character"},
+                "semantic_search": {
+                    "model": "Alibaba-NLP/gte-base-en-v1.5",
+                },
+            },
+        })
+        .into(),
+    ),
+)?;
+
+```
+{% endtab %}
+
+{% tab title="C" %}
+```c
+PipelineC * pipeline = pgml_pipelinec_new(
+  "test_pipeline", 
+  "{\
+    \"title\": {\
+      \"full_text_search\": {\"configuration\": \"english\"},\
+    },\
+    \"body\": {\
+      \"splitter\": {\"model\": \"recursive_character\"},\
+      \"semantic_search\": {\
+        \"model\": \"Alibaba-NLP/gte-base-en-v1.5\"\
+      }\
+    }\
+  }"
+);
+```
+{% endtab %}
 {% endtabs %}
 
 This `Pipeline` does two things. For each document in the `Collection`, it converts all `title`s into tsvectors enabling full text search, and splits and embeds the `body` text enabling semantic search using vectors. This kind of `Pipeline` would be great for site search utilizing hybrid keyword and semantic search.
@@ -90,6 +132,42 @@ pipeline = Pipeline(
         },
     },
 )
+```
+{% endtab %}
+
+{% tab title="Rust" %}
+```rust
+let mut pipeline = Pipeline::new(
+    "test_pipeline",
+    Some(
+        serde_json::json!({
+            "body": {
+                "splitter": {"model": "recursive_character"},
+                "semantic_search": {
+                    "model": "Alibaba-NLP/gte-base-en-v1.5",
+                },
+            },
+        })
+        .into(),
+    ),
+)?;
+
+```
+{% endtab %}
+
+{% tab title="C" %}
+```c
+PipelineC * pipeline = pgml_pipelinec_new(
+  "test_pipeline", 
+  "{\
+    \"body\": {\
+      \"splitter\": {\"model\": \"recursive_character\"},\
+      \"semantic_search\": {\
+        \"model\": \"Alibaba-NLP/gte-base-en-v1.5\"\
+      }\
+    }\
+  }"
+);
 ```
 {% endtab %}
 {% endtabs %}
@@ -166,6 +244,44 @@ pipeline = Pipeline(
 )
 ```
 {% endtab %}
+
+{% tab title="Rust" %}
+```rust
+let mut pipeline = Pipeline::new(
+    "test_pipeline",
+    Some(
+        serde_json::json!({
+            "body": {
+                "splitter": {"model": "recursive_character"},
+                "semantic_search": {
+                    "model": "Alibaba-NLP/gte-base-en-v1.5",
+                    "hnsw": {"m": 100, "ef_construction": 200}
+                },
+            },
+        })
+        .into(),
+    ),
+)?;
+
+```
+{% endtab %}
+
+{% tab title="C" %}
+```c
+PipelineC * pipeline = pgml_pipelinec_new(
+  "test_pipeline", 
+  "{\
+    \"body\": {\
+      \"splitter\": {\"model\": \"recursive_character\"},\
+      \"semantic_search\": {\
+        \"model\": \"Alibaba-NLP/gte-base-en-v1.5\",\
+        \"hnsw\": {\"m\": 100, \"ef_construction\": 200}\
+      }\
+    }\
+  }"
+);
+```
+{% endtab %}
 {% endtabs %}
 
 ## Adding Pipelines to a Collection
@@ -184,6 +300,18 @@ await collection.add_pipeline(pipeline)
 await collection.add_pipeline(pipeline)
 ```
 {% endtab %}
+
+{% tab title="Rust" %}
+```rust
+collection.add_pipeline(&mut pipeline).await?;
+```
+{% endtab %}
+
+{% tab title="C" %}
+```c
+pgml_collectionc_add_pipeline(collection, pipeline);
+```
+{% endtab %}
 {% endtabs %}
 
 > Note: After a `Pipeline` has been added to a `Collection` instances of the `Pipeline` object can be created without specifying a schema:
@@ -198,6 +326,18 @@ const pipeline = pgml.newPipeline("test_pipeline")
 {% tab title="Python" %}
 ```python
 pipeline = Pipeline("test_pipeline")
+```
+{% endtab %}
+
+{% tab title="Rust" %}
+```rust
+let mut pipeline = Pipeline::new("test_pipeline", None)?;
+```
+{% endtab %}
+
+{% tab title="C" %}
+```c
+PipelineC * pipeline = pgml_pipelinec_new("test_pipeline",  NULL);
 ```
 {% endtab %}
 {% endtabs %}
@@ -231,6 +371,22 @@ collection = Collection("test_collection")
 await collection.disable_pipeline(pipeline)
 ```
 {% endtab %}
+
+{% tab title="Rust" %}
+```rust
+let mut collection = Collection::new("test_collection", None)?;
+let mut pipeline = Pipeline::new("test_pipeline", None)?;
+collection.disable_pipeline(&mut pipeline).await?;
+```
+{% endtab %}
+
+{% tab title="C" %}
+```c
+CollectionC * collection = pgml_collectionc_new("test_collection", NULL);
+PipelineC * pipeline = pgml_pipelinec_new("test_pipeline",  NULL);
+pgml_collectionc_disable_pipeline(collection, pipeline);
+```
+{% endtab %}
 {% endtabs %}
 
 Disabling a `Pipeline` prevents it from running automatically, but leaves all tsvectors, chunks, and embeddings already created by that `Pipeline` in the database.
@@ -255,6 +411,22 @@ collection = Collection("test_collection")
 await collection.enable_pipeline(pipeline)
 ```
 {% endtab %}
+
+{% tab title="Rust" %}
+```rust
+let mut collection = Collection::new("test_collection", None)?;
+let mut pipeline = Pipeline::new("test_pipeline", None)?;
+collection.enable_pipeline(&mut pipeline).await?;
+```
+{% endtab %}
+
+{% tab title="C" %}
+```c
+CollectionC * collection = pgml_collectionc_new("test_collection", NULL);
+PipelineC * pipeline = pgml_pipelinec_new("test_pipeline",  NULL);
+pgml_collectionc_enable_pipeline(collection, pipeline);
+```
+{% endtab %}
 {% endtabs %}
 
 Enabling a `Pipeline` will cause it to automatically run on all documents it may have missed while disabled.
@@ -263,10 +435,11 @@ Enabling a `Pipeline` will cause it to automatically run on all documents it may
 
 {% tabs %}
 {% tab title="JavaScript" %}
-<pre class="language-javascript"><code class="lang-javascript">const pipeline = pgml.newPipeline("test_pipeline")
-<strong>const collection = pgml.newCollection("test_collection")
-</strong>await collection.remove_pipeline(pipeline)
-</code></pre>
+```javascript
+const pipeline = pgml.newPipeline("test_pipeline")
+const collection = pgml.newCollection("test_collection")
+await collection.remove_pipeline(pipeline)
+```
 {% endtab %}
 
 {% tab title="Python" %}
@@ -274,6 +447,22 @@ Enabling a `Pipeline` will cause it to automatically run on all documents it may
 pipeline = Pipeline("test_pipeline")
 collection = Collection("test_collection")
 await collection.remove_pipeline(pipeline)
+```
+{% endtab %}
+
+{% tab title="Rust" %}
+```rust
+let mut collection = Collection::new("test_collection", None)?;
+let mut pipeline = Pipeline::new("test_pipeline", None)?;
+collection.remove_pipeline(&mut pipeline).await?;
+```
+{% endtab %}
+
+{% tab title="C" %}
+```c
+CollectionC * collection = pgml_collectionc_new("test_collection", NULL);
+PipelineC * pipeline = pgml_pipelinec_new("test_pipeline",  NULL);
+pgml_collectionc_remove_pipeline(collection, pipeline);
 ```
 {% endtab %}
 {% endtabs %}
