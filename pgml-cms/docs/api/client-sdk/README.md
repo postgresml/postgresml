@@ -89,9 +89,10 @@ async def main():
 {% tab title="Rust" %}
 ```rust
 use pgml::{Collection, Pipeline};
+use anyhow::Error;
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> Result<(), Error> {
     let mut collection = Collection::new("sample_collection", None)?;
 }
 ```

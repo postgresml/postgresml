@@ -439,6 +439,7 @@ Enabling a `Pipeline` will cause it to automatically run on all documents it may
 const pipeline = pgml.newPipeline("test_pipeline")
 const collection = pgml.newCollection("test_collection")
 await collection.remove_pipeline(pipeline)
+```
 {% endtab %}
 
 {% tab title="Python" %}
