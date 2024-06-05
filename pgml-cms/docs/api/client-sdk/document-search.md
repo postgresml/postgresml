@@ -79,7 +79,7 @@ collection.add_pipeline(&mut pipeline).await?;
 {% endtab %}
 
 {% tab title="C" %}
-```c
+```cpp
 PipelineC *pipeline = pgml_pipelinec_new("test_pipeline", "{\
     \"abstract\": {\
         \"semantic_search\": {\
@@ -192,7 +192,7 @@ let results = collection
 {% endtab %}
 
 {% tab title="C" %}
-```c
+```cpp
 char * results = pgml_collectionc_search(collection, "\
      \"query\": {\
         \"full_text_search\": {\

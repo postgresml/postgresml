@@ -82,7 +82,7 @@ let mut pipeline = Pipeline::new(
 {% endtab %}
 
 {% tab title="C" %}
-```c
+```cpp
 PipelineC * pipeline = pgml_pipelinec_new(
   "test_pipeline", 
   "{\
@@ -156,7 +156,7 @@ let mut pipeline = Pipeline::new(
 {% endtab %}
 
 {% tab title="C" %}
-```c
+```cpp
 PipelineC * pipeline = pgml_pipelinec_new(
   "test_pipeline", 
   "{\
@@ -173,6 +173,8 @@ PipelineC * pipeline = pgml_pipelinec_new(
 {% endtabs %}
 
 This `Pipeline` splits and embeds the `body` text enabling semantic search using vectors. This is a very popular `Pipeline` for RAG.
+
+### Switching from OpenAI
 
 We support most every open source model on [Hugging Face](https://huggingface.co/), and OpenAI's embedding models. To use a model from OpenAI specify the `source` as `openai`, and make sure and set the environment variable `OPENAI_API_KEY`.
 
@@ -202,6 +204,44 @@ pipeline = Pipeline(
         },
     },
 )
+```
+{% endtab %}
+
+{% tab title="Rust" %}
+```rust
+let mut pipeline = Pipeline::new(
+    "test_pipeline",
+    Some(
+        serde_json::json!({
+            "body": {
+                "splitter": {"model": "recursive_character"},
+                "semantic_search": {
+                    "model": "text-embedding-ada-002",
+                    "source": "openai"
+                },
+            },
+        })
+        .into(),
+    ),
+)?;
+
+```
+{% endtab %}
+
+{% tab title="C" %}
+```cpp
+PipelineC * pipeline = pgml_pipelinec_new(
+  "test_pipeline", 
+  "{\
+    \"body\": {\
+      \"splitter\": {\"model\": \"recursive_character\"},\
+      \"semantic_search\": {\
+        \"model\": \"text-embedding-ada-002\",\
+        \"source\": \"openai\"\
+      }\
+    }\
+  }"
+);
 ```
 {% endtab %}
 {% endtabs %}
@@ -267,7 +307,7 @@ let mut pipeline = Pipeline::new(
 {% endtab %}
 
 {% tab title="C" %}
-```c
+```cpp
 PipelineC * pipeline = pgml_pipelinec_new(
   "test_pipeline", 
   "{\
@@ -308,7 +348,7 @@ collection.add_pipeline(&mut pipeline).await?;
 {% endtab %}
 
 {% tab title="C" %}
-```c
+```cpp
 pgml_collectionc_add_pipeline(collection, pipeline);
 ```
 {% endtab %}
@@ -336,7 +376,7 @@ let mut pipeline = Pipeline::new("test_pipeline", None)?;
 {% endtab %}
 
 {% tab title="C" %}
-```c
+```cpp
 PipelineC * pipeline = pgml_pipelinec_new("test_pipeline",  NULL);
 ```
 {% endtab %}
@@ -381,7 +421,7 @@ collection.disable_pipeline(&mut pipeline).await?;
 {% endtab %}
 
 {% tab title="C" %}
-```c
+```cpp
 CollectionC * collection = pgml_collectionc_new("test_collection", NULL);
 PipelineC * pipeline = pgml_pipelinec_new("test_pipeline",  NULL);
 pgml_collectionc_disable_pipeline(collection, pipeline);
@@ -421,7 +461,7 @@ collection.enable_pipeline(&mut pipeline).await?;
 {% endtab %}
 
 {% tab title="C" %}
-```c
+```cpp
 CollectionC * collection = pgml_collectionc_new("test_collection", NULL);
 PipelineC * pipeline = pgml_pipelinec_new("test_pipeline",  NULL);
 pgml_collectionc_enable_pipeline(collection, pipeline);
@@ -459,7 +499,7 @@ collection.remove_pipeline(&mut pipeline).await?;
 {% endtab %}
 
 {% tab title="C" %}
-```c
+```cpp
 CollectionC * collection = pgml_collectionc_new("test_collection", NULL);
 PipelineC * pipeline = pgml_pipelinec_new("test_pipeline",  NULL);
 pgml_collectionc_remove_pipeline(collection, pipeline);
