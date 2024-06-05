@@ -363,13 +363,6 @@ results = await collection.vector_search(
 ```
 {% endtab %}
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-{% endtab %}
->>>>>>> 97398a2e (Periodic commit)
-=======
->>>>>>> 7efe6d9f (Updated everything to have rust and c)
 {% tab title="Rust" %}
 ```rust
 let results = collection
@@ -469,13 +462,6 @@ results = await collection.vector_search(
 ```
 {% endtab %}
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-{% endtab %}
->>>>>>> 97398a2e (Periodic commit)
-=======
->>>>>>> 7efe6d9f (Updated everything to have rust and c)
 {% tab title="Rust" %}
 ```rust
 let results = collection
