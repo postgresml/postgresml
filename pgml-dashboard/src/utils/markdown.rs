@@ -208,6 +208,8 @@ impl<'a> From<&str> for CodeFence<'a> {
             "postgresql-line-nums"
         } else if options.starts_with("rust") {
             "rust"
+        } else if options.starts_with("cpp") {
+            "cpp"
         } else if options.starts_with("json") {
             "json"
         } else {
