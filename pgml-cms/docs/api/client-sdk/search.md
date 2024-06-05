@@ -80,7 +80,7 @@ collection.add_pipeline(&mut pipeline).await?;
 {% endtab %}
 
 {% tab title="C" %}
-```c
+```cpp
 PipelineC *pipeline = pgml_pipelinec_new("test_pipeline", "{\
     \"abstract\": {\
         \"semantic_search\": {\
@@ -173,7 +173,7 @@ let results = collection
 {% endtab %}
 
 {% tab title="C" %}
-```c
+```cpp
 r_size = 0;
 char **results = pgml_collectionc_vector_search(collection, "{\
   \"query\": {\
@@ -283,7 +283,7 @@ let results = collection
 {% endtab %}
 
 {% tab title="C" %}
-```c
+```cpp
 r_size = 0;
 char **results = pgml_collectionc_vector_search(collection, "{\
  \"query\": {\
@@ -389,7 +389,7 @@ let results = collection
 {% endtab %}
 
 {% tab title="C" %}
-```c
+```cpp
 r_size = 0;
 char **results = pgml_collectionc_vector_search(collection, "{\
     \"query\": {\
@@ -488,7 +488,7 @@ let results = collection
 {% endtab %}
 
 {% tab title="C" %}
-```c
+```cpp
 r_size = 0;
 char **results = pgml_collectionc_vector_search(collection, "{\
     \"query\": {\
@@ -615,7 +615,7 @@ let results = collection
 {% endtab %}
 
 {% tab title="C" %}
-```c
+```cpp
 r_size = 0;
 char **results = pgml_collectionc_vector_search(collection, "{\
   \"query\": {\

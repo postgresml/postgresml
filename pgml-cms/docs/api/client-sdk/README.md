@@ -99,7 +99,7 @@ async fn main() -> Result<(), Error> {
 {% endtab %}
 
 {% tab title="C" %}
-```c
+```cpp
 #include <stdio.h>
 #include "pgml.h"
 
@@ -176,7 +176,7 @@ collection.add_pipeline(&mut pipeline).await?;
 {% endtab %}
 
 {% tab title="C" %}
-```c
+```cpp
 // Add this code to the end of the main function from the above example.
 PipelineC * pipeline = pgml_pipelinec_new("sample_pipeline", "{\"text\": {\"splitter\": {\"model\": \"recursive_character\"},\"semantic_search\": {\"model\": \"Alibaba-NLP/gte-base-en-v1.5\"}}}");
 
@@ -251,7 +251,7 @@ collection.upsert_documents(documents, None).await?;
 {% endtab %}
 
 {% tab title="C" %}
-```c
+```cpp
 // Add this code to the end of the main function in the above example.
 char * documents_to_upsert[2] = {"{\"id\": \"Document One\", \"text\": \"document one contents...\"}", "{\"id\": \"Document Two\", \"text\": \"document two contents...\"}"};
 
@@ -334,7 +334,7 @@ Ok(())
 {% endtab %}
 
 {% tab title="C" %}
-```c
+```cpp
 // Add this code to the end of the main function in the above example.
 r_size = 0;
 char** results = pgml_collectionc_vector_search(collection, "{\"query\": {\"fields\": {\"text\": {\"query\": \"Something about a document...\"}}}, \"limit\": 2}", pipeline, &r_size);
