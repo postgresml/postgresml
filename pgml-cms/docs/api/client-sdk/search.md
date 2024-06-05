@@ -147,6 +147,7 @@ results = await collection.vector_search(
 )
 ```
 {% endtab %}
+
 {% tab title="Rust" %}
 ```rust
 let results = collection
@@ -252,7 +253,6 @@ results = await collection.vector_search(
 ```
 {% endtab %}
 
-{% endtab %}
 {% tab title="Rust" %}
 ```rust
 let query = "What is the best database?";
@@ -363,7 +363,6 @@ results = await collection.vector_search(
 ```
 {% endtab %}
 
-{% endtab %}
 {% tab title="Rust" %}
 ```rust
 let results = collection
@@ -463,7 +462,6 @@ results = await collection.vector_search(
 ```
 {% endtab %}
 
-{% endtab %}
 {% tab title="Rust" %}
 ```rust
 let results = collection
@@ -583,6 +581,61 @@ results = await collection.vector_search(
     },
     pipeline,
 )
+```
+{% endtab %}
+
+{% tab title="Rust" %}
+```rust
+let results = collection
+    .vector_search(
+        serde_json::json!({
+            "query": {
+                "fields": {
+                    "body": {
+                        "query": "What is the best database?",
+                        "parameters": {
+                            "instruction": "Represent this sentence for searching relevant passages: ",
+                        },
+                    },
+                },
+                "filter": {
+                    "$or": [
+                        {"$and": [{"$eq": {"user_id": 1}}, {"$lt": {"user_score": 100}}]},
+                        {"special": {"$ne": True}},
+                    ],
+                },
+            },
+            "limit": 5,
+        })
+        .into(),
+        &mut pipeline,
+    )
+    .await?;
+```
+{% endtab %}
+
+{% tab title="C" %}
+```c
+r_size = 0;
+char **results = pgml_collectionc_vector_search(collection, "{\
+  \"query\": {\
+      \"fields\": {\
+          \"body\": {\
+              \"query\": \"What is the best database?\",\
+              \"parameters\": {\
+                  \"instruction\": \"Represent this sentence for searching relevant passages: \"\
+              }\
+          }\
+      },\
+      \"filter\": {\
+          \"$or\": [\
+              {\"$and\": [{\"$eq\": {\"user_id\": 1}}, {\"$lt\": {\"user_score\": 100}}]},\
+              {\"special\": {\"$ne\": True}}\
+          ]\
+      }\
+  },\
+  \"limit\": 5\
+}", pipeline, &r_size);
 ```
 {% endtab %}
 {% endtabs %}

@@ -10,14 +10,14 @@ This section will assume we have previously ran the following code:
 const pipeline = pgml.newPipeline("test_pipeline", {
   abstract: {
     semantic_search: {
-      model: "Alibaba-NLP/gte-base-en-v1.5",
+      model: "mixedbread-ai/mxbai-embed-large-v1",
     },
     full_text_search: { configuration: "english" },
   },
   body: {
     splitter: { model: "recursive_character" },
     semantic_search: {
-      model: "Alibaba-NLP/gte-base-en-v1.5",
+      model: "mixedbread-ai/mxbai-embed-large-v1",
     },
   },
 });
@@ -33,14 +33,14 @@ pipeline = Pipeline(
     {
         "abstract": {
             "semantic_search": {
-                "model": "Alibaba-NLP/gte-base-en-v1.5",
+                "model": "mixedbread-ai/mxbai-embed-large-v1",
             },
             "full_text_search": {"configuration": "english"},
         },
         "body": {
             "splitter": {"model": "recursive_character"},
             "semantic_search": {
-                "model": "Alibaba-NLP/gte-base-en-v1.5",
+                "model": "mixedbread-ai/mxbai-embed-large-v1",
             },
         },
     },
@@ -48,7 +48,59 @@ pipeline = Pipeline(
 collection = Collection("test_collection")
 ```
 {% endtab %}
+
+{% tab title="Rust" %}
+```rust
+let mut pipeline = Pipeline::new(
+    "test_pipeline",
+    Some(
+        serde_json::json!(
+            {
+                "abstract": {
+                    "semantic_search": {
+                        "model": "mixedbread-ai/mxbai-embed-large-v1",
+                    },
+                    "full_text_search": {"configuration": "english"},
+                },
+                "body": {
+                    "splitter": {"model": "recursive_character"},
+                    "semantic_search": {
+                        "model": "mixedbread-ai/mxbai-embed-large-v1",
+                    },
+                },
+            }
+        )
+        .into(),
+    ),
+)?;
+let mut collection = Collection::new("test_collection", None)?;
+collection.add_pipeline(&mut pipeline).await?;
+```
+{% endtab %}
+
+{% tab title="C" %}
+```c
+PipelineC *pipeline = pgml_pipelinec_new("test_pipeline", "{\
+    \"abstract\": {\
+        \"semantic_search\": {\
+            \"model\": \"mixedbread-ai/mxbai-embed-large-v1\"\
+        },\
+        \"full_text_search\": {\"configuration\": \"english\"}\
+    },\
+    \"body\": {\
+        \"splitter\": {\"model\": \"recursive_character\"},\
+        \"semantic_search\": {\
+            \"model\": \"mixedbread-ai/mxbai-embed-large-v1\"\
+        }\
+    }\
+}");
+CollectionC * collection = pgml_collectionc_new("test_collection", NULL);
+pgml_collectionc_add_pipeline(collection, pipeline);
+```
+{% endtab %}
 {% endtabs %}
+
+This creates a `Pipeline` that is capable of full text search and semantic search on the `abstract` and semantic search on the `body` of documents.
 
 ## Doing Document Search
 
@@ -106,6 +158,63 @@ results = await collection.search(
     },
     pipeline,
 )
+```
+{% endtab %}
+
+
+{% tab title="Rust" %}
+```rust
+let results = collection
+    .search(serde_json::json!({
+        "query": {
+            "full_text_search": {
+                "abstract": {"query": "What is the best database?", "boost": 1.2}
+            },
+            "semantic_search": {
+                "abstract": {
+                    "query": "What is the best database?",
+                    "boost": 2.0,
+                },
+                "body": {
+                    "query": "What is the best database?",
+                    "boost": 1.25,
+                    "parameters": {
+                        "instruction": "Represent the Wikipedia question for retrieving supporting documents: ",
+                    },
+                },
+            },
+            "filter": {"user_id": {"$eq": 1}},
+        },
+        "limit": 10,
+    }).into(), &mut pipeline)
+    .await?;
+```
+{% endtab %}
+
+{% tab title="C" %}
+```c
+char * results = pgml_collectionc_search(collection, "\
+     \"query\": {\
+        \"full_text_search\": {\
+            \"abstract\": {\"query\": \"What is the best database?\", \"boost\": 1.2}\
+        },\
+        \"semantic_search\": {\
+            \"abstract\": {\
+                \"query\": \"What is the best database?\",\
+                \"boost\": 2.0\
+            },\
+            \"body\": {\
+                \"query\": \"What is the best database?\",\
+                \"boost\": 1.25,\
+                \"parameters\": {\
+                    \"instruction\": \"Represent the Wikipedia question for retrieving supporting documents: \"\
+                }\
+            }\
+        },\
+        \"filter\": {\"user_id\": {\"$eq\": 1}}\
+    },\
+    \"limit\": 10\
+", pipeline);
 ```
 {% endtab %}
 {% endtabs %}
