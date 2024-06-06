@@ -5,7 +5,7 @@ featured: false
 tags: [engineering]
 ---
 
-# Our migration from AWS to GCP with minimal downtime
+# How we migrated from AWS to GCP with minimal downtime
 
 <div align="left">
 
