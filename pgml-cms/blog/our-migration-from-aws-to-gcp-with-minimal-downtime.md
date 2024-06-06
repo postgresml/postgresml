@@ -1,11 +1,11 @@
 ---
 description: >-
-  The story of how we moved terabytes of real time data between cloud providers with minimal downtime.
+  Lessons learned from moving terabytes of real time data between cloud providers.
 featured: false
 tags: [engineering]
 ---
 
-# Our migration from AWS to GCP
+# Our migration from AWS to GCP with minimal downtime
 
 <div align="left">
 
@@ -15,7 +15,7 @@ tags: [engineering]
 
 Lev Kokotov
 
-June 8, 2024
+June 6, 2024
 
 From the beginning, our plan for PostgresML was to be cloud-agnostic. Since we are an infrastructure provider, we have to deploy our code where our customers are. Like most startups, we started on AWS, because that's what we knew best. After over 10 years of AWS experience, and its general dominance in the market, it seemed right to build something we've done before, this time in Rust of course.
 
