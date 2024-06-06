@@ -91,7 +91,7 @@ mbuffer -s 12M -m 2G | pbzip2 -d | zfs recv tank/pgdata@snapshot
 
 ### Double check everything
 
-Once the ZFS snapshot finally made it from the East coast to the Midwest, we configured Postgres streaming replication, which went as you'd expect, and we had a live hot standby in GCP, ready to go. Before cutting the AWS cord, we wanted to double check that everything was okay. We were moving customer data after all, and losing data is bad for business, especially for a database company.
+Once the ZFS snapshot finally made it from the East coast to the Midwest, we configured Postgres streaming replication, which went as you'd expect, and we had a live hot standby in GCP, ready to go. Before cutting the AWS cord, we wanted to double check that everything was okay. We were moving customer data after all, and losing data is bad for business — especially for a database company.
 
 #### The case of the missing bytes
 
@@ -123,6 +123,12 @@ As soon as the Systemd service stopped, we changed the DNS record to point to ou
 
 ## Lessons learned
 
-Migrating between clouds is hard, but not impossible. The key is to understand how your tools work and why they work the way they do. For us, we learned that network buffering is essential, data compression will save you time and money, advanced filesystems are complex, and solving hard problems can be done one step at a time.
+Migrating between clouds is hard, but not impossible. The key is to understand how your tools work and why they work the way they do. For us, these were the takeaways:
 
+1. Network buffering is essential
+2. Data compression will save you time and money
+3. Advanced filesystems are complex
+3. You can solve hard problems, just take it one step at time
+
+At PostgresML, we're excited to solve hard problems. If you are too, feel free to explore [career opportunities](/careers) with us, or check out our [open-source docs](/docs) and contribute to our project.
 
