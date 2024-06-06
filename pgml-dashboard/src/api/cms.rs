@@ -927,7 +927,7 @@ async fn blog_landing_page(cluster: &Cluster) -> Result<ResponseOk, crate::respo
 async fn docs_landing_page(cluster: &Cluster) -> Result<ResponseOk, crate::responses::NotFound> {
     let index = DOCS.open_index(&PathBuf::from("/docs"));
 
-    let doc_layout = crate::components::layouts::Docs::new("PostgresML documentation", Some(cluster)).index(&index);
+    let doc_layout = crate::components::layouts::Docs::new("Documentation", Some(cluster)).index(&index);
 
     let page = crate::components::pages::docs::LandingPage::new(&cluster)
         .parse_sections(DOCS.index.clone())
