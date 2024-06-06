@@ -35,9 +35,9 @@ Our primary Serverless deployment was in Oregon, AWS *us-west-2* region. We were
 
 ### Moving data is hard
 
-Moving data is hard. Moving terabytes of data between machines in the same cloud can be achieved with volume snapshots, and the hard part of ensuring data integrity is delegated to the cloud vendor. But to move data between clouds, one has to rely on your own tooling.
+Moving data is hard. Moving terabytes of data between machines in the same cloud can be achieved with volume snapshots, and the hard part of ensuring data integrity is delegated to the cloud vendor. Of course, that's not always guaranteed, and you can still corrupt your data if you're not careful, but that's a story for another time.
 
-Since we use ZFS, our original plan was to just send a ZFS snapshot across the country and synchronize later with Postgres replication. To make sure the data isn't intercepted by nefarious entities while in transit, the typical recommendation is to pipe it through SSH:
+That being said, to move data between clouds, one has to rely on your own tooling. Since we use ZFS, our original plan was to just send a ZFS snapshot across the country and synchronize later with Postgres replication. To make sure the data isn't intercepted by nefarious entities while in transit, the typical recommendation is to pipe it through SSH:
 
 ```bash
 zfs send tank/pgdata@snapshot | ssh ubuntu@machine \
@@ -78,11 +78,11 @@ Something stood out though after trying so many different approaches. Why 30MB/s
 
 #### Buffer and compress
 
-After researching a bit about how other people migrated filesystems (it is quite common in the ZFS community, since it makes it quite convenient, our issues notwithstanding), the issue emerged: _zfs send_ and _zfs recv_ do not buffer data. For each chunk of data they send and receive, they issue separate `write()` and `read()` calls to the kernel, and process whatever data they get. 
+After researching a bit about how other people migrated filesystems (it is quite common in the ZFS community, since it makes it quite convenient, our issues notwithstanding), the issue emerged: _zfs send_ and _zfs recv_ do not buffer data. For each chunk of data they send and receive, they issue separate `write(2)` and `read(2)` calls to the kernel, and process whatever data they get. 
 
 In case of a network transfer, these kernel calls propagate all the way to the network stack, and like any experienced network engineer would tell you, makes things very slow.
 
-In comes `mbuffer(1)`. If you're not familiar with it, mbuffer is a tool that _buffers_ whatever data it receives and sends it in larger chunks to its destination, in our case SSH on the sender side and ZFS on the receiver side. Combined with a multi-threaded stream compressor, `pbzip2(1)`, which cut our data size in half, we were finally in business, transferring our data at over 200MB/second which cut our migration time from days to just a few hours, all with just one simple command:
+In comes `mbuffer(1)`. If you're not familiar with it, mbuffer is a tool that _buffers_ whatever data it receives and sends it in larger chunks to its destination, in our case SSH on the sender side and ZFS on the receiver side. Combined with a multi-threaded stream compressor, `pbzip2(1)`, which cut our data size in half, we were finally in business, transferring our data at over 200 MB/second which cut our migration time from days to just a few hours, all with just one command:
 
 ```bash
 zfs send tank/pgdata@snapshot | pbzip2 | mbuffer -s 12M -m 2G | ssh ubuntu@gcp \
