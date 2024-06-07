@@ -2,8 +2,9 @@ use pgml_components::Component;
 use std::collections::HashMap;
 
 pub use crate::components::{self, cms::index_link::IndexLink, NavLink, StaticNav, StaticNavLink};
-use crate::Notification;
+use crate::{Notification, NotificationLevel};
 use components::notifications::marketing::{AlertBanner, FeatureBanner};
+use components::notifications::product::ProductBanner;
 
 use crate::models::Cluster;
 use sailfish::TemplateOnce;
@@ -121,18 +122,23 @@ pub struct WebAppBase<'a> {
     pub product_left_nav: StaticNav,
     pub body_components: Vec<Component>,
     pub cluster: Cluster,
+    pub product_banner: ProductBanner,
 }
 
 impl<'a> WebAppBase<'a> {
-    pub fn new(title: &str, context: &crate::Context) -> Self {
-        let head = Head::new().title(title).context(&context.head_items);
-        let cluster = context.cluster.clone();
+    pub fn new(title: &str, context: &crate::guards::Cluster) -> Self {
+        let head = Head::new().title(title).context(&context.context.head_items);
+        let cluster = context.context.cluster.clone();
 
         WebAppBase {
             head,
             cluster,
-            dropdown_nav: context.dropdown_nav.clone(),
-            product_left_nav: context.product_left_nav.clone(),
+            dropdown_nav: context.context.dropdown_nav.clone(),
+            product_left_nav: context.context.product_left_nav.clone(),
+            product_banner: ProductBanner::from_notification(Notification::next_product_of_level(
+                context,
+                NotificationLevel::ProductHigh,
+            )),
             ..Default::default()
         }
     }
@@ -474,7 +480,19 @@ pub struct Uploaded {
 #[template(path = "content/dashboard/dashboard.html")]
 pub struct Dashboard<'a> {
     pub tabs: tabs::Tabs<'a>,
+    pub notification: ProductBanner,
 }
+
+impl Dashboard<'_> {
+    pub fn new<'a>(tabs: tabs::Tabs<'a>, context: &'a crate::guards::Cluster) -> Dashboard<'a> {
+        let notification = ProductBanner::from_notification(Notification::next_product_of_level(
+            context,
+            NotificationLevel::ProductMedium,
+        ));
+        Dashboard { tabs, notification }
+    }
+}
+
 #[derive(TemplateOnce)]
 #[template(path = "content/dashboard/tabs/notebooks_tab.html")]
 pub struct NotebooksTab;

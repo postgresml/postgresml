@@ -2,6 +2,7 @@ use rocket::route::Route;
 use sailfish::TemplateOnce;
 
 use crate::{
+    guards::Cluster,
     guards::ConnectedCluster,
     responses::{Error, ResponseOk},
 };
@@ -15,8 +16,8 @@ use crate::utils::urls;
 
 // Returns the deployments projects page.
 #[get("/projects")]
-pub async fn projects(cluster: ConnectedCluster<'_>) -> Result<ResponseOk, Error> {
-    let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster.inner.context);
+pub async fn projects(cluster: &Cluster) -> Result<ResponseOk, Error> {
+    let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster);
     layout.breadcrumbs(vec![NavLink::new("Projects", &urls::deployment_projects()).active()]);
 
     let tabs = vec![tabs::Tab {
@@ -26,15 +27,15 @@ pub async fn projects(cluster: ConnectedCluster<'_>) -> Result<ResponseOk, Error
 
     let nav_tabs = tabs::Tabs::new(tabs, Some("Notebooks"), Some("Projects"))?;
 
-    Ok(ResponseOk(layout.render(templates::Dashboard { tabs: nav_tabs })))
+    Ok(ResponseOk(layout.render(templates::Dashboard::new(nav_tabs, cluster))))
 }
 
 // Return the specified project page.
 #[get("/projects/<project_id>")]
-pub async fn project(cluster: ConnectedCluster<'_>, project_id: i64) -> Result<ResponseOk, Error> {
+pub async fn project(cluster: &Cluster, project_id: i64) -> Result<ResponseOk, Error> {
     let project = models::Project::get_by_id(cluster.pool(), project_id).await?;
 
-    let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster.inner.context);
+    let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster);
     layout.breadcrumbs(vec![
         NavLink::new("Projects", &urls::deployment_projects()),
         NavLink::new(project.name.as_str(), &urls::deployment_project_by_id(project_id)).active(),
@@ -47,7 +48,7 @@ pub async fn project(cluster: ConnectedCluster<'_>, project_id: i64) -> Result<R
 
     let nav_tabs = tabs::Tabs::new(tabs, Some("Projects"), Some("Projects"))?;
 
-    Ok(ResponseOk(layout.render(templates::Dashboard { tabs: nav_tabs })))
+    Ok(ResponseOk(layout.render(templates::Dashboard::new(nav_tabs, cluster))))
 }
 
 // Returns all the deployments for the project in a turbo frame.

@@ -21,8 +21,9 @@ pub mod types;
 pub mod utils;
 
 use components::notifications::marketing::{AlertBanner, FeatureBanner};
+use components::notifications::product::ProductBanner;
 use guards::Cluster;
-use responses::{Error, ResponseOk};
+use responses::{Error, Response, ResponseOk};
 use templates::{components::StaticNav, *};
 
 use crate::components::tables::serverless_models::{ServerlessModels, ServerlessModelsTurbo};
@@ -61,6 +62,7 @@ pub struct Notification {
     pub dismissible: bool,
     pub viewed: bool,
     pub link: Option<String>,
+    pub deployment: Option<String>,
 }
 impl Notification {
     pub fn new(message: &str) -> Notification {
@@ -74,34 +76,45 @@ impl Notification {
             dismissible: true,
             viewed: false,
             link: None,
+            deployment: None,
         }
     }
 
-    pub fn level(mut self, level: &NotificationLevel) -> Notification {
+    pub fn set_level(mut self, level: &NotificationLevel) -> Notification {
         self.level = level.clone();
         self
     }
 
-    pub fn dismissible(mut self, dismissible: bool) -> Notification {
+    pub fn set_dismissible(mut self, dismissible: bool) -> Notification {
         self.dismissible = dismissible;
         self
     }
 
-    pub fn link(mut self, link: &str) -> Notification {
+    pub fn set_link(mut self, link: &str) -> Notification {
         self.link = Some(link.into());
         self
     }
 
-    pub fn viewed(mut self, viewed: bool) -> Notification {
+    pub fn set_viewed(mut self, viewed: bool) -> Notification {
         self.viewed = viewed;
+        self
+    }
+
+    pub fn set_deployment(mut self, deployment: &str) -> Notification {
+        self.deployment = Some(deployment.into());
         self
     }
 
     pub fn is_alert(level: &NotificationLevel) -> bool {
         match level {
-            NotificationLevel::Level1 => true,
-            NotificationLevel::Level2 => true,
-            NotificationLevel::Level3 => true,
+            NotificationLevel::Level1 | NotificationLevel::Level2 | NotificationLevel::Level3 => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_feature(level: &NotificationLevel) -> bool {
+        match level {
+            NotificationLevel::Feature1 | NotificationLevel::Feature2 | NotificationLevel::Feature3 => true,
             _ => false,
         }
     }
@@ -131,12 +144,76 @@ impl Notification {
                 Some(notifications) => {
                     match notifications
                         .into_iter()
-                        .filter(|n| !Notification::is_alert(&n.level))
+                        .filter(|n| Notification::is_feature(&n.level))
                         .next()
                     {
                         Some(notification) => return Some(notification),
                         None => return None,
                     }
+                }
+                None => return None,
+            },
+            None => return None,
+        };
+    }
+
+    pub fn next_product_of_level(
+        context: &crate::guards::Cluster,
+        desired_level: NotificationLevel,
+    ) -> Option<&Notification> {
+        match &context.notifications {
+            Some(notifications) => {
+                match notifications
+                    .into_iter()
+                    .filter(|n| {
+                        Notification::product_filter(
+                            n,
+                            desired_level.clone(),
+                            Some(context.context.cluster.id.clone().to_string()),
+                        )
+                    })
+                    .next()
+                {
+                    Some(notification) => return Some(notification),
+                    None => return None,
+                }
+            }
+            None => return None,
+        }
+    }
+
+    // Determine if product notification matches desired level and deployment id.
+    pub fn product_filter(
+        notification: &Notification,
+        desired_level: NotificationLevel,
+        deployment_id: Option<String>,
+    ) -> bool {
+        match notification.level {
+            NotificationLevel::ProductHigh => notification.level == desired_level && notification.viewed == false,
+            NotificationLevel::ProductMedium => {
+                println!(
+                    "{} == {} && {:?} == {:?} && {} == {}",
+                    notification.level,
+                    desired_level,
+                    notification.deployment,
+                    deployment_id.clone(),
+                    notification.viewed,
+                    false
+                );
+                notification.level == desired_level
+                    && notification.deployment == deployment_id
+                    && notification.viewed == false
+            }
+            NotificationLevel::ProductMarketing => notification.level == desired_level && notification.viewed == false,
+            _ => false,
+        }
+    }
+
+    pub fn get_notifications_from_context(context: Option<&crate::guards::Cluster>) -> Option<Notification> {
+        match context.as_ref() {
+            Some(context) => match &context.notifications {
+                Some(notifications) => {
+                    return Some(notifications[0].clone());
                 }
                 None => return None,
             },
@@ -154,6 +231,9 @@ impl std::fmt::Display for NotificationLevel {
             NotificationLevel::Feature1 => write!(f, "feature1"),
             NotificationLevel::Feature2 => write!(f, "feature2"),
             NotificationLevel::Feature3 => write!(f, "feature3"),
+            NotificationLevel::ProductHigh => write!(f, "product_high"),
+            NotificationLevel::ProductMedium => write!(f, "product_medium"),
+            NotificationLevel::ProductMarketing => write!(f, "product_marketing"),
         }
     }
 }
@@ -161,12 +241,18 @@ impl std::fmt::Display for NotificationLevel {
 #[derive(Debug, Clone, Default, PartialEq)]
 pub enum NotificationLevel {
     #[default]
+    // global
     Level1,
     Level2,
     Level3,
+    // marketing
     Feature1,
     Feature2,
     Feature3,
+    // product
+    ProductHigh,
+    ProductMedium,
+    ProductMarketing,
 }
 
 #[get("/serverless_models/turboframe?<style>")]
@@ -222,12 +308,13 @@ pub async fn dashboard(tab: Option<&str>, id: Option<i64>) -> Redirect {
 
 #[get("/playground")]
 pub async fn playground(cluster: &Cluster) -> Result<ResponseOk, Error> {
-    let mut layout = crate::templates::WebAppBase::new("Playground", &cluster.context);
+    let mut layout = crate::templates::WebAppBase::new("Playground", &cluster);
     Ok(ResponseOk(layout.render(templates::Playground {})))
 }
 
-#[get("/notifications/remove_banner?<id>&<alert>")]
-pub fn remove_banner(id: String, alert: bool, cookies: &CookieJar<'_>, context: &Cluster) -> ResponseOk {
+// Remove Alert and Feature banners after user exits out of the message.
+#[get("/notifications/remove_banner?<id>&<notification_type>")]
+pub fn remove_banner(id: String, notification_type: String, cookies: &CookieJar<'_>, context: &Cluster) -> ResponseOk {
     let mut viewed = Notifications::get_viewed(cookies);
 
     viewed.push(id);
@@ -235,28 +322,84 @@ pub fn remove_banner(id: String, alert: bool, cookies: &CookieJar<'_>, context: 
 
     let notification = match context.notifications.as_ref() {
         Some(notifications) => {
-            if alert {
+            if notification_type == "alert" {
                 notifications
                     .into_iter()
                     .filter(|n: &&Notification| -> bool { Notification::is_alert(&n.level) && !viewed.contains(&n.id) })
                     .next()
-            } else {
+            } else if notification_type == "feature" {
                 notifications
                     .into_iter()
                     .filter(|n: &&Notification| -> bool {
-                        !Notification::is_alert(&n.level) && !viewed.contains(&n.id)
+                        Notification::is_feature(&n.level) && !viewed.contains(&n.id)
                     })
                     .next()
+            } else {
+                None
             }
         }
         _ => None,
     };
 
-    if alert {
+    if notification_type == "alert" {
         return ResponseOk(AlertBanner::from_notification(notification).render_once().unwrap());
     } else {
         return ResponseOk(FeatureBanner::from_notification(notification).render_once().unwrap());
     }
+}
+
+// Replace or remove all product banners after user exits out of the message.
+#[get("/notifications/product/remove_banner?<id>&<deployment_id>")]
+pub fn remove_banner_product(
+    id: String,
+    deployment_id: Option<String>,
+    cookies: &CookieJar<'_>,
+    context: &Cluster,
+) -> Result<Response, Error> {
+    let mut all_viewed = Notifications::get_viewed(cookies);
+
+    all_viewed.push(id.clone());
+    Notifications::update_viewed(&all_viewed, cookies);
+
+    // Get the notification that triggered this call.
+    // Guaranteed to exist since it built the component that called this, so this is safe to unwrap.
+    let last_notification = context
+        .notifications
+        .as_ref()
+        .unwrap()
+        .clone()
+        .into_iter()
+        .filter(|n: &Notification| -> bool { n.id == id })
+        .next();
+
+    let next_notification = match context.notifications.as_ref() {
+        Some(notifications) => notifications
+            .clone()
+            .into_iter()
+            .filter(|n: &Notification| -> bool {
+                let n = n.clone().set_viewed(n.id == id);
+                Notification::product_filter(
+                    &n,
+                    last_notification.clone().unwrap().level.clone(),
+                    deployment_id.clone(),
+                )
+            })
+            .next(),
+        _ => None,
+    };
+
+    let component = ProductBanner::from_notification(next_notification.as_ref());
+    let target = ProductBanner::from_notification(last_notification.as_ref()).get_location_id();
+    let content = component.render_once().unwrap();
+    let turbo_stream = format!(
+        r##"<turbo-stream action="replace" targets=".{}">
+<template>
+{}
+</template>
+</turbo-stream>"##,
+        target, content
+    );
+    return Ok(Response::turbo_stream(turbo_stream));
 }
 
 pub fn routes() -> Vec<Route> {
@@ -265,7 +408,8 @@ pub fn routes() -> Vec<Route> {
         remove_banner,
         playground,
         serverless_models_turboframe,
-        serverless_pricing_turboframe
+        serverless_pricing_turboframe,
+        remove_banner_product
     ]
 }
 

@@ -20,8 +20,8 @@ use crate::utils::urls;
 
 // Returns notebook page
 #[get("/notebooks")]
-pub async fn notebooks(cluster: ConnectedCluster<'_>) -> Result<ResponseOk, Error> {
-    let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster.inner.context);
+pub async fn notebooks(cluster: &Cluster) -> Result<ResponseOk, Error> {
+    let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster);
     layout.breadcrumbs(vec![NavLink::new("Notebooks", &urls::deployment_notebooks()).active()]);
 
     let tabs = vec![tabs::Tab {
@@ -31,15 +31,15 @@ pub async fn notebooks(cluster: ConnectedCluster<'_>) -> Result<ResponseOk, Erro
 
     let nav_tabs = tabs::Tabs::new(tabs, Some("Notebooks"), Some("Notebooks"))?;
 
-    Ok(ResponseOk(layout.render(templates::Dashboard { tabs: nav_tabs })))
+    Ok(ResponseOk(layout.render(templates::Dashboard::new(nav_tabs, cluster))))
 }
 
 // Returns the specified notebook page.
 #[get("/notebooks/<notebook_id>")]
-pub async fn notebook(cluster: ConnectedCluster<'_>, notebook_id: i64) -> Result<ResponseOk, Error> {
+pub async fn notebook(cluster: &Cluster, notebook_id: i64) -> Result<ResponseOk, Error> {
     let notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
 
-    let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster.inner.context);
+    let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster);
     layout.breadcrumbs(vec![
         NavLink::new("Notebooks", &urls::deployment_notebooks()),
         NavLink::new(notebook.name.as_str(), &urls::deployment_notebook_by_id(notebook_id)).active(),
@@ -52,7 +52,7 @@ pub async fn notebook(cluster: ConnectedCluster<'_>, notebook_id: i64) -> Result
 
     let nav_tabs = tabs::Tabs::new(tabs, Some("Notebooks"), Some("Notebooks"))?;
 
-    Ok(ResponseOk(layout.render(templates::Dashboard { tabs: nav_tabs })))
+    Ok(ResponseOk(layout.render(templates::Dashboard::new(nav_tabs, cluster))))
 }
 
 // Returns all the notebooks for a deployment in a turbo frame.

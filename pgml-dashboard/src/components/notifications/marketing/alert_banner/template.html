@@ -12,7 +12,7 @@
         </div>
         
         <% if notification.dismissible && notification.level != NotificationLevel::Level3 {%>
-        <a class="w-0 overflow-visible d-flex align-items-center" style="right: 4vw" href="/dashboard/notifications/remove_banner?id=<%- notification.id%>&alert=true">
+        <a class="w-0 overflow-visible d-flex align-items-center" style="right: 4vw" href="/dashboard/notifications/remove_banner?id=<%- notification.id%>&notification_type=alert">
           <span class="material-symbols-outlined <% if notification.level == NotificationLevel::Level2 {%>close-light<% } else {%>close-dark<% } %>">
             close
           </span></a>

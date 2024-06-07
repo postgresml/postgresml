@@ -1,0 +1,17 @@
+div[data-controller="notifications-product-product-banner"] {
+  margin-top: 3rem;
+  margin-bottom: 3rem;
+  
+  .product1, .product2, .product3 {
+    background-color: #{$gray-600};
+    margin: 2px 0px;
+  }
+
+  .close {
+      color: #{$gray-100};
+  }
+
+  .more-info {
+      color: #{$gray-100}
+  }
+}

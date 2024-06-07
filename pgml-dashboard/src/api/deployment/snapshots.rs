@@ -2,6 +2,7 @@ use rocket::route::Route;
 use sailfish::TemplateOnce;
 
 use crate::{
+    guards::Cluster,
     guards::ConnectedCluster,
     responses::{Error, ResponseOk},
 };
@@ -16,8 +17,8 @@ use std::collections::HashMap;
 
 // Returns snapshots page
 #[get("/snapshots")]
-pub async fn snapshots(cluster: ConnectedCluster<'_>) -> Result<ResponseOk, Error> {
-    let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster.inner.context);
+pub async fn snapshots(cluster: &Cluster) -> Result<ResponseOk, Error> {
+    let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster);
     layout.breadcrumbs(vec![NavLink::new("Snapshots", &urls::deployment_snapshots()).active()]);
 
     let tabs = vec![tabs::Tab {
@@ -27,15 +28,15 @@ pub async fn snapshots(cluster: ConnectedCluster<'_>) -> Result<ResponseOk, Erro
 
     let nav_tabs = tabs::Tabs::new(tabs, Some("Snapshots"), Some("Snapshots"))?;
 
-    Ok(ResponseOk(layout.render(templates::Dashboard { tabs: nav_tabs })))
+    Ok(ResponseOk(layout.render(templates::Dashboard::new(nav_tabs, cluster))))
 }
 
 // Returns the specific snapshot page
 #[get("/snapshots/<snapshot_id>")]
-pub async fn snapshot(cluster: ConnectedCluster<'_>, snapshot_id: i64) -> Result<ResponseOk, Error> {
+pub async fn snapshot(cluster: &Cluster, snapshot_id: i64) -> Result<ResponseOk, Error> {
     let snapshot = models::Snapshot::get_by_id(cluster.pool(), snapshot_id).await?;
 
-    let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster.inner.context);
+    let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster);
     layout.breadcrumbs(vec![
         NavLink::new("Snapshots", &urls::deployment_snapshots()),
         NavLink::new(&snapshot.relation_name, &urls::deployment_snapshot_by_id(snapshot.id)).active(),
@@ -48,7 +49,7 @@ pub async fn snapshot(cluster: ConnectedCluster<'_>, snapshot_id: i64) -> Result
 
     let nav_tabs = tabs::Tabs::new(tabs, Some("Snapshots"), Some("Snapshots"))?;
 
-    Ok(ResponseOk(layout.render(templates::Dashboard { tabs: nav_tabs })))
+    Ok(ResponseOk(layout.render(templates::Dashboard::new(nav_tabs, cluster))))
 }
 
 // Returns all snapshots for the deployment in a turboframe.

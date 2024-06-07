@@ -1,12 +1,25 @@
-<% use crate::NotificationLevel; %>
-<turbo-frame id="marketing-notifications-banner-feature" class="position-relative z-1">
+<% 
+  use crate::NotificationLevel;
+%>
+
+<div class="<%- location_id %>">
   <% if notification.is_some() {%>
     <% let notification = notification.unwrap(); %>
-  <div data-controller="notifications-marketing-feature-banner">
-
-    <div class="<%- notification.level.to_string() %> <% if notification.level == NotificationLevel::Feature3 {%>main-gradient-border-card<% } %> rounded-2 W-100">
+  <div data-controller="notifications-product-product-banner">
+    <%
+      let border_color = {
+        if notification.level == NotificationLevel::ProductHigh {
+          "red-gradient-border-card"
+        } else if notification.level == NotificationLevel::ProductMedium {
+          "orange-gradient-border-card"
+        } else {
+          "green-gradient-border-card"
+        }
+      };
+    %>
+    <div class="<%- border_color %> rounded-2 W-100">
       <div class="banner d-flex container">
-
+  
         <% let content = format!(
           r#"
           <{} class="{} flex-grow-1 d-flex flex-column flex-md-row justify-content-center align-items-center row-gap-0 column-gap-3 fw-semibold overflow-hidden">
@@ -23,15 +36,17 @@
         ); %>
         
         <%- content %>
-
+  
         <% if notification.dismissible {%>
-        <a class="w-0 btn btn-tertiary overflow-visible d-flex align-items-start p-2" style="height: fit-content" href="/dashboard/notifications/remove_banner?id=<%- notification.id%>&notification_type=feature">
+        <a class="w-0 btn btn-tertiary overflow-visible d-flex align-items-start p-2" style="height: fit-content" href="<%- url %>" >
           <span class="material-symbols-outlined close">
             close
-          </span></a>
+          </span>
+        </a>
         <% } %>
       </div>
     </div>
   </div>
+
   <% } %>
-</turbo-frame>
+</div>
