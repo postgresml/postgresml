@@ -7,7 +7,7 @@ use anyhow::{anyhow, bail, Context, Result};
 use pgrx::*;
 use pyo3::prelude::*;
 use pyo3::types::{PyBool, PyDict, PyFloat, PyInt, PyList, PyString, PyTuple};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::create_pymodule;
@@ -23,7 +23,7 @@ pub use transform::*;
 create_pymodule!("/src/bindings/transformers/transformers.py");
 
 // Need a wrapper so we can implement traits for it
-struct Json(Value);
+pub struct Json(pub Value);
 
 impl From<Json> for Value {
     fn from(value: Json) -> Self {
@@ -109,7 +109,7 @@ pub fn embed(transformer: &str, inputs: Vec<&str>, kwargs: &serde_json::Value) -
     })
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
 pub struct RankResult {
     pub corpus_id: i64,
     pub score: f64,
