@@ -212,7 +212,7 @@ pub async fn build_rag_query(
                         r#"(SELECT string_agg(chunk, '{}') FROM "{var_name}")"#,
                         vector_search.aggregate.join
                     ),
-                    format!(r#"(SELECT row_to_json(j) FROM "{var_name}" j)"#),
+                    format!(r#"(SELECT json_agg(j) FROM "{var_name}" j)"#),
                 )
             }
             ValidVariable::RawSQL(sql) => (format!("({})", sql.sql), format!("({})", sql.sql)),

@@ -2289,6 +2289,11 @@ mod tests {
                                     "id"
                                 ]
                             },
+                            "rerank": {
+                                "query": "Test document 2",
+                                "model": "mixedbread-ai/mxbai-rerank-base-v1",
+                                "num_documents_to_rerank": 100
+                            },
                             "limit": 5
                         },
                         "aggregate": {
