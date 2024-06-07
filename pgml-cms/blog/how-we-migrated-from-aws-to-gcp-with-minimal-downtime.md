@@ -117,9 +117,9 @@ The database files were the same on GCP and AWS, if one checked them for their "
 
 ### The cutover
 
-The final step was to move our customers' traffic from AWS to GCP, and do so without losing a byte of data. We picked the lowest traffic period, midnight Pacific time, and shut down our AWS primary.
+The final step was to move our customers' traffic from AWS to GCP, and do so without losing a byte of data. We picked the lowest traffic period, midnight Pacific time, paused our [PgCat](/docs/product/pgcat/) pooler, waited for all remaining transactions to replicate, and shut down our AWS primary.
 
-As soon as the Systemd service stopped, we changed the DNS record to point to our GCP standby and ran `SELECT pg_promote()`. Traffic moved over almost immediately, thanks to our low DNS TTL and we were back in business.
+As soon as the Systemd service stopped, we changed the DNS record to point to our GCP standby and ran `SELECT pg_promote()`. Traffic moved over almost immediately, thanks to our low DNS TTL, and we were back in business.
 
 ## Lessons learned
 
