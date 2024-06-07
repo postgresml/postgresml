@@ -4,7 +4,7 @@ description: Rank documents against a piece of text using the specified ranking 
 
 # pgml.rank()
 
-The `pgml.rank` function is used to rank text documents against some text. This function is primarly used as the last step in a search system where the results returned from the initial search are reranked before being used.
+The `pgml.rank()` function is used to rank text documents against some text. This function is primarily used as the last step in a search system where the results returned from the initial search are re-ranked before being used.
 
 ## API
 
