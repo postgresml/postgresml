@@ -1051,6 +1051,7 @@ impl Collection {
     ///    }).into(), &mut pipeline).await?;
     ///    Ok(())
     /// }
+    #[allow(clippy::type_complexity)]
     #[instrument(skip(self))]
     pub async fn vector_search(
         &mut self,
@@ -1061,7 +1062,7 @@ impl Collection {
 
         let (built_query, values) =
             build_vector_search_query(query.clone(), self, pipeline).await?;
-        let results: Result<Vec<(Json, String, f64)>, _> =
+        let results: Result<Vec<(Json, String, f64, Option<f64>)>, _> =
             sqlx::query_as_with(&built_query, values)
                 .fetch_all(&pool)
                 .await;
@@ -1072,7 +1073,8 @@ impl Collection {
                     serde_json::json!({
                         "document": v.0,
                         "chunk": v.1,
-                        "score": v.2
+                        "score": v.2,
+                        "rerank_score": v.3
                     })
                     .into()
                 })
@@ -1087,7 +1089,7 @@ impl Collection {
                             .await?;
                         let (built_query, values) =
                             build_vector_search_query(query, self, pipeline).await?;
-                        let results: Vec<(Json, String, f64)> =
+                        let results: Vec<(Json, String, f64, Option<f64>)> =
                             sqlx::query_as_with(&built_query, values)
                                 .fetch_all(&pool)
                                 .await?;
@@ -1097,7 +1099,8 @@ impl Collection {
                                 serde_json::json!({
                                     "document": v.0,
                                     "chunk": v.1,
-                                    "score": v.2
+                                    "score": v.2,
+                                    "rerank_score": v.3
                                 })
                                 .into()
                             })
@@ -1121,16 +1124,18 @@ impl Collection {
         let pool = get_or_initialize_pool(&self.database_url).await?;
         let (built_query, values) =
             build_vector_search_query(query.clone(), self, pipeline).await?;
-        let results: Vec<(Json, String, f64)> = sqlx::query_as_with(&built_query, values)
-            .fetch_all(&pool)
-            .await?;
+        let results: Vec<(Json, String, f64, Option<f64>)> =
+            sqlx::query_as_with(&built_query, values)
+                .fetch_all(&pool)
+                .await?;
         Ok(results
             .into_iter()
             .map(|v| {
                 serde_json::json!({
                     "document": v.0,
                     "chunk": v.1,
-                    "score": v.2
+                    "score": v.2,
+                    "rerank_score": v.3
                 })
                 .into()
             })

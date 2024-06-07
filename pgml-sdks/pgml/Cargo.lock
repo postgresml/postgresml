@@ -1963,7 +1963,6 @@ dependencies = [
 [[package]]
 name = "rust_bridge"
 version = "0.1.0"
-source = "git+https://github.com/postgresml/postgresml#b949d45a2353141b3635d7f88b1fdd9cf78fa666"
 dependencies = [
  "rust_bridge_macros",
  "rust_bridge_traits",
@@ -1972,7 +1971,6 @@ dependencies = [
 [[package]]
 name = "rust_bridge_macros"
 version = "0.1.0"
-source = "git+https://github.com/postgresml/postgresml#b949d45a2353141b3635d7f88b1fdd9cf78fa666"
 dependencies = [
  "anyhow",
  "proc-macro2",
@@ -1983,7 +1981,6 @@ dependencies = [
 [[package]]
 name = "rust_bridge_traits"
 version = "0.1.0"
-source = "git+https://github.com/postgresml/postgresml#b949d45a2353141b3635d7f88b1fdd9cf78fa666"
 dependencies = [
  "neon",
 ]
