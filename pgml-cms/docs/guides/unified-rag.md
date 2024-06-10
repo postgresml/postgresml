@@ -238,7 +238,7 @@ Retrieval with Unified RAG is lightning fast and incredibly simple.
 
 !!! generic
 
-!!! code\_block time="70.381 ms"
+!!! code_block time="70.381 ms"
 
 ```postgresql
 WITH embedded_query AS (
