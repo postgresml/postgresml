@@ -33,7 +33,7 @@ Unified RAG is a solution to the drawbacks of RAG. Instead of relying on separat
 
 ### Preperation
 
-Just like RAG, the first step is to prepare our unified RAG system. The first step in preparing our Unified RAG system is storing our documents in our PostgresML Postgres database.
+Just like RAG, the first step is to prepare our unified RAG system, and the first step in preparing our Unified RAG system is storing our documents in our PostgresML Postgres database.
 
 !!! generic
 
@@ -91,10 +91,10 @@ INSERT INTO documents (document) SELECT md5(random()::text) FROM generate_series
 !!!
 
 !!!
+
 In addition to the document that contains an example of pgml.transform we have inserted 100 randomly generated documents. We include these noisy documents to verify that our Unified RAG system can retrieve the correct context.
 
 We can then split them using the pgml.chunk function.
-
 
 !!! generic
 
@@ -120,7 +120,7 @@ FROM (
 
 !!!
 
-Note: we are explicitly setting a really small chunk size we want to split this document into 6 chunks, 3 of which only have text and don't show the examples they are referring to so we can demonstrate reranking while still utilizing a resonably small demo.
+Note: we are explicitly setting a really small chunk size as we want to split our example document into 6 chunks, 3 of which only have text and don't show the examples they are referring to so we can demonstrate reranking.
 
 We can verify they were split correctly.
 
@@ -136,7 +136,6 @@ SELECT * FROM chunks limit 10;
 
 !!! results
 
-pgml=# SELECT * FROM chunks limit 10;
  id  |                         chunk                          | chunk_index | document_id 
 -----+--------------------------------------------------------+-------------+-------------
  107 | Here is an example of the pgml.transform function      |           1 |         102
@@ -183,7 +182,6 @@ pgml=# SELECT * FROM chunks limit 10;
 !!!
 
 Instead of using an embedding API, we are going to embed our chunks directly in our databse using the `pgml.embed` function.
-
 
 !!! generic
 
@@ -313,6 +311,8 @@ id  |   cosine_distance   |                         chunk
 
 We are using a CTE to embed the user query, and then performing nearest neighbors search using the cosine similarity function to compare the distance between our embeddings. Note how fast this is! Our embeddings utilize an HNSW index from pgvector to perform ridiculously fast retrieval.
 
+There is a slight problem with the results of our retrieval. If you were to ask me: `How do I write a select statement with pgml.transform?` I couldn't use any of the top 3 results from our search to answer that queestion. Our search results aren't bad, but they can be better. This is why we rerank.
+
 ### Unified Retrieval + Reranking
 
 We can rerank in the database in the same query we did retrieval with using the `pgml.rank` function.
@@ -419,6 +419,8 @@ FROM (
 
 We are using the mixedbread-ai/mxbai-rerank-base-v1 model to rerank the results from our semantic search. Once again, note how fast this is. We have now combined the embedding api call, the semantic search api call, and the rerank api call from our RAG flow into one sql query. 
 
+Also notice that the top 3 results all show examples using the `pgml.transform` function. This is the exact results we wanted for our search, and why we needed to rerank. 
+
 ### Unified Retrieval + Reranking + Text Generation
 
 Using the pgml.transform function, we can perform text generation in the same query we did retrieval and reranking with.
@@ -498,9 +500,9 @@ FROM
 
 !!!
 
-We have now combined the embedding api call, the semantic search api call, the rerank api call and the text generation api call from our RAG flow into one sql query. 
+We have now combined the embedding api call, the semantic search api call, the rerank api call and the text generation api call from our RAG flow into one sql query.
 
-We are using meta-llama/Meta-Llama-3-8B-Instruct to perform text generation. We have a number of different models available for text generation, but for our use case `meta-llama/Meta-Llama-3-8B-Instruct` is a fantastic mix between speed and capability. 
+We are using meta-llama/Meta-Llama-3-8B-Instruct to perform text generation. We have a number of different models available for text generation, but for our use case `meta-llama/Meta-Llama-3-8B-Instruct` is a fantastic mix between speed and capability. For this simple example we are only passing the top search result as context to the LLM. In real world use cases, you will want to pass more results.
 
 We can stream from the database by using the `pgml.transform_stream` function and cursors. Here is a query measuring time to first token.
 
@@ -594,6 +596,6 @@ Time: 135.170 ms
 
 !!!
 
-Note how fast this is now! With unified RAG we can perform the entire RAG pipeline and get the first token for our text generation back in under 300 milliseconds.
+Note how fast this is! With unified RAG we can perform the entire RAG pipeline and get the first token for our text generation back in under 300 milliseconds.
 
-We have reduced our RAG system that involved 4 different network calls into a single unified system that requires one sql query and yields a response in: TIME
+In summary, we have reduced our RAG system that involved four different network calls into a single unified system that requires one sql query and yields a response in: TIME
