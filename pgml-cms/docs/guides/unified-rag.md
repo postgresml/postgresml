@@ -6,7 +6,7 @@ featured: true
 
 # Unified RAG
 
-## Introduction <a href="#introduction" id="introduction"></a>
+## Introduction
 
 Retrieval Augmented Generation (RAG) is domain specific jargon that simply means augmenting LLMs with context to improve their response. For example, if I were to ask an LLM: “How do I use pgml.transform?”. I would most likely get an unsatisfactory mostly incorrect example.
 
