@@ -1,6 +1,7 @@
 ---
 description: >-
   Unified RAG is an alternative to typically RAG systems where embedding, retrieval, reranking, and text-generation are combined under on service.
+featured: true
 ---
 
 # Unified RAG
