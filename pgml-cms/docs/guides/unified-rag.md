@@ -1,16 +1,18 @@
 ---
 description: >-
-  Unified RAG is an alternative to typically RAG systems where embedding, retrieval, reranking, and text-generation are combined under on service.
+  Unified RAG is an alternative to typical RAG systems where embedding, retrieval, reranking, and text generation are unified under on service.
 featured: true
 ---
 
 # Unified RAG
 
+This is not a post about the typically modern RAG workflow, this is a demonstration of Unified RAG and the simplicity and power it provides.
+
 ## Introduction
 
-Retrieval Augmented Generation (RAG) is domain specific jargon that simply means augmenting LLMs with context to improve their response. For example, if I were to ask an LLM: “How do I use pgml.transform?”. I would most likely get an unsatisfactory mostly incorrect example.
+Retrieval Augmented Generation (RAG) is domain specific jargon that simply means augmenting LLMs with context to improve their response. For example, if I were to ask an LLM: "How do I write a select statement with pgml.transform?". I would most likely get an unsatisfactory mostly incorrect example.
 
-However, if I were to first provide it with some context about the pgml.transform function, and then asked it “How do I use pgml.transform?”. I would likely get a much better answer.
+However, if I were to first provide it with some context about the pgml.transform function, and then asked it "How do I write a select statement with pgml.transform?". I would likely get a much better answer.
 
 RAG has grown rapidly in popularity. It is not an esoteric practice run only by advanced machine learning practitioners, but is used widely by anyone who wants to improve the output of their LLMs. It is most commonly used by chatbots to better answer user questions.
 
@@ -19,8 +21,6 @@ As quick reminder, the typical modern RAG workflow looks like this:
 TODO: INSERT RAG DIAGRAM
 
 Steps one through three prepare our RAG system, and steps four through eight are RAG itself. 
-
-This is not a post about the typically modern RAG workflow, this is a demonstration of Unified RAG and the simplicity and power it provides.
 
 ## Unified RAG
 
@@ -37,7 +37,7 @@ Just like RAG, the first step is to prepare our unified RAG system. The first st
 
 !!! generic
 
-!!! code\_block
+!!! code block
 
 ```postgresql
 CREATE TABLE documents (id SERIAL PRIMARY KEY, document text NOT NULL);
@@ -57,7 +57,7 @@ SELECT pgml.transform(
   }''::JSONB
 );
 
-Here is another example of using the pgml.transform function
+Here is another example of the pgml.transform function
 
 SELECT pgml.transform(
   task   => ''{
@@ -70,7 +70,7 @@ SELECT pgml.transform(
   }''::JSONB
 );
 
-Here is another example of using the pgml.transform function
+Here is a third example of the pgml.transform function
 
 SELECT pgml.transform(
   task   => ''{
@@ -91,7 +91,6 @@ INSERT INTO documents (document) SELECT md5(random()::text) FROM generate_series
 !!!
 
 !!!
-
 In addition to the document that contains an example of pgml.transform we have inserted 100 randomly generated documents. We include these noisy documents to verify that our Unified RAG system can retrieve the correct context.
 
 We can then split them using the pgml.chunk function.
@@ -99,7 +98,7 @@ We can then split them using the pgml.chunk function.
 
 !!! generic
 
-!!! code\_block
+!!! code block
 
 ```postgresql
 CREATE TABLE chunks(id SERIAL PRIMARY KEY, chunk text NOT NULL, chunk_index int NOT NULL, document_id int references documents(id));
@@ -121,11 +120,13 @@ FROM (
 
 !!!
 
+Note: we are explicitly setting a really small chunk size we want to split this document into 6 chunks, 3 of which only have text and don't show the examples they are referring to so we can demonstrate reranking while still utilizing a resonably small demo.
+
 We can verify they were split correctly.
 
 !!! generic
 
-!!! code\_block
+!!! code block
 
 ```postgresql
 SELECT * FROM chunks limit 10;
@@ -135,45 +136,47 @@ SELECT * FROM chunks limit 10;
 
 !!! results
 
-id |                            chunk                             | chunk_index | document_id 
-----+--------------------------------------------------------------+-------------+-------------
-  1 | Here is an example of the pgml.transform function            |           1 |           1
-  2 | SELECT pgml.transform(                                      +|           2 |           1
-    |   task   => '{                                              +|             | 
-    |     "task": "text-generation",                              +|             | 
-    |     "model": "meta-llama/Meta-Llama-3-8B-Instruct"          +|             | 
-    |   }'::JSONB,                                                +|             | 
-    |   inputs  => ARRAY['AI is going to'],                       +|             | 
-    |   args   => '{                                              +|             | 
-    |     "max_new_tokens": 100                                   +|             | 
-    |   }'::JSONB                                                 +|             | 
-    | );                                                           |             | 
-  3 | Here is another example of using the pgml.transform function |           3 |           1
-  4 | SELECT pgml.transform(                                      +|           4 |           1
-    |   task   => '{                                              +|             | 
-    |     "task": "text-generation",                              +|             | 
-    |     "model": "meta-llama/Meta-Llama-3-70B-Instruct"         +|             | 
-    |   }'::JSONB,                                                +|             | 
-    |   inputs  => ARRAY['AI is going to'],                       +|             | 
-    |   args   => '{                                              +|             | 
-    |     "max_new_tokens": 100                                   +|             | 
-    |   }'::JSONB                                                 +|             | 
-    | );                                                           |             | 
-  5 | Here is another example of using the pgml.transform function |           5 |           1
-  6 | SELECT pgml.transform(                                      +|           6 |           1
-    |   task   => '{                                              +|             | 
-    |     "task": "text-generation",                              +|             | 
-    |     "model": "microsoft/Phi-3-mini-128k-instruct"           +|             | 
-    |   }'::JSONB,                                                +|             | 
-    |   inputs  => ARRAY['AI is going to'],                       +|             | 
-    |   args   => '{                                              +|             | 
-    |     "max_new_tokens": 100                                   +|             | 
-    |   }'::JSONB                                                 +|             | 
-    | );                                                           |             | 
-  7 | ad825d335ceea1f2383620d796b61ba0                             |           1 |           2
-  8 | f3319e27b8b560b3564a9fbd1a873480                             |           1 |           3
-  9 | f420939ecc8721f0200afa78d440642d                             |           1 |           4
- 10 | 3592866b9081fb53aa3b5d11997170d9                             |           1 |           5
+pgml=# SELECT * FROM chunks limit 10;
+ id  |                         chunk                          | chunk_index | document_id 
+-----+--------------------------------------------------------+-------------+-------------
+ 107 | Here is an example of the pgml.transform function      |           1 |         102
+ 108 | SELECT pgml.transform(                                +|           2 |         102
+     |   task   => '{                                        +|             | 
+     |     "task": "text-generation",                        +|             | 
+     |     "model": "meta-llama/Meta-Llama-3-8B-Instruct"    +|             | 
+     |   }'::JSONB,                                          +|             | 
+     |   inputs  => ARRAY['AI is going to'],                 +|             | 
+     |   args   => '{                                        +|             | 
+     |     "max_new_tokens": 100                             +|             | 
+     |   }'::JSONB                                           +|             | 
+     | );                                                     |             | 
+ 109 | Here is another example of the pgml.transform function |           3 |         102
+ 110 | SELECT pgml.transform(                                +|           4 |         102
+     |   task   => '{                                        +|             | 
+     |     "task": "text-generation",                        +|             | 
+     |     "model": "meta-llama/Meta-Llama-3-70B-Instruct"   +|             | 
+     |   }'::JSONB,                                          +|             | 
+     |   inputs  => ARRAY['AI is going to'],                 +|             | 
+     |   args   => '{                                        +|             | 
+     |     "max_new_tokens": 100                             +|             | 
+     |   }'::JSONB                                           +|             | 
+     | );                                                     |             | 
+ 111 | Here is a third example of the pgml.transform function |           5 |         102
+ 112 | SELECT pgml.transform(                                +|           6 |         102
+     |   task   => '{                                        +|             | 
+     |     "task": "text-generation",                        +|             | 
+     |     "model": "microsoft/Phi-3-mini-128k-instruct"     +|             | 
+     |   }'::JSONB,                                          +|             | 
+     |   inputs  => ARRAY['AI is going to'],                 +|             | 
+     |   args   => '{                                        +|             | 
+     |     "max_new_tokens": 100                             +|             | 
+     |   }'::JSONB                                           +|             | 
+     | );                                                     |             | 
+ 113 | ae94d3413ae82367c3d0592a67302b25                       |           1 |         103
+ 114 | 34b901600979ed0138557680ff528aa5                       |           1 |         104
+ 115 | ce71f8c6a6d697f4c4c9172c0691d646                       |           1 |         105
+ 116 | f018a8fde18db014a1a71dd700118d89                       |           1 |         106
+(10 rows)
 
 !!!
 
@@ -184,7 +187,7 @@ Instead of using an embedding API, we are going to embed our chunks directly in 
 
 !!! generic
 
-!!! code\_block
+!!! code block
 
 ```postgresql
 CREATE TABLE embeddings (
@@ -210,7 +213,7 @@ We can verify they were embedded correctly.
 
 !!! generic
 
-!!! code\_block
+!!! code block
 
 ```postgresql
 \x auto
@@ -243,7 +246,7 @@ Retrieval with Unified RAG is lightning fast and incredibly simple.
 ```postgresql
 WITH embedded_query AS (
     SELECT
-        pgml.embed('mixedbread-ai/mxbai-embed-large-v1', 'How do I use pgml.transform?', '{"prompt": "Represent this sentence for searching relevant passages: "}')::vector embedding
+        pgml.embed('mixedbread-ai/mxbai-embed-large-v1', 'How do I write a select statement with pgml.transform?', '{"prompt": "Represent this sentence for searching relevant passages: "}')::vector embedding
 )
 SELECT
     chunks.id,
@@ -267,41 +270,41 @@ LIMIT 6;
 
 !!! results
 
- id |   cosine_distance   |                            chunk                             
-----+---------------------+--------------------------------------------------------------
-  1 | 0.07063409896594541 | Here is an example of the pgml.transform function
-  5 | 0.07361361603777417 | Here is another example of using the pgml.transform function
-  3 | 0.07361361603777417 | Here is another example of using the pgml.transform function
-  6 |  0.1615426790254476 | SELECT pgml.transform(                                      +
-    |                     |   task   => '{                                              +
-    |                     |     "task": "text-generation",                              +
-    |                     |     "model": "microsoft/Phi-3-mini-128k-instruct"           +
-    |                     |   }'::JSONB,                                                +
-    |                     |   inputs  => ARRAY['AI is going to'],                       +
-    |                     |   args   => '{                                              +
-    |                     |     "max_new_tokens": 100                                   +
-    |                     |   }'::JSONB                                                 +
-    |                     | );
-  2 | 0.16822049523056992 | SELECT pgml.transform(                                      +
-    |                     |   task   => '{                                              +
-    |                     |     "task": "text-generation",                              +
-    |                     |     "model": "meta-llama/Meta-Llama-3-8B-Instruct"          +
-    |                     |   }'::JSONB,                                                +
-    |                     |   inputs  => ARRAY['AI is going to'],                       +
-    |                     |   args   => '{                                              +
-    |                     |     "max_new_tokens": 100                                   +
-    |                     |   }'::JSONB                                                 +
-    |                     | );
-  4 | 0.16937527108941763 | SELECT pgml.transform(                                      +
-    |                     |   task   => '{                                              +
-    |                     |     "task": "text-generation",                              +
-    |                     |     "model": "meta-llama/Meta-Llama-3-70B-Instruct"         +
-    |                     |   }'::JSONB,                                                +
-    |                     |   inputs  => ARRAY['AI is going to'],                       +
-    |                     |   args   => '{                                              +
-    |                     |     "max_new_tokens": 100                                   +
-    |                     |   }'::JSONB                                                 +
-    |                     | );
+id  |   cosine_distance   |                         chunk                          
+-----+---------------------+--------------------------------------------------------
+ 107 | 0.09044166306461232 | Here is an example of the pgml.transform function
+ 109 | 0.10787954026965096 | Here is another example of the pgml.transform function
+ 111 | 0.11683694289239333 | Here is a third example of the pgml.transform function
+ 112 | 0.17520464423854842 | SELECT pgml.transform(                                +
+     |                     |   task   => '{                                        +
+     |                     |     "task": "text-generation",                        +
+     |                     |     "model": "microsoft/Phi-3-mini-128k-instruct"     +
+     |                     |   }'::JSONB,                                          +
+     |                     |   inputs  => ARRAY['AI is going to'],                 +
+     |                     |   args   => '{                                        +
+     |                     |     "max_new_tokens": 100                             +
+     |                     |   }'::JSONB                                           +
+     |                     | );
+ 108 | 0.17699128851412282 | SELECT pgml.transform(                                +
+     |                     |   task   => '{                                        +
+     |                     |     "task": "text-generation",                        +
+     |                     |     "model": "meta-llama/Meta-Llama-3-8B-Instruct"    +
+     |                     |   }'::JSONB,                                          +
+     |                     |   inputs  => ARRAY['AI is going to'],                 +
+     |                     |   args   => '{                                        +
+     |                     |     "max_new_tokens": 100                             +
+     |                     |   }'::JSONB                                           +
+     |                     | );
+ 110 | 0.17844729798760672 | SELECT pgml.transform(                                +
+     |                     |   task   => '{                                        +
+     |                     |     "task": "text-generation",                        +
+     |                     |     "model": "meta-llama/Meta-Llama-3-70B-Instruct"   +
+     |                     |   }'::JSONB,                                          +
+     |                     |   inputs  => ARRAY['AI is going to'],                 +
+     |                     |   args   => '{                                        +
+     |                     |     "max_new_tokens": 100                             +
+     |                     |   }'::JSONB                                           +
+     |                     | );
 (6 rows)
 
 !!!
@@ -314,7 +317,105 @@ We are using a CTE to embed the user query, and then performing nearest neighbor
 
 We can rerank in the database in the same query we did retrieval with using the `pgml.rank` function.
 
-TODO INSERT RERANK CODE
+!!! generic
+
+!!! code_block time="70.381 ms"
+
+```postgresql
+WITH embedded_query AS (
+    SELECT
+        pgml.embed('mixedbread-ai/mxbai-embed-large-v1', 'How do I write a select statement with pgml.transform?', '{"prompt": "Represent this sentence for searching relevant passages: "}')::vector embedding
+),
+vector_search AS (
+    SELECT
+      chunks.id,
+      (
+          SELECT
+              embedding
+          FROM embedded_query) <=> embeddings.embedding cosine_distance,
+      chunks.chunk
+  FROM
+      chunks
+  INNER JOIN embeddings ON embeddings.chunk_id = chunks.id
+  ORDER BY
+      embeddings.embedding <=> (
+          SELECT
+              embedding
+          FROM embedded_query)
+  LIMIT 6
+),
+row_number_vector_search AS (
+    SELECT
+        cosine_distance,
+        chunk,
+        ROW_NUMBER() OVER () AS row_number
+    FROM
+        vector_search
+)
+SELECT
+    cosine_distance,
+    (rank).score AS rank_score,
+    chunk
+FROM (
+    SELECT
+      cosine_distance,
+      rank,
+      chunk
+    FROM
+        row_number_vector_search AS rnsv1
+    INNER JOIN (
+        SELECT
+          pgml.rank('mixedbread-ai/mxbai-rerank-base-v1', 'How do I write a select statement with pgml.transform?', array_agg("chunk"), '{"return_documents": false, "top_k": 6}'::jsonb || '{}') AS rank
+        FROM
+          row_number_vector_search
+    ) AS rnsv2 ON (rank).corpus_id + 1 = rnsv1.row_number
+) AS sub_query;
+```
+
+!!!
+
+!!! results
+
+   cosine_distance   |      rank_score      |                         chunk                          
+---------------------+----------------------+--------------------------------------------------------
+ 0.17520464423854842 | 0.021043598651885986 | SELECT pgml.transform(                                +
+                     |                      |   task   => '{                                        +
+                     |                      |     "task": "text-generation",                        +
+                     |                      |     "model": "microsoft/Phi-3-mini-128k-instruct"     +
+                     |                      |   }'::JSONB,                                          +
+                     |                      |   inputs  => ARRAY['AI is going to'],                 +
+                     |                      |   args   => '{                                        +
+                     |                      |     "max_new_tokens": 100                             +
+                     |                      |   }'::JSONB                                           +
+                     |                      | );
+ 0.17844729798760672 | 0.020746054127812386 | SELECT pgml.transform(                                +
+                     |                      |   task   => '{                                        +
+                     |                      |     "task": "text-generation",                        +
+                     |                      |     "model": "meta-llama/Meta-Llama-3-70B-Instruct"   +
+                     |                      |   }'::JSONB,                                          +
+                     |                      |   inputs  => ARRAY['AI is going to'],                 +
+                     |                      |   args   => '{                                        +
+                     |                      |     "max_new_tokens": 100                             +
+                     |                      |   }'::JSONB                                           +
+                     |                      | );
+ 0.17699128851412282 | 0.020292343571782112 | SELECT pgml.transform(                                +
+                     |                      |   task   => '{                                        +
+                     |                      |     "task": "text-generation",                        +
+                     |                      |     "model": "meta-llama/Meta-Llama-3-8B-Instruct"    +
+                     |                      |   }'::JSONB,                                          +
+                     |                      |   inputs  => ARRAY['AI is going to'],                 +
+                     |                      |   args   => '{                                        +
+                     |                      |     "max_new_tokens": 100                             +
+                     |                      |   }'::JSONB                                           +
+                     |                      | );
+ 0.09044166306461232 |  0.01262627448886633 | Here is an example of the pgml.transform function
+ 0.11683694289239333 | 0.012577935121953487 | Here is a third example of the pgml.transform function
+ 0.10787954026965096 |  0.01253141276538372 | Here is another example of the pgml.transform function
+
+!!!
+
+!!!
+
 
 We are using the mixedbread-ai/mxbai-rerank-base-v1 model to rerank the results from our semantic search. Once again, note how fast this is. We have now combined the embedding api call, the semantic search api call, and the rerank api call from our RAG flow into one sql query. 
 
@@ -322,12 +423,177 @@ We are using the mixedbread-ai/mxbai-rerank-base-v1 model to rerank the results 
 
 Using the pgml.transform function, we can perform text generation in the same query we did retrieval and reranking with.
 
-SHOW CODE
+!!! generic
+
+!!! code_block time="70.381 ms"
+
+```postgresql
+WITH embedded_query AS (
+    SELECT
+        pgml.embed('mixedbread-ai/mxbai-embed-large-v1', 'How do I write a select statement with pgml.transform?', '{"prompt": "Represent this sentence for searching relevant passages: "}')::vector embedding
+),
+vector_search AS (
+    SELECT
+      chunks.id,
+      (
+          SELECT
+              embedding
+          FROM embedded_query) <=> embeddings.embedding cosine_distance,
+      chunks.chunk
+  FROM
+      chunks
+  INNER JOIN embeddings ON embeddings.chunk_id = chunks.id
+  ORDER BY
+      embeddings.embedding <=> (
+          SELECT
+              embedding
+          FROM embedded_query)
+  LIMIT 6
+),
+row_number_vector_search AS (
+    SELECT
+        cosine_distance,
+        chunk,
+        ROW_NUMBER() OVER () AS row_number
+    FROM
+        vector_search
+),
+context AS (
+  SELECT
+      chunk
+  FROM (
+      SELECT
+        chunk
+      FROM
+          row_number_vector_search AS rnsv1
+      INNER JOIN (
+          SELECT
+            pgml.rank('mixedbread-ai/mxbai-rerank-base-v1', 'How do I write a select statement with pgml.transform?', array_agg("chunk"), '{"return_documents": false, "top_k": 1}'::jsonb || '{}') AS rank
+          FROM
+            row_number_vector_search
+      ) AS rnsv2 ON (rank).corpus_id + 1 = rnsv1.row_number
+  ) AS sub_query
+)
+SELECT
+    pgml.transform (
+      task => '{
+        "task": "conversational",
+        "model": "meta-llama/Meta-Llama-3-8B-Instruct"
+      }'::jsonb, 
+      inputs => ARRAY['{"role": "system", "content": "You are a friendly and helpful chatbot."}'::jsonb, jsonb_build_object('role', 'user', 'content', replace('Given the context answer the following question: How do I write a select statement with pgml.transform? Context:\n\n{CONTEXT}', '{CONTEXT}', chunk))], 
+      args => '{
+        "max_new_tokens": 100
+      }'::jsonb)
+FROM
+    context;
+```
+
+!!!
+
+!!! results
+
+["To write a SELECT statement with pgml.transform, you can use the following syntax:\n\n```sql\nSELECT pgml.transform(\n  task   => '{\n    \"task\": \"text-generation\",\n    \"model\": \"meta-llama/Meta-Llama-3-70B-Instruct\"\n  }'::JSONB,\n  inputs  => ARRAY['AI is going to'],\n  args   => '{\n    \"max_new_tokens\": 100\n  }'::JSONB\n"]
+
+!!!
+
+!!!
+
+We have now combined the embedding api call, the semantic search api call, the rerank api call and the text generation api call from our RAG flow into one sql query. 
 
 We are using meta-llama/Meta-Llama-3-8B-Instruct to perform text generation. We have a number of different models available for text generation, but for our use case `meta-llama/Meta-Llama-3-8B-Instruct` is a fantastic mix between speed and capability. 
 
 We can stream from the database by using the `pgml.transform_stream` function and cursors. Here is a query measuring time to first token.
 
-SHOW CODE
+!!! generic
+
+!!! code_block time="70.381 ms"
+
+```postgresql
+BEGIN;
+DECLARE c CURSOR FOR WITH embedded_query AS (
+    SELECT
+        pgml.embed('mixedbread-ai/mxbai-embed-large-v1', 'How do I write a select statement with pgml.transform?', '{"prompt": "Represent this sentence for searching relevant passages: "}')::vector embedding
+),
+vector_search AS (
+    SELECT
+      chunks.id,
+      (
+          SELECT
+              embedding
+          FROM embedded_query) <=> embeddings.embedding cosine_distance,
+      chunks.chunk
+  FROM
+      chunks
+  INNER JOIN embeddings ON embeddings.chunk_id = chunks.id
+  ORDER BY
+      embeddings.embedding <=> (
+          SELECT
+              embedding
+          FROM embedded_query)
+  LIMIT 6
+),
+row_number_vector_search AS (
+    SELECT
+        cosine_distance,
+        chunk,
+        ROW_NUMBER() OVER () AS row_number
+    FROM
+        vector_search
+),
+context AS (
+  SELECT
+      chunk
+  FROM (
+      SELECT
+        chunk
+      FROM
+          row_number_vector_search AS rnsv1
+      INNER JOIN (
+          SELECT
+            pgml.rank('mixedbread-ai/mxbai-rerank-base-v1', 'How do I write a select statement with pgml.transform?', array_agg("chunk"), '{"return_documents": false, "top_k": 1}'::jsonb || '{}') AS rank
+          FROM
+            row_number_vector_search
+      ) AS rnsv2 ON (rank).corpus_id + 1 = rnsv1.row_number
+  ) AS sub_query
+)
+SELECT
+    pgml.transform_stream(
+      task => '{
+        "task": "conversational",
+        "model": "meta-llama/Meta-Llama-3-8B-Instruct"
+      }'::jsonb, 
+      inputs => ARRAY['{"role": "system", "content": "You are a friendly and helpful chatbot."}'::jsonb, jsonb_build_object('role', 'user', 'content', replace('Given the context answer the following question: How do I write a select statement with pgml.transform? Context:\n\n{CONTEXT}', '{CONTEXT}', chunk))], 
+      args => '{
+        "max_new_tokens": 100
+      }'::jsonb)
+FROM
+    context;
+FETCH 2 FROM c;
+END;
+```
+
+!!!
+
+!!! results
+
+BEGIN
+Time: 73.012 ms
+
+DECLARE CURSOR
+Time: 77.593 ms
+
+ transform_stream 
+------------------
+ []
+ ["To"]
+(2 rows)
+
+Time: 135.170 ms
+
+!!!
+
+!!!
+
+Note how fast this is now! With unified RAG we can perform the entire RAG pipeline and get the first token for our text generation back in under 300 milliseconds.
 
 We have reduced our RAG system that involved 4 different network calls into a single unified system that requires one sql query and yields a response in: TIME
