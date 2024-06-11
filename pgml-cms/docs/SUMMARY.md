@@ -63,6 +63,7 @@
 * [Chatbots](guides/chatbots/README.md)
   * [Example Application](use-cases/chatbots.md)
 * [Supervised Learning](guides/supervised-learning.md)
+* [Unified RAG](guides/unified-rag.md)
 * [OpenSourceAI](guides/opensourceai.md)
 * [Natural Language Processing](guides/natural-language-processing.md)
   
