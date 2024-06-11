@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       packageVersion:
-        default: "2.8.2"
+        default: "2.9.1"
 jobs:
   #
   # PostgresML extension.

@@ -55,7 +55,7 @@ impl Sampling {
             Sampling::stratified => {
                 format!(
                     "
-                    SELECT *
+                    SELECT {col_string}
                     FROM (
                         SELECT 
                             *,
@@ -125,7 +125,7 @@ mod tests {
         let columns = get_column_fixtures();
         let sql = sampling.get_sql("my_table", columns);
         let expected_sql = "
-                    SELECT *
+                    SELECT \"col1\", \"col2\"
                     FROM (
                         SELECT 
                             *,

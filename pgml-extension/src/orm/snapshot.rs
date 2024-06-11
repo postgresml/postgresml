@@ -230,16 +230,24 @@ impl Column {
         if self.preprocessor.encode == Encode::target {
             let categories = self.statistics.categories.as_mut().unwrap();
             let mut sums = vec![0_f32; categories.len() + 1];
+            let mut total = 0.;
             Zip::from(array).and(target).for_each(|&value, &target| {
+                total += target;
                 sums[value as usize] += target;
             });
+            let avg_target = total / categories.len() as f32;
             for category in categories.values_mut() {
-                let sum = sums[category.value as usize];
-                category.value = sum / category.members as f32;
+                if category.members > 0 {
+                    let sum = sums[category.value as usize];
+                    category.value = sum / category.members as f32;
+                } else {
+                    // use avg target for categories w/ no members, e.g. __NULL__ category in a complete dataset
+                    category.value = avg_target;
+                }
             }
         }
 
-        // Data is filtered for NaN because it is not well defined statistically, and they are counted as separate stat
+        // Data is filtered for NaN because it is not well-defined statistically, and they are counted as separate stat
         let mut data = array
             .iter()
             .filter_map(|n| if n.is_nan() { None } else { Some(*n) })
@@ -404,7 +412,8 @@ impl Snapshot {
                 .first();
             if !result.is_empty() {
                 let jsonb: JsonB = result.get(7).unwrap().unwrap();
-                let columns: Vec<Column> = serde_json::from_value(jsonb.0).unwrap();
+                let columns: Vec<Column> =
+                    serde_json::from_value(jsonb.0).expect("invalid json description of columns");
                 // let jsonb: JsonB = result.get(8).unwrap();
                 // let analysis: Option<IndexMap<String, f32>> = Some(serde_json::from_value(jsonb.0).unwrap());
                 let mut s = Snapshot {
@@ -500,9 +509,10 @@ impl Snapshot {
 
         let preprocessors: HashMap<String, Preprocessor> = serde_json::from_value(preprocess.0).expect("is valid");
 
+        let mut position = 0; // Postgres column positions are not updated when other columns are dropped, but we expect consecutive positions when we read the table.
         Spi::connect(|mut client| {
             let mut columns: Vec<Column> = Vec::new();
-            client.select("SELECT column_name::TEXT, udt_name::TEXT, is_nullable::BOOLEAN, ordinal_position::INTEGER FROM information_schema.columns WHERE table_schema = $1 AND table_name = $2 ORDER BY ordinal_position ASC",
+            client.select("SELECT column_name::TEXT, udt_name::TEXT, is_nullable::BOOLEAN FROM information_schema.columns WHERE table_schema = $1 AND table_name = $2 ORDER BY ordinal_position ASC",
                 None,
                 Some(vec![
                     (PgBuiltInOids::TEXTOID.oid(), schema_name.into_datum()),
@@ -520,7 +530,7 @@ impl Snapshot {
                     pg_type = pg_type[1..].to_string() + "[]";
                 }
                 let nullable = row[3].value::<bool>().unwrap().unwrap();
-                let position = row[4].value::<i32>().unwrap().unwrap() as usize;
+                position += 1;
                 let label = match y_column_name {
                     Some(ref y_column_name) => y_column_name.contains(&name),
                     None => false,
@@ -1158,7 +1168,7 @@ impl Snapshot {
     pub fn numeric_encoded_dataset(&mut self) -> Dataset {
         let mut data = None;
         Spi::connect(|client| {
-            // Postgres Arrays arrays are 1 indexed and so are SPI tuples...
+            // Postgres arrays are 1 indexed and so are SPI tuples...
             let result = client.select(&self.select_sql(), None, None).unwrap();
             let num_rows = result.len();
             let (num_train_rows, num_test_rows) = self.train_test_split(num_rows);
