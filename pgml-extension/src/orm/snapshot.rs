@@ -412,7 +412,8 @@ impl Snapshot {
                 .first();
             if !result.is_empty() {
                 let jsonb: JsonB = result.get(7).unwrap().unwrap();
-                let columns: Vec<Column> = serde_json::from_value(jsonb.0).expect("invalid json description of columns");
+                let columns: Vec<Column> =
+                    serde_json::from_value(jsonb.0).expect("invalid json description of columns");
                 // let jsonb: JsonB = result.get(8).unwrap();
                 // let analysis: Option<IndexMap<String, f32>> = Some(serde_json::from_value(jsonb.0).unwrap());
                 let mut s = Snapshot {

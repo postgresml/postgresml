@@ -380,7 +380,7 @@ pub fn load_dataset(
         .ok_or(anyhow!("dataset `data` key is not an object"))?;
     let column_names = types
         .iter()
-        .map(|(name, _type)| format!("\"{}\"", name) )
+        .map(|(name, _type)| format!("\"{}\"", name))
         .collect::<Vec<String>>()
         .join(", ");
     let column_types = types
