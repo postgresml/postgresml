@@ -55,7 +55,7 @@ impl Sampling {
             Sampling::stratified => {
                 format!(
                     "
-                    SELECT *
+                    SELECT {col_string}
                     FROM (
                         SELECT 
                             *,

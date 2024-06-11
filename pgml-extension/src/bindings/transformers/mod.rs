@@ -380,7 +380,7 @@ pub fn load_dataset(
         .ok_or(anyhow!("dataset `data` key is not an object"))?;
     let column_names = types
         .iter()
-        .map(|(name, _type)| name.clone())
+        .map(|(name, _type)| format!("\"{}\"", name) )
         .collect::<Vec<String>>()
         .join(", ");
     let column_types = types
@@ -393,13 +393,14 @@ pub fn load_dataset(
                 "int64" => "INT8",
                 "int32" => "INT4",
                 "int16" => "INT2",
+                "int8" => "INT2",
                 "float64" => "FLOAT8",
                 "float32" => "FLOAT4",
                 "float16" => "FLOAT4",
                 "bool" => "BOOLEAN",
                 _ => bail!("unhandled dataset feature while reading dataset: {type_}"),
             };
-            Ok(format!("{name} {type_}"))
+            Ok(format!("\"{name}\" {type_}"))
         })
         .collect::<Result<Vec<String>>>()?
         .join(", ");
@@ -455,7 +456,7 @@ pub fn load_dataset(
                         .into_datum(),
                 )),
                 "dict" | "list" => row.push((PgBuiltInOids::JSONBOID.oid(), JsonB(value.clone()).into_datum())),
-                "int64" | "int32" | "int16" => row.push((
+                "int64" | "int32" | "int16" | "int8" => row.push((
                     PgBuiltInOids::INT8OID.oid(),
                     value
                         .as_i64()

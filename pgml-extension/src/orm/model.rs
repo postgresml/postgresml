@@ -344,13 +344,12 @@ impl Model {
             ).unwrap().first();
 
             if !result.is_empty() {
-                let project_id = result.get(2).unwrap().unwrap();
-                let project = Project::find(project_id).unwrap();
-                let snapshot_id = result.get(3).unwrap().unwrap();
-                let snapshot = Snapshot::find(snapshot_id).unwrap();
-                let algorithm = Algorithm::from_str(result.get(4).unwrap().unwrap()).unwrap();
-                let runtime = Runtime::from_str(result.get(5).unwrap().unwrap()).unwrap();
-
+                let project_id = result.get(2).unwrap().expect("project_id is i64");
+                let project = Project::find(project_id).expect("project doesn't exist");
+                let snapshot_id = result.get(3).unwrap().expect("snapshot_id is i64");
+                let snapshot = Snapshot::find(snapshot_id).expect("snapshot doesn't exist");
+                let algorithm = Algorithm::from_str(result.get(4).unwrap().unwrap()).expect("algorithm is malformed");
+                let runtime = Runtime::from_str(result.get(5).unwrap().unwrap()).expect("runtime is malformed");
                 let data = Spi::get_one_with_args::<Vec<u8>>(
                     "
                         SELECT data
