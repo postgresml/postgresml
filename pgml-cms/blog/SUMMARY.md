@@ -1,6 +1,7 @@
 # Table of contents
 
 * [Home](README.md)
+* [Announcing the Release of our Rust SDK](announcing-the-release-of-our-rust-sdk.md)
 * [Serverless LLMs are dead; Long live Serverless LLMs](serverless-llms-are-dead-long-live-serverless-llms.md)
 * [Speeding up vector recall 5x with HNSW](speeding-up-vector-recall-5x-with-hnsw.md)
 * [Introducing the OpenAI Switch Kit: Move from closed to open-source AI in minutes](introducing-the-openai-switch-kit-move-from-closed-to-open-source-ai-in-minutes.md)

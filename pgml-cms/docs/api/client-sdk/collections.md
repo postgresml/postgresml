@@ -26,6 +26,18 @@ const collection = pgml.newCollection("test_collection")
 collection = Collection("test_collection")
 ```
 {% endtab %}
+
+{% tab title="Rust" %}
+```rust
+let mut collection = Collection::new("test_collection", None)?;
+```
+{% endtab %}
+
+{% tab title="C" %}
+```cpp
+CollectionC * collection = pgml_collectionc_new("test_collection", NULL);
+```
+{% endtab %}
 {% endtabs %}
 
 ### Custom `PGML_DATABASE_URL`
@@ -42,6 +54,18 @@ const collection = pgml.newCollection("test_collection", CUSTOM_DATABASE_URL)
 {% tab title="Python" %}
 ```python
 collection = Collection("test_collection", CUSTOM_DATABASE_URL)
+```
+{% endtab %}
+
+{% tab title="Rust" %}
+```rust
+let mut collection = Collection::new("test_collection", Some(CUSTOM_DATABASE_URL))?;
+```
+{% endtab %}
+
+{% tab title="C" %}
+```cpp
+CollectionC * collection = pgml_collectionc_new("test_collection", CUSTOM_DATABASE_URL);
 ```
 {% endtab %}
 {% endtabs %}
@@ -90,6 +114,38 @@ documents = [
 await collection.upsert_documents(documents)
 ```
 {% endtab %}
+
+{% tab title="Rust" %}
+```rust
+let documents: Vec<pgml::types::Json> = vec![
+    serde_json::json!({
+        "id": "document_one",
+        "title": "Document One",
+        "text": "Here are the contents of Document 1",
+        "random_key": "here is some random data",
+    })
+    .into(),
+    serde_json::json!({
+        "id": "document_two",
+        "title": "Document Two",
+        "text": "Here are the contents of Document 2",
+        "random_key": "here is some random data",
+    })
+    .into(),
+];
+collection.upsert_documents(documents, None).await?;
+```
+{% endtab %}
+
+{% tab title="C" %}
+```cpp
+char * documents[2] = {
+  "{\"id\": \"document_one\", \"title\": \"Document One\", \"text\": \"Here are the contents of Document 1\", \"random_key\": \"here is some random data\"}",
+  "{\"id\": \"document_two\", \"title\": \"Document Two\", \"text\": \"Here are the contents of Document 2\", \"random_key\": \"here is some random data\"}"
+};
+pgml_collectionc_upsert_documents(collection, documents, 2, NULL);
+```
+{% endtab %}
 {% endtabs %}
 
 Documents can be replaced by upserting documents with the same `id`.
@@ -134,6 +190,38 @@ documents = [
 await collection.upsert_documents(documents)
 ```
 {% endtab %}
+
+{% tab title="Rust" %}
+```rust
+let documents: Vec<pgml::types::Json> = vec![
+    serde_json::json!({
+        "id": "document_one",
+        "title": "Document One",
+        "text": "Here is some new text for document one",
+        "random_key": "here is some random data",
+    })
+    .into(),
+    serde_json::json!({
+        "id": "document_two",
+        "title": "Document Two",
+        "text": "Here is some new text for document two",
+        "random_key": "here is some random data",
+    })
+    .into(),
+];
+collection.upsert_documents(documents, None).await?;
+```
+{% endtab %}
+
+{% tab title="C" %}
+```cpp
+char * documents[2] = {
+  "{\"id\": \"document_one\", \"title\": \"Document One\", \"text\": \"Here is some new text for document one\", \"random_key\": \"here is some random data\"}",
+  "{\"id\": \"document_two\", \"title\": \"Document Two\", \"text\": \"Here is some new text for document two\", \"random_key\": \"here is some random data\"}"
+};
+pgml_collectionc_upsert_documents(collection, documents, 2, NULL);
+```
+{% endtab %}
 {% endtabs %}
 
 Documents can be merged by setting the `merge` option. On conflict, new document keys will override old document keys.
@@ -176,6 +264,38 @@ documents = [
 await collection.upsert_documents(documents, {"merge": True})
 ```
 {% endtab %}
+
+{% tab title="Rust" %}
+```rust
+let documents: Vec<pgml::types::Json> = vec![
+    serde_json::json!({
+        "id": "document_one",
+        "new_key": "this will be a new key in document one",
+        "random_key": "this will replace old random_key"
+    })
+    .into(),
+    serde_json::json!({
+        "id": "document_two",
+        "new_key": "this will be a new key in document two",
+        "random_key": "this will replace old random_key"
+    })
+    .into(),
+];
+collection
+    .upsert_documents(documents, Some(serde_json::json!({"merge": true}).into()))
+    .await?;
+```
+{% endtab %}
+
+{% tab title="C" %}
+```cpp
+char * documents[2] = {
+  "{\"id\": \"document_one\", \"new_key\": \"this will be a new key in document one\", \"random_key\": \"this will replace old random_key\"}",
+  "{\"id\": \"document_two\", \"new_key\": \"this will be a new key in document two\", \"random_key\": \"this will replace old random_key\"}"
+};
+pgml_collectionc_upsert_documents(collection, documents, 2, "{\"merge\": true}");
+```
+{% endtab %}
 {% endtabs %}
 
 ## Getting Documents
@@ -192,6 +312,21 @@ const documents = await collection.get_documents({limit: 100 })
 {% tab title="Python" %}
 ```python
 documents = await collection.get_documents({ "limit": 100 })
+```
+{% endtab %}
+
+{% tab title="Rust" %}
+```rust
+let documents = collection
+    .get_documents(Some(serde_json::json!({"limit": 100}).into()))
+    .await?;
+```
+{% endtab %}
+
+{% tab title="C" %}
+```cpp
+unsigned long r_size = 0;
+char** documents = pgml_collectionc_get_documents(collection, "{\"limit\": 100}", &r_size);
 ```
 {% endtab %}
 {% endtabs %}
@@ -214,6 +349,21 @@ const documents = await collection.get_documents({ limit: 100, offset: 10 })
 documents = await collection.get_documents({ "limit": 100, "offset": 10 })
 ```
 {% endtab %}
+
+{% tab title="Rust" %}
+```rust
+let documents = collection
+    .get_documents(Some(serde_json::json!({"limit": 100, "offset": 10}).into()))
+    .await?;
+```
+{% endtab %}
+
+{% tab title="C" %}
+```cpp
+unsigned long r_size = 0;
+char** documents = pgml_collectionc_get_documents(collection, "{\"limit\": 100, \"offset\": 10}", &r_size);
+```
+{% endtab %}
 {% endtabs %}
 
 #### Keyset Pagination
@@ -228,6 +378,21 @@ const documents = await collection.get_documents({ limit: 100, last_row_id: 10 }
 {% tab title="Python" %}
 ```python
 documents = await collection.get_documents({ "limit": 100, "last_row_id": 10 })
+```
+{% endtab %}
+
+{% tab title="Rust" %}
+```rust
+let documents = collection
+    .get_documents(Some(serde_json::json!({"limit": 100, "last_row_id": 10}).into()))
+    .await?;
+```
+{% endtab %}
+
+{% tab title="C" %}
+```cpp
+unsigned long r_size = 0;
+char** documents = pgml_collectionc_get_documents(collection, "{\"limit\": 100, \"last_row_id\": 10}", &r_size);
 ```
 {% endtab %}
 {% endtabs %}
@@ -264,6 +429,29 @@ documents = await collection.get_documents(
 )
 ```
 {% endtab %}
+
+{% tab title="Rust" %}
+```rust
+let documents = collection
+    .get_documents(Some(
+        serde_json::json!({
+            "limit": 100,
+            "filter": {
+                "id": {"$eq": "document_one"},
+            }
+        })
+        .into(),
+    ))
+    .await?;
+```
+{% endtab %}
+
+{% tab title="C" %}
+```cpp
+unsigned long r_size = 0;
+char** documents = pgml_collectionc_get_documents(collection, "{\"limit\": 100, \"filter\": {\"id\": {\"$eq\": \"document_one\"}}}", &r_size);
+```
+{% endtab %}
 {% endtabs %}
 
 ### Sorting Documents
@@ -294,6 +482,30 @@ documents = await collection.get_documents({
 })
 ```
 {% endtab %}
+
+{% tab title="Rust" %}
+```rust
+let documents = collection
+    .get_documents(Some(
+        serde_json::json!({
+            "limit": 100,
+            "offset": 10,
+            "order_by": {
+                "id": "desc"
+            }
+        })
+        .into(),
+    ))
+    .await?;
+```
+{% endtab %}
+
+{% tab title="C" %}
+```cpp
+unsigned long r_size = 0;
+char** documents = pgml_collectionc_get_documents(collection, "{\"limit\": 100, \"offset\": 10, \"order_by\": {\"id\": \"desc\"}}", &r_size);
+```
+{% endtab %}
 {% endtabs %}
 
 ### Deleting Documents
@@ -318,6 +530,27 @@ documents = await collection.delete_documents(
         "id": {"$eq": 1},
     }
 )
+```
+{% endtab %}
+
+{% tab title="Rust" %}
+```rust
+let documents = collection
+    .delete_documents(
+        serde_json::json!({
+            "id": {
+                "$eq": 1
+            }
+        })
+        .into(),
+    )
+    .await?;
+```
+{% endtab %}
+
+{% tab title="C" %}
+```cpp
+pgml_collectionc_delete_documents(collection, "{\"id\": { \"$eq\": 1}}");
 ```
 {% endtab %}
 {% endtabs %}

@@ -4,6 +4,7 @@ import { sql } from "postgresml-lang-sql";
 import { python } from "@codemirror/lang-python";
 import { javascript } from "@codemirror/lang-javascript";
 import { rust } from "@codemirror/lang-rust";
+import { cpp } from "@codemirror/lang-cpp";
 import { json } from "@codemirror/lang-json";
 import { EditorView, ViewPlugin, Decoration } from "@codemirror/view";
 import { RangeSetBuilder, Facet } from "@codemirror/state";
@@ -84,6 +85,8 @@ const language = (element) => {
       return rust;
     case "json":
       return json;
+    case "cpp":
+      return cpp;
     default:
       return null;
   }

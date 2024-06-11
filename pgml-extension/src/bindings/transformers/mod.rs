@@ -6,7 +6,8 @@ use std::{collections::HashMap, path::Path};
 use anyhow::{anyhow, bail, Context, Result};
 use pgrx::*;
 use pyo3::prelude::*;
-use pyo3::types::PyTuple;
+use pyo3::types::{PyBool, PyDict, PyFloat, PyInt, PyList, PyString, PyTuple};
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::create_pymodule;
@@ -20,6 +21,59 @@ mod transform;
 pub use transform::*;
 
 create_pymodule!("/src/bindings/transformers/transformers.py");
+
+// Need a wrapper so we can implement traits for it
+pub struct Json(pub Value);
+
+impl From<Json> for Value {
+    fn from(value: Json) -> Self {
+        value.0
+    }
+}
+
+impl FromPyObject<'_> for Json {
+    fn extract(ob: &PyAny) -> PyResult<Self> {
+        if ob.is_instance_of::<PyDict>() {
+            let dict: &PyDict = ob.downcast()?;
+            let mut json = serde_json::Map::new();
+            for (key, value) in dict.iter() {
+                let value = Json::extract(value)?;
+                json.insert(String::extract(key)?, value.0);
+            }
+            Ok(Self(serde_json::Value::Object(json)))
+        } else if ob.is_instance_of::<PyBool>() {
+            let value = bool::extract(ob)?;
+            Ok(Self(serde_json::Value::Bool(value)))
+        } else if ob.is_instance_of::<PyInt>() {
+            let value = i64::extract(ob)?;
+            Ok(Self(serde_json::Value::Number(value.into())))
+        } else if ob.is_instance_of::<PyFloat>() {
+            let value = f64::extract(ob)?;
+            let value =
+                serde_json::value::Number::from_f64(value).context("Could not convert f64 to serde_json::Number")?;
+            Ok(Self(serde_json::Value::Number(value)))
+        } else if ob.is_instance_of::<PyString>() {
+            let value = String::extract(ob)?;
+            Ok(Self(serde_json::Value::String(value)))
+        } else if ob.is_instance_of::<PyList>() {
+            let value = ob.downcast::<PyList>()?;
+            let mut json_values = Vec::new();
+            for v in value {
+                let v = v.extract::<Json>()?;
+                json_values.push(v.0);
+            }
+            Ok(Self(serde_json::Value::Array(json_values)))
+        } else {
+            if ob.is_none() {
+                return Ok(Self(serde_json::Value::Null));
+            }
+            Err(anyhow::anyhow!(
+                "Unsupported type for JSON conversion: {:?}",
+                ob.get_type()
+            ))?
+        }
+    }
+}
 
 pub fn get_model_from(task: &Value) -> Result<String> {
     Python::with_gil(|py| -> Result<String> {
@@ -52,6 +106,46 @@ pub fn embed(transformer: &str, inputs: Vec<&str>, kwargs: &serde_json::Value) -
             .format_traceback(py)?;
 
         output.extract(py).format_traceback(py)
+    })
+}
+
+#[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
+pub struct RankResult {
+    pub corpus_id: i64,
+    pub score: f64,
+    pub text: Option<String>,
+}
+
+pub fn rank(
+    transformer: &str,
+    query: &str,
+    documents: Vec<&str>,
+    kwargs: &serde_json::Value,
+) -> Result<Vec<RankResult>> {
+    let kwargs = serde_json::to_string(kwargs)?;
+    Python::with_gil(|py| -> Result<Vec<RankResult>> {
+        let embed: Py<PyAny> = get_module!(PY_MODULE).getattr(py, "rank").format_traceback(py)?;
+        let output = embed
+            .call1(
+                py,
+                PyTuple::new(
+                    py,
+                    &[
+                        transformer.to_string().into_py(py),
+                        query.into_py(py),
+                        documents.into_py(py),
+                        kwargs.into_py(py),
+                    ],
+                ),
+            )
+            .format_traceback(py)?;
+        let out: Vec<Json> = output.extract(py).format_traceback(py)?;
+        out.into_iter()
+            .map(|x| {
+                let x: RankResult = serde_json::from_value(x.0)?;
+                Ok(x)
+            })
+            .collect()
     })
 }
 

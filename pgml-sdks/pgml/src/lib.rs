@@ -1553,6 +1553,88 @@ mod tests {
         Ok(())
     }
 
+    #[tokio::test]
+    async fn can_vector_search_with_local_embeddings_and_rerank() -> anyhow::Result<()> {
+        internal_init_logger(None, None).ok();
+        let collection_name = "test r_c_cvswlear_1";
+        let mut collection = Collection::new(collection_name, None)?;
+        let documents = generate_dummy_documents(10);
+        collection.upsert_documents(documents.clone(), None).await?;
+        let pipeline_name = "0";
+        let mut pipeline = Pipeline::new(
+            pipeline_name,
+            Some(
+                json!({
+                    "title": {
+                        "semantic_search": {
+                            "model": "intfloat/e5-small-v2",
+                            "parameters": {
+                                "prompt": "passage: "
+                            }
+                        },
+                        "full_text_search": {
+                            "configuration": "english"
+                        }
+                    },
+                    "body": {
+                        "splitter": {
+                            "model": "recursive_character"
+                        },
+                        "semantic_search": {
+                            "model": "intfloat/e5-small-v2",
+                            "parameters": {
+                                "prompt": "passage: "
+                            }
+                        },
+                    },
+                })
+                .into(),
+            ),
+        )?;
+        collection.add_pipeline(&mut pipeline).await?;
+        let results = collection
+            .vector_search(
+                json!({
+                    "query": {
+                        "fields": {
+                            "title": {
+                                "query": "Test document: 2",
+                                "parameters": {
+                                    "prompt": "passage: "
+                                },
+                                "full_text_filter": "test",
+                                "boost": 1.2
+                            },
+                            "body": {
+                                "query": "Test document: 2",
+                                "parameters": {
+                                    "prompt": "passage: "
+                                },
+                                "boost": 1.0
+                            },
+                        }
+                    },
+                    "rerank": {
+                        "query": "Test document 2",
+                        "model": "mixedbread-ai/mxbai-rerank-base-v1",
+                        "num_documents_to_rerank": 100
+                    },
+                    "limit": 5
+                })
+                .into(),
+                &mut pipeline,
+            )
+            .await?;
+        assert!(results[0]["rerank_score"].as_f64().is_some());
+        let ids: Vec<u64> = results
+            .into_iter()
+            .map(|r| r["document"]["id"].as_u64().unwrap())
+            .collect();
+        assert_eq!(ids, vec![2, 1, 3, 8, 6]);
+        collection.archive().await?;
+        Ok(())
+    }
+
     ///////////////////////////////
     // Working With Documents /////
     ///////////////////////////////
@@ -2206,6 +2288,11 @@ mod tests {
                                 "keys": [
                                     "id"
                                 ]
+                            },
+                            "rerank": {
+                                "query": "Test document 2",
+                                "model": "mixedbread-ai/mxbai-rerank-base-v1",
+                                "num_documents_to_rerank": 100
                             },
                             "limit": 5
                         },

@@ -41,6 +41,20 @@ struct ValidDocument {
     keys: Option<Vec<String>>,
 }
 
+const fn default_num_documents_to_rerank() -> u64 {
+    10
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(deny_unknown_fields)]
+struct ValidRerank {
+    query: String,
+    model: String,
+    #[serde(default = "default_num_documents_to_rerank")]
+    num_documents_to_rerank: u64,
+    parameters: Option<Json>,
+}
+
 const fn default_limit() -> u64 {
     10
 }
@@ -56,6 +70,8 @@ pub struct ValidQuery {
     limit: u64,
     // Document related items
     document: Option<ValidDocument>,
+    // Rerank related items
+    rerank: Option<ValidRerank>,
 }
 
 pub async fn build_sqlx_query(
@@ -66,8 +82,13 @@ pub async fn build_sqlx_query(
     prefix: Option<&str>,
 ) -> anyhow::Result<(SelectStatement, Vec<CommonTableExpression>)> {
     let valid_query: ValidQuery = serde_json::from_value(query.0)?;
-    let limit = valid_query.limit;
     let fields = valid_query.query.fields.unwrap_or_default();
+
+    let search_limit = if let Some(rerank) = valid_query.rerank.as_ref() {
+        rerank.num_documents_to_rerank
+    } else {
+        valid_query.limit
+    };
 
     let prefix = prefix.unwrap_or("");
 
@@ -209,7 +230,7 @@ pub async fn build_sqlx_query(
                 Expr::col((SIden::Str("documents"), SIden::Str("id")))
                     .equals((SIden::Str("chunks"), SIden::Str("document_id"))),
             )
-            .limit(limit);
+            .limit(search_limit);
 
         if let Some(filter) = &valid_query.query.filter {
             let filter = FilterBuilder::new(filter.clone().0, "documents", "document").build()?;
@@ -272,7 +293,79 @@ pub async fn build_sqlx_query(
     // Resort and limit
     query
         .order_by(SIden::Str("score"), Order::Desc)
-        .limit(limit);
+        .limit(search_limit);
+
+    // Rerank
+    let query = if let Some(rerank) = &valid_query.rerank {
+        // Add our vector_search CTE
+        let mut vector_search_cte = CommonTableExpression::from_select(query);
+        vector_search_cte.table_name(Alias::new(format!("{prefix}_vector_search")));
+        ctes.push(vector_search_cte);
+
+        // Add our row_number_vector_search CTE
+        let mut row_number_vector_search = Query::select();
+        row_number_vector_search
+            .columns([
+                SIden::Str("document"),
+                SIden::Str("chunk"),
+                SIden::Str("score"),
+            ])
+            .from(SIden::String(format!("{prefix}_vector_search")));
+        row_number_vector_search
+            .expr_as(Expr::cust("ROW_NUMBER() OVER ()"), Alias::new("row_number"));
+        let mut row_number_vector_search_cte =
+            CommonTableExpression::from_select(row_number_vector_search);
+        row_number_vector_search_cte
+            .table_name(Alias::new(format!("{prefix}_row_number_vector_search")));
+        ctes.push(row_number_vector_search_cte);
+
+        // Our actual select statement
+        let mut query = Query::select();
+        query.columns([
+            SIden::Str("document"),
+            SIden::Str("chunk"),
+            SIden::Str("score"),
+        ]);
+        query.expr_as(Expr::cust("(rank).score"), Alias::new("rank_score"));
+
+        // Build the actual select statement sub query
+        let mut sub_query_rank_call = Query::select();
+        let model_expr = Expr::cust_with_values("$1", [rerank.model.clone()]);
+        let query_expr = Expr::cust_with_values("$1", [rerank.query.clone()]);
+        let parameters_expr =
+            Expr::cust_with_values("$1", [rerank.parameters.clone().unwrap_or_default().0]);
+        sub_query_rank_call.expr_as(Expr::cust_with_exprs(
+            format!(r#"pgml.rank($1, $2, array_agg("chunk"), '{{"return_documents": false, "top_k": {}}}'::jsonb || $3)"#, valid_query.limit),
+            [model_expr, query_expr, parameters_expr],
+        ), Alias::new("rank"))
+        .from(SIden::String(format!("{prefix}_row_number_vector_search")));
+
+        let mut sub_query = Query::select();
+        sub_query
+            .columns([
+                SIden::Str("document"),
+                SIden::Str("chunk"),
+                SIden::Str("score"),
+                SIden::Str("rank"),
+            ])
+            .from_as(
+                SIden::String(format!("{prefix}_row_number_vector_search")),
+                Alias::new("rnsv1"),
+            )
+            .join_subquery(
+                JoinType::InnerJoin,
+                sub_query_rank_call,
+                Alias::new("rnsv2"),
+                Expr::cust("((rank).corpus_id + 1) = rnsv1.row_number"),
+            );
+
+        // Query from the sub query
+        query.from_subquery(sub_query, Alias::new("sub_query"));
+
+        query
+    } else {
+        query
+    };
 
     Ok((query, ctes))
 }

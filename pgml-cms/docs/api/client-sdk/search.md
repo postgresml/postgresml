@@ -10,14 +10,14 @@ This section will assume we have previously ran the following code:
 const pipeline = pgml.newPipeline("test_pipeline", {
   abstract: {
     semantic_search: {
-      model: "Alibaba-NLP/gte-base-en-v1.5",
+      model: "mixedbread-ai/mxbai-embed-large-v1",
     },
     full_text_search: { configuration: "english" },
   },
   body: {
     splitter: { model: "recursive_character" },
     semantic_search: {
-      model: "Alibaba-NLP/gte-base-en-v1.5",
+      model: "mixedbread-ai/mxbai-embed-large-v1",
     },
   },
 });
@@ -33,19 +33,70 @@ pipeline = Pipeline(
     {
         "abstract": {
             "semantic_search": {
-                "model": "Alibaba-NLP/gte-base-en-v1.5",
+                "model": "mixedbread-ai/mxbai-embed-large-v1",
             },
             "full_text_search": {"configuration": "english"},
         },
         "body": {
             "splitter": {"model": "recursive_character"},
             "semantic_search": {
-                "model": "Alibaba-NLP/gte-base-en-v1.5",
+                "model": "mixedbread-ai/mxbai-embed-large-v1",
             },
         },
     },
 )
 collection = Collection("test_collection")
+await collection.add_pipeline(pipeline);
+```
+{% endtab %}
+
+{% tab title="Rust" %}
+```rust
+let mut pipeline = Pipeline::new(
+    "test_pipeline",
+    Some(
+        serde_json::json!(
+            {
+                "abstract": {
+                    "semantic_search": {
+                        "model": "mixedbread-ai/mxbai-embed-large-v1",
+                    },
+                    "full_text_search": {"configuration": "english"},
+                },
+                "body": {
+                    "splitter": {"model": "recursive_character"},
+                    "semantic_search": {
+                        "model": "mixedbread-ai/mxbai-embed-large-v1",
+                    },
+                },
+            }
+        )
+        .into(),
+    ),
+)?;
+let mut collection = Collection::new("test_collection", None)?;
+collection.add_pipeline(&mut pipeline).await?;
+```
+{% endtab %}
+
+{% tab title="C" %}
+```cpp
+PipelineC *pipeline = pgml_pipelinec_new("test_pipeline", "{\
+    \"abstract\": {\
+        \"semantic_search\": {\
+            \"model\": \"Alibaba-NLP/gte-base-en-v1.5\"\
+        },\
+        \"full_text_search\": {\"configuration\": \"english\"}\
+    },\
+    \"body\": {\
+        \"splitter\": {\"model\": \"recursive_character\"},\
+        \"semantic_search\": {\
+            \"model\": \"Alibaba-NLP/gte-base-en-v1.5\"\
+        }\
+    }\
+}");
+CollectionC * collection = pgml_collectionc_new("test_collection", NULL);
+pgml_collectionc_add_pipeline(collection, pipeline);
 ```
 {% endtab %}
 {% endtabs %}
@@ -63,8 +114,8 @@ const results = await collection.vector_search(
       fields: {
         body: {
           query: "What is the best database?", parameters: {
-            instruction:
-              "Represent the Wikipedia question for retrieving supporting documents: ",
+          prompt:
+              "Represent this sentence for searching relevant passages: ",
           }
         },
       },
@@ -85,7 +136,7 @@ results = await collection.vector_search(
                 "body": {
                     "query": "What is the best database?",
                     "parameters": {
-                        "instruction": "Represent the Wikipedia question for retrieving supporting documents: ",
+                        "prompt": "Represent this sentence for searching relevant passages: ",
                     },
                 },
             },
@@ -96,9 +147,57 @@ results = await collection.vector_search(
 )
 ```
 {% endtab %}
+
+{% tab title="Rust" %}
+```rust
+let results = collection
+    .vector_search(
+        serde_json::json!({
+            "query": {
+                "fields": {
+                    "body": {
+                        "query": "What is the best database?",
+                        "parameters": {
+                            "prompt": "Represent this sentence for searching relevant passages: ",
+                        },
+                    },
+                },
+            },
+            "limit": 5,
+        })
+        .into(),
+        &mut pipeline,
+    )
+    .await?;
+```
+{% endtab %}
+
+{% tab title="C" %}
+```cpp
+r_size = 0;
+char **results = pgml_collectionc_vector_search(collection, "{\
+  \"query\": {\
+    \"fields\": {\
+      \"body\": {\
+        \"query\": \"What is the best database?\",\
+        \"parameters\": {\
+          \"prompt\": \"Represent this sentence for searching relevant passages: \"\
+        }\
+      }\
+    }\
+  },\
+  \"limit\": 5\
+}",
+pipeline, &r_size);
+```
+{% endtab %}
 {% endtabs %}
 
-Let's break this down. `vector_search` takes in a `JSON` object and a `Pipeline`. The `JSON` object currently supports two keys: `query` and `limit` . The `limit` limits how many chunks should be returned, the `query` specifies the actual query to perform. Let's see another more complicated example:
+Let's break this down. `vector_search` takes in a `JSON` object and a `Pipeline`. The `JSON` object currently supports two keys: `query` and `limit` . The `limit` limits how many chunks should be returned, the `query` specifies the actual query to perform. 
+
+Note that `mixedbread-ai/mxbai-embed-large-v1` takes in a prompt when creating embeddings for searching against a corpus which we provide in the `parameters`.
+
+Let's see another more complicated example:
 
 {% tabs %}
 {% tab title="JavaScript" %}
@@ -115,7 +214,7 @@ const results = await collection.vector_search(
         body: {
           query: query, parameters: {
             instruction:
-              "Represent the Wikipedia question for retrieving supporting documents: ",
+              "Represent this sentence for searching relevant passages: ",
           }
         },
       },
@@ -141,7 +240,7 @@ results = await collection.vector_search(
                 "body": {
                     "query": query,
                     "parameters": {
-                        "instruction": "Represent the Wikipedia question for retrieving supporting documents: ",
+                        "instruction": "Represent this sentence for searching relevant passages: ",
                     },
                 },
             },
@@ -151,6 +250,58 @@ results = await collection.vector_search(
     pipeline,
 )
 
+```
+{% endtab %}
+
+{% tab title="Rust" %}
+```rust
+let query = "What is the best database?";
+let results = collection
+    .vector_search(
+        serde_json::json!({
+            "query": {
+                "fields": {
+                    "abastract": {
+                        "query": query,
+                        "full_text_filter": "database",
+                    },
+                    "body": {
+                        "query": query,
+                        "parameters": {
+                            "instruction": "Represent this sentence for searching relevant passages: ",
+                        },
+                    },
+                },
+            },
+            "limit": 5,
+        })
+        .into(),
+        &mut pipeline,
+    )
+    .await?;
+```
+{% endtab %}
+
+{% tab title="C" %}
+```cpp
+r_size = 0;
+char **results = pgml_collectionc_vector_search(collection, "{\
+ \"query\": {\
+      \"fields\": {\
+          \"abastract\": {\
+              \"query\": \"What is the best database?\",\
+              \"full_text_filter\": \"database\"\
+          },\
+          \"body\": {\
+              \"query\": \"What is the best database?\",\
+              \"parameters\": {\
+                  \"instruction\": \"Represent this sentence for searching relevant passages: \"\
+              }\
+          }\
+      }\
+  },\
+  \"limit\": 5,\
+}", pipeline, &r_size);
 ```
 {% endtab %}
 {% endtabs %}
@@ -173,7 +324,7 @@ const results = await collection.vector_search(
         body: {
           query: "What is the best database?", parameters: {
             instruction:
-              "Represent the Wikipedia question for retrieving supporting documents: ",
+              "Represent this sentence for searching relevant passages: ",
           }
         },
       },
@@ -199,7 +350,7 @@ results = await collection.vector_search(
                 "body": {
                     "query": "What is the best database?",
                     "parameters": {
-                        "instruction": "Represent the Wikipedia question for retrieving supporting documents: ",
+                        "instruction": "Represent this sentence for searching relevant passages: ",
                     },
                 },
             },
@@ -209,6 +360,51 @@ results = await collection.vector_search(
     },
     pipeline,
 )
+```
+{% endtab %}
+
+{% tab title="Rust" %}
+```rust
+let results = collection
+    .vector_search(
+        serde_json::json!({
+            "query": {
+                "fields": {
+                    "body": {
+                        "query": "What is the best database?",
+                        "parameters": {
+                            "instruction": "Represent this sentence for searching relevant passages: ",
+                        },
+                    },
+                },
+                "filter": {"user_id": {"$eq": 1}},
+            },
+            "limit": 5,
+        })
+        .into(),
+        &mut pipeline,
+    )
+    .await?;
+```
+{% endtab %}
+
+{% tab title="C" %}
+```cpp
+r_size = 0;
+char **results = pgml_collectionc_vector_search(collection, "{\
+    \"query\": {\
+        \"fields\": {\
+            \"body\": {\
+                \"query\": \"What is the best database?\",\
+                \"parameters\": {\
+                    \"instruction\": \"Represent this sentence for searching relevant passages: \"\
+                }\
+            }\
+        },\
+        \"filter\": {\"user_id\": {\"$eq\": 1}}\
+    },\
+    \"limit\": 5\
+}", pipeline, &r_size);
 ```
 {% endtab %}
 {% endtabs %}
@@ -227,7 +423,7 @@ const results = await collection.vector_search(
         body: {
           query: "What is the best database?", parameters: {
             instruction:
-              "Represent the Wikipedia question for retrieving supporting documents: ",
+              "Represent this sentence for searching relevant passages: ",
           }
         },
       },
@@ -253,7 +449,7 @@ results = await collection.vector_search(
                 "body": {
                     "query": "What is the best database?",
                     "parameters": {
-                        "instruction": "Represent the Wikipedia question for retrieving supporting documents: ",
+                        "instruction": "Represent this sentence for searching relevant passages: ",
                     },
                 },
             },
@@ -263,6 +459,51 @@ results = await collection.vector_search(
     },
     pipeline,
 )
+```
+{% endtab %}
+
+{% tab title="Rust" %}
+```rust
+let results = collection
+    .vector_search(
+        serde_json::json!({
+            "query": {
+                "fields": {
+                    "body": {
+                        "query": "What is the best database?",
+                        "parameters": {
+                            "instruction": "Represent this sentence for searching relevant passages: ",
+                        },
+                    },
+                },
+                "filter": {"user_id": {"$gte": 1}},
+            },
+            "limit": 5,
+        })
+        .into(),
+        &mut pipeline,
+    )
+    .await?;
+```
+{% endtab %}
+
+{% tab title="C" %}
+```cpp
+r_size = 0;
+char **results = pgml_collectionc_vector_search(collection, "{\
+    \"query\": {\
+        \"fields\": {\
+            \"body\": {\
+                \"query\": \"What is the best database?\",\
+                \"parameters\": {\
+                    \"instruction\": \"Represent this sentence for searching relevant passages: \"\
+                }\
+            }\
+        },\
+        \"filter\": {\"user_id\": {\"$eq\": 1}}\
+    },\
+    \"limit\": 5\
+}", pipeline, &r_size);
 ```
 {% endtab %}
 {% endtabs %}
@@ -281,7 +522,7 @@ const results = await collection.vector_search(
         body: {
           query: "What is the best database?", parameters: {
             instruction:
-              "Represent the Wikipedia question for retrieving supporting documents: ",
+              "Represent this sentence for searching relevant passages: ",
           }
         },
       },
@@ -325,7 +566,7 @@ results = await collection.vector_search(
                 "body": {
                     "query": "What is the best database?",
                     "parameters": {
-                        "instruction": "Represent the Wikipedia question for retrieving supporting documents: ",
+                        "instruction": "Represent this sentence for searching relevant passages: ",
                     },
                 },
             },
@@ -340,6 +581,61 @@ results = await collection.vector_search(
     },
     pipeline,
 )
+```
+{% endtab %}
+
+{% tab title="Rust" %}
+```rust
+let results = collection
+    .vector_search(
+        serde_json::json!({
+            "query": {
+                "fields": {
+                    "body": {
+                        "query": "What is the best database?",
+                        "parameters": {
+                            "instruction": "Represent this sentence for searching relevant passages: ",
+                        },
+                    },
+                },
+                "filter": {
+                    "$or": [
+                        {"$and": [{"$eq": {"user_id": 1}}, {"$lt": {"user_score": 100}}]},
+                        {"special": {"$ne": True}},
+                    ],
+                },
+            },
+            "limit": 5,
+        })
+        .into(),
+        &mut pipeline,
+    )
+    .await?;
+```
+{% endtab %}
+
+{% tab title="C" %}
+```cpp
+r_size = 0;
+char **results = pgml_collectionc_vector_search(collection, "{\
+  \"query\": {\
+      \"fields\": {\
+          \"body\": {\
+              \"query\": \"What is the best database?\",\
+              \"parameters\": {\
+                  \"instruction\": \"Represent this sentence for searching relevant passages: \"\
+              }\
+          }\
+      },\
+      \"filter\": {\
+          \"$or\": [\
+              {\"$and\": [{\"$eq\": {\"user_id\": 1}}, {\"$lt\": {\"user_score\": 100}}]},\
+              {\"special\": {\"$ne\": True}}\
+          ]\
+      }\
+  },\
+  \"limit\": 5\
+}", pipeline, &r_size);
 ```
 {% endtab %}
 {% endtabs %}
