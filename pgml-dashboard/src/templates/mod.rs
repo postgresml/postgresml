@@ -5,6 +5,7 @@ pub use crate::components::{self, cms::index_link::IndexLink, NavLink, StaticNav
 use crate::{Notification, NotificationLevel};
 use components::notifications::marketing::{AlertBanner, FeatureBanner};
 use components::notifications::product::ProductBanner;
+use rocket::http::CookieJar;
 
 use crate::models::Cluster;
 use sailfish::TemplateOnce;

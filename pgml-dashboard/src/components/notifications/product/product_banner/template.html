@@ -1,38 +1,54 @@
 <% 
   use crate::NotificationLevel;
+  use crate::components::Modal;
 %>
 
 <div class="<%- location_id %>">
   <% if notification.is_some() {%>
     <% let notification = notification.unwrap(); %>
-  <div data-controller="notifications-product-product-banner">
+  <div 
+    data-controller="notifications-product-product-banner"
+    data-action="hide.bs.modal->notifications-product-product-banner#updateModalCookie"
+    data-notifications-product-product-banner-modal-value="<%- location_id %>"
+    data-notifications-product-product-banner-show-modal-value="<%- notification.modal && notification.trigger_modal %>">
     <%
-      let border_color = {
+      let icon = {
         if notification.level == NotificationLevel::ProductHigh {
-          "red-gradient-border-card"
+          "error"
         } else if notification.level == NotificationLevel::ProductMedium {
-          "orange-gradient-border-card"
+          "notifications"
         } else {
-          "green-gradient-border-card"
+          "lightbulb"
         }
       };
     %>
-    <div class="<%- border_color %> rounded-2 W-100">
+    <div class="rounded-2 W-100 <%- notification.level.to_string() %>">
       <div class="banner d-flex container">
+
+        <%
+        let title = if notification.title.is_some() { 
+          format!(r#"<p class="title m-0">{}</p>"#, notification.title.unwrap())} else {String::from("")};
+        %>
   
         <% let content = format!(
           r#"
-          <{} class="{} flex-grow-1 d-flex flex-column flex-md-row justify-content-center align-items-center row-gap-0 column-gap-3 fw-semibold overflow-hidden">
-            <div class="px-3 py-3 py-sm-0 overflow-hidden">
-              <p class="m-0 text-center">{} {}</p>
+          <{open_tag} class="{} flex-grow-1 d-flex flex-column flex-md-row justify-content-start align-items-center row-gap-0 column-gap-3 fw-semibold overflow-hidden">
+            <div class="px-3 py-3 py-sm-1 overflow-hidden text-container d-flex flex-row gap-2">
+              <span class="material-symbols-outlined {display} preset-icon">{icon}</span>
+              <div>
+                {title}
+                <p class="m-0">{message}</p>
+              </div>
             </div>
-          </{}>
+          </{close_tag}>
           "#,
-          if notification.link.is_some() { format!(r#"a href="{}" data-turbo="false" "#, notification.link.clone().unwrap()) } else { "div".to_string() },
-          if notification.link.is_some() { "btn btn-tertiary p-0 goto-arrow-hover-trigger" } else { "" },
-          notification.message,
-          if notification.link.is_some() { r#"<span class="material-symbols-outlined more-info position-relative goto-arrow-shift-animation" style="top: 2px;">arrow_forward</span>"# } else { "" },
-          if notification.link.is_some() { "a" } else { "div" },
+          if notification.link.is_some() { "btn btn-tertiary p-0" } else { "" },
+          display = if notification.preset_icon { "d-block" } else { "d-none" },
+          icon = icon,
+          title = title,
+          message = notification.message,
+          open_tag = if notification.link.is_some() { format!(r#"a href="{}" data-turbo="false" "#, notification.link.clone().unwrap()) } else { "div".to_string() },
+          close_tag = if notification.link.is_some() { "a" } else { "div" },
         ); %>
         
         <%- content %>
@@ -48,5 +64,9 @@
     </div>
   </div>
 
+  <% if notification.modal {%>
+  <% println!("modal is on the screen"); %>
+  <%+ Modal::new("we need to say something".into()).id(&location_id) %>
+  <% } %>
   <% } %>
 </div>

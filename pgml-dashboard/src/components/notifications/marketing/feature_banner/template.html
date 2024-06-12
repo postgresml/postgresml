@@ -4,7 +4,7 @@
     <% let notification = notification.unwrap(); %>
   <div data-controller="notifications-marketing-feature-banner">
 
-    <div class="<%- notification.level.to_string() %> <% if notification.level == NotificationLevel::Feature3 {%>main-gradient-border-card<% } %> rounded-2 W-100">
+    <div class="<%- notification.level.to_string() %> <% if notification.level == NotificationLevel::Feature3 {%>main-gradient-border-card<% } %> rounded-3 W-100">
       <div class="banner d-flex container">
 
         <% let content = format!(

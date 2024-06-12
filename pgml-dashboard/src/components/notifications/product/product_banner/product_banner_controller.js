@@ -1,14 +1,24 @@
 import { Controller } from '@hotwired/stimulus'
 
 export default class extends Controller {
-  static targets = [];
-  static outlets = [];
+  static values = {
+    modal: String,
+    showModal: Boolean
+  };
 
-  initialize() {
-    console.log("Initialized notifications-product-product-banner");
+
+  initialize() {}
+
+  connect() {
+    if (this.showModalValue) {
+      const myModal = new bootstrap.Modal(document.getElementById(this.modalValue), {})
+      myModal.show();
+    }
   }
 
-  connect() {}
+  updateModalCookie() {
+    console.log("updating cookie")
+  }
 
   disconnect() {}
 }

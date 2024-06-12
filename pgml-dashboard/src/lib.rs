@@ -28,8 +28,9 @@ use templates::{components::StaticNav, *};
 
 use crate::components::tables::serverless_models::{ServerlessModels, ServerlessModelsTurbo};
 use crate::components::tables::serverless_pricing::{ServerlessPricing, ServerlessPricingTurbo};
-use crate::utils::cookies::Notifications;
+use crate::utils::cookies::{NotificationCookie, Notifications};
 use crate::utils::urls;
+use chrono;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 
@@ -63,6 +64,12 @@ pub struct Notification {
     pub viewed: bool,
     pub link: Option<String>,
     pub deployment: Option<String>,
+    pub preset_icon: bool,
+    pub title: Option<String>,
+    pub modal_show_interval: i64,
+    pub notification_show_interval: i64,
+    pub modal: bool,
+    pub trigger_modal: bool,
 }
 impl Notification {
     pub fn new(message: &str) -> Notification {
@@ -77,6 +84,12 @@ impl Notification {
             viewed: false,
             link: None,
             deployment: None,
+            preset_icon: false,
+            title: None,
+            modal_show_interval: 90,
+            notification_show_interval: 90,
+            modal: false,
+            trigger_modal: false,
         }
     }
 
@@ -102,6 +115,36 @@ impl Notification {
 
     pub fn set_deployment(mut self, deployment: &str) -> Notification {
         self.deployment = Some(deployment.into());
+        self
+    }
+
+    pub fn has_preset_icon(mut self, show_icon: bool) -> Notification {
+        self.preset_icon = show_icon;
+        self
+    }
+
+    pub fn set_title(mut self, title: &str) -> Notification {
+        self.title = Some(title.into());
+        self
+    }
+
+    pub fn set_modal_show_interval(mut self, interval: i64) -> Notification {
+        self.modal_show_interval = interval;
+        self
+    }
+
+    pub fn set_notification_show_interval(mut self, interval: i64) -> Notification {
+        self.notification_show_interval = interval;
+        self
+    }
+
+    pub fn has_modal(mut self, modal: bool) -> Notification {
+        self.modal = modal;
+        self
+    }
+
+    pub fn set_trigger_modal(mut self, trigger_modal: bool) -> Notification {
+        self.trigger_modal = trigger_modal;
         self
     }
 
@@ -191,15 +234,6 @@ impl Notification {
         match notification.level {
             NotificationLevel::ProductHigh => notification.level == desired_level && notification.viewed == false,
             NotificationLevel::ProductMedium => {
-                println!(
-                    "{} == {} && {:?} == {:?} && {} == {}",
-                    notification.level,
-                    desired_level,
-                    notification.deployment,
-                    deployment_id.clone(),
-                    notification.viewed,
-                    false
-                );
                 notification.level == desired_level
                     && notification.deployment == deployment_id
                     && notification.viewed == false
@@ -317,7 +351,11 @@ pub async fn playground(cluster: &Cluster) -> Result<ResponseOk, Error> {
 pub fn remove_banner(id: String, notification_type: String, cookies: &CookieJar<'_>, context: &Cluster) -> ResponseOk {
     let mut viewed = Notifications::get_viewed(cookies);
 
-    viewed.push(id);
+    viewed.push(NotificationCookie {
+        id: id.clone(),
+        time_viewed: Some(chrono::Utc::now()),
+        time_modal_viewed: None,
+    });
     Notifications::update_viewed(&viewed, cookies);
 
     let notification = match context.notifications.as_ref() {
@@ -325,13 +363,27 @@ pub fn remove_banner(id: String, notification_type: String, cookies: &CookieJar<
             if notification_type == "alert" {
                 notifications
                     .into_iter()
-                    .filter(|n: &&Notification| -> bool { Notification::is_alert(&n.level) && !viewed.contains(&n.id) })
+                    .filter(|n: &&Notification| -> bool {
+                        Notification::is_alert(&n.level)
+                            && !viewed
+                                .clone()
+                                .into_iter()
+                                .map(|x| x.id)
+                                .collect::<Vec<String>>()
+                                .contains(&n.id)
+                    })
                     .next()
             } else if notification_type == "feature" {
                 notifications
                     .into_iter()
                     .filter(|n: &&Notification| -> bool {
-                        Notification::is_feature(&n.level) && !viewed.contains(&n.id)
+                        Notification::is_feature(&n.level)
+                            && !viewed
+                                .clone()
+                                .into_iter()
+                                .map(|x| x.id)
+                                .collect::<Vec<String>>()
+                                .contains(&n.id)
                     })
                     .next()
             } else {
@@ -358,7 +410,11 @@ pub fn remove_banner_product(
 ) -> Result<Response, Error> {
     let mut all_viewed = Notifications::get_viewed(cookies);
 
-    all_viewed.push(id.clone());
+    all_viewed.push(NotificationCookie {
+        id: id.clone(),
+        time_viewed: Some(chrono::Utc::now()),
+        time_modal_viewed: None,
+    });
     Notifications::update_viewed(&all_viewed, cookies);
 
     // Get the notification that triggered this call.
@@ -402,17 +458,16 @@ pub fn remove_banner_product(
     return Ok(Response::turbo_stream(turbo_stream));
 }
 
-pub fn routes() -> Vec<Route> {
-    routes![
-        dashboard,
-        remove_banner,
-        playground,
-        serverless_models_turboframe,
-        serverless_pricing_turboframe,
-        remove_banner_product
-    ]
-}
+// Update cookie to inidicate the user has viewed the modal.
+// #[get("/notifications/product/modal/remove_modal?<id>&<deployment_id>")]
+// pub fn remove_modal_product(
+//     id: String,
+//     deployment_id: Option<String>,
+//     cookies: &CookieJar<'_>,
+//     context: &Cluster,
+// ) {
+//     let mut all_viewed = Notifications::get_viewed(cookies);
 
-pub async fn migrate(pool: &PgPool) -> anyhow::Result<()> {
-    Ok(sqlx::migrate!("./migrations").run(pool).await?)
-}
+//     all_viewed.push(NotificationCookie{id: id.clone(), time_viewed: None, time_modal_viewed: Some(chrono::Utc::now())});
+//     Notifications::update_viewed(&all_viewed, cookies);
+// }
