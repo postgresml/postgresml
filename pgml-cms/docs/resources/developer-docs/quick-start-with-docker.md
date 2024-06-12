@@ -80,7 +80,7 @@ Time: 41.520 ms
 postgresml=# SELECT pgml.version();
  version 
 ---------
- 2.7.13
+ 2.9.1
 (1 row)
 ```
 
