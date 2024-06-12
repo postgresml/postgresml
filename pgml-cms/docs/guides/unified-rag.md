@@ -339,7 +339,7 @@ FROM (
 !!!
 
 
-We are using the mixedbread-ai/mxbai-rerank-base-v1 model to rerank the results from our semantic search. Once again, note how fast this is. We have now combined the embedding api call, the semantic search api call, and the rerank api call from our RAG flow into one sql query. 
+We are using the `mixedbread-ai/mxbai-rerank-base-v1` model to rerank the results from our semantic search. Once again, note how fast this is. We have now combined the embedding api call, the semantic search api call, and the rerank api call from our RAG flow into one sql query. 
 
 Also notice that the top 3 results all show examples using the `pgml.transform` function. This is the exact results we wanted for our search, and why we needed to rerank. 
 
@@ -426,7 +426,7 @@ FROM
 
 We have now combined the embedding api call, the semantic search api call, the rerank api call and the text generation api call from our RAG flow into one sql query.
 
-We are using meta-llama/Meta-Llama-3-8B-Instruct to perform text generation. We have a number of different models available for text generation, but for our use case `meta-llama/Meta-Llama-3-8B-Instruct` is a fantastic mix between speed and capability. For this simple example we are only passing the top search result as context to the LLM. In real world use cases, you will want to pass more results.
+We are using `meta-llama/Meta-Llama-3-8B-Instruct` to perform text generation. We have a number of different models available for text generation, but for our use case `meta-llama/Meta-Llama-3-8B-Instruct` is a fantastic mix between speed and capability. For this simple example we are only passing the top search result as context to the LLM. In real world use cases, you will want to pass more results.
 
 We can stream from the database by using the `pgml.transform_stream` function and cursors. Here is a query measuring time to first token.
 
@@ -524,4 +524,4 @@ Time: 135.170 ms
 
 Note how fast this is! With unified RAG we can perform the entire RAG pipeline and get the first token for our text generation back in under 300 milliseconds.
 
-In summary, we have reduced our RAG system that involved four different network calls into a single unified system that requires one sql query and yields a response in: TIME
+In summary, we have reduced our RAG system that involved four different network calls into a single unified system that requires one sql query and yields a response in less than 300 milliseconds.
