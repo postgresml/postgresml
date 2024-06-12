@@ -21,8 +21,7 @@ impl std::fmt::Display for NotificationCookie {
                 self.time_modal_viewed.clone().unwrap()
             ));
         }
-        rsp.push_str("}}");
-        println!("rsp: {}", rsp);
+        rsp.push_str("}");
         return write!(f, "{}", rsp);
     }
 }

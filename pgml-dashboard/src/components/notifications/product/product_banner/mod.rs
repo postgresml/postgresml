@@ -8,7 +8,6 @@ pub struct ProductBanner {
     pub notification: Option<Notification>,
     pub location_id: String,
     pub url: String,
-    pub show_modal: bool,
 }
 
 impl ProductBanner {
@@ -33,7 +32,6 @@ impl ProductBanner {
                     notification: Some(notification.clone()),
                     location_id,
                     url,
-                    show_modal: false,
                 }
             }
             None => {
@@ -41,7 +39,6 @@ impl ProductBanner {
                     notification: None,
                     location_id,
                     url,
-                    show_modal: false,
                 }
             }
         }
@@ -53,10 +50,6 @@ impl ProductBanner {
 
     pub fn get_url(&self) -> String {
         self.url.clone()
-    }
-
-    pub fn set_show_modal(&mut self, show_modal: bool) {
-        self.show_modal = show_modal;
     }
 }
 

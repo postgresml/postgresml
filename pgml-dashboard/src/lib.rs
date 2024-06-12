@@ -408,14 +408,26 @@ pub fn remove_banner_product(
     cookies: &CookieJar<'_>,
     context: &Cluster,
 ) -> Result<Response, Error> {
-    let mut all_viewed = Notifications::get_viewed(cookies);
+    let mut all_notification_cookies = Notifications::get_viewed(cookies);
 
-    all_viewed.push(NotificationCookie {
-        id: id.clone(),
-        time_viewed: Some(chrono::Utc::now()),
-        time_modal_viewed: None,
-    });
-    Notifications::update_viewed(&all_viewed, cookies);
+    let current_notification_cookie = all_notification_cookies.iter().position(|x| x.id == id);
+
+    println!("Current Notification Cookie: {:?}", current_notification_cookie);
+
+    match current_notification_cookie {
+        Some(index) => {
+            all_notification_cookies[index].time_viewed = Some(chrono::Utc::now());
+        }
+        None => {
+            all_notification_cookies.push(NotificationCookie {
+                id: id.clone(),
+                time_viewed: Some(chrono::Utc::now()),
+                time_modal_viewed: None,
+            });
+        }
+    }
+
+    Notifications::update_viewed(&all_notification_cookies, cookies);
 
     // Get the notification that triggered this call.
     // Guaranteed to exist since it built the component that called this, so this is safe to unwrap.
@@ -425,8 +437,7 @@ pub fn remove_banner_product(
         .unwrap()
         .clone()
         .into_iter()
-        .filter(|n: &Notification| -> bool { n.id == id })
-        .next();
+        .find(|n: &Notification| -> bool { n.id == id });
 
     let next_notification = match context.notifications.as_ref() {
         Some(notifications) => notifications
@@ -458,16 +469,41 @@ pub fn remove_banner_product(
     return Ok(Response::turbo_stream(turbo_stream));
 }
 
-// Update cookie to inidicate the user has viewed the modal.
-// #[get("/notifications/product/modal/remove_modal?<id>&<deployment_id>")]
-// pub fn remove_modal_product(
-//     id: String,
-//     deployment_id: Option<String>,
-//     cookies: &CookieJar<'_>,
-//     context: &Cluster,
-// ) {
-//     let mut all_viewed = Notifications::get_viewed(cookies);
+// Update cookie to show the user has viewed the modal.
+#[get("/notifications/product/modal/remove_modal?<id>")]
+pub fn remove_modal_product(id: String, cookies: &CookieJar<'_>) {
+    let mut all_notification_cookies = Notifications::get_viewed(cookies);
 
-//     all_viewed.push(NotificationCookie{id: id.clone(), time_viewed: None, time_modal_viewed: Some(chrono::Utc::now())});
-//     Notifications::update_viewed(&all_viewed, cookies);
-// }
+    let current_notification_cookie = all_notification_cookies.iter().position(|x| x.id == id);
+
+    match current_notification_cookie {
+        Some(index) => {
+            all_notification_cookies[index].time_modal_viewed = Some(chrono::Utc::now());
+        }
+        None => {
+            all_notification_cookies.push(NotificationCookie {
+                id: id,
+                time_viewed: None,
+                time_modal_viewed: Some(chrono::Utc::now()),
+            });
+        }
+    }
+
+    Notifications::update_viewed(&all_notification_cookies, cookies);
+}
+
+pub fn routes() -> Vec<Route> {
+    routes![
+        dashboard,
+        remove_banner,
+        playground,
+        serverless_models_turboframe,
+        serverless_pricing_turboframe,
+        remove_banner_product,
+        remove_modal_product
+    ]
+}
+
+pub async fn migrate(pool: &PgPool) -> anyhow::Result<()> {
+    Ok(sqlx::migrate!("./migrations").run(pool).await?)
+}

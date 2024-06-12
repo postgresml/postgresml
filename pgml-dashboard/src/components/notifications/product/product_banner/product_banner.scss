@@ -12,6 +12,9 @@ div[data-controller="notifications-product-product-banner"] {
     .title, .preset-icon {
       color: #{$alert-notification-high};
     }
+    .modal-body {
+      border-color: #{$alert-notification-high};
+    }
   }
 
   .product_medium {
@@ -19,13 +22,18 @@ div[data-controller="notifications-product-product-banner"] {
     .title, .preset-icon {
       color: #{$alert-notification-medium};
     }
-
+    .modal-body {
+      border-color: #{$alert-notification-medium};
+    }
   }
 
   .product_marketing {
     border: 2px solid #{$alert-notification-marketing};
     .title, .preset-icon {
       color: #{$alert-notification-marketing};
+    }
+    .modal-body {
+      border-color: #{$alert-notification-marketing};
     }
   }
 

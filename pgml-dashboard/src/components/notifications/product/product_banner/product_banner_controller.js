@@ -3,7 +3,8 @@ import { Controller } from '@hotwired/stimulus'
 export default class extends Controller {
   static values = {
     modal: String,
-    showModal: Boolean
+    showModal: Boolean,
+    notificationId: String,
   };
 
 
@@ -17,7 +18,7 @@ export default class extends Controller {
   }
 
   updateModalCookie() {
-    console.log("updating cookie")
+    fetch("/dashboard/notifications/product/modal/remove_modal?id=" + this.notificationIdValue, {})
   }
 
   disconnect() {}

@@ -8,7 +8,10 @@
     <% let notification = notification.unwrap(); %>
   <div 
     data-controller="notifications-product-product-banner"
-    data-action="hide.bs.modal->notifications-product-product-banner#updateModalCookie"
+    <% if notification.modal {%>
+    data-action="hide.bs.modal@document->notifications-product-product-banner#updateModalCookie"
+    <% } %>
+    data-notifications-product-product-banner-notification-id-value="<%- notification.id %>"
     data-notifications-product-product-banner-modal-value="<%- location_id %>"
     data-notifications-product-product-banner-show-modal-value="<%- notification.modal && notification.trigger_modal %>">
     <%
@@ -24,10 +27,9 @@
     %>
     <div class="rounded-2 W-100 <%- notification.level.to_string() %>">
       <div class="banner d-flex container">
-
         <%
         let title = if notification.title.is_some() { 
-          format!(r#"<p class="title m-0">{}</p>"#, notification.title.unwrap())} else {String::from("")};
+          format!(r#"<p class="title m-0">{}</p>"#, notification.title.clone().unwrap())} else {String::from("")};
         %>
   
         <% let content = format!(
@@ -61,12 +63,27 @@
         </a>
         <% } %>
       </div>
+      <% if notification.modal {%>
+      <%
+      let title = if notification.title.is_some() { 
+        format!(r#"<h6>{}</h6>"#, notification.title.unwrap())} else {String::from("")};
+      %>
+
+      <%+ Modal::new(format!(r#"
+        <div class="d-flex flex-column gap-4 align-items-center">
+          <span class="material-symbols-outlined {display} preset-icon" style="font-size: 44px">{icon}</span>
+          {title}
+          <p class="m-0">{message}</p>
+        </div>
+      "#, 
+      display = if notification.preset_icon { "d-block" } else { "d-none" },
+      icon = icon,
+      title = title,
+      message = notification.message
+      ).into()).id(&location_id) %>
+      <% } %>
     </div>
   </div>
 
-  <% if notification.modal {%>
-  <% println!("modal is on the screen"); %>
-  <%+ Modal::new("we need to say something".into()).id(&location_id) %>
-  <% } %>
   <% } %>
 </div>
