@@ -1,32 +1,35 @@
 ---
 description: >-
-  Unified RAG is an alternative to typical RAG systems where embedding, retrieval, reranking, and text generation are unified under on service.
+  Embedding generation, storage and retrieval + search reranking + text generation - all in Postgres.
 featured: true
+image: ".gitbook/assets/unified-rag-header-image.png"
 ---
 
 # Unified RAG
 
-This is not a guide on typical RAG workflows, this is a demonstration of Unified RAG and the simplicity and power it provides.
+<div align="left">
 
-## Introduction
+<figure><img src=".gitbook/assets/silas.jpg" alt="Author" width="125"><figcaption></figcaption></figure>
 
-Retrieval Augmented Generation (RAG) is domain specific jargon that simply means augmenting LLMs with context to improve their response. For example, if I were to ask an LLM: "How do I write a select statement with pgml.transform?". I would most likely get an unsatisfactory mostly incorrect example.
+</div>
 
-However, if I were to first provide it with some context about the pgml.transform function, and then asked it "How do I write a select statement with pgml.transform?". I would likely get a much better answer.
+Silas Marvin
 
-RAG has grown rapidly in popularity. It is not an esoteric practice run only by advanced machine learning practitioners, but is used widely by anyone who wants to improve the output of their LLMs. It is most commonly used by chatbots to better answer user questions.
+June 12, 2024
 
-As quick reminder, the typical modern RAG workflow looks like this:
+## The pitfalls of typical RAG systems
 
-<figure><img src="../.gitbook/assets/rag-flow-with-reranking.png" alt=""><figcaption><p>Steps one through three prepare our RAG system, and steps four through eight are RAG itself.</p></figcaption></figure>
- 
+The typical modern RAG workflow looks like this:
 
-## Unified RAG
+<figure><img src="../docs/.gitbook/assets/rag-flow-with-reranking.png" alt=""><figcaption><p>Steps one through three prepare our RAG system, and steps four through eight are RAG itself.</p></figcaption></figure>
 
 RAG systems have a number of drawbacks:
 - They require multiple different paid services
 - They introduce new microservices and points of failure
 - They are slow and expose user data to third parties providing a negative user experience
+
+
+## The solution: Unified RAG
 
 Unified RAG is a solution to the drawbacks of RAG. Instead of relying on separate microservices to handle embedding, retrieval, reranking, and text generation, unified RAG combines them under one service. In this case, we will be combining them all under PostgresML.
 
@@ -91,9 +94,9 @@ INSERT INTO documents (document) SELECT md5(random()::text) FROM generate_series
 
 !!!
 
-In addition to the document that contains an example of pgml.transform we have inserted 100 randomly generated documents. We include these noisy documents to verify that our Unified RAG system can retrieve the correct context.
+In addition to the document that contains an example of `pgml.transform` we have inserted 100 randomly generated documents. We include these noisy documents to verify that our Unified RAG system can retrieve the correct context.
 
-We can then split them using the pgml.chunk function.
+We can then split them using the `pgml.chunk` function.
 
 !!! generic
 
@@ -180,7 +183,7 @@ FROM
 
 !!!
 
-In this case we are using the mixedbread-ai/mxbai-embed-large-v1 a SOTA model with incredible recall performance.
+In this case we are using the `mixedbread-ai/mxbai-embed-large-v1` a SOTA model with incredible recall performance.
 
 We can verify they were embedded correctly.
 
@@ -258,7 +261,7 @@ LIMIT 6;
 
 !!!
 
-We are using a CTE to embed the user query, and then performing nearest neighbors search using the cosine similarity function to compare the distance between our embeddings. Note how fast this is! Our embeddings utilize an HNSW index from pgvector to perform ridiculously fast retrieval.
+We are using a CTE to embed the user query, and then performing nearest neighbors search using the cosine similarity function to compare the distance between our embeddings. Note how fast this is! We are embedding the query in the database and utilizing an HNSW index from pgvector to perform ridiculously fast retrieval.
 
 There is a slight problem with the results of our retrieval. If you were to ask me: `How do I write a select statement with pgml.transform?` I couldn't use any of the top 3 results from our search to answer that queestion. Our search results aren't bad, but they can be better. This is why we rerank.
 
@@ -339,7 +342,7 @@ FROM (
 !!!
 
 
-We are using the `mixedbread-ai/mxbai-rerank-base-v1` model to rerank the results from our semantic search. Once again, note how fast this is. We have now combined the embedding api call, the semantic search api call, and the rerank api call from our RAG flow into one sql query. 
+We are using the `mixedbread-ai/mxbai-rerank-base-v1` model to rerank the results from our semantic search. Once again, note how fast this is. We have now combined the embedding api call, the semantic search api call, and the rerank api call from our RAG flow into one sql query with embedding generation, retrieval and reranking all happening in the database.
 
 Also notice that the top 3 results all show examples using the `pgml.transform` function. This is the exact results we wanted for our search, and why we needed to rerank. 
 
@@ -526,3 +529,7 @@ Time: 0.240 ms
 !!!
 
 Note how fast this is! With unified RAG we can perform the entire RAG pipeline and get the first token for our text generation back in 100 milliseconds.
+
+In summary, we have reduced our RAG system that involved four different network calls into a single unified system that requires one sql query and yields a response in 100 milliseconds. Note that timing will vary with network latency.
+
+Feel free to give Unified RAG on PostgresML a try and let us know what you think. If you have any questions, or just have an idea on how to make PostgresML better, we'd love to hear form you in our [Discord](https://discord.com/invite/DmyJP3qJ7U). We’re open source, and welcome contributions from the community, especially when it comes to the rapidly evolving ML/AI landscape.
