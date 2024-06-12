@@ -31,7 +31,7 @@ pub async fn notebooks(cluster: &Cluster) -> Result<ResponseOk, Error> {
 
     let nav_tabs = tabs::Tabs::new(tabs, Some("Notebooks"), Some("Notebooks"))?;
 
-    Ok(ResponseOk(layout.render(templates::Dashboard::new(nav_tabs, cluster))))
+    Ok(ResponseOk(layout.render(templates::Dashboard::new(nav_tabs))))
 }
 
 // Returns the specified notebook page.
@@ -52,7 +52,7 @@ pub async fn notebook(cluster: &Cluster, notebook_id: i64) -> Result<ResponseOk,
 
     let nav_tabs = tabs::Tabs::new(tabs, Some("Notebooks"), Some("Notebooks"))?;
 
-    Ok(ResponseOk(layout.render(templates::Dashboard::new(nav_tabs, cluster))))
+    Ok(ResponseOk(layout.render(templates::Dashboard::new(nav_tabs))))
 }
 
 // Returns all the notebooks for a deployment in a turbo frame.

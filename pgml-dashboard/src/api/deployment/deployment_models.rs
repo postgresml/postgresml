@@ -29,7 +29,7 @@ pub async fn deployment_models(cluster: &Cluster) -> Result<ResponseOk, Error> {
 
     let nav_tabs = tabs::Tabs::new(tabs, Some("Models"), Some("Models"))?;
 
-    Ok(ResponseOk(layout.render(templates::Dashboard::new(nav_tabs, cluster))))
+    Ok(ResponseOk(layout.render(templates::Dashboard::new(nav_tabs))))
 }
 
 // Returns models page
@@ -52,7 +52,7 @@ pub async fn model(cluster: &Cluster, model_id: i64) -> Result<ResponseOk, Error
 
     let nav_tabs = tabs::Tabs::new(tabs, Some("Models"), Some("Models"))?;
 
-    Ok(ResponseOk(layout.render(templates::Dashboard::new(nav_tabs, cluster))))
+    Ok(ResponseOk(layout.render(templates::Dashboard::new(nav_tabs))))
 }
 
 #[get("/models_turboframe")]

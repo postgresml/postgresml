@@ -30,7 +30,7 @@ pub async fn uploader(cluster: &Cluster) -> Result<ResponseOk, Error> {
 
     let nav_tabs = tabs::Tabs::new(tabs, Some("Upload Data"), Some("Upload Data"))?;
 
-    Ok(ResponseOk(layout.render(templates::Dashboard::new(nav_tabs, cluster))))
+    Ok(ResponseOk(layout.render(templates::Dashboard::new(nav_tabs))))
 }
 
 // Returns uploader module in a turboframe.

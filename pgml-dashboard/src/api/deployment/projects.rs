@@ -27,7 +27,7 @@ pub async fn projects(cluster: &Cluster) -> Result<ResponseOk, Error> {
 
     let nav_tabs = tabs::Tabs::new(tabs, Some("Notebooks"), Some("Projects"))?;
 
-    Ok(ResponseOk(layout.render(templates::Dashboard::new(nav_tabs, cluster))))
+    Ok(ResponseOk(layout.render(templates::Dashboard::new(nav_tabs))))
 }
 
 // Return the specified project page.
@@ -48,7 +48,7 @@ pub async fn project(cluster: &Cluster, project_id: i64) -> Result<ResponseOk, E
 
     let nav_tabs = tabs::Tabs::new(tabs, Some("Projects"), Some("Projects"))?;
 
-    Ok(ResponseOk(layout.render(templates::Dashboard::new(nav_tabs, cluster))))
+    Ok(ResponseOk(layout.render(templates::Dashboard::new(nav_tabs))))
 }
 
 // Returns all the deployments for the project in a turbo frame.

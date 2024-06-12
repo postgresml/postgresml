@@ -122,7 +122,8 @@ pub struct WebAppBase<'a> {
     pub product_left_nav: StaticNav,
     pub body_components: Vec<Component>,
     pub cluster: Cluster,
-    pub product_banner: ProductBanner,
+    pub product_banner_high: ProductBanner,
+    pub product_banner_medium: ProductBanner,
 }
 
 impl<'a> WebAppBase<'a> {
@@ -135,9 +136,13 @@ impl<'a> WebAppBase<'a> {
             cluster,
             dropdown_nav: context.context.dropdown_nav.clone(),
             product_left_nav: context.context.product_left_nav.clone(),
-            product_banner: ProductBanner::from_notification(Notification::next_product_of_level(
+            product_banner_high: ProductBanner::from_notification(Notification::next_product_of_level(
                 context,
                 NotificationLevel::ProductHigh,
+            )),
+            product_banner_medium: ProductBanner::from_notification(Notification::next_product_of_level(
+                context,
+                NotificationLevel::ProductMedium,
             )),
             ..Default::default()
         }
@@ -469,16 +474,11 @@ pub struct Uploaded {
 #[template(path = "content/dashboard/dashboard.html")]
 pub struct Dashboard<'a> {
     pub tabs: tabs::Tabs<'a>,
-    pub notification: ProductBanner,
 }
 
 impl Dashboard<'_> {
-    pub fn new<'a>(tabs: tabs::Tabs<'a>, context: &'a crate::guards::Cluster) -> Dashboard<'a> {
-        let notification = ProductBanner::from_notification(Notification::next_product_of_level(
-            context,
-            NotificationLevel::ProductMedium,
-        ));
-        Dashboard { tabs, notification }
+    pub fn new<'a>(tabs: tabs::Tabs<'a>) -> Dashboard<'a> {
+        Dashboard { tabs }
     }
 }
 

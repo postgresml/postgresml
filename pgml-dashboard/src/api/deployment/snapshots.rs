@@ -28,7 +28,7 @@ pub async fn snapshots(cluster: &Cluster) -> Result<ResponseOk, Error> {
 
     let nav_tabs = tabs::Tabs::new(tabs, Some("Snapshots"), Some("Snapshots"))?;
 
-    Ok(ResponseOk(layout.render(templates::Dashboard::new(nav_tabs, cluster))))
+    Ok(ResponseOk(layout.render(templates::Dashboard::new(nav_tabs))))
 }
 
 // Returns the specific snapshot page
@@ -49,7 +49,7 @@ pub async fn snapshot(cluster: &Cluster, snapshot_id: i64) -> Result<ResponseOk,
 
     let nav_tabs = tabs::Tabs::new(tabs, Some("Snapshots"), Some("Snapshots"))?;
 
-    Ok(ResponseOk(layout.render(templates::Dashboard::new(nav_tabs, cluster))))
+    Ok(ResponseOk(layout.render(templates::Dashboard::new(nav_tabs))))
 }
 
 // Returns all snapshots for the deployment in a turboframe.
