@@ -1,6 +1,7 @@
 # Table of contents
 
 * [Home](README.md)
+* [Semantic Search in Postgres in 15 Minutes](semantic-search-in-postgres-in-15-minutes.md)
 * [Announcing the Release of our Rust SDK](announcing-the-release-of-our-rust-sdk.md)
 * [Serverless LLMs are dead; Long live Serverless LLMs](serverless-llms-are-dead-long-live-serverless-llms.md)
 * [Speeding up vector recall 5x with HNSW](speeding-up-vector-recall-5x-with-hnsw.md)
