@@ -70,7 +70,7 @@
       %>
 
       <%+ Modal::new(format!(r#"
-        <div class="d-flex flex-column gap-4 align-items-center">
+        <div class="d-flex flex-column gap-4 align-items-center" data-action="click->notifications-product-product-banner#closeModal">
           <span class="material-symbols-outlined {display} preset-icon" style="font-size: 44px">{icon}</span>
           {title}
           <p class="m-0">{message}</p>

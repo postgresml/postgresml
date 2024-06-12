@@ -1,4 +1,4 @@
-import { Controller } from '@hotwired/stimulus'
+import { Controller } from "@hotwired/stimulus";
 
 export default class extends Controller {
   static values = {
@@ -7,19 +7,37 @@ export default class extends Controller {
     notificationId: String,
   };
 
-
   initialize() {}
 
   connect() {
-    if (this.showModalValue) {
-      const myModal = new bootstrap.Modal(document.getElementById(this.modalValue), {})
-      myModal.show();
-    }
+    this.on_page_loaded = () => {
+      if (this.showModalValue) {
+        document
+          .getElementById(this.modalValue)
+          .dispatchEvent(new CustomEvent("show"));
+      }
+    };
+
+    window.addEventListener("load", this.on_page_loaded);
   }
 
   updateModalCookie() {
-    fetch("/dashboard/notifications/product/modal/remove_modal?id=" + this.notificationIdValue, {})
+    fetch(
+      "/dashboard/notifications/product/modal/remove_modal?id=" +
+        this.notificationIdValue,
+      {},
+    );
   }
 
-  disconnect() {}
+  closeModal(e) {
+    e.preventDefault();
+    document
+      .getElementById(this.modalValue)
+      .dispatchEvent(new CustomEvent("hide"));
+    Turbo.visit(e.target.href);
+  }
+
+  disconnect() {
+    window.removeEventListener("load", this.on_page_loaded);
+  }
 }
