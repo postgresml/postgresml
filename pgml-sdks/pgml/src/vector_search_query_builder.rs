@@ -364,6 +364,20 @@ pub async fn build_sqlx_query(
 
         query
     } else {
+        // Wrap our query to return a fourth null column
+        let mut vector_search_cte = CommonTableExpression::from_select(query);
+        vector_search_cte.table_name(Alias::new(format!("{prefix}_vector_search")));
+        ctes.push(vector_search_cte);
+
+        let mut query = Query::select();
+        query
+            .columns([
+                SIden::Str("document"),
+                SIden::Str("chunk"),
+                SIden::Str("score"),
+            ])
+            .expr(Expr::cust("NULL"))
+            .from(SIden::String(format!("{prefix}_vector_search")));
         query
     };
 
