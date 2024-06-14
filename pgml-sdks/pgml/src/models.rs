@@ -8,6 +8,7 @@ use crate::types::{DateTime, Json};
 // A multi field pipeline
 #[enum_def]
 #[derive(FromRow)]
+#[allow(dead_code)]
 pub struct Pipeline {
     pub id: i64,
     pub name: String,
@@ -19,6 +20,7 @@ pub struct Pipeline {
 // A model used to perform some task
 #[enum_def]
 #[derive(FromRow)]
+#[allow(dead_code)]
 pub struct Model {
     pub id: i64,
     pub created_at: DateTime,
@@ -29,6 +31,7 @@ pub struct Model {
 // A text splitter
 #[enum_def]
 #[derive(FromRow)]
+#[allow(dead_code)]
 pub struct Splitter {
     pub id: i64,
     pub created_at: DateTime,
@@ -63,6 +66,7 @@ impl Document {
 // A collection of documents
 #[enum_def]
 #[derive(FromRow)]
+#[allow(dead_code)]
 pub struct Collection {
     pub id: i64,
     pub created_at: DateTime,
@@ -74,6 +78,7 @@ pub struct Collection {
 // An embedding
 #[enum_def]
 #[derive(FromRow)]
+#[allow(dead_code)]
 pub struct Embedding {
     pub id: i64,
     pub created_at: DateTime,
@@ -83,6 +88,7 @@ pub struct Embedding {
 
 // A chunk of split text
 #[derive(FromRow)]
+#[allow(dead_code)]
 pub struct Chunk {
     pub id: i64,
     pub created_at: DateTime,
@@ -93,6 +99,7 @@ pub struct Chunk {
 
 // A tsvector of a document
 #[derive(FromRow)]
+#[allow(dead_code)]
 pub struct TSVector {
     pub id: i64,
     pub created_at: DateTime,

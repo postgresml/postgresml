@@ -175,6 +175,7 @@ impl From<Json> for InvividualSyncStatus {
 }
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct PipelineDatabaseData {
     pub id: i64,
     pub created_at: DateTime,
