@@ -5,15 +5,21 @@
 
 <div class="<%- location_id %>">
   <% if notification.is_some() {%>
-    <% let notification = notification.unwrap(); %>
+    <% 
+      let notification = notification.unwrap();
+      let modal_id = format!("modal-{}", notification.id);
+      let show_modal = notification.modal && notification.trigger_modal && show_modal_on_load;
+    %>
   <div 
     data-controller="notifications-product-product-banner"
-    <% if notification.modal {%>
-    data-action="hide.bs.modal@document->notifications-product-product-banner#updateModalCookie"
+    <% if show_modal {%>
+    data-action="
+      hide.bs.modal->notifications-product-product-banner#updateModalCookie
+      turbo:load@window->notifications-product-product-banner#showModal
+    "
     <% } %>
     data-notifications-product-product-banner-notification-id-value="<%- notification.id %>"
-    data-notifications-product-product-banner-modal-value="<%- location_id %>"
-    data-notifications-product-product-banner-show-modal-value="<%- notification.modal && notification.trigger_modal %>">
+    data-notifications-product-product-banner-modal-value="<%- modal_id %>">
     <%
       let icon = {
         if notification.level == NotificationLevel::ProductHigh {
@@ -63,24 +69,27 @@
         </a>
         <% } %>
       </div>
-      <% if notification.modal {%>
+      <% if show_modal {%>
       <%
       let title = if notification.title.is_some() { 
-        format!(r#"<h6>{}</h6>"#, notification.title.unwrap())} else {String::from("")};
+        format!(r#"<h6 data-action="click->notifications-product-product-banner#followModalLink">{}</h6>"#, notification.title.unwrap())} else {String::from("")};
       %>
 
       <%+ Modal::new(format!(r#"
-        <div class="d-flex flex-column gap-4 align-items-center" data-action="click->notifications-product-product-banner#closeModal">
+        <div class="d-flex flex-column gap-4 align-items-center">
           <span class="material-symbols-outlined {display} preset-icon" style="font-size: 44px">{icon}</span>
           {title}
-          <p class="m-0">{message}</p>
+          <button data-action="click->notifications-product-product-banner#hideModal">Close</button>
+          <p class="m-0" data-action="click->notifications-product-product-banner#followModalLink">{message}</p>
         </div>
       "#, 
       display = if notification.preset_icon { "d-block" } else { "d-none" },
       icon = icon,
       title = title,
       message = notification.message
-      ).into()).id(&location_id) %>
+      )
+      .into()).id(&modal_id)
+      .set_static_backdrop(true) %>
       <% } %>
     </div>
   </div>

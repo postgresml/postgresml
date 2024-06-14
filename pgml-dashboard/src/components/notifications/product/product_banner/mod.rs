@@ -5,15 +5,17 @@ use sailfish::TemplateOnce;
 #[derive(TemplateOnce, Default, Clone)]
 #[template(path = "notifications/product/product_banner/template.html")]
 pub struct ProductBanner {
-    pub notification: Option<Notification>,
-    pub location_id: String,
-    pub url: String,
+    notification: Option<Notification>,
+    location_id: String,
+    url: String,
+    show_modal_on_load: bool,
 }
 
 impl ProductBanner {
     pub fn from_notification(notification: Option<&Notification>) -> ProductBanner {
         let mut location_id = format!("product-banner");
         let mut url = format!("/dashboard/notifications/product/remove_banner");
+
         if notification.is_some() {
             let notification = notification.clone().unwrap();
             location_id.push_str(&format!("-{}", notification.level.to_string()));
@@ -32,6 +34,7 @@ impl ProductBanner {
                     notification: Some(notification.clone()),
                     location_id,
                     url,
+                    show_modal_on_load: true,
                 }
             }
             None => {
@@ -39,6 +42,7 @@ impl ProductBanner {
                     notification: None,
                     location_id,
                     url,
+                    show_modal_on_load: true,
                 }
             }
         }
@@ -50,6 +54,11 @@ impl ProductBanner {
 
     pub fn get_url(&self) -> String {
         self.url.clone()
+    }
+
+    pub fn set_show_modal_on_load(mut self, show_modal_on_load: bool) -> ProductBanner {
+        self.show_modal_on_load = show_modal_on_load;
+        self
     }
 }
 

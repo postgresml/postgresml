@@ -122,7 +122,7 @@ pub struct WebAppBase<'a> {
     pub product_left_nav: StaticNav,
     pub body_components: Vec<Component>,
     pub cluster: Cluster,
-    pub product_banner_high: ProductBanner,
+    pub product_banners_high: Vec<ProductBanner>,
     pub product_banner_medium: ProductBanner,
 }
 
@@ -131,15 +131,22 @@ impl<'a> WebAppBase<'a> {
         let head = Head::new().title(title).context(&context.context.head_items);
         let cluster = context.context.cluster.clone();
 
+        let all_product_high_level = context
+            .notifications
+            .clone()
+            .unwrap_or_else(|| vec![])
+            .into_iter()
+            .filter(|n: &Notification| n.level == NotificationLevel::ProductHigh)
+            .enumerate()
+            .map(|(i, n)| ProductBanner::from_notification(Some(&n)).set_show_modal_on_load(i == 0))
+            .collect::<Vec<ProductBanner>>();
+
         WebAppBase {
             head,
             cluster,
             dropdown_nav: context.context.dropdown_nav.clone(),
             product_left_nav: context.context.product_left_nav.clone(),
-            product_banner_high: ProductBanner::from_notification(Notification::next_product_of_level(
-                context,
-                NotificationLevel::ProductHigh,
-            )),
+            product_banners_high: all_product_high_level,
             product_banner_medium: ProductBanner::from_notification(Notification::next_product_of_level(
                 context,
                 NotificationLevel::ProductMedium,

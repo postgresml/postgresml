@@ -242,18 +242,6 @@ impl Notification {
             _ => false,
         }
     }
-
-    pub fn get_notifications_from_context(context: Option<&crate::guards::Cluster>) -> Option<Notification> {
-        match context.as_ref() {
-            Some(context) => match &context.notifications {
-                Some(notifications) => {
-                    return Some(notifications[0].clone());
-                }
-                None => return None,
-            },
-            None => return None,
-        };
-    }
 }
 
 impl std::fmt::Display for NotificationLevel {

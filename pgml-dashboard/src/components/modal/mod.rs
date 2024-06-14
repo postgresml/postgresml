@@ -10,6 +10,7 @@ pub struct Modal {
     pub header: Option<Component>,
     pub body: Component,
     pub default_style: bool,
+    static_backdrop: String,
 }
 
 component!(Modal);
@@ -61,6 +62,15 @@ impl Modal {
 
     pub fn no_default_style(mut self) -> Modal {
         self.default_style = false;
+        self
+    }
+
+    pub fn set_static_backdrop(mut self, set_static: bool) -> Modal {
+        if set_static {
+            self.static_backdrop = r#"data-bs-backdrop="static""#.into();
+        } else {
+            self.static_backdrop = String::new();
+        }
         self
     }
 }

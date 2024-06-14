@@ -15,7 +15,6 @@
             <div class="container-fluid p-0 min-vh-lg-100">
                 <div class="row gx-0 min-vh-lg-100 gy-0">
                     <%+ WebAppNavbar::new(product_left_nav.links.clone(), dropdown_nav).cluster(cluster) %>
-
                     <div class="d-flex">
                         <%+ WebAppLeftNav::new(product_left_nav.clone())
                             .id(&product_left_nav.unique_id()) %>
@@ -27,7 +26,9 @@
 
                             <div class="px-xs-2 px-md-5 overflow-hidden" style="padding-top: 57px;">
                                 <div class="webapp-content-max-width-container pt-4">
-                                    <%+ product_banner_high %>
+                                    <% for banner in product_banners_high {%>
+                                    <%+ banner %>
+                                    <% } %>
                                     <%+ product_banner_medium %>
                                     <%- content.unwrap_or_default() %>
                                 </div>
