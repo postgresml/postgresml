@@ -1038,7 +1038,12 @@ mod tests {
                 "full_text_search": {
                     "title": {
                         "query": "test 9",
-                        "boost": 4.0
+                        "boost": 4.0,
+                        "rerank": {
+                            "query": "Test document 2",
+                            "model": "mixedbread-ai/mxbai-rerank-base-v1",
+                            "num_documents_to_rerank": 100
+                        }
                     },
                     "body": {
                         "query": "Test",
@@ -1051,7 +1056,12 @@ mod tests {
                         "parameters": {
                             "prompt": "query: ",
                         },
-                        "boost": 2.0
+                        "boost": 2.0,
+                        "rerank": {
+                            "query": "Test document 2",
+                            "model": "mixedbread-ai/mxbai-rerank-base-v1",
+                            "num_documents_to_rerank": 100
+                        }
                     },
                     "body": {
                         "query": "This is the body test",
@@ -1086,7 +1096,7 @@ mod tests {
             .iter()
             .map(|r| r["document"]["id"].as_u64().unwrap())
             .collect();
-        assert_eq!(ids, vec![9, 3, 4, 7, 5]);
+        assert_eq!(ids, vec![9, 3, 4, 5, 6]);
 
         let pool = get_or_initialize_pool(&None).await?;
 
