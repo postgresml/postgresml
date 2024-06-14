@@ -16,7 +16,7 @@ use crate::utils::urls;
 
 // Returns the deployments projects page.
 #[get("/projects")]
-pub async fn projects(cluster: &Cluster) -> Result<ResponseOk, Error> {
+pub async fn projects(cluster: &Cluster, _connected: ConnectedCluster<'_>) -> Result<ResponseOk, Error> {
     let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster);
     layout.breadcrumbs(vec![NavLink::new("Projects", &urls::deployment_projects()).active()]);
 
@@ -32,7 +32,11 @@ pub async fn projects(cluster: &Cluster) -> Result<ResponseOk, Error> {
 
 // Return the specified project page.
 #[get("/projects/<project_id>")]
-pub async fn project(cluster: &Cluster, project_id: i64) -> Result<ResponseOk, Error> {
+pub async fn project(
+    cluster: &Cluster,
+    project_id: i64,
+    _connected: ConnectedCluster<'_>,
+) -> Result<ResponseOk, Error> {
     let project = models::Project::get_by_id(cluster.pool(), project_id).await?;
 
     let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster);
