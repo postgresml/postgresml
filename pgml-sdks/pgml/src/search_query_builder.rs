@@ -151,6 +151,7 @@ pub async fn build_search_query(
                 score_cte_non_recursive
                     .from_as(embeddings_table.to_table_tuple(), Alias::new("embeddings"))
                     .column((SIden::Str("documents"), SIden::Str("id")))
+                    .column((SIden::Str("chunks"), SIden::Str("chunk")))
                     .join_as(
                         JoinType::InnerJoin,
                         chunks_table.to_table_tuple(),
@@ -177,6 +178,7 @@ pub async fn build_search_query(
                 score_cte_recurisive
                     .from_as(embeddings_table.to_table_tuple(), Alias::new("embeddings"))
                     .column((SIden::Str("documents"), SIden::Str("id")))
+                    .column((SIden::Str("chunks"), SIden::Str("chunk")))
                     .expr(Expr::cust(format!(r#""{cte_name}".previous_document_ids || documents.id"#)))
                     .expr(Expr::cust(format!(
                         r#"(1 - (embeddings.embedding <=> (SELECT embedding FROM "{key}_embedding")::vector)) * {boost} AS score"#
@@ -233,6 +235,7 @@ pub async fn build_search_query(
                 score_cte_non_recursive
                     .from_as(embeddings_table.to_table_tuple(), Alias::new("embeddings"))
                     .column((SIden::Str("documents"), SIden::Str("id")))
+                    .column((SIden::Str("chunks"), SIden::Str("chunk")))
                     .expr(Expr::cust("ARRAY[documents.id] as previous_document_ids"))
                     .expr(Expr::cust_with_values(
                         format!("(1 - (embeddings.embedding <=> $1::vector)) * {boost} AS score"),
@@ -269,6 +272,7 @@ pub async fn build_search_query(
                         Expr::cust("1 = 1"),
                     )
                     .column((SIden::Str("documents"), SIden::Str("id")))
+                    .column((SIden::Str("chunks"), SIden::Str("chunk")))
                     .expr(Expr::cust(format!(
                         r#""{cte_name}".previous_document_ids || documents.id"#
                     )))
@@ -324,6 +328,7 @@ pub async fn build_search_query(
             let mut row_number_pre_rerank = Query::select();
             row_number_pre_rerank
                 .column(SIden::Str("id"))
+                .column(SIden::Str("chunk"))
                 .from(SIden::String(cte_name.clone()))
                 .expr_as(Expr::cust("ROW_NUMBER() OVER ()"), Alias::new("row_number"))
                 .limit(rerank.num_documents_to_rerank);
@@ -335,7 +340,10 @@ pub async fn build_search_query(
             // Our actual CTE
             let mut query = Query::select();
             query.column(SIden::Str("id"));
-            query.expr_as(Expr::cust("(rank).score"), Alias::new("score"));
+            query.expr_as(
+                Expr::cust(format!("(rank).score * {boost}")),
+                Alias::new("score"),
+            );
 
             // Build the actual CTE
             let mut sub_query_rank_call = Query::select();
@@ -347,14 +355,7 @@ pub async fn build_search_query(
                 format!(r#"pgml.rank($1, $2, array_agg("chunk"), '{{"return_documents": false, "top_k": {}}}'::jsonb || $3)"#, valid_query.limit),
                 [model_expr, query_expr, parameters_expr],
             ), Alias::new("rank"))
-            .from(SIden::String(format!("row_number_{cte_name}")))
-            .join_as(
-                JoinType::InnerJoin,
-                chunks_table.to_table_tuple(),
-                Alias::new("chunks"),
-                Expr::col((SIden::Str("chunks"), SIden::Str("id")))
-                    .equals((SIden::String(format!("row_number_{cte_name}")), SIden::Str("id"))),
-            );
+            .from(SIden::String(format!("row_number_{cte_name}")));
 
             let mut sub_query = Query::select();
             sub_query
@@ -403,6 +404,7 @@ pub async fn build_search_query(
 
         let mut score_cte_non_recursive = Query::select()
             .column((SIden::Str("documents"), SIden::Str("id")))
+            .column((SIden::Str("chunks"), SIden::Str("chunk")))
             .expr_as(
                 Expr::cust_with_values(
                     format!(
@@ -445,6 +447,7 @@ pub async fn build_search_query(
 
         let mut score_cte_recursive = Query::select()
             .column((SIden::Str("documents"), SIden::Str("id")))
+            .column((SIden::Str("chunks"), SIden::Str("chunk")))
             .expr_as(
                 Expr::cust_with_values(
                     format!(
@@ -514,6 +517,7 @@ pub async fn build_search_query(
             let mut row_number_pre_rerank = Query::select();
             row_number_pre_rerank
                 .column(SIden::Str("id"))
+                .column(SIden::Str("chunk"))
                 .from(SIden::String(cte_name.clone()))
                 .expr_as(Expr::cust("ROW_NUMBER() OVER ()"), Alias::new("row_number"))
                 .limit(rerank.num_documents_to_rerank);
@@ -525,7 +529,10 @@ pub async fn build_search_query(
             // Our actual CTE
             let mut query = Query::select();
             query.column(SIden::Str("id"));
-            query.expr_as(Expr::cust("(rank).score"), Alias::new("score"));
+            query.expr_as(
+                Expr::cust(format!("(rank).score * {boost}")),
+                Alias::new("score"),
+            );
 
             // Build the actual CTE
             let mut sub_query_rank_call = Query::select();
@@ -537,14 +544,7 @@ pub async fn build_search_query(
                 format!(r#"pgml.rank($1, $2, array_agg("chunk"), '{{"return_documents": false, "top_k": {}}}'::jsonb || $3)"#, valid_query.limit),
                 [model_expr, query_expr, parameters_expr],
             ), Alias::new("rank"))
-            .from(SIden::String(format!("row_number_{cte_name}")))
-            .join_as(
-                JoinType::InnerJoin,
-                chunks_table.to_table_tuple(),
-                Alias::new("chunks"),
-                Expr::col((SIden::Str("chunks"), SIden::Str("id")))
-                    .equals((SIden::String(format!("row_number_{cte_name}")), SIden::Str("id"))),
-            );
+            .from(SIden::String(format!("row_number_{cte_name}")));
 
             let mut sub_query = Query::select();
             sub_query

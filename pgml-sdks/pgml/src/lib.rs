@@ -980,7 +980,7 @@ mod tests {
     #[tokio::test]
     async fn can_search_with_local_embeddings() -> anyhow::Result<()> {
         internal_init_logger(None, None).ok();
-        let collection_name = "test_r_c_cswle_123";
+        let collection_name = "test_r_c_cswle_126";
         let mut collection = Collection::new(collection_name, None)?;
         let documents = generate_dummy_documents(10);
         collection.upsert_documents(documents.clone(), None).await?;
@@ -1096,7 +1096,7 @@ mod tests {
             .iter()
             .map(|r| r["document"]["id"].as_u64().unwrap())
             .collect();
-        assert_eq!(ids, vec![9, 3, 4, 5, 6]);
+        assert_eq!(ids, vec![2, 9, 3, 8, 4]);
 
         let pool = get_or_initialize_pool(&None).await?;
 
@@ -1121,7 +1121,7 @@ mod tests {
         // Document ids are 1 based in the db not 0 based like they are here
         assert_eq!(
             search_results.iter().map(|sr| sr.2).collect::<Vec<i64>>(),
-            vec![10, 4, 5, 8, 6]
+            vec![3, 10, 4, 9, 5]
         );
 
         let event = json!({"clicked": true});
