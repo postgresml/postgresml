@@ -326,7 +326,7 @@ pub async fn build_sqlx_query(
             SIden::Str("chunk"),
             SIden::Str("score"),
         ]);
-        query.expr_as(Expr::cust("(rank).score"), Alias::new("rank_score"));
+        query.expr_as(Expr::cust("(rank).score"), Alias::new("rerank_score"));
 
         // Build the actual select statement sub query
         let mut sub_query_rank_call = Query::select();
@@ -364,6 +364,20 @@ pub async fn build_sqlx_query(
 
         query
     } else {
+        // Wrap our query to return a fourth null column
+        let mut vector_search_cte = CommonTableExpression::from_select(query);
+        vector_search_cte.table_name(Alias::new(format!("{prefix}_vector_search")));
+        ctes.push(vector_search_cte);
+
+        let mut query = Query::select();
+        query
+            .columns([
+                SIden::Str("document"),
+                SIden::Str("chunk"),
+                SIden::Str("score"),
+            ])
+            .expr_as(Expr::cust("NULL"), Alias::new("rerank_score"))
+            .from(SIden::String(format!("{prefix}_vector_search")));
         query
     };
 

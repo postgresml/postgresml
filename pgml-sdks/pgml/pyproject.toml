@@ -5,7 +5,7 @@ build-backend = "maturin"
 [project]
 name = "pgml"
 requires-python = ">=3.7"
-version = "1.0.3"
+version = "1.1.0"
 description = "Python SDK is designed to facilitate the development of scalable vector search applications on PostgreSQL databases."
 authors = [
   {name = "PostgresML",  email = "team@postgresml.org"},
