@@ -77,9 +77,9 @@
 
       <%+ Modal::new(format!(r#"
         <div class="d-flex flex-column gap-4 align-items-center">
+          <a class="btn btn-tertiary" data-action="click->notifications-product-product-banner#hideModal"><span class="material-symbols-outlined close position-absolute top-0 end-0 m-2">close</span></a>
           <span class="material-symbols-outlined {display} preset-icon" style="font-size: 44px">{icon}</span>
           {title}
-          <button data-action="click->notifications-product-product-banner#hideModal">Close</button>
           <p class="m-0" data-action="click->notifications-product-product-banner#followModalLink">{message}</p>
         </div>
       "#, 

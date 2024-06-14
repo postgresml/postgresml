@@ -124,6 +124,7 @@ pub struct WebAppBase<'a> {
     pub cluster: Cluster,
     pub product_banners_high: Vec<ProductBanner>,
     pub product_banner_medium: ProductBanner,
+    pub product_banner_marketing: ProductBanner,
 }
 
 impl<'a> WebAppBase<'a> {
@@ -150,6 +151,10 @@ impl<'a> WebAppBase<'a> {
             product_banner_medium: ProductBanner::from_notification(Notification::next_product_of_level(
                 context,
                 NotificationLevel::ProductMedium,
+            )),
+            product_banner_marketing: ProductBanner::from_notification(Notification::next_product_of_level(
+                context,
+                NotificationLevel::ProductMarketing,
             )),
             ..Default::default()
         }
