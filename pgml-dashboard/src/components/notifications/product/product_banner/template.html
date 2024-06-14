@@ -8,7 +8,7 @@
     <% 
       let notification = notification.unwrap();
       let modal_id = format!("modal-{}", notification.id);
-      let show_modal = notification.modal && notification.trigger_modal && show_modal_on_load;
+      let show_modal = notification.trigger_modal && show_modal_on_load;
     %>
   <div 
     data-controller="notifications-product-product-banner"

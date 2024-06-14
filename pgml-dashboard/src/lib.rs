@@ -68,7 +68,6 @@ pub struct Notification {
     pub title: Option<String>,
     pub modal_show_interval: i64,
     pub notification_show_interval: i64,
-    pub modal: bool,
     pub trigger_modal: bool,
 }
 impl Notification {
@@ -86,9 +85,8 @@ impl Notification {
             deployment: None,
             preset_icon: false,
             title: None,
-            modal_show_interval: 90,
-            notification_show_interval: 90,
-            modal: false,
+            modal_show_interval: 90,        // If modal dismissed, show again in 90 days.
+            notification_show_interval: 90, // If notification dismissed, show again in 90 days.
             trigger_modal: false,
         }
     }
@@ -135,11 +133,6 @@ impl Notification {
 
     pub fn set_notification_show_interval(mut self, interval: i64) -> Notification {
         self.notification_show_interval = interval;
-        self
-    }
-
-    pub fn has_modal(mut self, modal: bool) -> Notification {
-        self.modal = modal;
         self
     }
 
@@ -388,9 +381,9 @@ pub fn remove_banner(id: String, notification_type: String, cookies: &CookieJar<
     }
 }
 
-// Replace or remove all product banners after user exits out of the message.
-#[get("/notifications/product/remove_banner?<id>&<deployment_id>")]
-pub fn remove_banner_product(
+// Replace a product banner after user exits out of the message.
+#[get("/notifications/product/replace_banner?<id>&<deployment_id>")]
+pub fn replace_banner_product(
     id: String,
     deployment_id: Option<String>,
     cookies: &CookieJar<'_>,
@@ -399,8 +392,6 @@ pub fn remove_banner_product(
     let mut all_notification_cookies = Notifications::get_viewed(cookies);
 
     let current_notification_cookie = all_notification_cookies.iter().position(|x| x.id == id);
-
-    println!("Current Notification Cookie: {:?}", current_notification_cookie);
 
     match current_notification_cookie {
         Some(index) => {
@@ -457,6 +448,38 @@ pub fn remove_banner_product(
     return Ok(Response::turbo_stream(turbo_stream));
 }
 
+// Remove a product banners after user exits out of the message.
+#[get("/notifications/product/remove_banner?<id>&<target>")]
+pub fn remove_banner_product(id: String, target: String, cookies: &CookieJar<'_>) -> Result<Response, Error> {
+    let mut all_notification_cookies = Notifications::get_viewed(cookies);
+
+    let current_notification_cookie = all_notification_cookies.iter().position(|x| x.id == id);
+
+    match current_notification_cookie {
+        Some(index) => {
+            all_notification_cookies[index].time_viewed = Some(chrono::Utc::now());
+        }
+        None => {
+            all_notification_cookies.push(NotificationCookie {
+                id: id.clone(),
+                time_viewed: Some(chrono::Utc::now()),
+                time_modal_viewed: None,
+            });
+        }
+    }
+
+    Notifications::update_viewed(&all_notification_cookies, cookies);
+
+    let turbo_stream = format!(
+        r##"<turbo-stream action="remove" targets=".{}">
+<template>
+</template>
+</turbo-stream>"##,
+        target
+    );
+    return Ok(Response::turbo_stream(turbo_stream));
+}
+
 // Update cookie to show the user has viewed the modal.
 #[get("/notifications/product/modal/remove_modal?<id>")]
 pub fn remove_modal_product(id: String, cookies: &CookieJar<'_>) {
@@ -487,8 +510,9 @@ pub fn routes() -> Vec<Route> {
         playground,
         serverless_models_turboframe,
         serverless_pricing_turboframe,
-        remove_banner_product,
-        remove_modal_product
+        replace_banner_product,
+        remove_modal_product,
+        remove_banner_product
     ]
 }
 
