@@ -17,7 +17,7 @@ use std::collections::HashMap;
 
 // Returns snapshots page
 #[get("/snapshots")]
-pub async fn snapshots(cluster: &Cluster) -> Result<ResponseOk, Error> {
+pub async fn snapshots(cluster: &Cluster, _connected: ConnectedCluster<'_>) -> Result<ResponseOk, Error> {
     let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster);
     layout.breadcrumbs(vec![NavLink::new("Snapshots", &urls::deployment_snapshots()).active()]);
 
@@ -33,7 +33,7 @@ pub async fn snapshots(cluster: &Cluster) -> Result<ResponseOk, Error> {
 
 // Returns the specific snapshot page
 #[get("/snapshots/<snapshot_id>")]
-pub async fn snapshot(cluster: &Cluster, snapshot_id: i64) -> Result<ResponseOk, Error> {
+pub async fn snapshot(cluster: &Cluster, snapshot_id: i64, _connected: ConnectedCluster<'_>) -> Result<ResponseOk, Error> {
     let snapshot = models::Snapshot::get_by_id(cluster.pool(), snapshot_id).await?;
 
     let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster);

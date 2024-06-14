@@ -20,7 +20,7 @@ use crate::utils::urls;
 
 // Returns notebook page
 #[get("/notebooks")]
-pub async fn notebooks(cluster: &Cluster) -> Result<ResponseOk, Error> {
+pub async fn notebooks(cluster: &Cluster, _connected: ConnectedCluster<'_>) -> Result<ResponseOk, Error> {
     let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster);
     layout.breadcrumbs(vec![NavLink::new("Notebooks", &urls::deployment_notebooks()).active()]);
 
@@ -36,7 +36,7 @@ pub async fn notebooks(cluster: &Cluster) -> Result<ResponseOk, Error> {
 
 // Returns the specified notebook page.
 #[get("/notebooks/<notebook_id>")]
-pub async fn notebook(cluster: &Cluster, notebook_id: i64) -> Result<ResponseOk, Error> {
+pub async fn notebook(cluster: &Cluster, notebook_id: i64, _connected: ConnectedCluster<'_>) -> Result<ResponseOk, Error> {
     let notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
 
     let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster);
