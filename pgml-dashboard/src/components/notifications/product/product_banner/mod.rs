@@ -81,7 +81,7 @@ impl ProductBanner {
             Some(format!("target={}", random_target)),
         ];
 
-        let mut all_params = query_params
+        let all_params = query_params
             .iter()
             .filter_map(|x| x.clone())
             .collect::<Vec<String>>()
