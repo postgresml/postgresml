@@ -3,3 +3,6 @@
 
 // src/components/notifications/marketing
 pub mod marketing;
+
+// src/components/notifications/product
+pub mod product;
