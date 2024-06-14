@@ -3,7 +3,6 @@
 description: >-
   Learn how to implement semantic search in postgres with nothing but SQL.
 featured: true
-image: ".gitbook/assets/image (2) (2).png"
 tags: ["Engineering"]
 ---
 
@@ -35,7 +34,7 @@ Embeddings are vectors. Given some text and some embedding model, we can convert
 
 !!! generic
 
-!!! code_block time="10.493 ms"
+!!! code_block time="19.080 ms"
 
 ```postgresql
 SELECT pgml.embed('mixedbread-ai/mxbai-embed-large-v1', 'test');
@@ -53,7 +52,7 @@ SELECT pgml.embed('mixedbread-ai/mxbai-embed-large-v1', 'test');
 
 !!!
 
-Above we used the pgml.embed SQL function to generate an embedding using the `mixedbread-ai/mxbai-embed-large-v1` model. 
+Above we used the `pgml.embed` SQL function to generate an embedding of the word `test` using the `mixedbread-ai/mxbai-embed-large-v1` model.
 
 The output size of the vector varies per model. This specific model outputs vectors with 1024 dimensions. This means each vector contains 1024 floating point numbers. 
 
@@ -120,7 +119,7 @@ Document2: I think tomatos are incredible on burgers.
 
 !!!
 
-And a user is looking for the answer to the question: `What is the pgml.transform function?`. If we embed the user query and all of the documents using a model like `mixedbread-ai/mxbai-embed-large-v1`, we can compare the query embedding to all of the document embeddings, and select the document that has the closest embedding as the answer. 
+And a user is looking for the answer to the question: `What is the pgml.transform function?`. If we embed the user query and all of the documents using a model like `mixedbread-ai/mxbai-embed-large-v1`, we can compare the query embedding to all of the document embeddings, and select the document that has the closest embedding to the answer. 
 
 These are big embeddings, and we can’t simply eyeball which one is the closest. How do we actually measure the similarity / distance between different vectors? There are four popular methods for measuring the distance between vectors available in PostgresML:
 - L2 distance
@@ -130,11 +129,11 @@ These are big embeddings, and we can’t simply eyeball which one is the closest
 
 For most use cases we recommend using the cosine distance as defined by the formula:
 
-INSERT IMAGE
+<figure><img src=".gitbook/assets/cosine_similarity.png" alt="cosine similarity formula"><figcaption></figcaption></figure>
 
 Where A and B are two vectors. 
 
-This is a somewhat confusing formula but lucky for us pgvector provides an operator that computes this for us.
+This is a somewhat confusing formula but luckily for us pgvector provides an operator that computes the cosine distance for us.
 
 !!! generic
 
@@ -158,7 +157,11 @@ SELECT '[1,2,3]'::vector <=> '[2,3,4]'::vector;
 
 !!!
 
+!!! note
+
 The other distance functions have similar formulas and also provide convenient operators to use. It may be worth testing the other operators and seeing which performs better for your use case. For more information on the other distance functions see our guide on [embeddings](https://postgresml.org/docs/guides/embeddings/vector-similarity).
+
+!!!
 
 Back to our search example outlined above, we can compute the cosine distance between our query embedding and our documents.
 
@@ -176,11 +179,11 @@ SELECT pgml.embed('mixedbread-ai/mxbai-embed-large-v1', 'What is the pgml.transf
 !!! results
 
 ```text
-  cosine_distance   
+cosine_distance   
 --------------------
  0.1114425936213167
 
-  cosine_distance   
+cosine_distance   
 --------------------
  0.7383001059221699
 ```
@@ -222,7 +225,7 @@ We can search this table using the following query:
 
 !!! generic
 
-!!! code_block time="10.493 ms"
+!!! code_block time="19.864 ms"
 
 ```postgresql
 WITH embedded_query AS (
@@ -237,11 +240,7 @@ SELECT
         FROM embedded_query) <=> text_and_embeddings.embedding cosine_distance
 FROM
   text_and_embeddings
-ORDER BY
-    text_and_embeddings.embedding <=> (
-        SELECT
-            embedding
-        FROM embedded_query)
+ORDER BY cosine_distance
 LIMIT 1;
 ```
 
@@ -259,18 +258,31 @@ LIMIT 1;
 
 !!!
 
-This query is fast for now, but as the table scales it will greatly slow down because we have not indexed the vector column. 
+This query is fast for now, but as the table scales it will greatly slow down because we have not indexed the embedding column. 
 
+Let's insert 100,000 embeddings.
 
 !!! generic
 
-!!! code_block time="10.493 ms"
+!!! code_block
 
 ```postgresql
 INSERT INTO text_and_embeddings (text, embedding) 
 SELECT md5(random()::text), pgml.embed('mixedbread-ai/mxbai-embed-large-v1', md5(random()::text)) 
-FROM generate_series(1, 10000);
+FROM generate_series(1, 100000);
+```
 
+!!!
+
+!!!
+
+Now let's try our search again.
+
+!!! generic
+
+!!! code_block time="105.917 ms"
+
+```postgresql
 WITH embedded_query AS (
     SELECT
         pgml.embed('mixedbread-ai/mxbai-embed-large-v1', 'What is the pgml.transform function?', '{"prompt": "Represent this sentence for searching relevant passages: "}')::vector embedding
@@ -283,11 +295,7 @@ SELECT
         FROM embedded_query) <=> text_and_embeddings.embedding cosine_distance
 FROM
   text_and_embeddings
-ORDER BY
-    text_and_embeddings.embedding <=> (
-        SELECT
-            embedding
-        FROM embedded_query)
+ORDER BY cosine_distance
 LIMIT 1;
 ```
 
@@ -305,13 +313,13 @@ LIMIT 1;
 
 !!!
 
-This somewhat less than ideal performance can be fixed by indexing the vector column. There are two types of indexes available in pgvector: IVFFlat and HNSW.
+This somewhat less than ideal performance can be fixed by indexing the embedding column. There are two types of indexes available in pgvector: IVFFlat and HNSW.
 
-IVFFlat indexes clusters the table into sublists, and when searching, only searches over a fixed number of the sublists. For example in the case above, if we were to add an IVFFlat index with 10 lists:
+IVFFlat indexes clusters the table into sublists, and when searching, only searches over a fixed number of the sublists. In the case above, if we were to add an IVFFlat index with 10 lists:
 
 !!! generic
 
-!!! code_block time="10.493 ms"
+!!! code_block time="4989.398 ms"
 
 ```postgresql
 CREATE INDEX ON text_and_embeddings USING ivfflat (embedding vector_cosine_ops) WITH (lists = 10);
@@ -321,11 +329,11 @@ CREATE INDEX ON text_and_embeddings USING ivfflat (embedding vector_cosine_ops) 
 
 !!!
 
-Now let's try searching again.
+And search again:
 
 !!! generic
 
-!!! code_block time="10.493 ms"
+!!! code_block time = "29.191"
 
 ```postgresql
 WITH embedded_query AS (
@@ -340,11 +348,7 @@ SELECT
         FROM embedded_query) <=> text_and_embeddings.embedding cosine_distance
 FROM
   text_and_embeddings
-ORDER BY
-    text_and_embeddings.embedding <=> (
-        SELECT
-            embedding
-        FROM embedded_query)
+ORDER BY cosine_distance
 LIMIT 1;
 ```
 
@@ -362,7 +366,7 @@ LIMIT 1;
 
 !!!
 
-We can see it is about a 10x speedup because we are only searching over 1/10th of the original vectors. 
+We can see it is a massive speedup because we are only searching over 1/10th of the original vectors! 
 
 HNSW indexes are a bit more complicated. It is essentially a graph with edges linked by proximity in the vector space. For more information you can check out this [writeup](https://www.pinecone.io/learn/series/faiss/hnsw/). 
 
@@ -370,7 +374,7 @@ HNSW indexes typically have better and faster recall but require more compute wh
 
 !!! generic
 
-!!! code_block time="10.493 ms"
+!!! code_block
 
 ```postgresql
 DROP index text_and_embeddings_embedding_idx;
@@ -386,7 +390,7 @@ Now let's try searching again.
 
 !!! generic
 
-!!! code_block time="10.493 ms"
+!!! code_block time="20.270 ms"
 
 ```postgresql
 WITH embedded_query AS (
@@ -401,11 +405,7 @@ SELECT
         FROM embedded_query) <=> text_and_embeddings.embedding cosine_distance
 FROM
   text_and_embeddings
-ORDER BY
-    text_and_embeddings.embedding <=> (
-        SELECT
-            embedding
-        FROM embedded_query)
+ORDER BY cosine_distance
 LIMIT 1;
 ```
 
@@ -424,3 +424,7 @@ LIMIT 1;
 !!!
 
 That was even faster!
+
+There is a lot more that can go into semantic search. Stay tuned for a follow up post on hybrid search and re-ranking.
+
+If you have any questions, or just have an idea on how to make PostgresML better, we'd love to hear from you in our [Discord](https://discord.com/invite/DmyJP3qJ7U). We’re open source, and welcome contributions from the community, especially when it comes to the rapidly evolving ML/AI landscape.
