@@ -33,7 +33,11 @@ pub async fn snapshots(cluster: &Cluster, _connected: ConnectedCluster<'_>) -> R
 
 // Returns the specific snapshot page
 #[get("/snapshots/<snapshot_id>")]
-pub async fn snapshot(cluster: &Cluster, snapshot_id: i64, _connected: ConnectedCluster<'_>) -> Result<ResponseOk, Error> {
+pub async fn snapshot(
+    cluster: &Cluster,
+    snapshot_id: i64,
+    _connected: ConnectedCluster<'_>,
+) -> Result<ResponseOk, Error> {
     let snapshot = models::Snapshot::get_by_id(cluster.pool(), snapshot_id).await?;
 
     let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster);

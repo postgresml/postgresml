@@ -32,7 +32,11 @@ pub async fn projects(cluster: &Cluster, _connected: ConnectedCluster<'_>) -> Re
 
 // Return the specified project page.
 #[get("/projects/<project_id>")]
-pub async fn project(cluster: &Cluster, project_id: i64, _connected: ConnectedCluster<'_>) -> Result<ResponseOk, Error> {
+pub async fn project(
+    cluster: &Cluster,
+    project_id: i64,
+    _connected: ConnectedCluster<'_>,
+) -> Result<ResponseOk, Error> {
     let project = models::Project::get_by_id(cluster.pool(), project_id).await?;
 
     let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster);

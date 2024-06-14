@@ -36,7 +36,11 @@ pub async fn notebooks(cluster: &Cluster, _connected: ConnectedCluster<'_>) -> R
 
 // Returns the specified notebook page.
 #[get("/notebooks/<notebook_id>")]
-pub async fn notebook(cluster: &Cluster, notebook_id: i64, _connected: ConnectedCluster<'_>) -> Result<ResponseOk, Error> {
+pub async fn notebook(
+    cluster: &Cluster,
+    notebook_id: i64,
+    _connected: ConnectedCluster<'_>,
+) -> Result<ResponseOk, Error> {
     let notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
 
     let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster);
