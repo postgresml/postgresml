@@ -528,9 +528,8 @@ mod test {
     use super::*;
     use crate::components::sections::footers::MarketingFooter;
     use crate::guards::Cluster;
-    use crate::utils::config;
     use rocket::fairing::AdHoc;
-    use rocket::http::{Cookie, Status};
+    use rocket::http::Cookie;
     use rocket::local::asynchronous::Client;
 
     #[sqlx::test]
@@ -635,7 +634,11 @@ mod test {
         let notification2 = Notification::new("Test notification 2")
             .set_level(&NotificationLevel::ProductMedium)
             .set_deployment("1");
-        let notification3 = Notification::new("Test notification 3").set_level(&NotificationLevel::ProductMarketing);
+        let _notification3 = Notification::new("Test notification 3")
+            .set_level(&NotificationLevel::ProductMedium)
+            .set_deployment("2");
+        let _notification4 = Notification::new("Test notification 4").set_level(&NotificationLevel::ProductMedium);
+        let _notification5 = Notification::new("Test notification 5").set_level(&NotificationLevel::ProductMarketing);
 
         let rocket = rocket::build()
             .attach(AdHoc::on_request("request", |req, _| {
@@ -657,7 +660,11 @@ mod test {
                             Notification::new("Test notification 2")
                                 .set_level(&NotificationLevel::ProductMedium)
                                 .set_deployment("1"),
-                            Notification::new("Test notification 3").set_level(&NotificationLevel::ProductMarketing),
+                            Notification::new("Test notification 3")
+                                .set_level(&NotificationLevel::ProductMedium)
+                                .set_deployment("2"),
+                            Notification::new("Test notification 4").set_level(&NotificationLevel::ProductMedium),
+                            Notification::new("Test notification 5").set_level(&NotificationLevel::ProductMarketing),
                         ]),
                     });
                 })
@@ -677,7 +684,7 @@ mod test {
         let body = response.into_string().await.unwrap();
         let rsp_contains_next_notification = body.contains("Test notification 2");
 
-        // ensure banner is replaced with next notification of same type
+        // Ensure the banner is replaced with next notification of same type
         assert_eq!(rsp_contains_next_notification, true);
 
         let response = client
@@ -689,9 +696,14 @@ mod test {
             .await;
 
         let body = response.into_string().await.unwrap();
-        let rsp_contains_next_notification = body.contains("Test notification 3");
+        let rsp_contains_next_notification_3 = body.contains("Test notification 3");
+        let rsp_contains_next_notification_4 = body.contains("Test notification 4");
+        let rsp_contains_next_notification_5 = body.contains("Test notification 5");
 
-        // ensure next notification is not found
-        assert_eq!(rsp_contains_next_notification, false);
+        // Ensure the next notification is not found since none match deployment id or level
+        assert_eq!(
+            rsp_contains_next_notification_3 && rsp_contains_next_notification_4 && rsp_contains_next_notification_5,
+            false
+        );
     }
 }
