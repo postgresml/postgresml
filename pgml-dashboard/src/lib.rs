@@ -407,12 +407,10 @@ pub fn replace_banner_product(
 
     Notifications::update_viewed(&all_notification_cookies, cookies);
 
-    // Get the notification that triggered this call..
-    // unwrap notifications if fine since we should panic if this is missing.
-    let last_notification = context
+    let last_notification: Option<Notification> = context
         .notifications
         .as_ref()
-        .unwrap()
+        .unwrap_or(&vec![] as &Vec<Notification>)
         .clone()
         .into_iter()
         .find(|n: &Notification| -> bool { n.id == id });
