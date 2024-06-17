@@ -137,7 +137,7 @@ mod test {
     async fn rocket() -> Rocket<Build> {
         dotenv::dotenv().ok();
 
-        pgml_dashboard::migrate(Cluster::default().pool()).await.unwrap();
+        pgml_dashboard::migrate(Cluster::default(None).pool()).await.unwrap();
 
         let mut site_search = markdown::SiteSearch::new()
             .await
