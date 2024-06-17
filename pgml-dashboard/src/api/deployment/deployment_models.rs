@@ -2,7 +2,6 @@ use rocket::route::Route;
 use sailfish::TemplateOnce;
 
 use crate::{
-    guards::Cluster,
     guards::ConnectedCluster,
     responses::{Error, ResponseOk},
 };
@@ -18,8 +17,8 @@ use std::collections::HashMap;
 
 // Returns models page
 #[get("/models")]
-pub async fn deployment_models(cluster: &Cluster) -> Result<ResponseOk, Error> {
-    let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster);
+pub async fn deployment_models(cluster: ConnectedCluster<'_>) -> Result<ResponseOk, Error> {
+    let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster.inner.context);
     layout.breadcrumbs(vec![NavLink::new("Models", &urls::deployment_models()).active()]);
 
     let tabs = vec![tabs::Tab {
@@ -29,16 +28,16 @@ pub async fn deployment_models(cluster: &Cluster) -> Result<ResponseOk, Error> {
 
     let nav_tabs = tabs::Tabs::new(tabs, Some("Models"), Some("Models"))?;
 
-    Ok(ResponseOk(layout.render(templates::Dashboard::new(nav_tabs))))
+    Ok(ResponseOk(layout.render(templates::Dashboard { tabs: nav_tabs })))
 }
 
 // Returns models page
 #[get("/models/<model_id>")]
-pub async fn model(cluster: &Cluster, model_id: i64) -> Result<ResponseOk, Error> {
+pub async fn model(cluster: ConnectedCluster<'_>, model_id: i64) -> Result<ResponseOk, Error> {
     let model = models::Model::get_by_id(cluster.pool(), model_id).await?;
     let project = models::Project::get_by_id(cluster.pool(), model.project_id).await?;
 
-    let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster);
+    let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster.inner.context);
     layout.breadcrumbs(vec![
         NavLink::new("Models", &urls::deployment_models()),
         NavLink::new(&project.name, &urls::deployment_project_by_id(project.id)),
@@ -52,7 +51,7 @@ pub async fn model(cluster: &Cluster, model_id: i64) -> Result<ResponseOk, Error
 
     let nav_tabs = tabs::Tabs::new(tabs, Some("Models"), Some("Models"))?;
 
-    Ok(ResponseOk(layout.render(templates::Dashboard::new(nav_tabs))))
+    Ok(ResponseOk(layout.render(templates::Dashboard { tabs: nav_tabs })))
 }
 
 #[get("/models_turboframe")]
