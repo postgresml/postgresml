@@ -19,7 +19,7 @@ use crate::utils::urls;
 
 // Returns the uploader page.
 #[get("/uploader")]
-pub async fn uploader(cluster: &Cluster) -> Result<ResponseOk, Error> {
+pub async fn uploader(cluster: &Cluster, _connected: ConnectedCluster<'_>) -> Result<ResponseOk, Error> {
     let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster);
     layout.breadcrumbs(vec![NavLink::new("Upload Data", &urls::deployment_uploader()).active()]);
 
