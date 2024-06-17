@@ -82,7 +82,6 @@ pub struct ConnectedCluster<'a> {
     pub inner: &'a Cluster,
 }
 
-// 404 rather than 500 if the cluster is not connected.
 #[rocket::async_trait]
 impl<'r> FromRequest<'r> for ConnectedCluster<'r> {
     type Error = ();
