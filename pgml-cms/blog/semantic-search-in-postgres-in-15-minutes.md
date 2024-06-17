@@ -20,11 +20,11 @@ June 15, 2024
 
 ## What is and is not Semantic Search
 
-Semantic search is a new form of machine learning powered search that doesn’t rely on any form of keyword matching, but transforms text into embeddings and performs nearest neighbors search. 
+Semantic search uses machine learning to understand the meaning of text by converting it into numerical vectors, allowing for more accurate and context-aware search results.
 
-It is not a complete replacement for full text search. In many cases full text search is capable of outperforming semantic search. Specifically, if a user knows the exact phrase in a document they want to match, full text search is faster and guaranteed to return the correct result while semantic search is only likely to return the correct result. Full text search and semantic search can be combined to create powerful and robust search systems.
+It is not a complete replacement for full-text search. In many cases, full-text search can outperform semantic search. Specifically, if a user knows the exact phrase they want to match in a document, full-text search is faster and guaranteed to return the correct result, whereas semantic search is only likely to return the correct result. Full-text search and semantic search can be combined to create powerful and robust search systems.
 
-Semantic search is not just for machine learning engineers. The actual system behind semantic search is relatively easy to implement and thanks to new Postgres extensions like pgml and pgvector, is readily available to SQL developers. Just as it is expected for modern SQL developers to be familiar with and capable of implementing full text search, soon SQL developers will be expected to implement semantic search.
+Semantic search is not just for machine learning engineers. The system behind semantic search is relatively easy to implement, and thanks to new Postgres extensions like pgml and pgvector, it is readily available to SQL developers. Just as modern SQL developers are expected to be familiar with and capable of implementing full-text search, they will soon be expected to implement semantic search as well.
 
 ## Embeddings 101
 
