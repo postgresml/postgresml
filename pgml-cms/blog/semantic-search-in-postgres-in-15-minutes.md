@@ -152,7 +152,7 @@ SELECT '[1,2,3]'::vector <=> '[2,3,4]'::vector;
 
 Other distance functions have similar formulas and provide convenient operators to use as well. It may be worth testing other operators and to see which performs better for your use case. For more information on the other distance functions, take a look at our [Embeddings guide](https://postgresml.org/docs/guides/embeddings/vector-similarity).
 
-Going back to our searchn example, we can compute the cosine distance between our query embedding and our documents:
+Going back to our search example, we can compute the cosine distance between our query embedding and our documents:
 
 !!! generic
 
