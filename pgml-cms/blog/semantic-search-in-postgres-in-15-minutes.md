@@ -106,7 +106,7 @@ For instance let’s say that we have the following documents:
 | Document ID | Document text |
 -----|----------|
 | 1 | The pgml.transform function is a PostgreSQL function for calling LLMs in the database. |
-| 2 | I think tomatos are incredible on burgers. |
+| 2 | I think tomatoes are incredible on burgers. |
 
 
 and a user is looking for the answer to the question: "What is the pgml.transform function?". If we embed the search query and all of the documents using a model like _mixedbread-ai/mxbai-embed-large-v1_, we can compare the query embedding to all of the document embeddings, and select the document that has the closest embedding in vector space, and therefore in meaning, to the to the answer. 
@@ -130,7 +130,7 @@ This is a somewhat confusing formula but luckily  _pgvector_ provides an operato
 
 !!! generic
 
-!!! code_block
+!!! code_block time="64.643 ms"
 
 ```postgresql
 SELECT '[1,2,3]'::vector <=> '[2,3,4]'::vector;
@@ -176,7 +176,7 @@ SELECT pgml.embed(
   <=>
 pgml.embed(
   'mixedbread-ai/mxbai-embed-large-v1',
-  'I think tomatos are incredible on burgers.'
+  'I think tomatoes are incredible on burgers.'
 )::vector AS cosine_distance;
 ```
 
@@ -191,14 +191,14 @@ cosine_distance
 
 cosine_distance   
 --------------------
- 0.7383001059221699
+ 0.7328613577628744
 ```
 
 !!!
 
 !!!
 
-You'll notice that the distance between "What is the pgml.transform function?" and "The pgml.transform function is a PostgreSQL function for calling LLMs in the database." is much smaller than the cosine distance between "What is the pgml.transform function?" and "I think tomatos are incredible on burgers".
+You'll notice that the distance between "What is the pgml.transform function?" and "The pgml.transform function is a PostgreSQL function for calling LLMs in the database." is much smaller than the cosine distance between "What is the pgml.transform function?" and "I think tomatoes are incredible on burgers".
 
 ## Making it fast!
 
@@ -228,10 +228,10 @@ VALUES
   ),
 
   (
-    'I think tomatos are incredible on burgers.',
+    'I think tomatoes are incredible on burgers.',
     pgml.embed(
       'mixedbread-ai/mxbai-embed-large-v1',
-      'I think tomatos are incredible on burgers.'
+      'I think tomatoes are incredible on burgers.'
     )
   );
 ```
@@ -282,7 +282,7 @@ LIMIT 1;
 
 !!!
 
-This query is fast for now, but as we add more data to the the table, it will slow down because we have not indexed the embedding column. 
+This query is fast for now, but as we add more data to the table, it will slow down because we have not indexed the embedding column. 
 
 Let's demonstrate this by inserting 100,000 additional embeddings:
 
@@ -344,7 +344,7 @@ LIMIT 1;
 
 This somewhat less than ideal performance can be fixed by indexing the embedding column. There are two types of indexes available in _pgvector_: IVFFlat and HNSW.
 
-IVFFlat indexes clusters the table into sublists, and when searching, only searches over a fixed number of sublists. In oour example, if we were to add an IVFFlat index with 10 lists:
+IVFFlat indexes clusters the table into sublists, and when searching, only searches over a fixed number of sublists. In our example, if we were to add an IVFFlat index with 10 lists:
 
 !!! generic
 
@@ -360,7 +360,7 @@ WITH (lists = 10);
 
 !!!
 
-and search again, we would get much better perfomance:
+and search again, we would get much better performance:
 
 !!! generic
 
