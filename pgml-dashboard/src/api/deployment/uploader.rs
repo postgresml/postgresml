@@ -5,7 +5,6 @@ use rocket::route::Route;
 use sailfish::TemplateOnce;
 
 use crate::{
-    guards::Cluster,
     guards::ConnectedCluster,
     responses::{BadRequest, Error, ResponseOk},
 };
@@ -19,8 +18,8 @@ use crate::utils::urls;
 
 // Returns the uploader page.
 #[get("/uploader")]
-pub async fn uploader(cluster: &Cluster) -> Result<ResponseOk, Error> {
-    let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster);
+pub async fn uploader(cluster: ConnectedCluster<'_>) -> Result<ResponseOk, Error> {
+    let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster.inner.context);
     layout.breadcrumbs(vec![NavLink::new("Upload Data", &urls::deployment_uploader()).active()]);
 
     let tabs = vec![tabs::Tab {
@@ -30,7 +29,7 @@ pub async fn uploader(cluster: &Cluster) -> Result<ResponseOk, Error> {
 
     let nav_tabs = tabs::Tabs::new(tabs, Some("Upload Data"), Some("Upload Data"))?;
 
-    Ok(ResponseOk(layout.render(templates::Dashboard::new(nav_tabs))))
+    Ok(ResponseOk(layout.render(templates::Dashboard { tabs: nav_tabs })))
 }
 
 // Returns uploader module in a turboframe.

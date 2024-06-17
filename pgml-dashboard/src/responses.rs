@@ -24,8 +24,6 @@ pub struct Response {
     pub body: Option<String>,
     pub location: Option<String>,
     pub user: Option<User>,
-    pub content_type: ContentType,
-    pub no_cache: bool,
 }
 
 impl Response {
@@ -36,26 +34,7 @@ impl Response {
             body: None,
             location: None,
             user: None,
-            content_type: ContentType::new("text", "html"),
-            no_cache: false,
         }
-    }
-
-    /// Set response body.
-    pub fn body(mut self, body: String) -> Response {
-        self.body = Some(body);
-        self
-    }
-
-    /// Set response location.
-    fn location(mut self, location: String) -> Response {
-        self.location = Some(location);
-        self
-    }
-
-    /// 500
-    pub fn server_error(body: String) -> Response {
-        Self::new(Status::InternalServerError).body(body)
     }
 
     /// Create a 303.
@@ -78,33 +57,22 @@ impl Response {
         Self::new(Status::NotFound)
     }
 
+    /// Set response body.
+    pub fn body(mut self, body: String) -> Response {
+        self.body = Some(body);
+        self
+    }
+
+    /// Set response location.
+    fn location(mut self, location: String) -> Response {
+        self.location = Some(location);
+        self
+    }
+
     /// Set the user on the response, if any.
     pub fn user(mut self, user: User) -> Response {
         self.user = Some(user);
         self
-    }
-
-    pub fn content_type(mut self, content_type: ContentType) -> Response {
-        self.content_type = content_type;
-        self
-    }
-
-    pub fn no_cache(mut self) -> Response {
-        self.no_cache = true;
-        self
-    }
-
-    pub fn json(body: String) -> Response {
-        Self::new(Status::Ok)
-            .body(body)
-            .content_type(ContentType::new("application", "json"))
-    }
-
-    pub fn turbo_stream(body: String) -> Response {
-        Self::new(Status::Ok)
-            .body(body)
-            .content_type(ContentType::new("text", "vnd.turbo-stream.html"))
-            .no_cache()
     }
 }
 
@@ -119,10 +87,7 @@ impl<'r> response::Responder<'r, 'r> for Response {
         };
 
         let mut binding = response::Response::build_from(body.respond_to(request)?);
-        let mut response = binding.header(self.content_type);
-        if self.no_cache {
-            response = response.header(Header::new("Cache-Control", "no-store"));
-        }
+        let mut response = binding.header(ContentType::new("text", "html"));
 
         if self.location.is_some() {
             response = response.header(Header::new("Location", self.location.unwrap()));

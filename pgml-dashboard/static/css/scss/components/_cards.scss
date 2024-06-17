@@ -151,18 +151,6 @@
     @include gradient-border-card($gray-600, $gradient-pink);
 }
 
-.orange-gradient-border-card {
-    @include gradient-border-card($gray-600, $gradient-orange);
-}
-
-.blue-gradient-border-card {
-    @include gradient-border-card($gray-600, $gradient-blue);
-}
-
-.green-gradient-border-card {
-    @include gradient-border-card($gray-600, $gradient-green);
-}
-
 .main-gradient-border-card-hover {
     @include gradient-border-card($gray-600, $gradient-main, true);
 }

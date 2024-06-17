@@ -25,7 +25,7 @@
         <%- content %>
 
         <% if notification.dismissible {%>
-        <a class="w-0 btn btn-tertiary overflow-visible d-flex align-items-start p-2" style="height: fit-content" href="/dashboard/notifications/remove_banner?id=<%- notification.id%>&notification_type=feature">
+        <a class="w-0 btn btn-tertiary overflow-visible d-flex align-items-start p-2" style="height: fit-content" href="/dashboard/notifications/remove_banner?id=<%- notification.id%>&alert=false">
           <span class="material-symbols-outlined close">
             close
           </span></a>

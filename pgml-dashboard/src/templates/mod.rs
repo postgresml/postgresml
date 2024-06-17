@@ -2,9 +2,8 @@ use pgml_components::Component;
 use std::collections::HashMap;
 
 pub use crate::components::{self, cms::index_link::IndexLink, NavLink, StaticNav, StaticNavLink};
-use crate::{Notification, NotificationLevel};
+use crate::Notification;
 use components::notifications::marketing::{AlertBanner, FeatureBanner};
-use components::notifications::product::ProductBanner;
 
 use crate::models::Cluster;
 use sailfish::TemplateOnce;
@@ -122,40 +121,18 @@ pub struct WebAppBase<'a> {
     pub product_left_nav: StaticNav,
     pub body_components: Vec<Component>,
     pub cluster: Cluster,
-    pub product_banners_high: Vec<ProductBanner>,
-    pub product_banner_medium: ProductBanner,
-    pub product_banner_marketing: ProductBanner,
 }
 
 impl<'a> WebAppBase<'a> {
-    pub fn new(title: &str, context: &crate::guards::Cluster) -> Self {
-        let head = Head::new().title(title).context(&context.context.head_items);
-        let cluster = context.context.cluster.clone();
-
-        let all_product_high_level = context
-            .notifications
-            .clone()
-            .unwrap_or_else(|| vec![])
-            .into_iter()
-            .filter(|n: &Notification| n.level == NotificationLevel::ProductHigh)
-            .enumerate()
-            .map(|(i, n)| ProductBanner::from_notification(Some(&n)).set_show_modal_on_load(i == 0))
-            .collect::<Vec<ProductBanner>>();
+    pub fn new(title: &str, context: &crate::Context) -> Self {
+        let head = Head::new().title(title).context(&context.head_items);
+        let cluster = context.cluster.clone();
 
         WebAppBase {
             head,
             cluster,
-            dropdown_nav: context.context.dropdown_nav.clone(),
-            product_left_nav: context.context.product_left_nav.clone(),
-            product_banners_high: all_product_high_level,
-            product_banner_medium: ProductBanner::from_notification(Notification::next_product_of_level(
-                context,
-                NotificationLevel::ProductMedium,
-            )),
-            product_banner_marketing: ProductBanner::from_notification(Notification::next_product_of_level(
-                context,
-                NotificationLevel::ProductMarketing,
-            )),
+            dropdown_nav: context.dropdown_nav.clone(),
+            product_left_nav: context.product_left_nav.clone(),
             ..Default::default()
         }
     }
@@ -487,13 +464,6 @@ pub struct Uploaded {
 pub struct Dashboard<'a> {
     pub tabs: tabs::Tabs<'a>,
 }
-
-impl Dashboard<'_> {
-    pub fn new<'a>(tabs: tabs::Tabs<'a>) -> Dashboard<'a> {
-        Dashboard { tabs }
-    }
-}
-
 #[derive(TemplateOnce)]
 #[template(path = "content/dashboard/tabs/notebooks_tab.html")]
 pub struct NotebooksTab;
