@@ -560,7 +560,7 @@ mod test {
             .time_modal_viewed;
 
         // Update modal view time for existing notification cookie
-        assert_eq!(time_modal_viewed.is_some(), true);
+        assert!(time_modal_viewed.is_some());
 
         let response = client
             .get("/notifications/product/modal/remove_modal?id=3")
@@ -574,7 +574,7 @@ mod test {
             .time_modal_viewed;
 
         // Update modal view time for new notification cookie
-        assert_eq!(time_modal_viewed.is_some(), true);
+        assert!(time_modal_viewed.is_some());
     }
 
     #[sqlx::test]
@@ -621,7 +621,7 @@ mod test {
             .time_viewed;
 
         // Update view time for new notification cookie
-        assert_eq!(time_viewed.is_some(), true);
+        assert!(time_viewed.is_some());
     }
 
     #[sqlx::test]
