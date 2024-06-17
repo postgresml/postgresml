@@ -1,25 +1,53 @@
 use chrono;
 use rocket::http::{Cookie, CookieJar};
 use rocket::serde::{Deserialize, Serialize};
+use time::Duration;
 
+/// Session data.
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Notifications {
+    /// App-wide notifications.
+    notifications: Vec<NotificationCookie>,
+}
+
+/// App-wide notifications.
 #[derive(Debug, Clone, Deserialize, Serialize, Default, PartialEq)]
 pub struct NotificationCookie {
+    /// Unique ID of the notification.
     pub id: String,
+    /// TODO: document
     pub time_viewed: Option<chrono::DateTime<chrono::Utc>>,
+    /// TODO: document
     pub time_modal_viewed: Option<chrono::DateTime<chrono::Utc>>,
 }
 
-pub struct Notifications {}
+/// Previous session state covering only which notifications were viewed.
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct NotificationsCookieOld {
+    pub notifications: Vec<String>,
+}
+
+impl From<NotificationsCookieOld> for NotificationCookie {
+    fn from(old: NotificationsCookieOld) -> Self {
+        NotificationCookie {
+            id: old.notifications[0].clone(),
+            time_viewed: None,
+            time_modal_viewed: None,
+        }
+    }
+}
 
 impl Notifications {
-    pub fn update_viewed(all_desired_notifications: &Vec<NotificationCookie>, cookies: &CookieJar<'_>) {
-        let session = Notifications::safe_serialize_session(all_desired_notifications);
+    /// Update the viewed notifications in the session.
+    pub fn update_viewed(notifications: &[NotificationCookie], cookies: &CookieJar<'_>) {
+        let session = Notifications::safe_serialize_session(notifications);
 
         let mut cookie = Cookie::new("session", session);
-        cookie.set_max_age(::time::Duration::weeks(4));
+        cookie.set_max_age(Duration::weeks(52 * 100)); // Keep the cookie "forever"
         cookies.add_private(cookie);
     }
 
+    /// Get viewed notifications from the session.
     pub fn get_viewed(cookies: &CookieJar<'_>) -> Vec<NotificationCookie> {
         match cookies.get_private("session") {
             Some(session) => Notifications::safe_deserialize_session(session.value()),
@@ -28,40 +56,21 @@ impl Notifications {
     }
 
     pub fn safe_deserialize_session(session: &str) -> Vec<NotificationCookie> {
-        match serde_json::from_str::<serde_json::Value>(session).unwrap_or_else(|_| {
-            serde_json::from_str::<serde_json::Value>(&Notifications::safe_serialize_session(&vec![])).unwrap()
-        })["notifications"]
-            .as_array()
-        {
-            Some(items) => items
-                .into_iter()
-                .map(|notification| {
-                    serde_json::from_str::<NotificationCookie>(&notification.to_string()).unwrap_or_else(|_| {
-                        serde_json::from_str::<String>(&notification.to_string())
-                            .and_then(|id| {
-                                Ok(NotificationCookie {
-                                    id,
-                                    time_viewed: None,
-                                    time_modal_viewed: None,
-                                })
-                            })
-                            .unwrap_or_else(|_| NotificationCookie::default())
-                    })
-                })
-                .collect::<Vec<NotificationCookie>>(),
-            _ => vec![],
+        match serde_json::from_str::<Notifications>(session) {
+            Ok(notifications) => notifications.notifications,
+            Err(_) => match serde_json::from_str::<NotificationsCookieOld>(session) {
+                Ok(notifications) => vec![NotificationCookie::from(notifications)],
+                Err(_) => vec![],
+            },
         }
     }
 
-    pub fn safe_serialize_session(cookies: &Vec<NotificationCookie>) -> String {
-        let serialized = cookies
-            .iter()
-            .map(|x| serde_json::to_string(x))
-            .filter(|x| x.is_ok())
-            .map(|x| x.unwrap())
-            .collect::<Vec<String>>();
+    pub fn safe_serialize_session(notifications: &[NotificationCookie]) -> String {
+        let notifications = Notifications {
+            notifications: notifications.to_vec(),
+        };
 
-        format!(r#"{{"notifications": [{}]}}"#, serialized.join(","))
+        serde_json::to_string(&notifications).unwrap()
     }
 }
 
@@ -118,7 +127,7 @@ mod test {
             time_viewed: None,
             time_modal_viewed: None,
         }];
-        let expected = r#"{"notifications": [{"id":"1","time_viewed":null,"time_modal_viewed":null}]}"#;
+        let expected = r#"{"notifications":[{"id":"1","time_viewed":null,"time_modal_viewed":null}]}"#;
         assert_eq!(Notifications::safe_serialize_session(&cookies), expected);
     }
 }

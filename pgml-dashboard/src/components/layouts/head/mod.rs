@@ -134,7 +134,7 @@ mod default_head_template_test {
 
     #[test]
     fn set_head() {
-        let mut head = Head::new()
+        let head = Head::new()
             .title("test title")
             .description("test description")
             .image("image/test_image.jpg");
