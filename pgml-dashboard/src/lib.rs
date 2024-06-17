@@ -705,7 +705,6 @@ mod test {
         );
     }
 
-
     #[sqlx::test]
     async fn test_replace_banner_product_no_notifications() {
         let notification1 = Notification::new("Test notification 1")
@@ -725,7 +724,7 @@ mod test {
                             marketing_footer: MarketingFooter::new().render_once().unwrap(),
                             head_items: None,
                         },
-                        notifications: None
+                        notifications: None,
                     });
                 })
             }))
