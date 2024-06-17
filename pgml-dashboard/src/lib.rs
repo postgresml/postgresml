@@ -527,7 +527,7 @@ mod test {
     use crate::components::sections::footers::MarketingFooter;
     use crate::guards::Cluster;
     use rocket::fairing::AdHoc;
-    use rocket::http::Cookie;
+    use rocket::http::{Cookie, Status};
     use rocket::local::asynchronous::Client;
 
     #[sqlx::test]
@@ -703,5 +703,44 @@ mod test {
             rsp_contains_next_notification_3 && rsp_contains_next_notification_4 && rsp_contains_next_notification_5,
             false
         );
+    }
+
+
+    #[sqlx::test]
+    async fn test_replace_banner_product_no_notifications() {
+        let notification1 = Notification::new("Test notification 1")
+            .set_level(&NotificationLevel::ProductMedium)
+            .set_deployment("1");
+
+        let rocket = rocket::build()
+            .attach(AdHoc::on_request("request", |req, _| {
+                Box::pin(async {
+                    req.local_cache(|| Cluster {
+                        pool: None,
+                        context: Context {
+                            user: models::User::default(),
+                            cluster: models::Cluster::default(),
+                            dropdown_nav: StaticNav { links: vec![] },
+                            product_left_nav: StaticNav { links: vec![] },
+                            marketing_footer: MarketingFooter::new().render_once().unwrap(),
+                            head_items: None,
+                        },
+                        notifications: None
+                    });
+                })
+            }))
+            .mount("/", routes());
+
+        let client = Client::tracked(rocket).await.unwrap();
+
+        let response = client
+            .get(format!(
+                "/notifications/product/replace_banner?id={}&deployment_id=1",
+                notification1.id
+            ))
+            .dispatch()
+            .await;
+
+        assert_eq!(response.status(), Status::Ok);
     }
 }
