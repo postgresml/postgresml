@@ -1,4 +1,4 @@
-comment = 'pgml:  Created by the PostgresML team'
+comment = 'Machine Learning and AI functions from postgresml.org'
 default_version = '@CARGO_VERSION@'
 module_pathname = '$libdir/pgml'
 relocatable = false

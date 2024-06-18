@@ -46,7 +46,7 @@ target |                                                                        
 
 ### Training a Model
 
-Now that we've got data, we're ready to train a model using an algorithm. We'll start with the default `linear` algorithm to demonstrate the basics. See the [Algorithms](../../../docs/training/algorithm\_selection/) for a complete list of available algorithms.
+Now that we've got data, we're ready to train a model using an algorithm. We'll start with a classification task to demonstrate the basics. See [pgml.train](/docs/api/sql-extension/pgml.train/) for a complete list of available algorithms and tasks.
 
 ```postgresql
 SELECT * FROM pgml.train(
@@ -79,7 +79,7 @@ INFO:  Metrics: {
 (1 row)
 ```
 
-The output gives us information about the training run, including the `deployed` status. This is great news indicating training has successfully reached a new high score for the project's key metric and our new model was automatically deployed as the one that will be used to make new predictions for the project. See [Deployments](../../../docs/predictions/deployments/) for a guide to managing the active model.
+The output gives us information about the training run, including the `deployed` status. This is great news indicating training has successfully reached a new high score for the project's key metric and our new model was automatically deployed as the one that will be used to make new predictions for the project.
 
 ### Inspecting the results
 
@@ -152,7 +152,7 @@ LIMIT 25;
 
 ### Example
 
-If you've already been through the [Training Overview](../../../docs/training/overview/), you can see the results of those efforts:
+If you've executed the commands in this guide, you can see the results of those efforts:
 
 ```postgresql
 SELECT
@@ -195,7 +195,7 @@ SELECT * FROM pgml.deployed_models;
 
 PostgresML will automatically deploy a model only if it has better metrics than existing ones, so it's safe to experiment with different algorithms and hyperparameters.
 
-Take a look at [Deploying Models](../../../docs/predictions/deployments/) documentation for more details.
+Take a look at [pgml.deploy](/docs/api/sql-extension/pgml.deploy) documentation for more details.
 
 ### Specific Models
 
