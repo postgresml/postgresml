@@ -355,7 +355,7 @@ LIMIT 1;
 
 !!!
 
-This somewhat less than ideal performance can be fixed by indexing the embedding column. There are two types of indexes available in _pgvector_: IVFFlat and HNSW.
+This somewhat less than ideal performance can be fixed by indexing the embedding column. There are two types of indexes available in `pgvector`: IVFFlat and HNSW.
 
 IVFFlat indexes clusters the table into sublists, and when searching, only searches over a fixed number of sublists. In our example, if we were to add an IVFFlat index with 10 lists:
 
