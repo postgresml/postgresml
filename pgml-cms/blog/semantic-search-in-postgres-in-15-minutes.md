@@ -481,7 +481,7 @@ There is a lot more that can go into semantic search. Stay tuned for a follow up
 
 If you have any questions, or just have an idea on how to make PostgresML better, we'd love to hear from you in our [Discord](https://discord.com/invite/DmyJP3qJ7U). We’re open source, and welcome contributions from the community, especially when it comes to the rapidly evolving ML/AI landscape.
 
-## Closing thoughts / why PostgresQL?
+## Closing thoughts / why PostgreSQL?
 
 There are a host of benefits to performing machine learning tasks in your database. The hard part of AI & ML systems has always been managing data. Vastly more engineers have a full-time job managing data pipelines than models. Vastly more money is spent on data management systems than LLMs, and this will continue to be the case, because data is the bespoke differentiator.
 
