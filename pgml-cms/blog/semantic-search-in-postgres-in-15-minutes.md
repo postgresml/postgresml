@@ -95,7 +95,7 @@ embedding for 'Rust is the best'
 
 !!!
 
-You'll notice how similar the vectors produced by the text "I like Postgres" and "I like SQL" are compared to "Rust is the best".  This is a artificial example, but the same idea holds true when translating to real models like _mixedbread-ai/mxbai-embed-large-v1_. 
+You'll notice how similar the vectors produced by the text "I like Postgres" and "I like SQL" are compared to "Rust is the best".  This is a artificial example, but the same idea holds true when translating to real models like `mixedbread-ai/mxbai-embed-large-v1`. 
 
 ## What does it mean to be "close"?
 
@@ -109,11 +109,11 @@ For instance let’s say that we have the following documents:
 | 2 | I think tomatoes are incredible on burgers. |
 
 
-and a user is looking for the answer to the question: "What is the pgml.transform function?". If we embed the search query and all of the documents using a model like _mixedbread-ai/mxbai-embed-large-v1_, we can compare the query embedding to all of the document embeddings, and select the document that has the closest embedding in vector space, and therefore in meaning, to the to the answer. 
+and a user is looking for the answer to the question: "What is the pgml.transform function?". If we embed the search query and all of the documents using a model like `mixedbread-ai/mxbai-embed-large-v1`, we can compare the query embedding to all of the document embeddings, and select the document that has the closest embedding in vector space, and therefore in meaning, to the to the answer. 
 
 These are big embeddings, so we can’t simply estimate which one is closest. So, how do we actually measure the similarity (distance) between different vectors?
 
-_pgvector_ as of this writing supports four different measurements of vector similarity:
+`pgvector` as of this writing supports four different measurements of vector similarity:
 
 - L2 distance
 - (negative) inner product
@@ -126,7 +126,7 @@ For most use cases we recommend using the cosine distance as defined by the form
 
 where A and B are two vectors. 
 
-This is a somewhat confusing formula but luckily  _pgvector_ provides an operator that computes the cosine distance for us:
+This is a somewhat confusing formula but luckily  `pgvector` provides an operator that computes the cosine distance for us:
 
 !!! generic
 
@@ -204,7 +204,7 @@ You'll notice that the distance between "What is the pgml.transform function?" a
 
 It is inefficient to compute embeddings for all the documents every time we search the dataset. Instead, we should embed our documents once and search against precomputed embeddings. 
 
-_pgvector_ provides us with the `vector` data type for storing embeddings in regular PostgreSQL tables:
+`pgvector` provides us with the `vector` data type for storing embeddings in regular PostgreSQL tables:
 
 
 !!! generic
