@@ -35,7 +35,7 @@ Embeddings are vectors. Given some text and some embedding model, we can convert
 
 !!! generic
 
-!!! code_block time="14.125 ms"
+!!! code_block
 
 ```postgresql
 SELECT pgml.embed('mixedbread-ai/mxbai-embed-large-v1', 'Generating embeddings in Postgres is fun!');
@@ -130,7 +130,7 @@ This is a somewhat confusing formula but luckily  _pgvector_ provides an operato
 
 !!! generic
 
-!!! code_block time="64.643 ms"
+!!! code_block
 
 ```postgresql
 SELECT '[1,2,3]'::vector <=> '[2,3,4]'::vector;
@@ -206,9 +206,10 @@ It is inefficient to compute embeddings for all the documents every time we sear
 
 _pgvector_ provides us with the `vector` data type for storing embeddings in regular PostgreSQL tables:
 
+
 !!! generic
 
-!!! code_block
+!!! code_block time="12.547 ms"
 
 ```postgresql
 CREATE TABLE text_and_embeddings (
@@ -216,7 +217,19 @@ CREATE TABLE text_and_embeddings (
     text text, 
     embedding vector (1024)
 );
+```
 
+!!!
+
+!!!
+
+Let's add some data to our table:
+
+!!! generic
+
+!!! code_block time="72.156 ms"
+
+```postgresql
 INSERT INTO text_and_embeddings (text, embedding)
 VALUES 
   (
@@ -240,11 +253,11 @@ VALUES
 
 !!!
 
-Once our table has some data, we can search it using the following query: 
+Now that our table has some data, we can search over it using the following query: 
 
 !!! generic
 
-!!! code_block time="19.864 ms"
+!!! code_block time="35.016 ms"
 
 ```postgresql
 WITH query_embedding AS (
@@ -288,7 +301,7 @@ Let's demonstrate this by inserting 100,000 additional embeddings:
 
 !!! generic
 
-!!! code_block
+!!! code_block time="3114242.499 ms"
 
 ```postgresql
 INSERT INTO text_and_embeddings (text, embedding) 
@@ -309,7 +322,7 @@ Now trying our search engine again:
 
 !!! generic
 
-!!! code_block time="105.917 ms"
+!!! code_block time="138.252 ms"
 
 ```postgresql
 WITH embedded_query AS (
@@ -364,7 +377,7 @@ and search again, we would get much better performance:
 
 !!! generic
 
-!!! code_block time="29.191 ms"
+!!! code_block time="44.508 ms"
 
 ```postgresql
 WITH embedded_query AS (
@@ -405,7 +418,7 @@ HNSW indexes typically have better and faster recall but require more compute wh
 
 !!! generic
 
-!!! code_block
+!!! code_block time="115564.303"
 
 ```postgresql
 DROP index text_and_embeddings_embedding_idx;
@@ -422,7 +435,7 @@ Now let's try searching again:
 
 !!! generic
 
-!!! code_block time="20.270 ms"
+!!! code_block time="35.716 ms"
 
 ```postgresql
 WITH embedded_query AS (
