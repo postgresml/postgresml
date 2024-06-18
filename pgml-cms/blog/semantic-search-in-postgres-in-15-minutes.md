@@ -31,7 +31,7 @@ Semantic search is not just for machine learning engineers. The system behind se
 
 Semantic search is powered by embeddings. To understand how semantic search works, we must have a basic understanding of embeddings. 
 
-Embeddings are vectors. Given some text and some embedding model, we can convert text to vectors:
+Embeddings are vectors / arrays. Given some text and some embedding model, we can convert text to vectors:
 
 !!! generic
 
