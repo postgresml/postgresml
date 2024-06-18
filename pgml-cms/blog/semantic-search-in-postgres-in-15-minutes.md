@@ -59,7 +59,7 @@ The output size of the vector varies per model, and in _mxbai-embed-large-v1_ ou
 
 The vector this model outputs is not random. It is designed to capture the semantic meaning of the text. What this really means, is that sentences which are closer together in meaning will be closer together in vector space. 
 
-Let’s look at a more simple example. Let's assume we have a model called _simple-embedding-model_, and it outputs vectors with only 2 dimensions. Let’s embed the following three phrases: "I like Postgres", "I like SQL" and "Rust is the best": 
+Let’s look at a more simple example. Let's assume we have a model called `simple-embedding-model`, and it outputs vectors with only 2 dimensions. Let’s embed the following three phrases: "I like Postgres", "I like SQL" and "Rust is the best": 
 
 !!! generic
 
