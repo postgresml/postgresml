@@ -1,11 +1,11 @@
 ---
 description: >-
-  Learn how to implement semantic search in PostgreSQL with nothing but SQL.
+  How to implement semantic search in Postgres with nothing but SQL.
 featured: true
 tags: ["Engineering"]
 ---
 
-# Semantic Search in Postgres in 15 Minutes
+# Implementing Semantic Search in Postgres in 15 Minutes
 
 <div align="left">
 
@@ -15,7 +15,7 @@ tags: ["Engineering"]
 
 Silas Marvin
 
-June 15, 2024
+June 18, 2024
 
 ## What is and is not semantic search
 
@@ -23,9 +23,11 @@ Semantic search uses machine learning to understand the meaning of text by conve
 
 When users are unsure of the exact terms to search for, semantic search can uncover relevant information that traditional keyword searches might miss. This capability is particularly valuable for discovering content based on the intent and context of the search query, rather than relying solely on precise word matches.
 
-It is not a replacement for full-text search. In many cases, full-text search can outperform semantic search. Specifically, if a user knows the exact keywords they want to match in a document, full-text search is faster and guaranteed to return the correct result, whereas semantic search is only likely to return the correct result. Full-text search and semantic search can be combined to create powerful and robust search systems.
+It is not a replacement for keyword search. In many cases, keyword search can outperform semantic search. Specifically, if a user knows the exact keywords they want to match in a document, keyword search is faster and guaranteed to return the correct result, whereas semantic search is only likely to return the correct result. The most robust search systems combine the two. This technique is called hybrid search, which ultimately delivers the most accurate search system and best user experience.
 
-Semantic search is not just for machine learning engineers. The system behind semantic search is relatively easy to implement, and thanks to new Postgres extensions like `pgml` and `pgvector`, it is readily available to SQL developers. Just as modern SQL developers are expected to be familiar with and capable of implementing full-text search, they will soon be expected to implement semantic search as well.
+Semantic search is not just for machine learning engineers. The system behind semantic search is relatively easy to implement, and thanks to new Postgres extensions like `pgml` and `pgvector`, it is readily available to SQL developers. Just as modern SQL developers are expected to be familiar with and capable of implementing keyword search, they will soon be expected to implement semantic search as well.
+
+For more on hybird search techniques check out our blog post, _[How to Improve Search Results with Machine Learning](https://postgresml.org/blog/how-to-improve-search-results-with-machine-learning)_.
 
 ## Embeddings 101
 
@@ -95,7 +97,7 @@ embedding for 'Rust is the best'
 
 !!!
 
-You'll notice how similar the vectors produced by the text "I like Postgres" and "I like SQL" are compared to "Rust is the best".  This is a artificial example, but the same idea holds true when translating to real models like `mixedbread-ai/mxbai-embed-large-v1`. 
+You'll notice how similar the vectors produced by the text "I like Postgres" and "I like SQL" are compared to "Rust is the best".  This is an artificial example, but the same idea holds true when translating to real models like `mixedbread-ai/mxbai-embed-large-v1`. 
 
 ## What does it mean to be "close"?
 
@@ -202,7 +204,7 @@ You'll notice that the distance between "What is the pgml.transform function?" a
 
 ## Making it fast!
 
-It is inefficient to compute embeddings for all the documents every time we search the dataset. Instead, we should embed our documents once and search against precomputed embeddings. 
+It is inefficient to compute embeddings for all the documents every time we search the dataset as it takes a few milliseconds to generate an embedding. Instead, we should embed our documents once and search against precomputed embeddings. 
 
 `pgvector` provides us with the `vector` data type for storing embeddings in regular PostgreSQL tables:
 
@@ -478,3 +480,15 @@ That was even faster!
 There is a lot more that can go into semantic search. Stay tuned for a follow up post on hybrid search and re-ranking.
 
 If you have any questions, or just have an idea on how to make PostgresML better, we'd love to hear from you in our [Discord](https://discord.com/invite/DmyJP3qJ7U). We’re open source, and welcome contributions from the community, especially when it comes to the rapidly evolving ML/AI landscape.
+
+## Closing thoughts / why PostgresQL?
+
+There are a host of benefits to performing machine learning tasks in your database. The hard part of AI & ML systems has always been managing data. Vastly more engineers have a full-time job managing data pipelines than models. Vastly more money is spent on data management systems than LLMs, and this will continue to be the case, because data is the bespoke differentiator.
+
+Getting the data to the models in a timely manner often spans multiple teams and multiple disciplines collaborating for multiple quarters. When the landscape is changing as quickly as modern AI & ML, many applications are out of date before they launch, and unmaintainable long term. 
+
+Moving the models to the data rather than constantly pulling the data to the models reduces engineering overhead, the number of costly external network calls, and only enhances your ability to scale. Why not scale your data on a proven database handling millions of requests per second? That’s why we do machine learning in Postgres. 
+
+For more on the benefits of in-database AI/ML see our blog post, [_LLMs are Commoditized, Data is the Differentiator_](https://postgresml.org/blog/llms-are-commoditized-data-is-the-differentiator).
+
+In this post we focused on SQL, but for those without SQL expertise, the benefits of in-database machine learning are still accessible. You can abstract away the SQL functions in [JS](https://postgresml.org/docs/api/client-sdk/), [Python](https://postgresml.org/docs/api/client-sdk/), [Rust](https://postgresml.org/docs/api/client-sdk/) or [C](https://postgresml.org/docs/api/client-sdk/).
