@@ -414,7 +414,7 @@ We can see it is a massive speedup because we are only comparing our input to 1/
 
 HNSW indexes are a bit more complicated. It is essentially a graph with edges linked by proximity in vector space. For more information you can check out this [write-up](https://www.pinecone.io/learn/series/faiss/hnsw/). 
 
-HNSW indexes typically have better and faster recall but require more compute when adding new vectors. That being said, we recommend using HNSW indexes for most use cases.
+HNSW indexes typically have better and faster recall but require more compute when adding new vectors. That being said, we recommend using HNSW indexes for most use cases where writes are less frequent than reads.
 
 !!! generic
 
