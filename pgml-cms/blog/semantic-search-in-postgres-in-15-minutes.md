@@ -25,7 +25,7 @@ When users are unsure of the exact terms to search for, semantic search can unco
 
 It is not a complete replacement for full-text search. In many cases, full-text search can outperform semantic search. Specifically, if a user knows the exact phrase they want to match in a document, full-text search is faster and guaranteed to return the correct result, whereas semantic search is only likely to return the correct result. Full-text search and semantic search can be combined to create powerful and robust search systems.
 
-Semantic search is not just for machine learning engineers. The system behind semantic search is relatively easy to implement, and thanks to new Postgres extensions like _pgml_ and _pgvector_, it is readily available to SQL developers. Just as modern SQL developers are expected to be familiar with and capable of implementing full-text search, they will soon be expected to implement semantic search as well.
+Semantic search is not just for machine learning engineers. The system behind semantic search is relatively easy to implement, and thanks to new Postgres extensions like `pgml` and `pgvector`, it is readily available to SQL developers. Just as modern SQL developers are expected to be familiar with and capable of implementing full-text search, they will soon be expected to implement semantic search as well.
 
 ## Embeddings 101
 
