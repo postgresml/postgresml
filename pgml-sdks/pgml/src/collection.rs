@@ -208,7 +208,7 @@ impl Collection {
             .all(|c| c.is_alphanumeric() || c.is_whitespace() || c == '-' || c == '_')
         {
             anyhow::bail!(
-                "Name must only consist of letters, numebers, white space, and '-' or '_'"
+                "Collection name must only consist of letters, numbers, white space, and '-' or '_'"
             )
         }
         let (pipelines_table_name, documents_table_name) = Self::generate_table_names(name);
@@ -264,21 +264,43 @@ impl Collection {
             } else {
                 let mut transaction = pool.begin().await?;
 
-                let project_id: i64 = sqlx::query_scalar("INSERT INTO pgml.projects (name, task) VALUES ($1, 'embedding'::pgml.task) ON CONFLICT (name) DO UPDATE SET task = EXCLUDED.task RETURNING id, task::TEXT")
-                    .bind(&self.name)
-                    .fetch_one(&mut *transaction)
-                    .await?;
+                let project_id: i64 = sqlx::query_scalar(
+                    "
+                    INSERT INTO pgml.projects (
+                        name,
+                        task
+                    ) VALUES (
+                        $1,
+                        'embedding'::pgml.task
+                    ) ON CONFLICT (name)
+                    DO UPDATE SET
+                        task = EXCLUDED.task
+                    RETURNING id, task::TEXT",
+                )
+                .bind(&self.name)
+                .fetch_one(&mut *transaction)
+                .await?;
 
                 transaction
                     .execute(query_builder!("CREATE SCHEMA IF NOT EXISTS %s", self.name).as_str())
                     .await?;
 
-                let c: models::Collection = sqlx::query_as("INSERT INTO pgml.collections (name, project_id, sdk_version) VALUES ($1, $2, $3) ON CONFLICT (name) DO NOTHING RETURNING *")
-                        .bind(&self.name)
-                        .bind(project_id)
-                        .bind(crate::SDK_VERSION)
-                        .fetch_one(&mut *transaction)
-                        .await?;
+                let c: models::Collection = sqlx::query_as(
+                    "
+                    INSERT INTO pgml.collections (
+                        name,
+                        project_id, 
+                        sdk_version
+                    ) VALUES (
+                        $1, $2, $3
+                    ) ON CONFLICT (name) DO NOTHING
+                    RETURNING *",
+                )
+                .bind(&self.name)
+                .bind(project_id)
+                .bind(crate::SDK_VERSION)
+                .fetch_one(&mut *transaction)
+                .await?;
 
                 let collection_database_data = CollectionDatabaseData {
                     id: c.id,
@@ -353,23 +375,25 @@ impl Collection {
         .await?;
 
         if exists {
-            warn!("Pipeline {} already exists not adding", pipeline.name);
+            warn!("Pipeline {} already exists, not adding", pipeline.name);
         } else {
-            // We want to intentially throw an error if they have already added this pipeline
+            // We want to intentionally throw an error if they have already added this pipeline
             // as we don't want to casually resync
+            let mp = MultiProgress::new();
+            mp.println(format!("Adding pipeline {}...", pipeline.name))?;
+
             pipeline
                 .verify_in_database(project_info, true, &pool)
                 .await?;
 
-            let mp = MultiProgress::new();
-            mp.println(format!("Added Pipeline {}, Now Syncing...", pipeline.name))?;
+            mp.println(format!("Added pipeline {}, now syncing...", pipeline.name))?;
 
             // TODO: Revisit this. If the pipeline is added but fails to sync, then it will be "out of sync" with the documents in the table
             // This is rare, but could happen
             pipeline
                 .resync(project_info, pool.acquire().await?.as_mut())
                 .await?;
-            mp.println(format!("Done Syncing {}\n", pipeline.name))?;
+            mp.println(format!("Done syncing {}\n", pipeline.name))?;
         }
         Ok(())
     }

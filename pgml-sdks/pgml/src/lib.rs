@@ -14,6 +14,7 @@ use tokio::runtime::{Builder, Runtime};
 use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
 
+mod batch;
 mod builtins;
 #[cfg(any(feature = "python", feature = "javascript"))]
 mod cli;
@@ -40,6 +41,7 @@ mod utils;
 mod vector_search_query_builder;
 
 // Re-export
+pub use batch::Batch;
 pub use builtins::Builtins;
 pub use collection::Collection;
 pub use model::Model;
@@ -217,6 +219,7 @@ fn pgml(_py: pyo3::Python, m: &pyo3::types::PyModule) -> pyo3::PyResult<()> {
     m.add_class::<builtins::BuiltinsPython>()?;
     m.add_class::<transformer_pipeline::TransformerPipelinePython>()?;
     m.add_class::<open_source_ai::OpenSourceAIPython>()?;
+    m.add_class::<batch::BatchPython>()?;
     Ok(())
 }
 
@@ -275,6 +278,7 @@ fn main(mut cx: neon::context::ModuleContext) -> neon::result::NeonResult<()> {
         "newOpenSourceAI",
         open_source_ai::OpenSourceAIJavascript::new,
     )?;
+    cx.export_function("newBatch", batch::BatchJavascript::new)?;
     Ok(())
 }
 
