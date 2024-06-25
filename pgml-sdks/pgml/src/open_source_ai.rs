@@ -35,126 +35,45 @@ fn try_model_nice_name_to_model_name_and_parameters(
         "meta-llama/Meta-Llama-3-8B-Instruct" => Some((
             "meta-llama/Meta-Llama-3-8B-Instruct",
             serde_json::json!({
-                "task": "conversationa",
+                "task": "conversational",
                 "model": "meta-llama/Meta-Llama-3-8B-Instruct"
             })
             .into(),
         )),
-
-        "mistralai/Mistral-7B-Instruct-v0.1" => Some((
-            "mistralai/Mistral-7B-Instruct-v0.1",
+        "meta-llama/Meta-Llama-3-70B-Instruct" => Some((
+            "meta-llama/Meta-Llama-3-70B-Instruct",
             serde_json::json!({
-              "task": "conversational",
-              "model": "mistralai/Mistral-7B-Instruct-v0.1",
-              "device_map": "auto",
-              "torch_dtype": "bfloat16"
+                "task": "conversational",
+                "model": "meta-llama/Meta-Llama-3-70B-Instruct"
             })
             .into(),
         )),
-
-        "TheBloke/Llama-2-7B-Chat-GPTQ" => Some((
-            "TheBloke/Llama-2-7B-Chat-GPTQ",
+        "microsoft/Phi-3-mini-128k-instruct" => Some((
+            "microsoft/Phi-3-mini-128k-instruct",
             serde_json::json!({
-              "task": "conversational",
-              "model": "TheBloke/Llama-2-7B-Chat-GPTQ",
-              "device_map": "auto",
-              "revision": "main"
+                "task": "conversational",
+                "model": "microsoft/Phi-3-mini-128k-instruct"
             })
             .into(),
         )),
-
-        "teknium/OpenHermes-2.5-Mistral-7B" => Some((
-            "teknium/OpenHermes-2.5-Mistral-7B",
+        "mistralai/Mixtral-8x7B-Instruct-v0.1" => Some((
+            "mistralai/Mixtral-8x7B-Instruct-v0.1",
             serde_json::json!({
-              "task": "conversational",
-              "model": "teknium/OpenHermes-2.5-Mistral-7B",
-              "device_map": "auto",
-              "torch_dtype": "bfloat16"
+                "task": "conversational",
+                "model": "mistralai/Mixtral-8x7B-Instruct-v0.1"
             })
             .into(),
         )),
-
-        "Open-Orca/Mistral-7B-OpenOrca" => Some((
-            "Open-Orca/Mistral-7B-OpenOrca",
+        "mistralai/Mistral-7B-Instruct-v0.2" => Some((
+            "mistralai/Mistral-7B-Instruct-v0.2",
             serde_json::json!({
-              "task": "conversational",
-              "model": "Open-Orca/Mistral-7B-OpenOrca",
-              "device_map": "auto",
-              "torch_dtype": "bfloat16"
-            })
-            .into(),
-        )),
-
-        "Undi95/Toppy-M-7B" => Some((
-            "Undi95/Toppy-M-7B",
-            serde_json::json!({
-                "model": "Undi95/Toppy-M-7B",
-                "device_map": "auto",
-                "torch_dtype": "bfloat16"
-            })
-            .into(),
-        )),
-
-        "Undi95/ReMM-SLERP-L2-13B" => Some((
-            "Undi95/ReMM-SLERP-L2-13B",
-            serde_json::json!({
-                "model": "Undi95/ReMM-SLERP-L2-13B",
-                "device_map": "auto",
-                "torch_dtype": "bfloat16"
-            })
-            .into(),
-        )),
-
-        "Gryphe/MythoMax-L2-13b" => Some((
-            "Gryphe/MythoMax-L2-13b",
-            serde_json::json!({
-                "model": "Gryphe/MythoMax-L2-13b",
-                "device_map": "auto",
-                "torch_dtype": "bfloat16"
-            })
-            .into(),
-        )),
-
-        "PygmalionAI/mythalion-13b" => Some((
-            "PygmalionAI/mythalion-13b",
-            serde_json::json!({
-                "model": "PygmalionAI/mythalion-13b",
-                "device_map": "auto",
-                "torch_dtype": "bfloat16"
-            })
-            .into(),
-        )),
-
-        "deepseek-ai/deepseek-llm-7b-chat" => Some((
-            "deepseek-ai/deepseek-llm-7b-chat",
-            serde_json::json!({
-                "model": "deepseek-ai/deepseek-llm-7b-chat",
-                "device_map": "auto",
-                "torch_dtype": "bfloat16"
-            })
-            .into(),
-        )),
-
-        "Phind/Phind-CodeLlama-34B-v2" => Some((
-            "Phind/Phind-CodeLlama-34B-v2",
-            serde_json::json!({
-                "model": "Phind/Phind-CodeLlama-34B-v2",
-                "device_map": "auto",
-                "torch_dtype": "bfloat16"
+                "task": "conversational",
+                "model": "mistralai/Mistral-7B-Instruct-v0.2"
             })
             .into(),
         )),
 
         _ => None,
-    }
-}
-
-fn try_get_model_chat_template(model_name: &str) -> Option<&'static str> {
-    match model_name {
-        // Any Alpaca instruct tuned model
-        "Undi95/Toppy-M-7B" | "Undi95/ReMM-SLERP-L2-13B" | "Gryphe/MythoMax-L2-13b" | "Phind/Phind-CodeLlama-34B-v2" => Some("{% for message in messages %}\n{% if message['role'] == 'user' %}\n{{ '### Instruction:\n' + message['content'] + '\n'}}\n{% elif message['role'] == 'system' %}\n{{ message['content'] + '\n'}}\n{% elif message['role'] == 'model' %}\n{{ '### Response:>\n'  + message['content'] + eos_token + '\n'}}\n{% endif %}\n{% if loop.last and add_generation_prompt %}\n{{ '### Response:' }}\n{% endif %}\n{% endfor %}"),
-        "PygmalionAI/mythalion-13b" => Some("{% for message in messages %}\n{% if message['role'] == 'user' %}\n{{ '<|user|>\n' + message['content'] + eos_token }}\n{% elif message['role'] == 'system' %}\n{{ '<|system|>\n' + message['content'] + eos_token }}\n{% elif message['role'] == 'model' %}\n{{ '<|model|>\n'  + message['content'] + eos_token }}\n{% endif %}\n{% if loop.last and add_generation_prompt %}\n{{ '<|model|>' }}\n{% endif %}\n{% endfor %}"),
-        _ => None
     }
 }
 
@@ -265,9 +184,7 @@ mistralai/Mistral-7B-v0.1
         // TODO: Add n
 
         let mut args = serde_json::json!({ "max_tokens": max_tokens, "temperature": temperature });
-        if let Some(t) = chat_template
-            .or_else(|| try_get_model_chat_template(&model_name).map(|s| s.to_string()))
-        {
+        if let Some(t) = chat_template {
             args.as_object_mut().unwrap().insert(
                 "chat_template".to_string(),
                 serde_json::to_value(t).unwrap(),
@@ -355,9 +272,7 @@ mistralai/Mistral-7B-v0.1
         // TODO: Add n
 
         let mut args = serde_json::json!({ "max_tokens": max_tokens, "temperature": temperature });
-        if let Some(t) = chat_template
-            .or_else(|| try_get_model_chat_template(&model_name).map(|s| s.to_string()))
-        {
+        if let Some(t) = chat_template {
             args.as_object_mut().unwrap().insert(
                 "chat_template".to_string(),
                 serde_json::to_value(t).unwrap(),

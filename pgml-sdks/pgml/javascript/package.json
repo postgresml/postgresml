@@ -1,6 +1,6 @@
 {
   "name": "pgml",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Open Source Alternative for Building End-to-End Vector Search Applications without OpenAI & Pinecone",
   "keywords": [
     "postgres",
