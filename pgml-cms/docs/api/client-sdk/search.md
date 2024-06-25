@@ -641,3 +641,119 @@ char **results = pgml_collectionc_vector_search(collection, "{\
 {% endtabs %}
 
 The above query would filter out all documents that do not have a key `special` with a value `True` or (have a key `user_id` equal to 1 and a key `user_score` less than 100).
+
+## **Re-ranking**
+
+Vector search results can be reranked in the same query they are retrieved in. To enable this, provide the `rerank` key.
+
+{% tabs %}
+{% tab title="JavaScript" %}
+```javascript
+const results = await collection.vector_search(
+  {
+    query: {
+      fields: {
+        body: {
+          query: "What is the best database?", parameters: {
+          prompt:
+              "Represent this sentence for searching relevant passages: ",
+          }
+        },
+      },
+    },
+    rerank: {
+        model: "mixedbread-ai/mxbai-rerank-base-v1",
+        query: "What is the best database?",
+        num_documents_to_rerank: 100,
+    },
+    limit: 5,
+  },
+  pipeline,
+);
+```
+{% endtab %}
+
+{% tab title="Python" %}
+```python
+results = await collection.vector_search(
+    {
+        "query": {
+            "fields": {
+                "body": {
+                    "query": "What is the best database?",
+                    "parameters": {
+                        "prompt": "Represent this sentence for searching relevant passages: ",
+                    },
+                },
+            },
+        },
+        "rerank": {
+            "model": "mixedbread-ai/mxbai-rerank-base-v1",
+            "query": "What is the best database",
+            "num_documents_to_rerank": 100,
+        },
+        "limit": 5,
+    },
+    pipeline,
+)
+```
+{% endtab %}
+
+{% tab title="Rust" %}
+```rust
+let results = collection
+    .vector_search(
+        serde_json::json!({
+            "query": {
+                "fields": {
+                    "body": {
+                        "query": "What is the best database?",
+                        "parameters": {
+                            "prompt": "Represent this sentence for searching relevant passages: ",
+                        },
+                    },
+                },
+            },
+            "rerank": {
+                "model": "mixedbread-ai/mxbai-rerank-base-v1",
+                "query": "What is the best database",
+                "num_documents_to_rerank": 100,
+            },
+            "limit": 5,
+        })
+        .into(),
+        &mut pipeline,
+    )
+    .await?;
+```
+{% endtab %}
+
+{% tab title="C" %}
+```cpp
+r_size = 0;
+char **results = pgml_collectionc_vector_search(collection, "{\
+  \"query\": {\
+    \"fields\": {\
+      \"body\": {\
+        \"query\": \"What is the best database?\",\
+        \"parameters\": {\
+          \"prompt\": \"Represent this sentence for searching relevant passages: \"\
+        }\
+      }\
+    }\
+  },\
+  \"rerank\": {\
+    \"model\": \"mixedbread-ai/mxbai-rerank-base-v1\",\
+    \"query\": \"What is the best database\",\
+    \"num_documents_to_rerank\": 100\
+  },\
+  \"limit\": 5\
+}",
+pipeline, &r_size);
+```
+{% endtab %}
+{% endtabs %}
+
+This query will first get the top 100 documents from the initial vector search and then rerank them using the `mixedbread-ai/mxbai-rerank-base-v1` cross-encoder.
+
+You can specify the number of documents to rerank with the `num_documents_to_rerank` parameter. The query returns the top `limit` results after re-ranking.
