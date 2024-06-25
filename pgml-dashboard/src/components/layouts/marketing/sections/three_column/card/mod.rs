@@ -1,5 +1,5 @@
-use sailfish::TemplateOnce;
 use pgml_components::{component, Component};
+use sailfish::TemplateOnce;
 
 #[derive(TemplateOnce, Default)]
 #[template(path = "layouts/marketing/sections/three_column/card/template.html")]
@@ -7,7 +7,8 @@ pub struct Card {
     pub title: Component,
     pub icon: String,
     pub color: String,
-    pub paragraph: Component,}
+    pub paragraph: Component,
+}
 
 impl Card {
     pub fn new() -> Card {
@@ -15,9 +16,10 @@ impl Card {
             title: "title".into(),
             icon: "home".into(),
             color: "red".into(),
-            paragraph: "paragraph".into(),}
+            paragraph: "paragraph".into(),
+        }
     }
-    
+
     pub fn set_title(mut self, title: Component) -> Self {
         self.title = title;
         self

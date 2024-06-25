@@ -16,7 +16,7 @@ impl CodeBlock {
             content: content.to_string(),
             language: "sql".to_string(),
             editable: false,
-            id: "code-block".to_string()
+            id: "code-block".to_string(),
         }
     }
 
