@@ -15,7 +15,13 @@ import {
   editorTheme,
 } from "../../../static/js/utilities/code_mirror_theme";
 
-const buildEditorView = (target, content, languageExtension, classes, editable) => {
+const buildEditorView = (
+  target,
+  content,
+  languageExtension,
+  classes,
+  editable,
+) => {
   let editorView = new EditorView({
     doc: content,
     extensions: [
@@ -53,17 +59,17 @@ const highlight = ViewPlugin.fromClass(
 function highlightLine(view) {
   let builder = new RangeSetBuilder();
   let classes = view.state.facet(addClasses).shift();
-  if(classes) {
+  if (classes) {
     for (let { from, to } of view.visibleRanges) {
       for (let pos = from; pos <= to; ) {
-          let lineClasses = classes.shift();
-          let line = view.state.doc.lineAt(pos);
-          builder.add(
-            line.from,
-            line.from,
-            Decoration.line({ attributes: { class: lineClasses } }),
-          );
-          pos = line.to + 1;
+        let lineClasses = classes.shift();
+        let line = view.state.doc.lineAt(pos);
+        builder.add(
+          line.from,
+          line.from,
+          Decoration.line({ attributes: { class: lineClasses } }),
+        );
+        pos = line.to + 1;
       }
     }
   }
@@ -97,9 +103,9 @@ const getLanguage = (element) => {
 
 const getIsEditable = (element) => {
   switch (element.getAttribute("editable")) {
-    case "true": 
+    case "true":
       return true;
-    default: 
+    default:
       return false;
   }
 };
@@ -124,14 +130,13 @@ export default class extends Controller {
     let lang = getLanguage(this.element);
     let editable = getIsEditable(this.element);
 
-
     let editor = buildEditorView(element, content, lang, classes, editable);
-    this.editor = editor
-    this.dispatch("code-block-connected")
+    this.editor = editor;
+    this.dispatch("code-block-connected");
   }
 
   getEditor() {
-    return this.editor
+    return this.editor;
   }
 }
 
