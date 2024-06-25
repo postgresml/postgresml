@@ -1,5 +1,5 @@
 <%
-  use pgml_components::Component;
+  use crate::components::cards::Psychedelic;
 
   let success_class = match success {
     Some(true) => "success",
@@ -14,8 +14,8 @@
   };
 
   let error_icon = match success {
-    Some(false) => Component::from(r#"<span class="material-symbols-outlined m-auto pe-2 text-error">warning</span>"#),
-    _ => Component::from("")
+    Some(false) => r#"<span class="material-symbols-outlined m-auto pe-2 text-error">warning</span>"#,
+    _ => ""
   };
 
   let email_placeholder = match &email {
@@ -28,27 +28,36 @@
       message
     }
   };
+
+  let email_val = match email {
+    Some(ref email) => "value=\"".to_string() + &email + "\"",
+    None => String::new()
+  };
 %>
 
 <turbo-frame id="newsletter-subscribe-frame">
   <div data-controller="cards-newsletter-subscribe">
-    <div class="d-flex flex-column flex-lg-row gap-5 justify-content-between align-items-center newsletter-subscribe-container psychedelic-pink-bg py-5 ps-xl-5 px-3 rounded-4">
-      <div class="d-flex flex-column gap-4 text-center text-md-start w-100">
-        <h3>Subscribe to our newsletter.<br> (It’s better than you think)</h3>
-        <p>No spam. No sales pitches. Just product updates. Keep up with all our articles and news. Join our newsletter and stay up to date!</p>
-      </div>
-
-      <div class="d-flex flex-column justify-content-center align-items-xl-end align-items-center gap-3 w-100 position-relative" style="max-width: 27rem;">
-        <form action="/newsletter_subscribe" class="d-flex flex-lg-row flex-column gap-3 w-100" method="post">
-          <div class="input-group p-1 ps-3 subscribe-input d-flex flex-row gap-1">
-            <input  type="email" class="form-control border-0" placeholder="<%- email_placeholder %>" name="email" autocomplete="off" <% if email.is_some() {%>value="<%- email.unwrap() %><% } %>">
-            <%+ error_icon %>
-            <button type="submit" class="btn btn-primary rounded-2 d-none d-md-block">Subscribe</button>
+    <%+ Psychedelic::new()
+        .set_content(format!(r#"
+        <div class="d-flex flex-column flex-lg-row gap-5 justify-content-between align-items-center newsletter-subscribe-container">
+          <div class="d-flex flex-column gap-4 text-center text-md-start w-100">
+            <h3>Subscribe to our newsletter.<br> (It's better than you think)</h3>
+            <p>No spam. No sales pitches. Just product updates. Keep up with all our articles and news. Join our newsletter and stay up to date!</p>
           </div>
-          <button type="submit" class="btn btn-primary rounded-2 d-md-none mx-auto">Subscribe</button>
-        </form>
-        <p class="message <%- success_class %> position-absolute body-small-text"><%- message %></p>
-      </div>
-    </div>
+    
+          <div class="d-flex flex-column justify-content-center align-items-xl-end align-items-center gap-3 w-100 position-relative" style="max-width: 27rem;">
+            <form action="/newsletter_subscribe" class="d-flex flex-lg-row flex-column gap-3 w-100" method="post">
+              <div class="input-group p-1 ps-3 subscribe-input d-flex flex-row gap-1">
+                <input  type="email" class="form-control border-0" placeholder="{email_placeholder}" name="email" autocomplete="off" {email_val}>
+                {error_icon}
+                <button type="submit" class="btn btn-primary rounded-2 d-none d-md-block">Subscribe</button>
+              </div>
+              <button type="submit" class="btn btn-primary rounded-2 d-md-none mx-auto">Subscribe</button>
+            </form>
+            <p class="message {success_class} position-absolute body-small-text">{message}</p>
+          </div>
+        </div>
+        "#).into())
+        .set_color_pink() %>
   </div>
 </turbo-frame>

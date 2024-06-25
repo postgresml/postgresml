@@ -15,7 +15,7 @@ import {
   editorTheme,
 } from "../../../static/js/utilities/code_mirror_theme";
 
-const buildEditorView = (target, content, languageExtension, classes) => {
+const buildEditorView = (target, content, languageExtension, classes, editable) => {
   let editorView = new EditorView({
     doc: content,
     extensions: [
@@ -23,7 +23,7 @@ const buildEditorView = (target, content, languageExtension, classes) => {
       languageExtension !== null ? languageExtension() : [], // if no language chosen do not highlight syntax
       EditorView.theme(editorTheme),
       syntaxHighlighting(HighlightStyle.define(highlightStyle)),
-      EditorView.contentAttributes.of({ contenteditable: false }),
+      EditorView.contentAttributes.of({ contenteditable: editable }),
       addClasses.of(classes),
       highlight,
     ],
@@ -49,19 +49,22 @@ const highlight = ViewPlugin.fromClass(
   },
 );
 
+// Allows for highlighting of specific lines
 function highlightLine(view) {
   let builder = new RangeSetBuilder();
   let classes = view.state.facet(addClasses).shift();
-  for (let { from, to } of view.visibleRanges) {
-    for (let pos = from; pos <= to; ) {
-      let lineClasses = classes.shift();
-      let line = view.state.doc.lineAt(pos);
-      builder.add(
-        line.from,
-        line.from,
-        Decoration.line({ attributes: { class: lineClasses } }),
-      );
-      pos = line.to + 1;
+  if(classes) {
+    for (let { from, to } of view.visibleRanges) {
+      for (let pos = from; pos <= to; ) {
+          let lineClasses = classes.shift();
+          let line = view.state.doc.lineAt(pos);
+          builder.add(
+            line.from,
+            line.from,
+            Decoration.line({ attributes: { class: lineClasses } }),
+          );
+          pos = line.to + 1;
+      }
     }
   }
   return builder.finish();
@@ -71,7 +74,7 @@ const addClasses = Facet.define({
   combone: (values) => values,
 });
 
-const language = (element) => {
+const getLanguage = (element) => {
   switch (element.getAttribute("language")) {
     case "sql":
       return sql;
@@ -92,6 +95,15 @@ const language = (element) => {
   }
 };
 
+const getIsEditable = (element) => {
+  switch (element.getAttribute("editable")) {
+    case "true": 
+      return true;
+    default: 
+      return false;
+  }
+};
+
 const codeBlockCallback = (element) => {
   let highlights = element.getElementsByClassName("highlight");
   let classes = [];
@@ -109,9 +121,17 @@ const codeBlockCallback = (element) => {
 export default class extends Controller {
   connect() {
     let [element, content, classes] = codeBlockCallback(this.element);
-    let lang = language(this.element);
+    let lang = getLanguage(this.element);
+    let editable = getIsEditable(this.element);
 
-    buildEditorView(element, content, lang, classes);
+
+    let editor = buildEditorView(element, content, lang, classes, editable);
+    this.editor = editor
+    this.dispatch("code-block-connected")
+  }
+
+  getEditor() {
+    return this.editor
   }
 }
 
@@ -120,13 +140,14 @@ class CodeBlockA extends HTMLElement {
   constructor() {
     super();
 
-    this.language = language(this);
+    this.language = getLanguage(this);
+    this.editable = getIsEditable(this);
   }
 
   connectedCallback() {
     let [element, content, classes] = codeBlockCallback(this);
 
-    buildEditorView(element, content, this.language, classes);
+    buildEditorView(element, content, this.language, classes, this.editable);
   }
 
   // component attributes

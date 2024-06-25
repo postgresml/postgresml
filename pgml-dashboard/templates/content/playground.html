@@ -14,6 +14,8 @@ use crate::components::Slider;
 use crate::components::pagination::Pagination;
 use crate::components::inputs::{range::Range, RangeGroupPricingCalc};
 use crate::components::tables::ServerlessModels;
+use crate::components::cards::Rgb;
+use crate::components::cards::Psychedelic;
 %>
 
 <div class="min-height: 100vh;" data-controller="playground">
@@ -322,7 +324,15 @@ use crate::components::tables::ServerlessModels;
   <%+ ServerlessModels::new() %>
 </div>
 
-<turbo-frame id="serverless-models" src="/dashboard/serverless_models/turboframe">
-  Getting models
-<turbo-frame>
+<div style="margin-bottom: 14rem;">
+  <h5>RGB card</h5>
+  <%+ Rgb::new("hi".into()).active() %>
+</div>
 
+<div style="margin-bottom: 14rem;">
+  <h5>Psychedelic card</h5>
+  <%+ Psychedelic::new() %>
+  <%+ Psychedelic::new().is_border_only(true) %>
+  <%+ Psychedelic::new().set_color_pink() %>
+  <%+ Psychedelic::new().set_color_pink().is_border_only(true) %>
+</div>
