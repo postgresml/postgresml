@@ -133,7 +133,7 @@ Notice there is near one to one relation between the parameters and return type 
 
 The best part of using open-source AI is the flexibility with models. Unlike OpenAI, we are not restricted to using a few censored models, but have access to almost any model out there.
 
-Here is an example of streaming with the popular Mythalion model, an uncensored MythoMax variant designed for chatting.
+Here is an example of streaming with the popular `meta-llama/Meta-Llama-3-8B-Instruct` model.
 
 {% tabs %}
 {% tab title="JavaScript" %}
@@ -141,7 +141,7 @@ Here is an example of streaming with the popular Mythalion model, an uncensored 
 const pgml = require("pgml");
 const client = pgml.newOpenSourceAI();
 const it = client.chat_completions_create_stream(
-  "PygmalionAI/mythalion-13b",
+  "meta-llama/Meta-Llama-3-8B-Instruct",
   [
     {
       role: "system",
@@ -166,7 +166,7 @@ while (!result.done) {
 import pgml
 client = pgml.OpenSourceAI()
 results = client.chat_completions_create_stream(
-     "PygmalionAI/mythalion-13b",
+     "meta-llama/Meta-Llama-3-8B-Instruct",
      [
          {
              "role": "system",
@@ -196,7 +196,7 @@ for c in results:
   ],
   "created": 1701296792,
   "id": "62a817f5-549b-43e0-8f0c-a7cb204ab897",
-  "model": "PygmalionAI/mythalion-13b",
+  "model": "meta-llama/Meta-Llama-3-8B-Instruct",
   "object": "chat.completion.chunk",
   "system_fingerprint": "f366d657-75f9-9c33-8e57-1e6be2cf62f3"
 }
@@ -212,7 +212,7 @@ for c in results:
   ],
   "created": 1701296792,
   "id": "62a817f5-549b-43e0-8f0c-a7cb204ab897",
-  "model": "PygmalionAI/mythalion-13b",
+  "model": "meta-llama/Meta-Llama-3-8B-Instruct",
   "object": "chat.completion.chunk",
   "system_fingerprint": "f366d657-75f9-9c33-8e57-1e6be2cf62f3"
 }
@@ -303,7 +303,7 @@ Notice the return types for the sync and async variations are the same.
 const pgml = require("pgml");
 const client = pgml.newOpenSourceAI();
 const it = await client.chat_completions_create_stream_async(
-  "PygmalionAI/mythalion-13b",
+  "meta-llama/Meta-Llama-3-8B-Instruct",
   [
     {
       role: "system",
@@ -359,7 +359,7 @@ async for c in results:
   ],
   "created": 1701296792,
   "id": "62a817f5-549b-43e0-8f0c-a7cb204ab897",
-  "model": "PygmalionAI/mythalion-13b",
+  "model": "meta-llama/Meta-Llama-3-8B-Instruct",
   "object": "chat.completion.chunk",
   "system_fingerprint": "f366d657-75f9-9c33-8e57-1e6be2cf62f3"
 }
@@ -375,7 +375,7 @@ async for c in results:
   ],
   "created": 1701296792,
   "id": "62a817f5-549b-43e0-8f0c-a7cb204ab897",
-  "model": "PygmalionAI/mythalion-13b",
+  "model": "meta-llama/Meta-Llama-3-8B-Instruct",
   "object": "chat.completion.chunk",
   "system_fingerprint": "f366d657-75f9-9c33-8e57-1e6be2cf62f3"
 }
@@ -391,121 +391,6 @@ We have tested the following models and verified they work with the OpenSourceAI
 
 * meta-llama/Meta-Llama-3-8B-Instruct
 * meta-llama/Meta-Llama-3-70B-Instruct
-* Phind/Phind-CodeLlama-34B-v2
-* HuggingFaceH4/zephyr-7b-beta
-* deepseek-ai/deepseek-llm-7b-chat
-* PygmalionAI/mythalion-13b
-* Gryphe/MythoMax-L2-13b
-* Undi95/ReMM-SLERP-L2-13B
-* Undi95/Toppy-M-7B
-* Open-Orca/Mistral-7B-OpenOrca
-* teknium/OpenHermes-2.5-Mistral-7B
-* mistralai/Mistral-7B-Instruct-v0.1
-
-Any model on hugging face should work with our OpenSourceAI. Here is an example of using one of the more popular quantized models from [TheBloke](https://huggingface.co/TheBloke).
-
-{% tabs %}
-{% tab title="JavaScript" %}
-```javascript
-const pgml = require("pgml");
-const client = pgml.newOpenSourceAI();
-const results = await client.chat_completions_create_async(
-  {
-    model: "TheBloke/vicuna-13B-v1.5-16K-GPTQ",
-    device_map: "auto",
-    revision: "main"
-  },
-  [
-    {
-      role: "system",
-      content: "You are a friendly chatbot who always responds in the style of a pirate",
-    },
-    {
-      role: "user",
-      content: "How many helicopters can a human eat in one sitting?",
-    },
-  ],
-)
-```
-{% endtab %}
-
-{% tab title="Python" %}
-```python
-import pgml
-client = pgml.OpenSourceAI()
-results = client.chat_completions_create(
-    {
-        "model": "TheBloke/vicuna-13B-v1.5-16K-GPTQ",
-        "device_map": "auto",
-        "revision": "main"
-    },
-    [
-        {
-            "role": "system",
-            "content": "You are a friendly chatbot who always responds in the style of a pirate",
-        },
-        {
-            "role": "user",
-            "content": "How many helicopters can a human eat in one sitting?",
-        },
-    ]
-)
-```
-{% endtab %}
-{% endtabs %}
-
-Notice that we don't specify a model name, but model JSON this time. The JSON keys in the model argument roughly follow the task argument when using our [text-generation SQL API](../api/sql-extension/pgml.transform/text-generation.md).
-
-To access a gated repo like `meta-llama/Llama-2-7b-chat-hf` simply provide the necessary hugging face token.
-
-{% tabs %}
-{% tab title="JavaScript" %}
-```javascript
-const pgml = require("pgml");
-const client = pgml.newOpenSourceAI();
-const results = await client.chat_completions_create_async(
-  {
-    model: "meta-llama/Llama-2-7b-chat-hf",
-    torch_dtype: "bfloat16",
-    device_map: "auto",
-    token: "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"
-  },
-  [
-      {
-          role: "system",
-          content: "You are a friendly chatbot who always responds in the style of a pirate",
-      },
-      {
-          role: "user",
-          content: "How many helicopters can a human eat in one sitting?",
-      },
-  ],
-);
-```
-{% endtab %}
-
-{% tab title="Python" %}
-```python
-import pgml
-client = pgml.OpenSourceAI()
-results = client.chat_completions_create(
-    {
-    "model": "meta-llama/Llama-2-7b-chat-hf",
-    "torch_dtype": "bfloat16",
-    "device_map": "auto",
-    "token": "YOUR_SUPER_SECRET_TOKEN"
-    },
-    [
-        {
-            "role": "system",
-            "content": "You are a friendly chatbot who always responds in the style of a pirate",
-        },
-        {
-            "role": "user",
-            "content": "How many helicopters can a human eat in one sitting?",
-        },
-    ]
-)
-```
-{% endtab %}
-{% endtabs %}
+* microsoft/Phi-3-mini-128k-instruct
+* mistralai/Mixtral-8x7B-Instruct-v0.1
+* mistralai/Mistral-7B-Instruct-v0.2
