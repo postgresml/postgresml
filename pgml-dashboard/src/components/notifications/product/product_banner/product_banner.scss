@@ -39,6 +39,11 @@ div[data-controller="notifications-product-product-banner"] {
 
   .close {
       color: #{$gray-100};
+      font-size: 24px;
+
+      &:hover {
+          color: #{$gray-200};
+      }
   }
 
   .more-info {
