@@ -1,3 +1,7 @@
+<%
+  let column_classes = "d-flex flex-column flex-1 gap-3";
+%>
+
 <div data-controller="sections-footers-marketing-footer">
   <div class="container-fluid main-container">
     <div class="container mb-5">
@@ -7,10 +11,19 @@
       </h5>
   
       <div class="d-flex flex-wrap w-100 row-gap-4">
-        <% if solutions.len() > 0 || resources.len() > 0 {%>
-        <div class="d-flex flex-wrap flex-grow-1 justify-content-around nav row-gap-4">
+        <% if solutions.len() > 0 || resources.len() > 0 || product.len() > 0 {%>
+        <div class="d-flex flex-column flex-lg-row flex-1 justify-content-lg-around nav row-gap-4">
+          <% if product.len() > 0 { %>
+          <div class="<%- column_classes %>">
+            <p class="footer-title fw-semibold  m-0">product</p>
+            <% for link in product { %>
+            <a class="nav-link <% if link.disabled {%> disabled<% } %>" <% if !link.disabled {%> href="<%- link.href %>" <% } %>><%- link.name %> <%if link.disabled {%><span class="coming-soon">(coming soon!)</span><% } %></a>
+            <% } %>
+          </div>
+          <% } %>
+
           <% if solutions.len() > 0 { %>
-          <div class="d-flex flex-column flex-grow-1 gap-3">
+          <div class="<%- column_classes %>">
             <p class="footer-title fw-semibold  m-0">solutions</p>
             <% for link in solutions { %>
             <a class="nav-link <% if link.disabled {%> disabled<% } %>" <% if !link.disabled {%> href="<%- link.href %>" <% } %>><%- link.name %> <%if link.disabled {%><span class="coming-soon">(coming soon!)</span><% } %></a>
@@ -19,7 +32,7 @@
           <% } %>
   
           <% if resources.len() > 0 { %>
-          <div class="d-flex flex-column flex-grow-1 gap-3">
+          <div class="<%- column_classes %>">
             <p class="footer-title fw-semibold  m-0">Resources</p>
             <% for link in resources { %>
               <div>
@@ -31,9 +44,9 @@
         </div>
         <% } %>
   
-        <div class="d-flex flex-wrap flex-grow-1 justify-content-around nav row-gap-4">
+        <div class="d-flex flex-column flex-lg-row flex-1 justify-content-lg-around nav row-gap-4">
           <% if company.len() > 0 { %>
-          <div class="d-flex flex-column flex-grow-1 gap-3">
+          <div class="<%- column_classes %>">
             <p class="footer-title fw-semibold  m-0 m-0">Company</p>
             <% for link in company { %>
             <a class="nav-link" href="<%- link.href %>"><%- link.name %></a>
@@ -41,7 +54,7 @@
           </div>
           <% } %>
   
-          <div class="d-flex flex-column flex-grow-1 gap-3">
+          <div class="<%- column_classes %>">
             <p class="footer-title fw-semibold  m-0">Community</p>
             <a class="nav-link d-flex gap-2 align-items-center" href="https://github.com/postgresml/postgresml">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18" fill="none">

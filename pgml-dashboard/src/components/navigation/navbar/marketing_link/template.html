@@ -8,12 +8,20 @@
 
   let list_item = |link: NavLink| {
     let is_disabled = if link.disabled { "disabled" } else { "" };
-    let icon = link.icon.unwrap();
     let href = link.href;
     let name = link.name;
+    
+    let icon_html = match link.custom_icon {
+      Some(icon) => icon.render_once().unwrap(),
+      None => {
+        let icon_name = link.icon.unwrap_or(String::from("house"));
+        format!(r#"<span class="material-symbols-outlined" style="width: 16px; height: 16px;">{icon_name}</span>"#)
+      }
+    };
+
     format!(r#"
       <li class="d-flex gap-3 {is_disabled}">
-        <span class="material-symbols-outlined" style="width: 16px; height: 16px;">{icon}</span>
+        {icon_html}
         <a class="submenu-link" href="{href}">{name}</a>
       </li>"#)
   };

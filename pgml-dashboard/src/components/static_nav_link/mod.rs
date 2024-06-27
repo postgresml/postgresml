@@ -1,3 +1,5 @@
+use pgml_components::Component;
+
 #[derive(Debug, Clone, Default)]
 pub struct StaticNavLink {
     pub name: String,
@@ -6,6 +8,7 @@ pub struct StaticNavLink {
     pub disabled: bool,
     pub icon: Option<String>,
     pub hide_for_lg_screens: bool,
+    pub custom_icon: Option<Component>,
 }
 
 impl StaticNavLink {
@@ -17,6 +20,7 @@ impl StaticNavLink {
             disabled: false,
             icon: None,
             hide_for_lg_screens: false,
+            custom_icon: None,
         }
     }
 
@@ -37,6 +41,11 @@ impl StaticNavLink {
 
     pub fn hide_for_lg_screens(mut self, hide: bool) -> Self {
         self.hide_for_lg_screens = hide;
+        self
+    }
+
+    pub fn custom_icon(mut self, icon: Component) -> Self {
+        self.custom_icon = Some(icon);
         self
     }
 }
