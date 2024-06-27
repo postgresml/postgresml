@@ -5,6 +5,17 @@
   use crate::components::static_nav_link::StaticNavLink;
   use pgml_components::Component;
 
+  let product_open_source_links = vec![
+    StaticNavLink::new("Korvus".to_string(), "/docs".to_string()).icon("description"),
+    StaticNavLink::new("PGML".to_string(), "/docs/cli".to_string()).custom_icon(Component::from(r#"<span class="icon-owl icomoon ps-1"></span>"#)),
+    StaticNavLink::new("PgCat".to_string(), "/docs/api".to_string()).icon("api"),
+  ];
+
+  let product_deployment_options_links = vec![
+    StaticNavLink::new("PostgresML Cloud".to_string(), "/docs/guides/deploy-on-cloud".to_string()).icon("filter_drama"),
+    StaticNavLink::new("VPC".to_string(), "/docs/guides/deploy-on-prem".to_string()).icon("vpn_key"),
+  ];
+
   let solutions_use_cases_links = vec![
     StaticNavLink::new("Search".to_string(), "/docs/guides/improve-search-results-with-machine-learning".to_string()).icon("feature_search"),
     StaticNavLink::new("Chatbots".to_string(), "/chatbot".to_string()).icon("smart_toy"),
@@ -62,7 +73,7 @@
       "##)
   };
 
-  let close_mobile_main_nav_items = vec!["solutions-collapse", "company-collapse"];
+  let close_mobile_main_nav_items = vec!["solutions-collapse", "company-collapse", "product-collapse"];
 %>
 
   <div class="sticky-top-nav" data-controller="navigation-navbar-marketing">
@@ -88,10 +99,20 @@
 
         <div class="collapse navbar-collapse drawer-submenu-container navbarSupportedContent" id="navbarSupportedContent">
           <!-- Main Menu -->
-          <div class="nav-item w-100 d-xl-flex flex-column flex-xl-row align-items-xl-center collapse collapse-horizontal drawer-submenu <% for item in close_mobile_main_nav_items {%> <%- item %><% } %> solutions-collapse show">
+          <div class="nav-item w-100 d-xl-flex flex-column flex-xl-row align-items-xl-center collapse collapse-horizontal drawer-submenu <% for item in close_mobile_main_nav_items {%> <%- item %><% } %> solutions-collapse product-collapse show">
             <ul class="navbar-nav flex-grow-1 gap-4 me-auto my-4 my-xl-0">
 
               <% if !standalone_dashboard { %>
+                <div class="d-none d-xl-flex">
+                  <%+ MarketingLink::new()
+                      .name("Product")
+                      .links(product_open_source_links.clone())
+                      .title_col1("Open-source")
+                      .links_col2(product_deployment_options_links.clone())
+                      .title_col2("Deployment options") %>
+                </div>
+                <%- link_to_drawer("Product", "product-collapse") %>
+
                 <div class="d-none d-xl-flex">
                   <%+ MarketingLink::new()
                       .name("Solutions")
@@ -215,6 +236,46 @@
                   Component::from(link_to_drawer("Use Cases", "solutions-use-cases-collapse"))
                 ],
               to_expand: vec!["solutions-tasks-collapse".to_string(), "solutions-use-cases-collapse".to_string()]
+            }
+          ) %>
+
+          <%- drawer(
+            DrawerNav {
+              collapse_name: "product-open-source-collapse".to_string(),
+              links: 
+                product_open_source_links.iter().map(|link| {
+                  MarketingLink::new().link(
+                        StaticNavLink::new(link.name.to_string(), link.href.to_string())
+                        .disabled(link.disabled))
+                        .into()
+                }).collect::<Vec<Component>>(),
+              to_expand: vec![]
+            }
+          ) %>
+
+          <%- drawer(
+            DrawerNav {
+              collapse_name: "product-deployment-options-collapse".to_string(),
+              links: 
+                product_deployment_options_links.iter().map(|link| {
+                  MarketingLink::new().link(
+                        StaticNavLink::new(link.name.to_string(), link.href.to_string())
+                        .disabled(link.disabled))
+                        .into()
+                }).collect::<Vec<Component>>(),
+              to_expand: vec![]
+            }
+          ) %>
+
+          <%- drawer(
+            DrawerNav {
+              collapse_name: "product-collapse".to_string(),
+              links: 
+                vec![
+                  Component::from(link_to_drawer("Open-Source", "product-open-source-collapse")),
+                  Component::from(link_to_drawer("Deployment Options", "product-deployment-options-collapse"))
+                ],
+              to_expand: vec!["product-open-source-collapse".to_string(), "product-deployment-options-collapse".to_string()]
             }
           ) %>
 
