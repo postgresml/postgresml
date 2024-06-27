@@ -131,3 +131,6 @@ pub mod tables;
 // src/components/test_component
 pub mod test_component;
 pub use test_component::TestComponent;
+
+// src/components/turbo
+pub mod turbo;

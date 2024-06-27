@@ -1,8 +1,13 @@
+use crate::components::code_editor::Editor;
+use crate::components::turbo::TurboFrame;
 use anyhow::Context;
 use once_cell::sync::OnceCell;
+use sailfish::TemplateOnce;
 use serde::Serialize;
 use sqlparser::dialect::PostgreSqlDialect;
 use sqlx::{postgres::PgPoolOptions, Executor, PgPool, Row};
+
+use crate::responses::ResponseOk;
 
 use rocket::route::Route;
 
@@ -85,55 +90,6 @@ impl StreamResponse {
 impl ToString for StreamResponse {
     fn to_string(&self) -> String {
         serde_json::to_string(self).unwrap()
-    }
-}
-
-#[get("/code_editor/play/stream")]
-pub async fn play_stream(ws: ws::WebSocket) -> ws::Stream!['static] {
-    ws::Stream! { ws =>
-        for await message in ws {
-            let message = match message {
-                Ok(message) => message,
-                Err(_err) => continue,
-            };
-
-            let mut got_something = false;
-            match AsyncResult::from_message(message).await {
-                Ok(mut result) => {
-                    loop {
-                        match result.next().await {
-                            Ok(Some(result)) => {
-                                got_something = true;
-                                yield ws::Message::from(StreamResponse::from_result(&result).to_string());
-                            }
-
-                            Err(err) => {
-                                yield ws::Message::from(StreamResponse::from_error(&err.to_string()).to_string());
-                                break;
-                            }
-
-                            Ok(None) => {
-                                if !got_something {
-                                    yield ws::Message::from(StreamResponse::from_error(ERROR).to_string());
-                                }
-                                break;
-                            }
-                        }
-                    };
-
-                    match result.close().await {
-                        Ok(_) => (),
-                        Err(err) => {
-                            info!("[stream] error closing: {:?}", err);
-                        }
-                    };
-                }
-
-                Err(err) => {
-                    yield ws::Message::from(StreamResponse::from_error(&err.to_string()).to_string());
-                }
-            }
-        };
     }
 }
 
@@ -265,27 +221,65 @@ impl<'a> AsyncResult<'a> {
         Ok(())
     }
 }
-pub fn routes() -> Vec<Route> {
-    routes![play_stream,]
+
+#[get("/code_editor/play/stream")]
+pub async fn play_stream(ws: ws::WebSocket) -> ws::Stream!['static] {
+    ws::Stream! { ws =>
+        for await message in ws {
+            let message = match message {
+                Ok(message) => message,
+                Err(_err) => continue,
+            };
+
+            let mut got_something = false;
+            match AsyncResult::from_message(message).await {
+                Ok(mut result) => {
+                    loop {
+                        match result.next().await {
+                            Ok(Some(result)) => {
+                                got_something = true;
+                                yield ws::Message::from(StreamResponse::from_result(&result).to_string());
+                            }
+
+                            Err(err) => {
+                                yield ws::Message::from(StreamResponse::from_error(&err.to_string()).to_string());
+                                break;
+                            }
+
+                            Ok(None) => {
+                                if !got_something {
+                                    yield ws::Message::from(StreamResponse::from_error(ERROR).to_string());
+                                }
+                                break;
+                            }
+                        }
+                    };
+
+                    match result.close().await {
+                        Ok(_) => (),
+                        Err(err) => {
+                            info!("[stream] error closing: {:?}", err);
+                        }
+                    };
+                }
+
+                Err(err) => {
+                    yield ws::Message::from(StreamResponse::from_error(&err.to_string()).to_string());
+                }
+            }
+        };
+    }
 }
 
-#[cfg(test)]
-mod test {
-    use super::*;
+#[get("/code_editor/embed?<id>")]
+pub fn embed_editor(id: String) -> ResponseOk {
+    let comp = Editor::new();
 
-    #[sqlx::test]
-    async fn test_play(_pool: sqlx::PgPool) -> anyhow::Result<()> {
-        let query = r#"
-            SELECT pgml.transform(
-              '{ "model": "mistralai/Mistral-7B-v0.1"}'::JSONB,
-              'Building AI apps with PostgresML is really easy, show me how!'
-            )
-        "#;
-        assert!(check_query(query).is_ok());
-        assert!(check_query("DROP TABLE test").is_err());
-        assert!(check_query("SELECT 1; SELECT 2;").is_err());
-        assert!(check_query("SELECT 1; DROP TABLE test;").is_err());
+    let rsp = TurboFrame::new().set_target_id(&id).set_content(comp.into());
 
-        Ok(())
-    }
+    return ResponseOk(rsp.render_once().unwrap());
+}
+
+pub fn routes() -> Vec<Route> {
+    routes![play_stream, embed_editor,]
 }

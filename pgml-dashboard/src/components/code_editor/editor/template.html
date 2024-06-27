@@ -7,7 +7,6 @@
 
   let code_block_id = format!("code-block-{}", random_string(5));
 
-
   let btn = if btn_style == "party" {
     format!(r#"
     <button
@@ -36,7 +35,7 @@
     };
 %>
 
-<div 
+<div
   data-controller="code-editor-editor"
   data-code-editor-editor-code-block-outlet="#<%- code_block_id %>"
   data-action="code-block:code-block-connected->code-editor-editor#codeBlockAvailable"
