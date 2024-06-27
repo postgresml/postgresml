@@ -30,6 +30,9 @@ pub mod cms;
 pub mod code_block;
 pub use code_block::CodeBlock;
 
+// src/components/code_editor
+pub mod code_editor;
+
 // src/components/confirm_modal
 pub mod confirm_modal;
 pub use confirm_modal::ConfirmModal;

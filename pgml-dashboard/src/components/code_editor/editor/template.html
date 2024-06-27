@@ -1,0 +1,166 @@
+<%
+  use crate::components::inputs::select::Select;
+  use crate::components::stimulus::stimulus_target::StimulusTarget;
+  use crate::components::stimulus::stimulus_action::{StimulusAction, StimulusEvents};
+  use crate::components::code_block::CodeBlock;
+  use crate::utils::random_string;
+
+  let code_block_id = format!("code-block-{}", random_string(5));
+
+
+  let btn = if btn_style == "party" {
+    format!(r#"
+    <button
+    type="submit"
+    class="btn btn-party"
+    data-action="code-editor-editor#onSubmit"
+    data-code-editor-editor-target="button"
+    >
+      <div></div>
+      <div></div>
+      <div class="z-1">Run</div>
+    </button>
+    "#)
+    } else {
+      format!(r#"
+      <button
+      type="submit"
+      class="btn btn-secondary-marketing"
+      style="right: 5%;"
+      data-action="code-editor-editor#onSubmit"
+      data-code-editor-editor-target="button"
+      >
+        Run
+      </button>
+      "#)
+    };
+%>
+
+<div 
+  data-controller="code-editor-editor"
+  data-code-editor-editor-code-block-outlet="#<%- code_block_id %>"
+  data-action="code-block:code-block-connected->code-editor-editor#codeBlockAvailable"
+  data-code-editor-editor-default-task-value="<%- task %>"
+  data-code-editor-editor-default-model-value="<%- model %>"
+  data-code-editor-editor-run-on-visible-value="<%- run_on_visible %>"
+>
+  <div class="w-100">
+    <div class="overflow-hidden rounded-3">
+      <div class="editor-header">
+        <% if show_task {%>
+        <div class="hh-t d-flex align-items-center gap-3 pt-3 pb-3 ps-4 pe-4">
+          <label class=""><strong class="text-uppercase">Task:</strong></label>
+          <%+ Select::new().options(vec![
+            "text-generation",
+            "embeddings",
+            "summarization",
+            "translation",
+            ])
+            .name("task-select")
+            .value_target(
+              StimulusTarget::new()
+              .controller("code-editor-editor")
+              .name("task")
+            )
+          .action(
+            StimulusAction::new()
+            .controller("code-editor-editor")
+            .method("taskChange")
+            .action(StimulusEvents::Change)
+          ) %>
+        </div>
+        <% } %>
+
+        <% if show_model {%>
+        <div class="hh-m d-flex align-items-center gap-3 pt-3 pb-3 ps-4 pe-4">
+          <label class=""><strong class="text-uppercase">Model:</strong></label>
+          <%+ Select::new().options(vec![
+            // Models are marked as C (cpu) G (gpu)
+            // The number is the average time it takes to run in seconds
+
+            // text-generation
+            "meta-llama/Meta-Llama-3-8B-Instruct", // G
+            "meta-llama/Meta-Llama-3-70B-Instruct", // G
+            "mistralai/Mixtral-8x7B-Instruct-v0.1", // G
+            "mistralai/Mistral-7B-Instruct-v0.2", // G
+
+            // Embeddings
+            "intfloat/e5-small-v2",
+            "Alibaba-NLP/gte-large-en-v1.5",
+            "mixedbread-ai/mxbai-embed-large-v1",
+
+            // Translation
+            "google-t5/t5-base",
+
+            // Summarization
+            "google/pegasus-xsum",
+
+            ])
+            .name("model-select")
+            .value_target(
+              StimulusTarget::new()
+              .controller("code-editor-editor")
+              .name("model")
+            )
+            .action(
+              StimulusAction::new()
+              .controller("code-editor-editor").method("modelChange")
+              .action(StimulusEvents::Change)
+            ) %>
+        </div>
+        <% } %>
+
+        <% if show_question_input {%>
+          <div class="d-flex flex-row position-relative pt-3 pb-3 ps-4 pe-4">
+            <div class="d-flex align-items-lg-center gap-lg-3 flex-fill flex-column flex-lg-row question-input">
+              <label class=""><strong class="text-uppercase text-white">Question:</strong></label>
+              <input type="text" class="form-control" placeholder="Ask a question about PGML" data-code-editor-editor-target="questionInput">
+            </div>
+            <% if btn_location == "question-header" {%>
+              <div class="d-flex align-items-center">
+                <%- btn %>
+              </div>
+            <% } %>
+          </div>
+        <% } %>
+      </div>
+
+      <div  class="pt-4 text-area text-start" data-code-editor-editor-target="editor">
+        <!-- We set the code via JS here-->
+        <%+ CodeBlock::new(&content.unwrap_or_default())
+            .set_language("sql")
+            .set_editable(is_editable)
+            .set_id(&code_block_id) %>
+
+        <% if btn_location == "text-area" {%>
+          <div class="mt-2 mb-4 bottom-0 d-flex justify-content-end pe-4">
+            <%- btn %>
+          </div>
+        <% } %>
+      </div>
+
+      <div class="p-4 editor-footer text-start">
+        <% if show_question_input {%><div class="eyebrow-text text-white text-uppercase mb-1">Answer: </div><% } %>
+        <div
+          data-code-editor-editor-target="loading"
+          class="d-none"
+          aria-hidden="true"
+        >
+          <div class="d-flex gap-3 align-items-start loading">
+            <div class="lds-dual-ring"></div>
+            <div class="">Loading non-cached models may take a few moments</div>
+          </div>
+        </div>
+
+        <div id="editor-play-result">
+          <pre><code data-code-editor-editor-target="result" class="d-none">[{“translation_text”:”Bienvenue à l'avenir!”}]</code></pre>
+        </div>
+        
+        <div id="editor-play-result-stream" data-code-editor-editor-target="resultStream">
+          AI is going to change the world!
+        </div>
+        
+      </div>
+    </div>
+  </div>
+</div>
