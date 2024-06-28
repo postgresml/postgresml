@@ -1,0 +1,45 @@
+div[data-controller="accordion"] {
+  .accordion-header {
+      cursor: pointer;
+  }
+
+  .accordion-body {
+    overflow: hidden;
+    transition: all 0.3s ease-in-out;
+  }
+
+  .accordion-item {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    border-top: solid #{$gray-600} 1px;
+  }
+
+  .accordion-item:last-child {
+    border-bottom: solid #{$gray-600} 1px;
+  }
+
+  .accordion-header {
+    div[aria-expanded="true"] {
+      .title {
+        color: #{$gray-100};
+      }
+      .add {
+          display: none;
+      }
+      .remove {
+          display: block;
+      }
+    }
+    div[aria-expanded="false"] {
+      .title {
+        color: #{$gray-300};
+      }
+      .add {
+          display: block;
+      }
+      .remove {
+          display: none;
+      }
+    }
+  } 
+}
