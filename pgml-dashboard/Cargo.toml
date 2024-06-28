@@ -43,6 +43,7 @@ sentry = "0.31"
 sentry-log = "0.31"
 sentry-anyhow = "0.31"
 serde_json = "1"
+sqlparser = "0.38"
 sqlx = { version = "0.7.3", features = [ "runtime-tokio-rustls", "postgres", "json", "migrate", "time", "uuid", "bigdecimal"] }
 tantivy = "0.19"
 time = "0.3"

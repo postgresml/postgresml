@@ -102,6 +102,11 @@ article {
                                     supported by Chrome, Edge, Opera and Firefox */
 }
 
+// because boostrap 5.3 flex-fill is broken. 
+.flex-1 {
+    flex: 1;
+}
+
 // Smooth scroll does not work in firefox and turbo.  New pages will not scroll to top, so we remove smooth for Firefox. 
 @-moz-document url-prefix() {
     :root {

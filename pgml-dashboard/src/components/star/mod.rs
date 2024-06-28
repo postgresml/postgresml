@@ -16,6 +16,7 @@ static SVGS: Lazy<HashMap<&'static str, &'static str>> = Lazy::new(|| {
     let mut map = HashMap::new();
     map.insert("green", include_str!("../../../static/images/icons/stars/green.svg"));
     map.insert("party", include_str!("../../../static/images/icons/stars/party.svg"));
+    map.insert("blue", include_str!("../../../static/images/icons/stars/blue.svg"));
     map.insert(
         "give_it_a_spin",
         include_str!("../../../static/images/icons/stars/give_it_a_spin.svg"),

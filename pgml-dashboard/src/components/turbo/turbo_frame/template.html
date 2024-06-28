@@ -1,0 +1,8 @@
+<%
+  let id_attr = format!("id={}", target_id);
+  let src_attr = format!("src={}", src.render_once().unwrap());
+  let other_attrs = attributes.join(" ");
+%>
+<turbo-frame <%- id_attr %> <%- src_attr %> <%- other_attrs%>>
+  <%- content.unwrap_or_default().render_once().unwrap() %>
+</turbo-frame>
