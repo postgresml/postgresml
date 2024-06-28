@@ -202,16 +202,16 @@ Let's take this hypothetical example and make it a reality. For the rest of this
 * The chatbot remembers our past conversation
 * The chatbot can answer questions correctly about Baldur's Gate 3
 
-In reality we haven't created a SOTA LLM, but fortunately other people have and we will be using the incredibly popular fine-tune of Mistral: `teknium/OpenHermes-2.5-Mistral-7B`. We will be using pgml our own Python library for the remainder of this tutorial. If you want to follow along and have not installed it yet:
+In reality we haven't created a SOTA LLM, but fortunately other people have and we will be using the incredibly popular `meta-llama/Meta-Llama-3-8B-Instruct`. We will be using pgml our own Python library for the remainder of this tutorial. If you want to follow along and have not installed it yet:
 
 ```
 pip install pgml
 ```
 
-Also make sure and set the `DATABASE_URL` environment variable:
+Also make sure and set the `PGML_DATABASE_URL` environment variable:
 
 ```
-export DATABASE_URL="{your free PostgresML database url}"
+export PGML_DATABASE_URL="{your free PostgresML database url}"
 ```
 
 Let's setup a basic chat loop with our model:
@@ -220,17 +220,15 @@ Let's setup a basic chat loop with our model:
 from pgml import TransformerPipeline
 import asyncio
 
-model = TransformerPipeline(
-    "text-generation",
-    "teknium/OpenHermes-2.5-Mistral-7B",
-    {"device_map": "auto", "torch_dtype": "bfloat16"},
-)
+model = TransformerPipeline("text-generation", "meta-llama/Meta-Llama-3-8B-Instruct")
+
 
 async def main():
     while True:
         user_input = input("=> ")
-        model_output = await model.transform([user_input], {"max_new_tokens": 1000})
-        print(model_output[0][0]["generated_text"], "\n")
+        model_output = await model.transform([user_input], {"max_new_tokens": 25})
+        print(model_output[0], "\n")
+
 
 asyncio.run(main())
 ```
@@ -257,7 +255,7 @@ I asked you if you were going to the store.
 Oh, I see. No, I'm not going to the store.
 ```
 
-That wasn't close to what we wanted to happen. Getting chatbots to work in the real world seems a bit more complicated than the hypothetical world.
+That wasn't close to what we wanted to happen. We got mostly garbage, nonsensical output. Getting chatbots to work in the real world seems a bit more complicated than the hypothetical world.
 
 To understand why our chatbot gave us a nonsensical first response, and why it didn't remember our conversation at all, we must dive shortly into the world of prompting.
 
@@ -268,17 +266,17 @@ Remember LLM's are just function approximators that are designed to predict the 
 
 We need to understand that LLMs have a special format for the inputs specifically for conversations. So far we have been ignoring this required formatting and giving our LLM the wrong inputs causing it to predicate nonsensical outputs.
 
-What do the right inputs look like? That actually depends on the model. Each model can choose which format to use for conversations while training, and not all models are trained to be conversational. `teknium/OpenHermes-2.5-Mistral-7B` has been trained to be conversational and expects us to format text meant for conversations like so:
+What do the right inputs look like? That actually depends on the model. Each model can choose which format to use for conversations while training, and not all models are trained to be conversational. `meta-llama/Meta-Llama-3-8B-Instruct` has been trained to be conversational and expects us to format text meant for conversations like so:
 
 ```
-<|im_start|>system
-You are a helpful AI assistant named Hermes
-<|im_start|>user
-What is your name?<|im_end|>
-<|im_start|>assistant
+<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+
+You are a helpful AI assistant named Llama<|eot_id|><|start_header_id|>user<|end_header_id|>
+
+What is your name?<|eot_id|><|start_header_id|>assistant<|end_header_id|>
 ```
 
-We have added a bunch of these new HTML looking tags throughout our input. These tags map to tokens the LLM has been trained to associate with conversation shifts. `<|im_start|>` marks the beginning of a message. The text right after `<|im_start|>`, either system, user, or assistant marks the role of the message, and `<|im_end|>` marks the end of a message.
+We have added a bunch of these new HTML looking tags throughout our input. These tags map to tokens the LLM has been trained to associate with conversation shifts. `<|begin_of_text|>` marks the beginning of the text. `<|start_header_id|>` marks the beginning of a the role for a message. The text right after `<|end_header_id|>`, either system, user, or assistant marks the role of the message, and `<|eot_id|>` marks the end of a message.
 
 This is the style of input our LLM has been trained on. Let's do a simple test with this input and see if we get a better response:
 
@@ -286,29 +284,25 @@ This is the style of input our LLM has been trained on. Let's do a simple test w
 from pgml import TransformerPipeline
 import asyncio
 
-model = TransformerPipeline(
-    "text-generation",
-    "teknium/OpenHermes-2.5-Mistral-7B",
-    {"device_map": "auto", "torch_dtype": "bfloat16"},
-)
+model = TransformerPipeline("text-generation", "meta-llama/Meta-Llama-3-8B-Instruct")
 
 user_input = """
-<|im_start|>system
-You are a helpful AI assistant named Hermes
-<|im_start|>user
-What is your name?<|im_end|>
-<|im_start|>assistant
+<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+
+You are a helpful AI assistant named Llama<|eot_id|><|start_header_id|>user<|end_header_id|>
+
+What is your name?<|eot_id|><|start_header_id|>assistant<|end_header_id|>
 """
 
 async def main():
     model_output = await model.transform([user_input], {"max_new_tokens": 1000})
-    print(model_output[0][0]["generated_text"], "\n")
+    print(model_output[0], "\n")
 
 asyncio.run(main())
 ```
 
 ```
-My name is Hermes
+Hello there! My name is Llama, nice to meet you! I'm a helpful AI assistant, here to assist you with any questions or tasks you might have. What can I help you with today?
 ```
 
 {% hint style="info" %}
@@ -321,42 +315,38 @@ That was perfect! We got the exact response we wanted for the first question, bu
 from pgml import TransformerPipeline
 import asyncio
 
-model = TransformerPipeline(
-    "text-generation",
-    "teknium/OpenHermes-2.5-Mistral-7B",
-    {"device_map": "auto", "torch_dtype": "bfloat16"},
-)
+model = TransformerPipeline("text-generation", "meta-llama/Meta-Llama-3-8B-Instruct")
 
 user_input = """
-<|im_start|>system
-You are a helpful AI assistant named Hermes
-<|im_start|>user
-What is your name?<|im_end|>
-<|im_start|>assistant
-My name is Hermes<|im_end|>
-<|im_start|>user
-What did I just ask you?
-<im_start|>assistant
+<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+
+You are a helpful AI assistant named Llama<|eot_id|><|start_header_id|>user<|end_header_id|>
+
+What is your name?<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+
+My name is Llama<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+
+What did I just ask you?<|eot_id|><|start_header_id|>assistant<|end_header_id|>
 """
 
 async def main():
     model_output = await model.transform([user_input], {"max_new_tokens": 1000})
-    print(model_output[0][0]["generated_text"], "\n")
+    print(model_output[0], "\n")
 
 asyncio.run(main())
 ```
 
 ```
-You just asked me my name, and I responded that my name is Hermes. Is there anything else you would like to know?
+You just asked me, "What is your name?" And I told you that my name is Llama! I'm a helpful AI assistant here to assist you with any questions or tasks you may have! 
 ```
 
-By chaining these special tags we can build a conversation that Hermes has been trained to understand and is a great function approximator for.
+By chaining these special tags we can build a conversation that Llama has been trained to understand and is a great function approximator for.
 
 {% hint style="info" %}
 This example highlights that modern LLM's are stateless function approximators. Notice we have included the first question we asked and the models response in our input. Every time we ask it a new question in our conversation, we will have to supply the entire conversation history if we want it to know what we already discussed. LLMs have no built in way to remember past questions and conversations.
 {% endhint %}
 
-Doing this by hand seems very tedious, how do we actually accomplish this in the real world? We use [Jinja](https://jinja.palletsprojects.com/en/3.1.x/) templates. Conversational models on HuggingFace typical come with a Jinja template which can be found in the `tokenizer_config.json`. [Checkout `teknium/OpenHermes-2.5-Mistral-7B`'s Jinja template in the `tokenizer_config.json`](https://huggingface.co/teknium/OpenHermes-2.5-Mistral-7B/blob/main/tokenizer\_config.json). For more information on Jinja templating check out [HuggingFace's introduction](https://huggingface.co/docs/transformers/main/chat\_templating).
+Doing this by hand seems very tedious, how do we actually accomplish this in the real world? We use [Jinja](https://jinja.palletsprojects.com/en/3.1.x/) templates. Conversational models on HuggingFace typical come with a Jinja template which can be found in the `tokenizer_config.json`. [Checkout `meta-llama/Meta-Llama-3-8B-Instruct`'s Jinja template in the `tokenizer_config.json`](https://huggingface.co/meta-llama/Meta-Llama-3-8B-Instruct/blob/main/tokenizer_config.json). For more information on Jinja templating check out [HuggingFace's introduction](https://huggingface.co/docs/transformers/main/chat_templating).
 
 Luckily for everyone reading this, our `pgml` library automatically handles templating and formatting inputs correctly so we can skip a bunch of boring code. We do want to change up our program a little bit to take advantage of this automatic templating:
 
@@ -366,14 +356,14 @@ from pgml import OpenSourceAI
 client = OpenSourceAI()
 
 history = [
-    {"role": "system", "content": "You are a friendly and helpful chatbot named Hermes"}
+    {"role": "system", "content": "You are a friendly and helpful chatbot named Llama"}
 ]
 
 while True:
     user_input = input("=> ")
     history.append({"role": "user", "content": user_input})
     model_output = client.chat_completions_create(
-        "teknium/OpenHermes-2.5-Mistral-7B", history, temperature=0.85
+        "meta-llama/Meta-Llama-3-8B-Instruct", history, temperature=0.85
     )
     history.append({"role": "assistant", "content": model_output["choices"][0]["message"]["content"]})
     print(model_output["choices"][0]["message"]["content"], "\n")
@@ -387,10 +377,10 @@ This program let's us have conversations like the following:
 
 ```
 => What is your name?
-Hello! My name is Hermes. How can I help you today?
+Hello there! My name is Llama, and I'm a friendly and helpful chatbot here to assist you with any questions or tasks you may have. I'm excited to meet you and chat with you! 
 
 => What did I just ask you?
-You just asked me what my name is, and I am a friendly and helpful chatbot named Hermes. How can I assist you today? Feel free to ask me any questions or seek any assistance you need.
+You just asked me "What is your name?"! I'm Llama, the friendly and helpful chatbot, and I'm happy to have introduced myself to you! 
 ```
 
 Note that we have a list of dictionaries called `history` we use to store the chat history, and instead of feeding text into our model, we are inputting the `history` list. Our library automatically converts this list of dictionaries into the format expected by the model. Notice the `roles` in the dictionaries are the same as the `roles` of the messages in the previous example. This list of dictionaries with keys `role` and `content`  as a storage system for messages is pretty standard and used by us as well as OpenAI and HuggingFace.
@@ -420,22 +410,36 @@ As expected this is rather a shallow response that lacks any of the actual plot.
 Luckily none of this is actually very difficult as people like us have built libraries that handle the complex pieces. Here is a program that handles steps 1-4:
 
 ```python
-from pgml import Collection, Model, Splitter, Pipeline
+from pgml import OpenSourceAI, Collection, Pipeline
+import asyncio
 import wikipediaapi
 import asyncio
+
 
 # Construct our wikipedia api
 wiki_wiki = wikipediaapi.Wikipedia("Chatbot Tutorial Project", "en")
 
-# Use the default model for embedding and default splitter for splitting
-model = Model() # The default model is Alibaba-NLP/gte-base-en-v1.5
-splitter = Splitter() # The default splitter is recursive_character
 
-# Construct a pipeline for ingesting documents, splitting them into chunks, and then embedding them
-pipeline = Pipeline("test-pipeline-1", model, splitter)
+# Construct a pipeline for ingesting documents, splitting them into chunks, and embedding them
+pipeline = Pipeline(
+    "v0",
+    {
+        "text": {
+            "splitter": {
+                "model": "recursive_character",
+                "parameters": {"chunk_size": 1500},
+            },
+            "semantic_search": {
+                "model": "mixedbread-ai/mxbai-embed-large-v1",
+            },
+        },
+    },
+)
+
 
 # Create a collection to house these documents
-collection = Collection("chatbot-knowledge-base-1")
+collection = Collection("chatbot-knowledge-base-2")
+
 
 async def main():
     # Add the pipeline to the collection
@@ -448,13 +452,24 @@ async def main():
     await collection.upsert_documents([{"id": "Baldur's_Gate_3", "text": page.text}])
 
     # Retrieve and print the most relevant section
-    most_relevant_section = await (
-        collection.query()
-        .vector_recall("What is the plot of Baldur's Gate 3", pipeline)
-        .limit(1)
-        .fetch_all()
+    results = await collection.vector_search(
+        {
+            "query": {
+                "fields": {
+                    "text": {
+                        "query": "What is the plot of Baldur's Gate 3?",
+                        "parameters": {
+                            "prompt": "Represent this sentence for searching relevant passages: "  # The prompt for our embedding model
+                        },
+                    }
+                },
+            },
+            "limit": 1,
+        },
+        pipeline,
     )
-    print(most_relevant_section[0][1])
+    print(results[0]["chunk"])
+
 
 asyncio.run(main())
 ```
@@ -471,7 +486,7 @@ Once again we are using `pgml` to abstract away the complicated pieces for our m
 
 Our search returned the exact section of the Wikipedia article we wanted! Let's talk a little bit about what is going on here.
 
-First we create a `pipeline`. A pipeline is composed of a `splitter` that splits a document, and a `model` that embeds the document. In this case we are using the default for both.
+First we create a `pipeline`. A pipeline is composed of a name and schema where the schema specifies the transformations to apply to the data. In this case, we are splitting and embedding the `text` key of any data upserted to the collection.
 
 Second we create a `collection`. A `collection` is just some number of documents that we can search over. In relation to our hypothetical example and diagram above, you can think of the `collection` as the Store - the storage of chunk's text and embeddings we can search over.
 
@@ -481,20 +496,20 @@ We extract the text from the Wikipedia article using the `wikipediaapi` library 
 
 After our collection has split and embedded the Wikipedia document we search over it getting the best matching chunk and print that chunk's text out.
 
-Let's apply this system to our chatbot. As promised before, we will be putting the context for the chatbot in the `system` message. It does not have to be done this way, but I find it works well when using `teknium/OpenHermes-2.5-Mistral-7B`.
+Let's apply this system to our chatbot. As promised before, we will be putting the context for the chatbot in the `system` message. It does not have to be done this way, but I find it works well when using `meta-llama/Meta-Llama-3-8B-Instruct`.
 
 ```python
-from pgml import OpenSourceAI, Collection, Model, Splitter, Pipeline
+from pgml import OpenSourceAI, Collection, Pipeline
 import asyncio
 import copy
 
 client = OpenSourceAI()
 
 # Instantiate our pipeline and collection. We don't need to add the pipeline to the collection as we already did that
-pipeline = Pipeline("test-pipeline-1")
-collection = Collection("chatbot-knowledge-base-1")
+pipeline = Pipeline("v0")
+collection = Collection("chatbot-knowledge-base-2")
 
-system_message = """You are a friendly and helpful chatbot named Hermes. Given the following context respond the best you can.
+system_message = """You are a friendly and helpful chatbot named Llama. Given the following context respond the best you can.
 
 ### Context
 {context}
@@ -503,23 +518,35 @@ system_message = """You are a friendly and helpful chatbot named Hermes. Given t
 
 history = [{"role": "system", "content": ""}]
 
+
 def build_history_with_context(context):
     history[0]["content"] = system_message.replace("{context}", context)
     return history
+
 
 async def main():
     while True:
         user_input = input("=> ")
         history.append({"role": "user", "content": user_input})
-        context = await (
-            collection.query()
-            .vector_recall("What is Balder's Gate 3", pipeline)
-            .limit(1)
-            .fetch_all()
+        context = await collection.vector_search(
+            {
+                "query": {
+                    "fields": {
+                        "text": {
+                            "query": user_input,
+                            "parameters": {
+                                "prompt": "Represent this sentence for searching relevant passages: "
+                            },
+                        }
+                    },
+                },
+                "limit": 1,
+            },
+            pipeline,
         )
-        new_history = build_history_with_context(context[0][1])
+        new_history = build_history_with_context(context[0]["chunk"])
         model_output = client.chat_completions_create(
-            "teknium/OpenHermes-2.5-Mistral-7B", new_history, temperature=0.85
+            "meta-llama/Meta-Llama-3-8B-Instruct", new_history, temperature=0.85
         )
         history.append(
             {
@@ -528,6 +555,7 @@ async def main():
             }
         )
         print(model_output["choices"][0]["message"]["content"], "\n")
+
 
 asyncio.run(main())
 ```
@@ -538,13 +566,27 @@ Note that we don't need to upsert the Wikipedia document and we don't need to ad
 
 ```
 => What is the plot of Baldur's Gate 3?
-Without revealing too many spoilers, the plot of Baldur's Gate 3 revolves around the player characters being mind-controlled by an ancient mind flayer named Ilslieith. They've been abducted, along with other individuals, by the mind flayer for a sinister purpose - to create a new mind flayer hive mind using the captured individuals' minds. The player characters escape and find themselves on a quest to stop Ilslieith and the hive mind from being created. Along the way, they encounter various allies, each with their own motivations and storylines, as they navigate through three acts in distinct regions of the world, all while trying to survive and resist the mind flayers' influence. As in most role-playing games, decisions made by the player can have significant impacts on the story and the relationships with the companions.
+Hello there! I'm Llama, here to help!
+
+Baldur's Gate 3 is a role-playing game set in the Forgotten Realms universe, and its plot is still unfolding as the game is still in development. However, I can give you a general overview of what we know so far.
+
+Spoiler alert!
+
+The game begins with the player character being part of a group of adventurers who are seeking to save the world from the aftermath of a catastrophic event known as the "Mind Flayer invasion." This event was caused by the powerful Mind Flayer, Zorath, who sought to take over the world by invading the minds of important figures and bend them to his will.
+
+The player's character is part of a group of rebels fighting against the Mind Flayer's dark forces, which have taken control of the city of Baldur's Gate. The group's goal is to infiltrate the Mind Flayer's stronghold, gather allies, and ultimately defeat Zorath to free the world from his control.
+
+Throughout the game, the player will encounter various factions, characters, and plotlines, including the Zhentarim, the Chosen, the Harpers, and the Fey'ri. They will also explore different locations, such as the Emerald Grove, Moonrise Towers, and the Underdark, while battling against the Mind Flayer's minions and other enemies.
+
+As the story unfolds, the player will discover that the Mind Flayer's invasion is just one piece of a larger puzzle, and that the world is facing threats from other directions as well. The ultimate goal is to save the world from destruction and restore freedom to the people of Faerûn.
+
+That's a general overview of the plot, but keep in mind that it's still subject to change as the game is in development. 
 
 => What did I just ask you?
-You asked me about the plot of Baldur's Gate 3, a role-playing video game from Larian Studios. The plot revolves around your character being controlled by an ancient mind flayer, trying to escape and stop the creation of a new mind flayer hive mind. Along the journey, you encounter allies with their own motivations, and decisions made by the player can affect the story and relationships with the companions.
+You asked me what the plot of Baldur's Gate 3 is.
 
 => Tell me a fun fact about Baldur's Gate 3
-A fun fact about Baldur's Gate 3 is that it features fully voice-acted and motion-captured characters, amounting to approximately 1.5 million words of performance capture. This level of detail and immersion brings the game's narrative and character interactions to life in a way that is unique to video games based on the Dungeons & Dragons tabletop role-playing system.
+Here's a fun fact: Did you know that Baldur's Gate 3 features a dynamic companion system, where your party members can develop romance relationships with each other? That's right! The game includes a complex web of relationships, choices, and consequences that can affect the story and your party's dynamics. You can even influence the relationships by making choices, role-playing, and exploring the world. It's like playing a fantasy soap opera! 
 ```
 
 We did it! We are using RAG to overcome the limitations in the context and data the LLM was trained on, and we have accomplished our three goals:
