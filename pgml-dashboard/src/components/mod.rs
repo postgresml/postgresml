@@ -5,6 +5,10 @@
 pub mod accordian;
 pub use accordian::Accordian;
 
+// src/components/accordion
+pub mod accordion;
+pub use accordion::Accordion;
+
 // src/components/badges
 pub mod badges;
 
