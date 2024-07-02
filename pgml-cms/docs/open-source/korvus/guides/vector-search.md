@@ -1,16 +1,16 @@
 # Vector Search
 
-SDK is specifically designed to provide powerful, flexible vector search. `Pipeline`s are required to perform search. See [Pipelines ](https://postgresml.org/docs/api/client-sdk/pipelines)for more information about using `Pipeline`s.
+The Korvus SDK is specifically designed to provide powerful, flexible vector search. `Pipeline`s are required to perform search. See [Pipelines ](https://postgresml.org/docs/api/client-sdk/pipelines) for more information about using `Pipeline`s.
 
 This section will assume we have previously ran the following code:
 
 {% tabs %}
 {% tab title="JavaScript" %}
 ```javascript
-const pipeline = pgml.newPipeline("test_pipeline", {
+const pipeline = korvus.newPipeline("test_pipeline", {
   abstract: {
     semantic_search: {
-      model: "mixedbread-ai/mxbai-embed-large-v1",
+      model: "Alibaba-NLP/gte-base-en-v1.5",
     },
     full_text_search: { configuration: "english" },
   },
@@ -21,7 +21,7 @@ const pipeline = pgml.newPipeline("test_pipeline", {
     },
   },
 });
-const collection = pgml.newCollection("test_collection");
+const collection = korvus.newCollection("test_collection");
 await collection.add_pipeline(pipeline);
 ```
 {% endtab %}
@@ -33,7 +33,7 @@ pipeline = Pipeline(
     {
         "abstract": {
             "semantic_search": {
-                "model": "mixedbread-ai/mxbai-embed-large-v1",
+                "model": "Alibaba-NLP/gte-base-en-v1.5",
             },
             "full_text_search": {"configuration": "english"},
         },
@@ -59,7 +59,7 @@ let mut pipeline = Pipeline::new(
             {
                 "abstract": {
                     "semantic_search": {
-                        "model": "mixedbread-ai/mxbai-embed-large-v1",
+                        "model": "Alibaba-NLP/gte-base-en-v1.5",
                     },
                     "full_text_search": {"configuration": "english"},
                 },
@@ -81,7 +81,7 @@ collection.add_pipeline(&mut pipeline).await?;
 
 {% tab title="C" %}
 ```cpp
-PipelineC *pipeline = pgml_pipelinec_new("test_pipeline", "{\
+PipelineC *pipeline = korvus_pipelinec_new("test_pipeline", "{\
     \"abstract\": {\
         \"semantic_search\": {\
             \"model\": \"Alibaba-NLP/gte-base-en-v1.5\"\
@@ -91,19 +91,19 @@ PipelineC *pipeline = pgml_pipelinec_new("test_pipeline", "{\
     \"body\": {\
         \"splitter\": {\"model\": \"recursive_character\"},\
         \"semantic_search\": {\
-            \"model\": \"Alibaba-NLP/gte-base-en-v1.5\"\
+            \"model\": \"mixedbread-ai/mxbai-embed-large-v1\"\
         }\
     }\
 }");
-CollectionC * collection = pgml_collectionc_new("test_collection", NULL);
-pgml_collectionc_add_pipeline(collection, pipeline);
+CollectionC * collection = korvus_collectionc_new("test_collection", NULL);
+korvus_collectionc_add_pipeline(collection, pipeline);
 ```
 {% endtab %}
 {% endtabs %}
 
 This creates a `Pipeline` that is capable of full text search and semantic search on the `abstract` and semantic search on the `body` of documents.
 
-## **Doing vector search**
+## Doing vector search
 
 {% tabs %}
 {% tab title="JavaScript" %}
@@ -113,12 +113,19 @@ const results = await collection.vector_search(
     query: {
       fields: {
         body: {
-          query: "What is the best database?", parameters: {
+          query: "What is the best database?", 
+          parameters: {
           prompt:
               "Represent this sentence for searching relevant passages: ",
           }
         },
       },
+    },
+    document: {
+        keys: [
+            "id",
+            "abstract"
+        ]
     },
     limit: 5,
   },
@@ -140,6 +147,12 @@ results = await collection.vector_search(
                     },
                 },
             },
+        },
+        "document": {
+            "keys": [
+                "id",
+                "abstract"
+            ]
         },
         "limit": 5,
     },
@@ -163,6 +176,12 @@ let results = collection
                     },
                 },
             },
+            "document": {
+                "keys": [
+                    "id",
+                    "abstract"
+                ]
+            },
             "limit": 5,
         })
         .into(),
@@ -175,7 +194,7 @@ let results = collection
 {% tab title="C" %}
 ```cpp
 r_size = 0;
-char **results = pgml_collectionc_vector_search(collection, "{\
+char **results = korvus_collectionc_vector_search(collection, "{\
   \"query\": {\
     \"fields\": {\
       \"body\": {\
@@ -186,6 +205,12 @@ char **results = pgml_collectionc_vector_search(collection, "{\
       }\
     }\
   },\
+  \"document\": {\
+    \"keys\": [\
+      \"id\",\
+      \"abstract\"\
+    ]\
+  },\
   \"limit\": 5\
 }",
 pipeline, &r_size);
@@ -193,7 +218,19 @@ pipeline, &r_size);
 {% endtab %}
 {% endtabs %}
 
-Let's break this down. `vector_search` takes in a `JSON` object and a `Pipeline`. The `JSON` object currently supports two keys: `query` and `limit` . The `limit` limits how many chunks should be returned, the `query` specifies the actual query to perform. 
+Let's break this down. The `vector_search` function takes in a `JSON` object and a `Pipeline`. The `JSON` object currently supports four keys: 
+- `query` 
+- `document`
+- `rerank`
+- `limit`
+
+The `query` object specifies the actual query to perform. Each key specified in the `Pipeline` can be searched or filtered over according to the specification in the `Pipeline`.
+
+The `limit` key limits how many chunks should be returned.
+
+The `document` object can restrict which fields to return from the document. If left out, the whole document is returned. In this case we are specifying we only want the `id` and `abstract` returned.
+
+the `rerank` object specifies what type of re-ranking to perform. If left out, no re-ranking is done. See the [Re-ranking section](/docs/open-source/korvus/guides/vector-search#re-ranking) for more information.
 
 Note that `mixedbread-ai/mxbai-embed-large-v1` takes in a prompt when creating embeddings for searching against a corpus which we provide in the `parameters`.
 
@@ -212,7 +249,8 @@ const results = await collection.vector_search(
           full_text_filter: "database"
         },
         body: {
-          query: query, parameters: {
+          query: query, 
+          parameters: {
             instruction:
               "Represent this sentence for searching relevant passages: ",
           }
@@ -285,7 +323,7 @@ let results = collection
 {% tab title="C" %}
 ```cpp
 r_size = 0;
-char **results = pgml_collectionc_vector_search(collection, "{\
+char **results = korvus_collectionc_vector_search(collection, "{\
  \"query\": {\
       \"fields\": {\
           \"abastract\": {\
@@ -308,9 +346,9 @@ char **results = pgml_collectionc_vector_search(collection, "{\
 
 The `query` in this example is slightly more intricate. We are doing vector search over both the `abstract` and `body` keys of our documents. This means our search may return chunks from both the `abstract` and `body` of our documents.  We are also filtering out all `abstract` chunks that do not contain the text `"database"` we can do this because we enabled `full_text_search` on the `abstract` key in the `Pipeline` schema. Also note that the model used for embedding the `body` takes parameters, but not the model used for embedding the `abstract`.
 
-## **Filtering**
+## Filtering
 
-We provide powerful and flexible arbitrarly nested filtering based off of [MongoDB Comparison Operators](https://www.mongodb.com/docs/manual/reference/operator/query-comparison/). We support each operator mentioned except the `$nin`.
+We provide powerful and flexible arbitrarly nested filtering based off of [MongoDB Comparison Operators](https://www.mongodb.com/docs/manual/reference/operator/query-comparison/). We support each operator mentioned in Mongo's docs except the `$nin`.
 
 **Vector search with $eq filtering**
 
@@ -322,7 +360,8 @@ const results = await collection.vector_search(
     query: {
       fields: {
         body: {
-          query: "What is the best database?", parameters: {
+          query: "What is the best database?", 
+          parameters: {
             instruction:
               "Represent this sentence for searching relevant passages: ",
           }
@@ -391,7 +430,7 @@ let results = collection
 {% tab title="C" %}
 ```cpp
 r_size = 0;
-char **results = pgml_collectionc_vector_search(collection, "{\
+char **results = korvus_collectionc_vector_search(collection, "{\
     \"query\": {\
         \"fields\": {\
             \"body\": {\
@@ -421,7 +460,8 @@ const results = await collection.vector_search(
     query: {
       fields: {
         body: {
-          query: "What is the best database?", parameters: {
+          query: "What is the best database?", 
+          parameters: {
             instruction:
               "Represent this sentence for searching relevant passages: ",
           }
@@ -490,7 +530,7 @@ let results = collection
 {% tab title="C" %}
 ```cpp
 r_size = 0;
-char **results = pgml_collectionc_vector_search(collection, "{\
+char **results = korvus_collectionc_vector_search(collection, "{\
     \"query\": {\
         \"fields\": {\
             \"body\": {\
@@ -520,7 +560,8 @@ const results = await collection.vector_search(
     query: {
       fields: {
         body: {
-          query: "What is the best database?", parameters: {
+          query: "What is the best database?", 
+          parameters: {
             instruction:
               "Represent this sentence for searching relevant passages: ",
           }
@@ -617,7 +658,7 @@ let results = collection
 {% tab title="C" %}
 ```cpp
 r_size = 0;
-char **results = pgml_collectionc_vector_search(collection, "{\
+char **results = korvus_collectionc_vector_search(collection, "{\
   \"query\": {\
       \"fields\": {\
           \"body\": {\
@@ -642,7 +683,7 @@ char **results = pgml_collectionc_vector_search(collection, "{\
 
 The above query would filter out all documents that do not have a key `special` with a value `True` or (have a key `user_id` equal to 1 and a key `user_score` less than 100).
 
-## **Re-ranking**
+## Re-ranking
 
 Vector search results can be reranked in the same query they are retrieved in. To enable this, provide the `rerank` key.
 
@@ -731,7 +772,7 @@ let results = collection
 {% tab title="C" %}
 ```cpp
 r_size = 0;
-char **results = pgml_collectionc_vector_search(collection, "{\
+char **results = korvus_collectionc_vector_search(collection, "{\
   \"query\": {\
     \"fields\": {\
       \"body\": {\

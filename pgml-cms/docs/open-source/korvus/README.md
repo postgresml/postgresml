@@ -14,28 +14,28 @@ Installing the SDK into your project is as simple as:
 {% tabs %}
 {% tab title="JavaScript" %}
 ```bash
-npm i pgml
+npm i korvus
 ```
 {% endtab %}
 
 {% tab title="Python" %}
 ```bash
-pip install pgml
+pip install korvus
 ```
 {% endtab %}
 
 {% tab title="Rust" %}
 ```bash
-cargo add pgml
+cargo add korvus
 ```
 {% endtab %}
 
 {% tab title="C" %}
 
-First clone the `postgresml` repository and navigate to the `pgml-sdks/pgml/c` directory:
+First clone the `korvus` repository and navigate to the `korvus/c` directory:
 ```bash
-git clone https://github.com/postgresml/postgresml
-cd postgresml/pgml-sdks/pgml/c
+git clone https://github.com/postgresml/korvus
+cd korvus/korvus/c
 ```
 
 Then build the bindings
@@ -43,7 +43,7 @@ Then build the bindings
 make bindings
 ```
 
-This will generate the `pgml.h` file and a `.so` on linux and `.dyblib` on MacOS.
+This will generate the `korvus.h` file and a `.so` on linux and `.dyblib` on MacOS.
 {% endtab %}
 {% endtabs %}
 
@@ -55,10 +55,10 @@ The SDK uses the database to perform most of its functionality. Before continuin
 
 The SDK automatically manages connections to PostgresML. The connection string can be specified as an argument to the collection constructor, or as an environment variable.
 
-If your app follows the twelve-factor convention, we recommend you configure the connection in the environment using the `PGML_DATABASE_URL` variable:
+If your app follows the twelve-factor convention, we recommend you configure the connection in the environment using the `KORVUS_DATABASE_URL` variable:
 
 ```bash
-export PGML_DATABASE_URL=postgres://user:password@sql.cloud.postgresml.org:6432/pgml_database
+export KORVUS_DATABASE_URL=postgres://user:password@sql.cloud.postgresml.org:6432/korvus_database
 ```
 
 ### Create a collection
@@ -68,17 +68,17 @@ The SDK is written in asynchronous code, so you need to run it inside an async r
 {% tabs %}
 {% tab title="JavaScript" %}
 ```javascript
-const pgml = require("pgml");
+const korvus = require("korvus");
 
 const main = async () => {
-  const collection = pgml.newCollection("sample_collection");
+  const collection = korvus.newCollection("sample_collection");
 }
 ```
 {% endtab %}
 
 {% tab title="Python" %}
 ```python
-from pgml import Collection, Pipeline
+from korvus import Collection, Pipeline
 import asyncio
 
 async def main():
@@ -88,7 +88,7 @@ async def main():
 
 {% tab title="Rust" %}
 ```rust
-use pgml::{Collection, Pipeline};
+use korvus::{Collection, Pipeline};
 use anyhow::Error;
 
 #[tokio::main]
@@ -101,16 +101,16 @@ async fn main() -> Result<(), Error> {
 {% tab title="C" %}
 ```cpp
 #include <stdio.h>
-#include "pgml.h"
+#include "korvus.h"
 
 int main() {
-  CollectionC * collection = pgml_collectionc_new("sample_collection", NULL);
+  CollectionC * collection = korvus_collectionc_new("sample_collection", NULL);
 }
 ```
 {% endtab %}
 {% endtabs %}
 
-The above example imports the `pgml` module and creates a collection object. By itself, the collection only tracks document contents and identifiers, but once we add a pipeline, we can instruct the SDK to perform additional tasks when documents and are inserted and retrieved.
+The above example imports the `korvus` module and creates a collection object. By itself, the collection only tracks document contents and identifiers, but once we add a pipeline, we can instruct the SDK to perform additional tasks when documents and are inserted and retrieved.
 
 
 ### Create a pipeline
@@ -121,7 +121,7 @@ Continuing the example, we will create a pipeline called `sample_pipeline`, whic
 {% tab title="JavaScript" %}
 ```javascript
 // Add this code to the end of the main function from the above example.
-const pipeline = pgml.newPipeline("sample_pipeline", {
+const pipeline = korvus.newPipeline("sample_pipeline", {
   text: {
     splitter: { model: "recursive_character" },
     semantic_search: {
@@ -178,9 +178,9 @@ collection.add_pipeline(&mut pipeline).await?;
 {% tab title="C" %}
 ```cpp
 // Add this code to the end of the main function from the above example.
-PipelineC * pipeline = pgml_pipelinec_new("sample_pipeline", "{\"text\": {\"splitter\": {\"model\": \"recursive_character\"},\"semantic_search\": {\"model\": \"Alibaba-NLP/gte-base-en-v1.5\"}}}");
+PipelineC * pipeline = korvus_pipelinec_new("sample_pipeline", "{\"text\": {\"splitter\": {\"model\": \"recursive_character\"},\"semantic_search\": {\"model\": \"Alibaba-NLP/gte-base-en-v1.5\"}}}");
 
-pgml_collectionc_add_pipeline(collection, pipeline);
+korvus_collectionc_add_pipeline(collection, pipeline);
 ```
 {% endtab %}
 {% endtabs %}
@@ -255,7 +255,7 @@ collection.upsert_documents(documents, None).await?;
 // Add this code to the end of the main function in the above example.
 char * documents_to_upsert[2] = {"{\"id\": \"Document One\", \"text\": \"document one contents...\"}", "{\"id\": \"Document Two\", \"text\": \"document two contents...\"}"};
 
-pgml_collectionc_upsert_documents(collection, documents_to_upsert, 2, NULL);
+korvus_collectionc_upsert_documents(collection, documents_to_upsert, 2, NULL);
 ```
 {% endtab %}
 {% endtabs %}
@@ -337,14 +337,14 @@ Ok(())
 ```cpp
 // Add this code to the end of the main function in the above example.
 r_size = 0;
-char** results = pgml_collectionc_vector_search(collection, "{\"query\": {\"fields\": {\"text\": {\"query\": \"Something about a document...\"}}}, \"limit\": 2}", pipeline, &r_size);
+char** results = korvus_collectionc_vector_search(collection, "{\"query\": {\"fields\": {\"text\": {\"query\": \"Something about a document...\"}}}, \"limit\": 2}", pipeline, &r_size);
 printf("\n\nPrinting results:\n");
 for (i = 0; i < r_size; ++i) {
   printf("Result %u -> %s\n", i, results[i]);
 }
 
-pgml_pipelinec_delete(pipeline);
-pgml_collectionc_delete(collection);
+korvus_pipelinec_delete(pipeline);
+korvus_collectionc_delete(collection);
 ```
 {% endtab %}
 {% endtabs %}
