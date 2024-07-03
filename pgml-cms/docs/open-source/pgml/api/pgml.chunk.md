@@ -16,7 +16,7 @@ pgml.chunk(
 )
 ```
 
-## Example
+## Examples
 
 ```postgresql
 SELECT pgml.chunk('recursive_character', 'test');

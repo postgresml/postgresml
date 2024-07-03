@@ -8,212 +8,164 @@ description: >-
 
 This tutorial demonstrates using the `pgml` SDK to create a collection, add documents, build a pipeline for vector search, make a sample query, and archive the collection when finished.
 
-[Link to full JavaScript implementation](https://github.com/postgresml/postgresml/blob/master/pgml-sdks/pgml/javascript/examples/semantic_search.js)
+[Link to full JavaScript implementation](https://github.com/postgresml/korvus/blob/main/korvus/javascript/examples/semantic_search.js)
 
-[Link to full Python implementation](https://github.com/postgresml/postgresml/blob/master/pgml-sdks/pgml/python/examples/semantic_search.py)
+[Link to full Python implementation](https://github.com/postgresml/korvus/blob/main/korvus/python/examples/semantic_search.py)
 
-## Imports and Setup
+## The Code
 
 The SDK is imported and environment variables are loaded.
 
 {% tabs %}
 {% tab title="JavaScript" %}
 ```js
-const pgml = require("pgml");
-require("dotenv").config();
-```
-{% endtab %}
+const korvus = require("korvus");
 
-{% tab title="Python" %}
-```python
-from pgml import Collection, Pipeline
-from datasets import load_dataset
-from time import time
-from dotenv import load_dotenv
-from rich.console import Console
-import asyncio
-```
-{% endtab %}
-{% endtabs %}
+// Initialize our Collection
+const collection = korvus.newCollection("semantic-search-demo");
 
-## Initialize Collection
+// Initialize our Pipeline
+// Our Pipeline will split and embed the `text` key of documents we upsert
+const pipeline = korvus.newPipeline("v1", {
+  text: {
+    splitter: { model: "recursive_character" },
+    semantic_search: {
+      model: "mixedbread-ai/mxbai-embed-large-v1",
+    }
+  },
+});
 
-A collection object is created to represent the search collection.
-
-{% tabs %}
-{% tab title="JavaScript" %}
-```js
-const main = async () => { // Open the main function, we close it at the bottom
-  // Initialize the collection
-  const collection = pgml.newCollection("semantic_search_collection");
-```
-{% endtab %}
-
-{% tab title="Python" %}
-```python
-async def main(): # Start the main function, we end it after archiving
-    load_dotenv()
-    console = Console()
-
-    # Initialize collection
-    collection = Collection("quora_collection")
-```
-{% endtab %}
-{% endtabs %}
-
-## Create Pipeline
-
-A pipeline encapsulating a model and splitter is created and added to the collection.
-
-{% tabs %}
-{% tab title="JavaScript" %}
-```js
-  // Add a pipeline
-  const pipeline = pgml.newPipeline("semantic_search_pipeline", {
-    text: {
-      splitter: { model: "recursive_character" },
-      semantic_search: {
-        model: "Alibaba-NLP/gte-base-en-v1.5",
-      },
-    },
-  });
+const main = async () => {
+  // Add our Pipeline to our Collection
   await collection.add_pipeline(pipeline);
-```
-{% endtab %}
 
-{% tab title="Python" %}
-```python
-    # Create and add pipeline
-    pipeline = Pipeline(
-        "quorav1",
-        {
-            "text": {
-                "splitter": {"model": "recursive_character"},
-                "semantic_search": {"model": "Alibaba-NLP/gte-base-en-v1.5"},
-            }
-        },
-    )
-    await collection.add_pipeline(pipeline)
-```
-{% endtab %}
-{% endtabs %}
-
-## Upsert Documents
-
-Documents are upserted into the collection and indexed by the pipeline.
-
-{% tabs %}
-{% tab title="JavaScript" %}
-```js
-  // Upsert documents, these documents are automatically split into chunks and embedded by our pipeline
-  const documents = [
+  // Upsert our documents
+  // The `text` key of our documents will be split and embedded per our Pipeline specification above
+  let documents = [
     {
-      id: "Document One",
-      text: "document one contents...",
+      id: "1",
+      text: "Korvus is incredibly fast and easy to use.",
     },
     {
-      id: "Document Two",
-      text: "document two contents...",
+      id: "2",
+      text: "Tomatoes are incredible on burgers.",
     },
-  ];
-  await collection.upsert_documents(documents);
-```
-{% endtab %}
+  ]
+  await collection.upsert_documents(documents)
 
-{% tab title="Python" %}
-```python
-    # Prep documents for upserting
-    dataset = load_dataset("quora", split="train")
-    questions = []
-    for record in dataset["questions"]:
-        questions.extend(record["text"])
-
-    # Remove duplicates and add id
-    documents = []
-    for i, question in enumerate(list(set(questions))):
-        if question:
-            documents.append({"id": i, "text": question})
-
-    # Upsert documents
-    await collection.upsert_documents(documents[:2000])
-```
-{% endtab %}
-{% endtabs %}
-
-## Query
-
-A vector similarity search query is made on the collection.
-
-{% tabs %}
-{% tab title="JavaScript" %}
-```js
-  // Perform vector search
-  const query = "Something that will match document one first";
-  const queryResults = await collection.vector_search(
+  // Perform vector_search
+  // We are querying for the string "Is Korvus fast?"
+  // Notice that the `mixedbread-ai/mxbai-embed-large-v1` embedding model takes a prompt paramter when embedding for search
+  // We specify that we only want to return the `id` of documents. If the `document` key was blank it would return the entire document with every result
+  // Limit the results to 5. In our case we only have two documents in our Collection so we will only get two results
+  const results = await collection.vector_search(
     {
       query: {
         fields: {
-          text: { query: query }
-        }
-      }, limit: 2
-    }, pipeline);
-  console.log("The results");
-  console.log(queryResults);
+          text: {
+            query: "Is Korvus fast?",
+            parameters: {
+              prompt:
+                "Represent this sentence for searching relevant passages: ",
+            }
+          },
+        },
+      },
+      document: {
+        keys: [
+          "id"
+        ]
+      },
+      limit: 5,
+    },
+    pipeline);
+  console.log(results)
+}
+
+main().then(() => console.log("DONE!"))
 ```
 {% endtab %}
 
 {% tab title="Python" %}
 ```python
-    # Query
-    query = "What is a good mobile os?"
-    console.print("Querying for %s..." % query)
-    start = time()
+from korvus import Collection, Pipeline
+from rich import print
+import asyncio
+
+# Initialize our Collection
+collection = Collection("semantic-search-demo")
+
+# Initialize our Pipeline
+# Our Pipeline will split and embed the `text` key of documents we upsert
+pipeline = Pipeline(
+    "v1",
+    {
+        "text": {
+            "splitter": {"model": "recursive_character"},
+            "semantic_search": {
+                "model": "mixedbread-ai/mxbai-embed-large-v1",
+            },
+        },
+    },
+)
+
+
+async def main():
+    # Add our Pipeline to our Collection
+    await collection.add_pipeline(pipeline)
+
+    # Upsert our documents
+    # The `text` key of our documents will be split and embedded per our Pipeline specification above
+    documents = [
+        {
+            "id": "1",
+            "text": "Korvus is incredibly fast and easy to use.",
+        },
+        {
+            "id": "2",
+            "text": "Tomatoes are incredible on burgers.",
+        },
+    ]
+    await collection.upsert_documents(documents)
+
+    # Perform vector_search
+    # We are querying for the string "Is Korvus fast?"
+    # Notice that the `mixedbread-ai/mxbai-embed-large-v1` embedding model takes a prompt paramter when embedding for search
+    # We specify that we only want to return the `id` of documents. If the `document` key was blank it would return the entire document with every result
+    # Limit the results to 5. In our case we only have two documents in our Collection so we will only get two results
     results = await collection.vector_search(
-        {"query": {"fields": {"text": {"query": query}}}, "limit": 5}, pipeline
+        {
+            "query": {
+                "fields": {
+                    "text": {
+                        "query": "Is Korvus fast?",
+                        "parameters": {
+                            "prompt": "Represent this sentence for searching relevant passages: ",
+                        },
+                    },
+                },
+            },
+            "document": {"keys": ["id"]},
+            "limit": 5,
+        },
+        pipeline,
     )
-    end = time()
-    console.print("\n Results for '%s' " % (query), style="bold")
-    console.print(results)
-    console.print("Query time = %0.3f" % (end - start))
+    print(results)
+
+
+asyncio.run(main())
 ```
 {% endtab %}
+
 {% endtabs %}
 
-## Archive Collection
+Running this example outputs:
 
-The collection is archived when finished.
-
-{% tabs %}
-{% tab title="JavaScript" %}
-```js
-  await collection.archive();
-} // Close the main function
+```json
+[
+    {'chunk': 'Korvus is incredibly fast and easy to use.', 'document': {'id': '1'}, 'rerank_score': None, 'score': 0.7855310349374217},
+    {'chunk': 'Tomatoes are incredible on burgers.', 'document': {'id': '2'}, 'rerank_score': None, 'score': 0.3634796874710092}
+]
 ```
-{% endtab %}
 
-{% tab title="Python" %}
-```python
-    await collection.archive()
-# The end of the main function
-```
-{% endtab %}
-{% endtabs %}
-
-## Main
-
-Boilerplate to call main() async function.
-
-{% tabs %}
-{% tab title="JavaScript" %}
-```javascript
-main().then(() => console.log("Done!"));
-```
-{% endtab %}
-
-{% tab title="Python" %}
-```python
-if __name__ == "__main__":
-    asyncio.run(main())
-```
-{% endtab %}
-{% endtabs %}
+Notice how much higher the score for `Korvus is incredibly fast and easy to use.` is compared to `Tomatoes are incredible on burgers.`. This means our semantic search is working!

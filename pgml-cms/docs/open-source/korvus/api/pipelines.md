@@ -8,6 +8,8 @@ description: >-
 
 `Pipeline`s define the schema for the transformation of documents. Different `Pipeline`s can be used for different tasks.
 
+See our [guide to Constructing Piplines](../guides/constructing-pipelines) for more information on how to create `Pipelines`.
+
 ## Defining Schema
 
 New `Pipeline`s require schema. Here are a few examples of variations of schema along with common use cases.

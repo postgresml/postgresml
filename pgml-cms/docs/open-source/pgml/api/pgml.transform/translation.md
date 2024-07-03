@@ -9,10 +9,11 @@ Translation is the task of converting text written in one language into another 
 ```postgresql
 select pgml.transform(
     inputs => array[
-            	'How are you?'
+        'How are you?'
     ],
-	task => '{"task": "translation", 
-              "model": "Helsinki-NLP/opus-mt-en-fr"
+	task => '{
+        "task": "translation", 
+        "model": "google-t5/t5-base"
     }'::JSONB	
 );
 ```

@@ -1,7 +1,5 @@
 ---
-description: >-
-  Generate high quality embeddings with faster end-to-end vector operations
-  without an additional vector database.
+description: Generate high quality embeddings with faster end-to-end vector operations without an additional vector database.
 ---
 
 # pgml.embed()
@@ -24,9 +22,9 @@ pgml.embed(
 | text | The text to embed. This can be a string or the name of a column from a PostgreSQL table. | `'I am your father, Luke'` |
 | kwargs | Additional arguments that are passed to the model during inference. | |
 
-### Examples
+## Examples
 
-#### Generate embeddings from text
+### Generate embeddings from text
 
 Creating an embedding from text is as simple as calling the function with the text you want to embed:
 
@@ -36,14 +34,15 @@ Creating an embedding from text is as simple as calling the function with the te
 ```postgresql
 SELECT pgml.embed(
   'intfloat/e5-small-v2',
-  'No, that''s not true, that''s impossible.'
+  'No, that''s not true, that''s impossible.',
+  '{"prompt": "query: "}'::JSONB
 );
 ```
 
 {% endtab %}
 {% endtabs %}
 
-#### Generate embeddings inside a table
+### Generate embeddings inside a table
 
 SQL functions can be used as part of a query to insert, update, or even automatically generate column values of any table:
 
@@ -51,7 +50,7 @@ SQL functions can be used as part of a query to insert, update, or even automati
 CREATE TABLE star_wars_quotes (
   quote TEXT NOT NULL,
   embedding vector(384) GENERATED ALWAYS AS (
-    pgml.embed('intfloat/e5-small-v2', quote)
+    pgml.embed('intfloat/e5-small-v2', quote, '{"prompt": "passage: "}')
   ) STORED
 );
 
@@ -64,7 +63,7 @@ VALUES
 
 In this example, we're using [generated columns](https://www.postgresql.org/docs/current/ddl-generated-columns.html) to automatically create an embedding of the `quote` column every time the column value is updated.
 
-#### Using embeddings in queries
+### Using embeddings in queries
 
 Once you have embeddings, you can use them in queries to find text with similar semantic meaning:
 
@@ -74,7 +73,8 @@ FROM star_wars_quotes
 ORDER BY pgml.embed(
     'intfloat/e5-small-v2',
     'Feel the force!',
-  ) <=> embedding DESC
+  '{"prompt": "query: "}'::JSONB
+  )::vector <=> embedding DESC
 LIMIT 1;
 ```
 
