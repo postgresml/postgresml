@@ -1,11 +1,11 @@
-use pgml_components::component;
+use pgml_components::{component, Component};
 use sailfish::TemplateOnce;
 
 #[derive(TemplateOnce, Default)]
 #[template(path = "accordion/template.html")]
 pub struct Accordion {
-    html_contents: Vec<String>,
-    html_titles: Vec<String>,
+    html_contents: Vec<Component>,
+    html_titles: Vec<Component>,
     selected: usize,
     title_size: String,
 }
@@ -20,13 +20,13 @@ impl Accordion {
         }
     }
 
-    pub fn html_contents<S: ToString>(mut self, html_contents: Vec<S>) -> Self {
-        self.html_contents = html_contents.into_iter().map(|s| s.to_string()).collect();
+    pub fn html_contents(mut self, html_contents: Vec<Component>) -> Self {
+        self.html_contents = html_contents;
         self
     }
 
-    pub fn html_titles<S: ToString>(mut self, html_titles: Vec<S>) -> Self {
-        self.html_titles = html_titles.into_iter().map(|s| s.to_string()).collect();
+    pub fn html_titles(mut self, html_titles: Vec<Component>) -> Self {
+        self.html_titles = html_titles;
         self
     }
 
