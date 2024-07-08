@@ -7,7 +7,7 @@ pub struct Accordion {
     html_contents: Vec<String>,
     html_titles: Vec<String>,
     selected: usize,
-    small_titles: bool,
+    title_size: String,
 }
 
 impl Accordion {
@@ -16,7 +16,7 @@ impl Accordion {
             html_contents: Vec::new(),
             html_titles: Vec::new(),
             selected: 0,
-            small_titles: false,
+            title_size: "h5".to_string(),
         }
     }
 
@@ -30,8 +30,21 @@ impl Accordion {
         self
     }
 
-    pub fn small_titles(mut self, small_titles: bool) -> Self {
-        self.small_titles = small_titles;
+    pub fn set_title_size_body(mut self) -> Self {
+        self.title_size = "body-regular-text".to_string();
+        self
+    }
+
+    pub fn set_title_size_header(mut self, title_size: i32) -> Self {
+        match title_size {
+            1 => self.title_size = "h1".to_string(),
+            2 => self.title_size = "h2".to_string(),
+            3 => self.title_size = "h3".to_string(),
+            4 => self.title_size = "h4".to_string(),
+            5 => self.title_size = "h5".to_string(),
+            6 => self.title_size = "h6".to_string(),
+            _ => self.title_size = "h5".to_string(),
+        }
         self
     }
 }
