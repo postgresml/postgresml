@@ -4,7 +4,7 @@ description: Overview of the PostgresML SQL API and SDK.
 
 # Open Source Overview
 
-PostgresML maintins three open source projects:
+PostgresML maintains three open source projects:
 - [pgml](pgml/)
 - [Korvus](korvus/)
 - [pgcat](pgcat/)
