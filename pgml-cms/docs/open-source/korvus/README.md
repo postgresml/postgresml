@@ -4,6 +4,8 @@ description: Korvus is an SDK for JavaScript, Python and Rust implements common 
 
 # Korvus
 
+Korvus is an all-in-one, open-source RAG (Retrieval-Augmented Generation) pipeline built for PostgresML. It combines LLMs, vector memory, embedding generation, reranking, summarization and custom models into a single query, maximizing performance and simplifying your search architecture.
+
 Korvus can be installed using standard package managers for JavaScript, Python, and Rust. Since the SDK is written in Rust, the JavaScript and Python packages come with no additional dependencies.
 
 For key features, a quick start, and the code see [the Korvus GitHub](https://github.com/postgresml/korvus)
