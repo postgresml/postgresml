@@ -15,6 +15,10 @@ pub use newsletter_subscribe::NewsletterSubscribe;
 pub mod primary;
 pub use primary::Primary;
 
+// src/components/cards/psychedelic
+pub mod psychedelic;
+pub use psychedelic::Psychedelic;
+
 // src/components/cards/rgb
 pub mod rgb;
 pub use rgb::Rgb;

@@ -148,7 +148,7 @@
     --bs-btn-padding-y: 16px;
 }
 
-.btn-secondary-web-app {
+.btn-secondary-web-app, .btn-secondary-marketing {
     --bs-btn-padding-x: 30px;
     --bs-btn-padding-y: 20px;
 
@@ -175,6 +175,20 @@
     &:focus-within {
         @include bold_by_shadow(var(--bs-btn-focus-color));
     }
+}
+
+.btn-secondary-marketing {
+    --bs-btn-padding-x: 24px;
+    --bs-btn-padding-y: 16px;
+
+    --bs-btn-color: #{$gray-100};
+    --bs-btn-border-color: #{$gray-100};
+
+    --bs-btn-hover-color: #{#{$gray-100}};
+    --bs-btn-hover-border-color: #{$neon-tint-300};
+
+    --bs-btn-active-color: #{$gray-100};
+    --bs-btn-active-border-color: #{$neon-tint-200};
 }
 
 .btn-tertiary-web-app {

@@ -1,0 +1,140 @@
+div[data-controller="code-editor-editor"] {
+  .text-area {
+    background-color: #17181a;
+    max-height: 388px;
+    overflow: auto;
+
+    .cm-scroller {
+      min-height: 100px;
+    }
+  
+    .btn-party {
+      position: relative;
+      --bs-btn-color: #{$hp-white};
+      --bs-btn-font-size: 24px;
+      border-radius: 0.5rem;
+      padding-left: 2rem;
+      padding-right: 2rem;
+      z-index: 1;
+    }
+    
+    .btn-party div:nth-child(1) {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      margin: -2px;
+      border-radius: inherit;
+      background: #{$primary-gradient-main};
+    }
+    
+    .btn-party div:nth-child(2) {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      border-radius: inherit;
+      background: #{$gray-700};
+    }
+    
+    .btn-party:hover div:nth-child(2) {
+      background: #{$primary-gradient-main};
+    }
+  }
+
+  div[data-code-editor-editor-target="resultStream"] {
+    padding-right: 5px;
+  }
+
+  .lds-dual-ring {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+  }
+  .lds-dual-ring:after {
+    content: " ";
+    display: block;
+    width: 1rem;
+    height: 1rem;
+    margin: 0px;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    border-color: #fff transparent #fff transparent;
+    animation: lds-dual-ring 1.2s linear infinite;
+  }
+  @keyframes lds-dual-ring {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  pre {
+    padding: 0px;
+    margin: 0px;
+    border-radius: 0;
+  }
+
+  ul.dropdown-menu {
+    padding-bottom: 15px;
+  }
+
+  .editor-header {
+    background-color: #{$gray-700};
+  }
+  
+  .editor-header > div:first-child {
+    border-bottom: solid #{$gray-600} 2px;
+  }
+  
+  .editor-footer {
+    background-color: #{$gray-700};
+  }
+  
+  .editor-footer code, #editor-play-result-stream, .editor-footer .loading {
+    height: 4rem;
+    overflow: auto;
+    display: block;
+  }
+
+  input {
+    border: none;
+  }
+
+  div[data-controller="inputs-select"] {
+    flex-grow: 1;
+    min-width: 0;
+
+    .material-symbols-outlined {
+      color: #{$gray-200};
+    }
+  }
+
+  .btn-dropdown {
+    padding: 0px !important;
+    border: none !important;
+    border-radius: 0px !important;
+  }
+
+  .btn-dropdown:focus,
+  .btn-dropdown:hover {
+    border: none !important;
+  }
+
+  [placeholder] {
+    text-overflow: ellipsis;
+  }
+
+  @include media-breakpoint-down(xl) {
+    .question-input {
+      justify-content: space-between;
+    }
+    input {
+      padding: 0px;
+    }
+  }
+}

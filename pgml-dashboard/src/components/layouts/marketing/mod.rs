@@ -4,3 +4,6 @@
 // src/components/layouts/marketing/base
 pub mod base;
 pub use base::Base;
+
+// src/components/layouts/marketing/sections
+pub mod sections;

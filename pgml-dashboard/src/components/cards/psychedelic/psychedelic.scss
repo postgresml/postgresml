@@ -1,0 +1,34 @@
+div[data-controller="cards-psychedelic"] {
+  .psychedelic-pink-bg {
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+
+    background-image: url("/dashboard/static/images/newsletter_subscribe_background_mobile.png");
+    background-color: #{$pink};
+    background-color: #{$blue};
+    padding: 2px;
+  }
+
+  .psychedelic-blue-bg {
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+
+    background-image: url("/dashboard/static/images/psychedelic_blue.jpg");
+    background-color: #{$blue};
+    padding: 2px;
+  }
+
+  .fill {
+    background-color: #{$mostly-black};
+  }
+
+  .psycho-as-border {
+    padding: 1rem;
+  }
+
+  .psycho-as-background {
+    padding: 3rem;
+  }
+}
