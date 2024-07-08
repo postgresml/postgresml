@@ -55,6 +55,10 @@
     * [Document Search](open-source/korvus/guides/document-search.md)
   * [Example Apps](open-source/korvus/example-apps/README.md)
     * [Semantic Search](open-source/korvus/example-apps/semantic-search.md)
+* [PgCat](open-source/pgcat/README.md)
+  * [Features](open-source/pgcat/features.md)
+  * [Installation](open-source/pgcat/installation.md)
+  * [Configuration](open-source/pgcat/configuration.md)
 
 ## Guides
 
@@ -79,11 +83,6 @@
   * [Dedicated](product/cloud-database/dedicated.md)
   * [Enterprise](product/cloud-database/plans.md)
 * [Vector database](product/vector-database.md)
-* [PgCat pooler](product/pgcat/README.md)
-  * [Features](product/pgcat/features.md)
-  * [Installation](product/pgcat/installation.md)
-  * [Configuration](product/pgcat/configuration.md)
-
 
 ## Resources
 
