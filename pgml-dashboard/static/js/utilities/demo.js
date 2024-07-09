@@ -42,7 +42,7 @@ SELECT
       "task": "conversational",
       "model": "meta-llama/Meta-Llama-3-8B-Instruct"
     }'::jsonb,
-    inputs => ARRAY['{"role": "system", "content": "You are a friendly and helpful chatbot."}'::jsonb, jsonb_build_object('role', 'user', 'content', replace('Given the context answer the following question. What is Postgres? Context:\n{CONTEXT}', '{CONTEXT}', chunk))],
+    inputs => ARRAY['{"role": "system", "content": "You are a friendly and helpful chatbot."}'::jsonb, jsonb_build_object('role', 'user', 'content', replace('Given the context answer the following question. ${userInput}? Context:\n{CONTEXT}', '{CONTEXT}', chunk))],
     args => '{
       "max_new_tokens": 100
     }'::jsonb
