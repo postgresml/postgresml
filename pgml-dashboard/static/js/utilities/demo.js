@@ -28,7 +28,7 @@ export const generateSql = (task, model, userInput) => {
 );`;
   } else if (task === "embedded-query") {
     return `WITH embedded_query AS (
-  SELECT pgml.embed ('Alibaba-NLP/gte-base-en-v1.5', '${userInput}')::vector embedding
+  SELECT pgml.embed('mixedbread-ai/mxbai-embed-large-v1', 'What is Postgres?', '{"prompt": "Represent this sentence for searching relevant passages: "}'::JSONB)::vector embedding
 ),
 context_query AS (
   SELECT chunks.chunk FROM chunks
@@ -42,7 +42,7 @@ SELECT
       "task": "conversational",
       "model": "meta-llama/Meta-Llama-3-8B-Instruct"
     }'::jsonb,
-    inputs => ARRAY['{"role": "system", "content": "You are a friendly and helpful chatbot."}'::jsonb, replace('{"role": "user", "content": "Given the context answer the following question. ${userInput}? Context:\n\n{CONTEXT}"}', '{CONTEXT}', chunk)::jsonb],
+    inputs => ARRAY['{"role": "system", "content": "You are a friendly and helpful chatbot."}'::jsonb, jsonb_build_object('role', 'user', 'content', replace('Given the context answer the following question. ${userInput}? Context:\n{CONTEXT}', '{CONTEXT}', chunk))],
     args => '{
       "max_new_tokens": 100
     }'::jsonb

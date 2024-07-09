@@ -34,6 +34,7 @@ div[data-controller="star"] {
         flex-wrap: wrap;
         text-align: center;
         font-size: 0.8rem;
+        line-height: 1rem;
     }
 
     @-moz-keyframes spin { 100% { -moz-transform: rotate(360deg); } }
