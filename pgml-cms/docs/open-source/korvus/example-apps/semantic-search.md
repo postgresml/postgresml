@@ -6,15 +6,13 @@ description: >-
 
 # Semantic Search
 
-This tutorial demonstrates using the `pgml` SDK to create a collection, add documents, build a pipeline for vector search, make a sample query, and archive the collection when finished.
+This tutorial demonstrates using the `pgml` SDK to create a collection, add documents, build a pipeline for vector search and make a sample query.
 
 [Link to full JavaScript implementation](https://github.com/postgresml/korvus/blob/main/korvus/javascript/examples/semantic_search.js)
 
 [Link to full Python implementation](https://github.com/postgresml/korvus/blob/main/korvus/python/examples/semantic_search.py)
 
 ## The Code
-
-The SDK is imported and environment variables are loaded.
 
 {% tabs %}
 {% tab title="JavaScript" %}
