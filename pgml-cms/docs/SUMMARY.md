@@ -65,7 +65,7 @@
 * [PostgresML Cloud](product/postgresml-cloud/README.md)
   * [Serverless](product/postgresml-cloud/serverless.md)
   * [Dedicated](product/postgresml-cloud/dedicated.md)
-  * [Enterprise](product/postgresml-cloud/plans.md)
+  * [Enterprise](product/postgresml-cloud/enterprise.md)
 
 ## Guides
 
