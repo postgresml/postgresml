@@ -1,0 +1,31 @@
+<%
+  let items = html_contents.iter().zip(html_titles.iter());
+%>
+
+<div data-controller="accordion">
+  <div class="accordion" id="accordionExample">
+    <% for (i, (content, title)) in items.enumerate() {%>
+
+    <%
+    let expanded = i == selected;
+    let target = format!("collapse{}a", i);
+    %>
+
+    <div class="accordion-item">
+      <div class="accordion-header">
+        <div class="d-flex justify-content-between align-items-center w-100" type="button" data-bs-toggle="collapse" data-bs-target="#<%- target %>" aria-expanded=<%- expanded %> aria-controls="<%- target %>">
+          <h6 class="mb-0 title <%- title_size %>"><%+ title.clone() %></h6>
+          <span class="add material-symbols-outlined">add</span>
+          <span class="remove material-symbols-outlined">remove</span>
+        </div>
+      </div>
+      <div id="<%- target %>" class="accordion-collapse collapse <% if expanded {%>show<% } %>" data-bs-parent="#accordionExample">
+        <div class="accordion-body pt-3">
+          <%+ content.clone() %>
+        </div>
+      </div>
+    </div>
+    <% } %>
+
+  </div>
+</div>

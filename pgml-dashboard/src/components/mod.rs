@@ -5,6 +5,10 @@
 pub mod accordian;
 pub use accordian::Accordian;
 
+// src/components/accordion
+pub mod accordion;
+pub use accordion::Accordion;
+
 // src/components/badges
 pub mod badges;
 
@@ -29,6 +33,9 @@ pub mod cms;
 // src/components/code_block
 pub mod code_block;
 pub use code_block::CodeBlock;
+
+// src/components/code_editor
+pub mod code_editor;
 
 // src/components/confirm_modal
 pub mod confirm_modal;
@@ -128,3 +135,6 @@ pub mod tables;
 // src/components/test_component
 pub mod test_component;
 pub use test_component::TestComponent;
+
+// src/components/turbo
+pub mod turbo;
