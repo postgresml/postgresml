@@ -1,6 +1,7 @@
 # Table of contents
 
 * [Home](README.md)
+* [Korvus The All-in-One RAG Pipeline for PostgresML](introducing-korvus-the-all-in-one-rag-pipeline-for-postgresml.md)
 * [Semantic Search in Postgres in 15 Minutes](semantic-search-in-postgres-in-15-minutes.md)
 * [Unified RAG](unified-rag.md)
 * [Announcing the Release of our Rust SDK](announcing-the-release-of-our-rust-sdk.md)
