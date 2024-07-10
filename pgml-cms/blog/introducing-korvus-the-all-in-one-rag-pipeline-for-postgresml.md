@@ -15,7 +15,7 @@ image: ".gitbook/assets/Blog-Image_Korvus-Release.jpg"
 
 Cassandra Stumer
 
-June 4, 2024
+July 10, 2024
 
 You’re probably all too familiar with the complexities of building and maintaining RAG pipelines. The multiple services, the API calls, the data movement. Managing and scaling efficient infrastructure is the woefully painful and un-sexy side of building any ML/AI system. It’s also the most crucial factor when it comes to delivering real-world, production applications. That’s why we perform machine learning directly in PostgreSQL.
 
