@@ -5,17 +5,28 @@
   use crate::components::static_nav_link::StaticNavLink;
   use pgml_components::Component;
 
+  let product_open_source_links = vec![
+    StaticNavLink::new("Korvus".to_string(), "https://github.com/postgresml/korvus".to_string()).custom_icon(Component::from(r#"<span class="icon-korvus icomoon" style="width: 16px"></span>"#)),
+    StaticNavLink::new("PGML".to_string(), "https://github.com/postgresml/postgresml".to_string()).custom_icon(Component::from(r#"<span class="icon-owl icomoon" style="width: 16px"></span>"#)),
+    StaticNavLink::new("PgCat".to_string(), "https://github.com/postgresml/pgcat".to_string()).custom_icon(Component::from(r#"<span class="icon-pgcat icomoon" style="width: 16px"></span>"#)),
+  ];
+
+  let product_deployment_options_links = vec![
+    StaticNavLink::new("PostgresML Cloud".to_string(), "/docs/cloud/overview".to_string()).icon("filter_drama"),
+    StaticNavLink::new("VPC".to_string(), "/docs/cloud/enterprise/vpc".to_string()).icon("vpn_key"),
+  ];
+
   let solutions_use_cases_links = vec![
     StaticNavLink::new("Search".to_string(), "/docs/guides/improve-search-results-with-machine-learning".to_string()).icon("feature_search"),
     StaticNavLink::new("Chatbots".to_string(), "/chatbot".to_string()).icon("smart_toy"),
   ];
 
   let solutions_tasks_links = vec![
-    StaticNavLink::new("RAG".to_string(), "/rag".to_string()).icon("manage_search").disabled(true),
+    StaticNavLink::new("RAG".to_string(), "/rag".to_string()).icon("manage_search"),
     StaticNavLink::new("NLP".to_string(), "/docs/guides/natural-language-processing".to_string()).icon("description"),
     StaticNavLink::new("Supervised Learning".to_string(), "/docs/guides/supervised-learning".to_string()).icon("model_training"),
-    StaticNavLink::new("Embeddings".to_string(), "/docs/api/sql-extension/pgml.embed".to_string()).icon("subtitles"),
-    StaticNavLink::new("Vector Database".to_string(), "/docs/product/vector-database".to_string()).icon("open_with"),
+    StaticNavLink::new("Embeddings".to_string(), "/docs/guides/embeddings/".to_string()).icon("subtitles"),
+    StaticNavLink::new("Vector Database".to_string(), "/docs/guides/vector-database".to_string()).icon("open_with"),
   ];
 
   let company_links = vec![
@@ -56,23 +67,23 @@
 
   let link_to_drawer = |name: &str, target: &str| {
       format!(r##"
-      <li class="nav-item d-flex align-items-center d-flex d-xl-none">
+      <li class="nav-item d-flex align-items-center d-flex d-xxl-none">
         <a class="nav-link p-0 fw-semibold" href="#" data-bs-toggle="collapse" data-bs-target=".{target}">{name}</a>
       </li>
       "##)
   };
 
-  let close_mobile_main_nav_items = vec!["solutions-collapse", "company-collapse"];
+  let close_mobile_main_nav_items = vec!["solutions-collapse", "company-collapse", "product-collapse"];
 %>
 
   <div class="sticky-top-nav" data-controller="navigation-navbar-marketing">
-    <nav class='navbar-marketing-site horizontal navbar-expand-xl<% if style_alt {%> alt-color<% } %><% if no_transparent_nav { %> no-transparent<% } %>' data-controller='search topnav-styling' data-topnav-styling-alt-styling-value="<%- style_alt %>">
+    <nav class='navbar-marketing-site horizontal navbar-expand-xxl<% if style_alt {%> alt-color<% } %><% if no_transparent_nav { %> no-transparent<% } %>' data-controller='search topnav-styling' data-topnav-styling-alt-styling-value="<%- style_alt %>">
       <div class='container<% if style_alt {%><%- "-fluid p-0" %><%} %> column-gap-4'>
         <div class="controls">
           <%+ PostgresLogo::new("/") %>
 
           <div class="d-flex flex-row gap-1">
-            <li class="nav-item d-flex align-items-center d-block d-xl-none">
+            <li class="nav-item d-flex align-items-center d-block d-xxl-none">
               <button type="text" class="btn nav-link btn-search-input-webapp border-0 p-0" name="search" data-bs-toggle="modal" data-bs-target="#search" autocomplete="off" data-search-target="searchTrigger" data-action="search#openSearch">
                 <span class="material-symbols-outlined">search</span>
               </button>
@@ -88,11 +99,21 @@
 
         <div class="collapse navbar-collapse drawer-submenu-container navbarSupportedContent" id="navbarSupportedContent">
           <!-- Main Menu -->
-          <div class="nav-item w-100 d-xl-flex flex-column flex-xl-row align-items-xl-center collapse collapse-horizontal drawer-submenu <% for item in close_mobile_main_nav_items {%> <%- item %><% } %> solutions-collapse show">
-            <ul class="navbar-nav flex-grow-1 gap-4 me-auto my-4 my-xl-0">
+          <div class="nav-item w-100 d-xxl-flex flex-column flex-xxl-row align-items-xxl-center collapse collapse-horizontal drawer-submenu <% for item in close_mobile_main_nav_items {%> <%- item %><% } %> solutions-collapse product-collapse show">
+            <ul class="navbar-nav flex-grow-1 gap-4 me-auto my-4 my-xxl-0">
 
               <% if !standalone_dashboard { %>
-                <div class="d-none d-xl-flex">
+                <div class="d-none d-xxl-flex">
+                  <%+ MarketingLink::new()
+                      .name("Product")
+                      .links(product_open_source_links.clone())
+                      .title_col1("Open-source")
+                      .links_col2(product_deployment_options_links.clone())
+                      .title_col2("Deployment options") %>
+                </div>
+                <%- link_to_drawer("Product", "product-collapse") %>
+
+                <div class="d-none d-xxl-flex">
                   <%+ MarketingLink::new()
                       .name("Solutions")
                       .links(solutions_tasks_links.clone())
@@ -109,7 +130,7 @@
               <%+ MarketingLink::new().link(StaticNavLink::new("Blog".to_string(), "/blog".to_string())) %>
 
               <% if !standalone_dashboard { %>
-                <div class="d-none d-xl-flex">
+                <div class="d-none d-xxl-flex">
                   <%+ MarketingLink::new()
                       .name("Company")
                       .links(company_links.clone()) %>
@@ -117,24 +138,24 @@
                 <%- link_to_drawer("Company", "company-collapse") %>
               <% } %>
 
-              <li class="nav-item d-none d-xl-flex align-items-center">
+              <li class="nav-item d-none d-xxl-flex align-items-center">
                 <button type="text" class="btn nav-link btn-search-input-webapp border-0 p-0" name="search" data-bs-toggle="modal" data-bs-target="#search" autocomplete="off" data-search-target="searchTrigger" data-action="search#openSearch">
                   <span class="material-symbols-outlined">search</span>
                 </button>
               </li>
             </ul>
     
-            <ul class="navbar-nav gap-4 mb-2 mb-xl-0">
-              <li class="align-items-center d-none d-xl-flex">
+            <ul class="navbar-nav gap-4 mb-2 mb-xxl-0">
+              <li class="align-items-center d-none d-xxl-flex">
                 <%+ GithubIcon {show_stars: true} %>
               </li>
 
-              <div class="d-block d-xl-none">
+              <div class="d-block d-xxl-none">
                 <%+ MarketingLink::new().link(StaticNavLink::new("GitHub".to_string(), "https://github.com/postgresml/postgresml".to_string())) %>
               </div>
 
 
-              <div class="mb-5 mt-4 my-xl-0 d-flex flex-column flex-xl-row gap-4">
+              <div class="mb-5 mt-4 my-xxl-0 d-flex flex-column flex-xxl-row gap-4">
                 <% if !standalone_dashboard { %>
                   <% if current_user.as_ref().is_none() || current_user.as_ref().unwrap().id == -1 { %>
                 <li class="nav-item d-flex align-items-center">
@@ -215,6 +236,46 @@
                   Component::from(link_to_drawer("Use Cases", "solutions-use-cases-collapse"))
                 ],
               to_expand: vec!["solutions-tasks-collapse".to_string(), "solutions-use-cases-collapse".to_string()]
+            }
+          ) %>
+
+          <%- drawer(
+            DrawerNav {
+              collapse_name: "product-open-source-collapse".to_string(),
+              links: 
+                product_open_source_links.iter().map(|link| {
+                  MarketingLink::new().link(
+                        StaticNavLink::new(link.name.to_string(), link.href.to_string())
+                        .disabled(link.disabled))
+                        .into()
+                }).collect::<Vec<Component>>(),
+              to_expand: vec![]
+            }
+          ) %>
+
+          <%- drawer(
+            DrawerNav {
+              collapse_name: "product-deployment-options-collapse".to_string(),
+              links: 
+                product_deployment_options_links.iter().map(|link| {
+                  MarketingLink::new().link(
+                        StaticNavLink::new(link.name.to_string(), link.href.to_string())
+                        .disabled(link.disabled))
+                        .into()
+                }).collect::<Vec<Component>>(),
+              to_expand: vec![]
+            }
+          ) %>
+
+          <%- drawer(
+            DrawerNav {
+              collapse_name: "product-collapse".to_string(),
+              links: 
+                vec![
+                  Component::from(link_to_drawer("Open-Source", "product-open-source-collapse")),
+                  Component::from(link_to_drawer("Deployment Options", "product-deployment-options-collapse"))
+                ],
+              to_expand: vec!["product-open-source-collapse".to_string(), "product-deployment-options-collapse".to_string()]
             }
           ) %>
 

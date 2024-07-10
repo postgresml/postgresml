@@ -5,6 +5,7 @@ use sailfish::TemplateOnce;
 #[derive(TemplateOnce, Default)]
 #[template(path = "sections/footers/marketing_footer/template.html")]
 pub struct MarketingFooter {
+    product: Vec<StaticNavLink>,
     solutions: Vec<StaticNavLink>,
     resources: Vec<StaticNavLink>,
     company: Vec<StaticNavLink>,
@@ -13,12 +14,23 @@ pub struct MarketingFooter {
 impl MarketingFooter {
     pub fn new() -> MarketingFooter {
         MarketingFooter {
+            product: vec![
+                StaticNavLink::new("Korvus".into(), "https://github.com/postgresml/korvus".into()),
+                StaticNavLink::new("PGML".into(), "https://github.com/postgresml/postgresml".into()),
+                StaticNavLink::new("PpCat Learning".into(), "https://github.com/postgresml/pgcat".into()),
+                StaticNavLink::new("PostgresML".into(), "/docs/cloud/overview".into()),
+                StaticNavLink::new("VPC".into(), "/docs/cloud/enterprise/vpc".into()),
+            ],
             solutions: vec![
-                StaticNavLink::new("Overview".into(), "/docs/".into()),
+                StaticNavLink::new("NLP".into(), "/docs/guides/natural-language-processing".into()),
+                StaticNavLink::new("Supervised Learning".into(), "/docs/guides/supervised-learning".into()),
+                StaticNavLink::new("Embedding".into(), "/docs/guides/embeddings/".into()),
+                StaticNavLink::new("Vector Database".into(), "/docs/guides/vector-database".into()),
+                StaticNavLink::new(
+                    "Search".into(),
+                    "/docs/guides/improve-search-results-with-machine-learning".into(),
+                ),
                 StaticNavLink::new("Chatbot".into(), "/chatbot".into()),
-                StaticNavLink::new("Site Search".into(), "/search".into()).disabled(true),
-                StaticNavLink::new("Fraud Detection".into(), "/fraud".into()).disabled(true),
-                StaticNavLink::new("Forecasting".into(), "/forecasting".into()).disabled(true),
             ],
             resources: vec![
                 StaticNavLink::new("Documentation".into(), "/docs/".into()),
@@ -43,6 +55,11 @@ impl MarketingFooter {
 
     pub fn company(mut self, company: Vec<StaticNavLink>) -> MarketingFooter {
         self.company = company;
+        self
+    }
+
+    pub fn product(mut self, product: Vec<StaticNavLink>) -> MarketingFooter {
+        self.product = product;
         self
     }
 }

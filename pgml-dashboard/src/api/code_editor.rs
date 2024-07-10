@@ -22,7 +22,7 @@ fn get_readonly_pool() -> PgPool {
                 .max_connections(1)
                 .idle_timeout(std::time::Duration::from_millis(60_000))
                 .max_lifetime(std::time::Duration::from_millis(60_000))
-                .connect_lazy(&std::env::var("CHATBOT_DATABASE_URL").expect("CHATBOT_DATABASE_URL not set"))
+                .connect_lazy(&std::env::var("EDITOR_DATABASE_URL").expect("EDITOR_DATABASE_URL not set"))
                 .expect("could not build lazy database connection")
         })
         .clone()
