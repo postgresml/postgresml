@@ -18,8 +18,8 @@ impl MarketingFooter {
                 StaticNavLink::new("Korvus".into(), "https://github.com/postgresml/korvus".into()),
                 StaticNavLink::new("PGML".into(), "https://github.com/postgresml/postgresml".into()),
                 StaticNavLink::new("PpCat Learning".into(), "https://github.com/postgresml/pgcat".into()),
-                StaticNavLink::new("PostgresML".into(), "/docs/product/cloud-database/".into()),
-                StaticNavLink::new("VPC".into(), "/docs/product/vpn_key".into()).disabled(true),
+                StaticNavLink::new("PostgresML".into(), "/docs/cloud/overview".into()),
+                StaticNavLink::new("VPC".into(), "/docs/cloud/enterprise/vpc".into()),
             ],
             solutions: vec![
                 StaticNavLink::new("NLP".into(), "/docs/guides/natural-language-processing".into()),
