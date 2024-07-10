@@ -18,16 +18,16 @@ PostgresML Cloud is available on Amazon Web Services (AWS), Google Cloud Platfor
 
 Quickly and easily create a PostgresML engine that can scale from very little capacity to gigabytes of GPU cache and terabytes of disk storage. Ideal for teams that want to start small and grow as their usage of PostgresML increases. 
 
-[Learn more about serverless](serverless)
+[Learn more about serverless](serverless.md)
 
 ### Dedicated
 
 Dedicated plans provide a large assortment of hardware, including CPU and GPU configurations, near-bottomless storage capacity and horizontal scaling into millions of queries per second. Ideal for larger startups and enterprises that have established PostgresML as their AI database of choice. 
 
-[Learn more about dedicated](dedicated)
+[Learn more about dedicated](dedicated.md)
 
 ### Enterprise
 
 Enterprise plans are ideal large companies that have special compliance needs and deployment configurations; with options for cloud-prem (VPC), on-prem, ACL’s and more.
 
-[Learn more about enterprise](enterprise)
+[Learn more about enterprise](enterprise/)
