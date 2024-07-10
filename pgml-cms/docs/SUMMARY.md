@@ -60,6 +60,15 @@
   * [Installation](open-source/pgcat/installation.md)
   * [Configuration](open-source/pgcat/configuration.md)
 
+## Cloud
+
+* [Overview](cloud/overview.md)
+* [Serverless](cloud/serverless.md)
+* [Dedicated](cloud/dedicated.md)
+* [Enterprise](cloud/enterprise/README.md)
+  * [Teams](cloud/enterprise/teams.md)
+  * [VPC](cloud/enterprise/vpc.md)
+
 ## Guides
 
 * [Embeddings](guides/embeddings/README.md)
@@ -76,15 +85,6 @@
 * [OpenSourceAI](guides/opensourceai.md)
 * [Natural Language Processing](guides/natural-language-processing.md)
 * [Vector database](guides/vector-database.md)
-
-## Cloud
-
-* [Overview](cloud/overview.md)
-* [Serverless](cloud/serverless.md)
-* [Dedicated](cloud/dedicated.md)
-* [Enterprise](cloud/enterprise/README.md)
-  * [Teams](cloud/enterprise/teams.md)
-  * [VPC](cloud/enterprise/vpc.md)
 
 ## Resources
 
