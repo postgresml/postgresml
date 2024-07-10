@@ -60,13 +60,6 @@
   * [Installation](open-source/pgcat/installation.md)
   * [Configuration](open-source/pgcat/configuration.md)
 
-## Product
-
-* [PostgresML Cloud](product/postgresml-cloud/README.md)
-  * [Serverless](product/postgresml-cloud/serverless.md)
-  * [Dedicated](product/postgresml-cloud/dedicated.md)
-  * [Enterprise](product/postgresml-cloud/enterprise.md)
-
 ## Guides
 
 * [Embeddings](guides/embeddings/README.md)
@@ -82,8 +75,17 @@
 * [Unified RAG](guides/unified-rag.md)
 * [OpenSourceAI](guides/opensourceai.md)
 * [Natural Language Processing](guides/natural-language-processing.md)
-* [Vector database](product/vector-database.md)
-  
+* [Vector database](guides/vector-database.md)
+
+## Cloud
+
+* [Overview](cloud/overview.md)
+* [Serverless](cloud/serverless.md)
+* [Dedicated](cloud/dedicated.md)
+* [Enterprise](cloud/enterprise/README.md)
+  * [Teams](cloud/enterprise/teams.md)
+  * [VPC](cloud/enterprise/vpc.md)
+
 ## Resources
 
 * [Architecture](resources/architecture/README.md)
