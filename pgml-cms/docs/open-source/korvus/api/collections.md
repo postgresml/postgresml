@@ -8,16 +8,21 @@ description: >-
 
 Collections are the organizational building blocks of the SDK. They manage all documents and related chunks, embeddings, tsvectors, and pipelines.
 
+**Various collection methods have their own guides:**
+- [Vector search](/docs/open-source/korvus/guides/vector-search)
+- [Document search](/docs/open-source/korvus/guides/document-search)
+- [RAG](/docs/open-source/korvus/guides/rag)
+
 ## Creating Collections
 
-By default, collections will read and write to the database specified by `PGML_DATABASE_URL` environment variable.
+By default, collections will read and write to the database specified by `KORVUS_DATABASE_URL` environment variable.
 
-### **Default `PGML_DATABASE_URL`**
+### **Default `KORVUS_DATABASE_URL`**
 
 {% tabs %}
 {% tab title="JavaScript" %}
 ```javascript
-const collection = pgml.newCollection("test_collection")
+const collection = korvus.newCollection("test_collection")
 ```
 {% endtab %}
 
@@ -35,19 +40,19 @@ let mut collection = Collection::new("test_collection", None)?;
 
 {% tab title="C" %}
 ```cpp
-CollectionC * collection = pgml_collectionc_new("test_collection", NULL);
+CollectionC * collection = korvus_collectionc_new("test_collection", NULL);
 ```
 {% endtab %}
 {% endtabs %}
 
-### Custom `PGML_DATABASE_URL`
+### Custom `KORVUS_DATABASE_URL`
 
-Create a Collection that reads from a different database than that set by the environment variable `PGML_DATABASE_URL`.
+Create a Collection that reads from a different database than that set by the environment variable `KORVUS_DATABASE_URL`.
 
 {% tabs %}
 {% tab title="Javascript" %}
 ```javascript
-const collection = pgml.newCollection("test_collection", CUSTOM_DATABASE_URL)
+const collection = korvus.newCollection("test_collection", CUSTOM_DATABASE_URL)
 ```
 {% endtab %}
 
@@ -65,7 +70,7 @@ let mut collection = Collection::new("test_collection", Some(CUSTOM_DATABASE_URL
 
 {% tab title="C" %}
 ```cpp
-CollectionC * collection = pgml_collectionc_new("test_collection", CUSTOM_DATABASE_URL);
+CollectionC * collection = korvus_collectionc_new("test_collection", CUSTOM_DATABASE_URL);
 ```
 {% endtab %}
 {% endtabs %}
@@ -73,6 +78,8 @@ CollectionC * collection = pgml_collectionc_new("test_collection", CUSTOM_DATABA
 ## Upserting Documents
 
 Documents are dictionaries with one required key: `id`. All other keys/value pairs are stored and can be chunked, embedded, broken into tsvectors, and searched over as specified by a `Pipeline`.
+
+See [our guide on Constructing Pipelines](../guides/constructing-pipelines) for more information on building pipelines.
 
 {% tabs %}
 {% tab title="JavaScript" %}
@@ -117,7 +124,7 @@ await collection.upsert_documents(documents)
 
 {% tab title="Rust" %}
 ```rust
-let documents: Vec<pgml::types::Json> = vec![
+let documents: Vec<korvus::types::Json> = vec![
     serde_json::json!({
         "id": "document_one",
         "title": "Document One",
@@ -143,7 +150,7 @@ char * documents[2] = {
   "{\"id\": \"document_one\", \"title\": \"Document One\", \"text\": \"Here are the contents of Document 1\", \"random_key\": \"here is some random data\"}",
   "{\"id\": \"document_two\", \"title\": \"Document Two\", \"text\": \"Here are the contents of Document 2\", \"random_key\": \"here is some random data\"}"
 };
-pgml_collectionc_upsert_documents(collection, documents, 2, NULL);
+korvus_collectionc_upsert_documents(collection, documents, 2, NULL);
 ```
 {% endtab %}
 {% endtabs %}
@@ -193,7 +200,7 @@ await collection.upsert_documents(documents)
 
 {% tab title="Rust" %}
 ```rust
-let documents: Vec<pgml::types::Json> = vec![
+let documents: Vec<korvus::types::Json> = vec![
     serde_json::json!({
         "id": "document_one",
         "title": "Document One",
@@ -219,7 +226,7 @@ char * documents[2] = {
   "{\"id\": \"document_one\", \"title\": \"Document One\", \"text\": \"Here is some new text for document one\", \"random_key\": \"here is some random data\"}",
   "{\"id\": \"document_two\", \"title\": \"Document Two\", \"text\": \"Here is some new text for document two\", \"random_key\": \"here is some random data\"}"
 };
-pgml_collectionc_upsert_documents(collection, documents, 2, NULL);
+korvus_collectionc_upsert_documents(collection, documents, 2, NULL);
 ```
 {% endtab %}
 {% endtabs %}
@@ -267,7 +274,7 @@ await collection.upsert_documents(documents, {"merge": True})
 
 {% tab title="Rust" %}
 ```rust
-let documents: Vec<pgml::types::Json> = vec![
+let documents: Vec<korvus::types::Json> = vec![
     serde_json::json!({
         "id": "document_one",
         "new_key": "this will be a new key in document one",
@@ -293,7 +300,7 @@ char * documents[2] = {
   "{\"id\": \"document_one\", \"new_key\": \"this will be a new key in document one\", \"random_key\": \"this will replace old random_key\"}",
   "{\"id\": \"document_two\", \"new_key\": \"this will be a new key in document two\", \"random_key\": \"this will replace old random_key\"}"
 };
-pgml_collectionc_upsert_documents(collection, documents, 2, "{\"merge\": true}");
+korvus_collectionc_upsert_documents(collection, documents, 2, "{\"merge\": true}");
 ```
 {% endtab %}
 {% endtabs %}
@@ -326,7 +333,7 @@ let documents = collection
 {% tab title="C" %}
 ```cpp
 unsigned long r_size = 0;
-char** documents = pgml_collectionc_get_documents(collection, "{\"limit\": 100}", &r_size);
+char** documents = korvus_collectionc_get_documents(collection, "{\"limit\": 100}", &r_size);
 ```
 {% endtab %}
 {% endtabs %}
@@ -361,7 +368,7 @@ let documents = collection
 {% tab title="C" %}
 ```cpp
 unsigned long r_size = 0;
-char** documents = pgml_collectionc_get_documents(collection, "{\"limit\": 100, \"offset\": 10}", &r_size);
+char** documents = korvus_collectionc_get_documents(collection, "{\"limit\": 100, \"offset\": 10}", &r_size);
 ```
 {% endtab %}
 {% endtabs %}
@@ -392,7 +399,7 @@ let documents = collection
 {% tab title="C" %}
 ```cpp
 unsigned long r_size = 0;
-char** documents = pgml_collectionc_get_documents(collection, "{\"limit\": 100, \"last_row_id\": 10}", &r_size);
+char** documents = korvus_collectionc_get_documents(collection, "{\"limit\": 100, \"last_row_id\": 10}", &r_size);
 ```
 {% endtab %}
 {% endtabs %}
@@ -449,7 +456,7 @@ let documents = collection
 {% tab title="C" %}
 ```cpp
 unsigned long r_size = 0;
-char** documents = pgml_collectionc_get_documents(collection, "{\"limit\": 100, \"filter\": {\"id\": {\"$eq\": \"document_one\"}}}", &r_size);
+char** documents = korvus_collectionc_get_documents(collection, "{\"limit\": 100, \"filter\": {\"id\": {\"$eq\": \"document_one\"}}}", &r_size);
 ```
 {% endtab %}
 {% endtabs %}
@@ -503,7 +510,7 @@ let documents = collection
 {% tab title="C" %}
 ```cpp
 unsigned long r_size = 0;
-char** documents = pgml_collectionc_get_documents(collection, "{\"limit\": 100, \"offset\": 10, \"order_by\": {\"id\": \"desc\"}}", &r_size);
+char** documents = korvus_collectionc_get_documents(collection, "{\"limit\": 100, \"offset\": 10, \"order_by\": {\"id\": \"desc\"}}", &r_size);
 ```
 {% endtab %}
 {% endtabs %}
@@ -550,7 +557,19 @@ let documents = collection
 
 {% tab title="C" %}
 ```cpp
-pgml_collectionc_delete_documents(collection, "{\"id\": { \"$eq\": 1}}");
+korvus_collectionc_delete_documents(collection, "{\"id\": { \"$eq\": 1}}");
 ```
 {% endtab %}
 {% endtabs %}
+
+## Vector Search
+
+See: [Vector search](/docs/open-source/korvus/guides/vector-search)
+
+## Document Search
+
+See: [Document search](/docs/open-source/korvus/guides/document-search)
+
+## RAG
+
+See: [RAG](/docs/open-source/korvus/guides/rag)

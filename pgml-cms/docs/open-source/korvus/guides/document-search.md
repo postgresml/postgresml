@@ -1,13 +1,13 @@
 # Document Search
 
-SDK is specifically designed to provide powerful, flexible document search. `Pipeline`s are required to perform search. See the [Pipelines](https://postgresml.org/docs/api/client-sdk/pipelines) for more information about using `Pipeline`s.
+Korvus is specifically designed to provide powerful, flexible document search. `Pipeline`s are required to perform search. See the [Pipelines](docs/api/client-sdk/pipelines) for more information about using `Pipeline`s.
 
 This section will assume we have previously ran the following code:
 
 {% tabs %}
 {% tab title="JavaScript" %}
 ```javascript
-const pipeline = pgml.newPipeline("test_pipeline", {
+const pipeline = korvus.newPipeline("test_pipeline", {
   abstract: {
     semantic_search: {
       model: "mixedbread-ai/mxbai-embed-large-v1",
@@ -17,11 +17,11 @@ const pipeline = pgml.newPipeline("test_pipeline", {
   body: {
     splitter: { model: "recursive_character" },
     semantic_search: {
-      model: "mixedbread-ai/mxbai-embed-large-v1",
+      model: "Alibaba-NLP/gte-base-en-v1.5",
     },
   },
 });
-const collection = pgml.newCollection("test_collection");
+const collection = korvus.newCollection("test_collection");
 await collection.add_pipeline(pipeline);
 ```
 {% endtab %}
@@ -40,7 +40,7 @@ pipeline = Pipeline(
         "body": {
             "splitter": {"model": "recursive_character"},
             "semantic_search": {
-                "model": "mixedbread-ai/mxbai-embed-large-v1",
+                "model": "Alibaba-NLP/gte-base-en-v1.5",
             },
         },
     },
@@ -65,7 +65,7 @@ let mut pipeline = Pipeline::new(
                 "body": {
                     "splitter": {"model": "recursive_character"},
                     "semantic_search": {
-                        "model": "mixedbread-ai/mxbai-embed-large-v1",
+                        "model": "Alibaba-NLP/gte-base-en-v1.5",
                     },
                 },
             }
@@ -80,7 +80,7 @@ collection.add_pipeline(&mut pipeline).await?;
 
 {% tab title="C" %}
 ```cpp
-PipelineC *pipeline = pgml_pipelinec_new("test_pipeline", "{\
+PipelineC *pipeline = korvus_pipelinec_new("test_pipeline", "{\
     \"abstract\": {\
         \"semantic_search\": {\
             \"model\": \"mixedbread-ai/mxbai-embed-large-v1\"\
@@ -90,12 +90,12 @@ PipelineC *pipeline = pgml_pipelinec_new("test_pipeline", "{\
     \"body\": {\
         \"splitter\": {\"model\": \"recursive_character\"},\
         \"semantic_search\": {\
-            \"model\": \"mixedbread-ai/mxbai-embed-large-v1\"\
+            \"model\": \"Alibaba-NLP/gte-base-en-v1.5\"\
         }\
     }\
 }");
-CollectionC * collection = pgml_collectionc_new("test_collection", NULL);
-pgml_collectionc_add_pipeline(collection, pipeline);
+CollectionC * collection = korvus_collectionc_new("test_collection", NULL);
+korvus_collectionc_add_pipeline(collection, pipeline);
 ```
 {% endtab %}
 {% endtabs %}
@@ -117,8 +117,8 @@ const results = await collection.search(
         },
         body: {
           query: "What is the best database?", boost: 1.25, parameters: {
-            instruction:
-              "Represent the Wikipedia question for retrieving supporting documents: ",
+            prompt:
+              "Represent this sentence for searching relevant passages: ",
           }
         },
       },
@@ -148,7 +148,7 @@ results = await collection.search(
                     "query": "What is the best database?",
                     "boost": 1.25,
                     "parameters": {
-                        "instruction": "Represent the Wikipedia question for retrieving supporting documents: ",
+                        "prompt": "Represent this sentence for searching relevant passages: ",
                     },
                 },
             },
@@ -179,7 +179,7 @@ let results = collection
                     "query": "What is the best database?",
                     "boost": 1.25,
                     "parameters": {
-                        "instruction": "Represent the Wikipedia question for retrieving supporting documents: ",
+                        "prompt": "Represent this sentence for searching relevant passages: ",
                     },
                 },
             },
@@ -193,7 +193,7 @@ let results = collection
 
 {% tab title="C" %}
 ```cpp
-char * results = pgml_collectionc_search(collection, "\
+char * results = korvus_collectionc_search(collection, "\
      \"query\": {\
         \"full_text_search\": {\
             \"abstract\": {\"query\": \"What is the best database?\", \"boost\": 1.2}\
@@ -207,7 +207,7 @@ char * results = pgml_collectionc_search(collection, "\
                 \"query\": \"What is the best database?\",\
                 \"boost\": 1.25,\
                 \"parameters\": {\
-                    \"instruction\": \"Represent the Wikipedia question for retrieving supporting documents: \"\
+                    \"prompt\": \"Represent this sentence for searching relevant passages: \"\
                 }\
             }\
         },\
@@ -219,11 +219,20 @@ char * results = pgml_collectionc_search(collection, "\
 {% endtab %}
 {% endtabs %}
 
-Just like `vector_search`, `search` takes in two arguments. The first is a `JSON` object specifying the `query` and `limit` and the second is the `Pipeline`. The `query` object can have three fields: `full_text_search`, `semantic_search` and `filter`. Both `full_text_search` and `semantic_search` function similarly. They take in the text to compare against, titled`query`, an optional `boost` parameter used to boost the effectiveness of the ranking, and `semantic_search` also takes in an optional `parameters` key which specify parameters to pass to the embedding model when embedding the passed in text.
+Just like `vector_search`, `search` takes in two arguments. The first is a `JSON` object specifying the `query` and `limit` and the second is the `Pipeline`. 
+
+The `query` object can have three fields: 
+
+- `full_text_search`
+- `semantic_search`
+- `filter` 
+
+Both `full_text_search` and `semantic_search` function similarly. They take in the text to compare against, titled `query`, an optional `boost` parameter used to boost the effectiveness of the ranking, and `semantic_search` also takes in an optional `parameters` key which specify parameters to pass to the embedding model when embedding the passed in text.
+
+The `filter` is structured the same way it is when performing `vector_search` see [filtering with vector_search](/docs/open-source/korvus/guides/vector-search#filtering) for more examples on filtering documents.
 
 Lets break this query down a little bit more. We are asking for a maximum of 10 documents ranked by `full_text_search` on the `abstract` and `semantic_search` on the `abstract` and `body`. We are also filtering out all documents that do not have the key `user_id` equal to `1`.  The `full_text_search` provides a score for the `abstract`, and `semantic_search` provides scores for the `abstract` and the `body`. The `boost` parameter is a multiplier applied to these scores before they are summed together and sorted by `score` `DESC`.
 
-The `filter` is structured the same way it is when performing `vector_search` see [filtering with vector\_search](https://postgresml.org/docs/api/client-sdk/search)[ ](https://postgresml.org/docs/api/client-sdk/search#metadata-filtering)for more examples on filtering documents.
 
 ## Fine-Tuning Document Search
 
