@@ -97,7 +97,12 @@ async fn main() {
         .expect("Error initializing site search");
     let mut site_search_copy = site_search.clone();
     tokio::spawn(async move {
-        site_search_copy.build().await.expect("Error building site search");
+        match site_search_copy.build().await {
+            Err(e) => {
+                error!("Error building site search: {e}")
+            }
+            _ => {}
+        };
     });
 
     pgml_dashboard::migrate(guards::Cluster::default().pool())

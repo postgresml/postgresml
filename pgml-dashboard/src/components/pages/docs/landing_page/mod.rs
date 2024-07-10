@@ -42,11 +42,10 @@ lazy_static! {
         .into_iter()
         .map(|s| s.to_owned())
         .collect();
-    static ref TUTORIAL_TARGETS: Vec<String> =
-        Vec::from(["semantic search", "semantic search using instructor model",])
-            .into_iter()
-            .map(|s| s.to_owned())
-            .collect();
+    static ref TUTORIAL_TARGETS: Vec<String> = Vec::from(["semantic search"])
+        .into_iter()
+        .map(|s| s.to_owned())
+        .collect();
     static ref BENCHMARKS_TARGETS: Vec<String> = Vec::from([
         "postgresml is 8-40x faster than python http microservices",
         "scaling to 1 million requests per second",
@@ -62,11 +61,11 @@ lazy_static! {
 #[derive(TemplateOnce, Default)]
 #[template(path = "pages/docs/landing_page/template.html")]
 pub struct LandingPage {
-    sql_extensions_ai: Vec<DocCard>,
-    sql_extensions_ml: Vec<DocCard>,
+    pgml_ai: Vec<DocCard>,
+    pgml_ml: Vec<DocCard>,
     benchmarks: Vec<DocCard>,
-    client_sdks_overview: Vec<DocCard>,
-    client_sdks_tutorials: Vec<DocCard>,
+    korvus_overview: Vec<DocCard>,
+    korvus_tutorials: Vec<DocCard>,
     feature_banner: FeatureBanner,
 }
 
@@ -83,14 +82,14 @@ impl LandingPage {
 
         let mut benchmarks_folder: Vec<IndexLink> = Vec::new();
         let mut extension_folder: Vec<IndexLink> = Vec::new();
-        let mut client_sdks_folder: Vec<IndexLink> = Vec::new();
+        let mut korvus_folder: Vec<IndexLink> = Vec::new();
         while !children.is_empty() {
             let link = children.pop().unwrap();
 
             match link.title.to_lowercase().as_ref() {
                 "benchmarks" => benchmarks_folder = link.children,
-                "sql extension" => extension_folder = link.children,
-                "client sdk" => client_sdks_folder = link.children,
+                "pgml" => extension_folder = link.children,
+                "korvus" => korvus_folder = link.children,
                 _ => {
                     if !link.children.is_empty() {
                         for item in link.children.clone() {
@@ -123,34 +122,34 @@ impl LandingPage {
         };
 
         let benchmarks = find_targets(benchmarks_folder, &BENCHMARKS_TARGETS);
-        let client_sdks_overview = find_targets(client_sdks_folder.clone(), &OVERVIEW_TARGETS);
-        let client_sdks_tutorials = find_targets(client_sdks_folder, &TUTORIAL_TARGETS);
-        let sql_extensions_ai = find_targets(extension_folder.clone(), &AI_TARGETS);
-        let sql_extensions_ml = find_targets(extension_folder, &ML_TARGETS);
+        let korvus_overview = find_targets(korvus_folder.clone(), &OVERVIEW_TARGETS);
+        let korvus_tutorials = find_targets(korvus_folder, &TUTORIAL_TARGETS);
+        let pgml_ai = find_targets(extension_folder.clone(), &AI_TARGETS);
+        let pgml_ml = find_targets(extension_folder, &ML_TARGETS);
 
         for item in benchmarks {
             let card = DocCard::from_index_link(&item).await;
             self.benchmarks.push(card);
         }
 
-        for item in client_sdks_overview {
+        for item in korvus_overview {
             let card = DocCard::from_index_link(&item).await;
-            self.client_sdks_overview.push(card);
+            self.korvus_overview.push(card);
         }
 
-        for item in client_sdks_tutorials {
+        for item in korvus_tutorials {
             let card = DocCard::from_index_link(&item).await;
-            self.client_sdks_tutorials.push(card);
+            self.korvus_tutorials.push(card);
         }
 
-        for item in sql_extensions_ai {
+        for item in pgml_ai {
             let card = DocCard::from_index_link(&item).await;
-            self.sql_extensions_ai.push(card);
+            self.pgml_ai.push(card);
         }
 
-        for item in sql_extensions_ml {
+        for item in pgml_ml {
             let card = DocCard::from_index_link(&item).await;
-            self.sql_extensions_ml.push(card);
+            self.pgml_ml.push(card);
         }
 
         self

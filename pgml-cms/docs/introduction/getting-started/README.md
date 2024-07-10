@@ -16,4 +16,4 @@ We provide a fully managed solution in [our cloud](create-your-database), and do
 
 By building PostgresML on top of a mature database, we get reliable backups for model inputs and proven scalability without reinventing the wheel, so that we can focus on providing access to the latest developments in open source machine learning and artificial intelligence.
 
-This guide will help you get started with a generous [free account](create-your-database), which includes access to GPU accelerated models and 5 GB of storage, or you can skip to our [Developer Docs](/docs/resources/developer-docs/quick-start-with-docker) to see how to run PostgresML locally with our Docker image.
+This guide will help you get started with [$100 credits](create-your-database), which includes access to GPU accelerated models and 5 GB of storage, or you can skip to our [Developer Docs](/docs/resources/developer-docs/quick-start-with-docker) to see how to run PostgresML locally with our Docker image.

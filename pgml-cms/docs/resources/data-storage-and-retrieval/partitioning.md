@@ -108,7 +108,7 @@ This reduces the number of rows Postgres has to scan by half. By adding more par
 
 Partitioning by hash, unlike by range, can be applied to any data type, including text. A hash function is executed on the partition key to create a reasonably unique number, and that number is then divided by the number of partitions to find the right child table for the row.
 
-To create a table partitioned by hash, the syntax is similar to partition by range. Let's use the USA House Prices dataset we used in [Vectors](../../product/vector-database.md) and [Tabular data](README.md), and split that table into two (2) roughly equal parts. Since we already have the `usa_house_prices` table, let's create a new one with the same columns, except this one will be partitioned:
+To create a table partitioned by hash, the syntax is similar to partition by range. Let's use the USA House Prices dataset we used in [Vectors](../../cloud/vector-database.md) and [Tabular data](README.md), and split that table into two (2) roughly equal parts. Since we already have the `usa_house_prices` table, let's create a new one with the same columns, except this one will be partitioned:
 
 ```postgresql
 CREATE TABLE usa_house_prices_partitioned (

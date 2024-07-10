@@ -8,6 +8,8 @@ description: >-
 
 `Pipeline`s define the schema for the transformation of documents. Different `Pipeline`s can be used for different tasks.
 
+See our [guide to Constructing Piplines](../guides/constructing-pipelines) for more information on how to create `Pipelines`.
+
 ## Defining Schema
 
 New `Pipeline`s require schema. Here are a few examples of variations of schema along with common use cases.
@@ -25,7 +27,7 @@ For the following section we will assume we have documents that have the structu
 {% tabs %}
 {% tab title="JavaScript" %}
 ```javascript
-const pipeline = pgml.newPipeline("test_pipeline", {
+const pipeline = korvus.newPipeline("test_pipeline", {
   title: {
     full_text_search: { configuration: "english" },
   },
@@ -83,7 +85,7 @@ let mut pipeline = Pipeline::new(
 
 {% tab title="C" %}
 ```cpp
-PipelineC * pipeline = pgml_pipelinec_new(
+PipelineC * pipeline = korvus_pipelinec_new(
   "test_pipeline", 
   "{\
     \"title\": {\
@@ -108,7 +110,7 @@ For a more simple RAG use case, the following `Pipeline` would work well.
 {% tabs %}
 {% tab title="JavaScript" %}
 ```javascript
-const pipeline = pgml.newPipeline("test_pipeline", {
+const pipeline = korvus.newPipeline("test_pipeline", {
   body: {
     splitter: { model: "recursive_character" },
     semantic_search: {
@@ -157,7 +159,7 @@ let mut pipeline = Pipeline::new(
 
 {% tab title="C" %}
 ```cpp
-PipelineC * pipeline = pgml_pipelinec_new(
+PipelineC * pipeline = korvus_pipelinec_new(
   "test_pipeline", 
   "{\
     \"body\": {\
@@ -181,7 +183,7 @@ We support most every open source model on [Hugging Face](https://huggingface.co
 {% tabs %}
 {% tab title="JavaScript" %}
 ```javascript
-const pipeline = pgml.newPipeline("test_pipeline", {
+const pipeline = korvus.newPipeline("test_pipeline", {
   body: {
     splitter: { model: "recursive_character" },
     semantic_search: {
@@ -230,7 +232,7 @@ let mut pipeline = Pipeline::new(
 
 {% tab title="C" %}
 ```cpp
-PipelineC * pipeline = pgml_pipelinec_new(
+PipelineC * pipeline = korvus_pipelinec_new(
   "test_pipeline", 
   "{\
     \"body\": {\
@@ -253,7 +255,7 @@ By default the SDK uses HNSW indexes to efficiently perform vector recall. The d
 {% tabs %}
 {% tab title="JavaScript" %}
 ```javascript
-const pipeline = pgml.newPipeline("test_pipeline", {
+const pipeline = korvus.newPipeline("test_pipeline", {
   body: {
     splitter: { model: "recursive_character" },
     semantic_search: {
@@ -308,7 +310,7 @@ let mut pipeline = Pipeline::new(
 
 {% tab title="C" %}
 ```cpp
-PipelineC * pipeline = pgml_pipelinec_new(
+PipelineC * pipeline = korvus_pipelinec_new(
   "test_pipeline", 
   "{\
     \"body\": {\
@@ -349,7 +351,7 @@ collection.add_pipeline(&mut pipeline).await?;
 
 {% tab title="C" %}
 ```cpp
-pgml_collectionc_add_pipeline(collection, pipeline);
+korvus_collectionc_add_pipeline(collection, pipeline);
 ```
 {% endtab %}
 {% endtabs %}
@@ -359,7 +361,7 @@ pgml_collectionc_add_pipeline(collection, pipeline);
 {% tabs %}
 {% tab title="JavaScript" %}
 ```javascript
-const pipeline = pgml.newPipeline("test_pipeline")
+const pipeline = korvus.newPipeline("test_pipeline")
 ```
 {% endtab %}
 
@@ -377,7 +379,7 @@ let mut pipeline = Pipeline::new("test_pipeline", None)?;
 
 {% tab title="C" %}
 ```cpp
-PipelineC * pipeline = pgml_pipelinec_new("test_pipeline",  NULL);
+PipelineC * pipeline = korvus_pipelinec_new("test_pipeline",  NULL);
 ```
 {% endtab %}
 {% endtabs %}
@@ -398,8 +400,8 @@ See their respective pages for more information on searching.
 {% tabs %}
 {% tab title="JavaScript" %}
 ```javascript
-const pipeline = pgml.newPipeline("test_pipeline")
-const collection = pgml.newCollection("test_collection")
+const pipeline = korvus.newPipeline("test_pipeline")
+const collection = korvus.newCollection("test_collection")
 await collection.disable_pipeline(pipeline)
 ```
 {% endtab %}
@@ -422,9 +424,9 @@ collection.disable_pipeline(&mut pipeline).await?;
 
 {% tab title="C" %}
 ```cpp
-CollectionC * collection = pgml_collectionc_new("test_collection", NULL);
-PipelineC * pipeline = pgml_pipelinec_new("test_pipeline",  NULL);
-pgml_collectionc_disable_pipeline(collection, pipeline);
+CollectionC * collection = korvus_collectionc_new("test_collection", NULL);
+PipelineC * pipeline = korvus_pipelinec_new("test_pipeline",  NULL);
+korvus_collectionc_disable_pipeline(collection, pipeline);
 ```
 {% endtab %}
 {% endtabs %}
@@ -438,8 +440,8 @@ Disabled `Pipeline`s can be re-enabled.
 {% tabs %}
 {% tab title="JavaScript" %}
 ```javascript
-const pipeline = pgml.newPipeline("test_pipeline")
-const collection = pgml.newCollection("test_collection")
+const pipeline = korvus.newPipeline("test_pipeline")
+const collection = korvus.newCollection("test_collection")
 await collection.enable_pipeline(pipeline)
 ```
 {% endtab %}
@@ -462,9 +464,9 @@ collection.enable_pipeline(&mut pipeline).await?;
 
 {% tab title="C" %}
 ```cpp
-CollectionC * collection = pgml_collectionc_new("test_collection", NULL);
-PipelineC * pipeline = pgml_pipelinec_new("test_pipeline",  NULL);
-pgml_collectionc_enable_pipeline(collection, pipeline);
+CollectionC * collection = korvus_collectionc_new("test_collection", NULL);
+PipelineC * pipeline = korvus_pipelinec_new("test_pipeline",  NULL);
+korvus_collectionc_enable_pipeline(collection, pipeline);
 ```
 {% endtab %}
 {% endtabs %}
@@ -476,8 +478,8 @@ Enabling a `Pipeline` will cause it to automatically run on all documents it may
 {% tabs %}
 {% tab title="JavaScript" %}
 ```javascript
-const pipeline = pgml.newPipeline("test_pipeline")
-const collection = pgml.newCollection("test_collection")
+const pipeline = korvus.newPipeline("test_pipeline")
+const collection = korvus.newCollection("test_collection")
 await collection.remove_pipeline(pipeline)
 ```
 {% endtab %}
@@ -500,9 +502,9 @@ collection.remove_pipeline(&mut pipeline).await?;
 
 {% tab title="C" %}
 ```cpp
-CollectionC * collection = pgml_collectionc_new("test_collection", NULL);
-PipelineC * pipeline = pgml_pipelinec_new("test_pipeline",  NULL);
-pgml_collectionc_remove_pipeline(collection, pipeline);
+CollectionC * collection = korvus_collectionc_new("test_collection", NULL);
+PipelineC * pipeline = korvus_pipelinec_new("test_pipeline",  NULL);
+korvus_collectionc_remove_pipeline(collection, pipeline);
 ```
 {% endtab %}
 {% endtabs %}

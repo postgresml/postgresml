@@ -10,7 +10,7 @@
     }
 
     &.horizontal {
-        @include media-breakpoint-up(xl) {
+        @include media-breakpoint-up(xxl) {
             height: $navbar-height;
             --bs-navbar-padding-y: 24px;
             --bs-navbar-padding-x: 1.25rem;
@@ -22,13 +22,13 @@
             justify-content: space-between;
             min-height: $navbar-height;
     
-            @include media-breakpoint-down(xl) {
+            @include media-breakpoint-down(xxl) {
                 width: 100%;
             }
         }
     
         .navbar-collapse {
-            @include media-breakpoint-up(xl) {
+            @include media-breakpoint-up(xxl) {
                 width: 100%;
             }
         }
@@ -52,13 +52,13 @@
     }
 
     .btn-primary {
-        @include media-breakpoint-up(xl) {
+        @include media-breakpoint-up(xxl) {
             padding: 10px 20px;
         }
     }
 
     .btn-secondary {
-        @include media-breakpoint-up(xl) {
+        @include media-breakpoint-up(xxl) {
             padding: 8px 20px; // compensate for 1px boarder 
         }
     }

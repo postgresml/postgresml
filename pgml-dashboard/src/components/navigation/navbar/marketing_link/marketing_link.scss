@@ -20,10 +20,21 @@ li[data-controller="navigation-navbar-marketing-link"] {
             }
         }
 
+        .nav-item-bridge {
+            width: 0%;
+            height: 0px;
+        }
+
         &:hover {
             .nav-link {
                 border-bottom: 1px solid #{$slate-shade-100};
                 color: #{$slate-shade-100};
+            }
+
+            .nav-item-bridge {
+                width: 500%;
+                height: 20px;
+                z-index: 1;
             }
 
             .dropdown-container {
@@ -139,6 +150,15 @@ li[data-controller="navigation-navbar-marketing-link"] {
         top: -17px;
         position: absolute;
         left: 25px;
+    }
+
+    .material-symbols-outlined {
+        width: 16px;
+        height: 16px;
+    }
+
+    .icomoon {
+        font-size: 23px;
     }
 }
 
