@@ -24,8 +24,8 @@ impl MarketingFooter {
             solutions: vec![
                 StaticNavLink::new("NLP".into(), "/docs/guides/natural-language-processing".into()),
                 StaticNavLink::new("Supervised Learning".into(), "/docs/guides/supervised-learning".into()),
-                StaticNavLink::new("Embedding".into(), "/docs/api/sql-extension/pgml.embed".into()),
-                StaticNavLink::new("Vector Database".into(), "/docs/product/vector-database".into()),
+                StaticNavLink::new("Embedding".into(), "/docs/guides/embeddings/".into()),
+                StaticNavLink::new("Vector Database".into(), "/docs/guides/vector-database".into()),
                 StaticNavLink::new(
                     "Search".into(),
                     "/docs/guides/improve-search-results-with-machine-learning".into(),
