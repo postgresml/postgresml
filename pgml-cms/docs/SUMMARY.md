@@ -55,6 +55,7 @@
     * [Document Search](open-source/korvus/guides/document-search.md)
   * [Example Apps](open-source/korvus/example-apps/README.md)
     * [Semantic Search](open-source/korvus/example-apps/semantic-search.md)
+    * [RAG with OpenAI](open-source/korvus/example-apps/rag-with-openai.md)
 * [PgCat](open-source/pgcat/README.md)
   * [Features](open-source/pgcat/features.md)
   * [Installation](open-source/pgcat/installation.md)
