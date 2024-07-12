@@ -66,7 +66,7 @@ SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'xgboost', hyperpara
 
 -- runtimes
 SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'linear', runtime => 'python');
-SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'linear', runtime => 'rust');
+--SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'linear', runtime => 'rust');
 
 --SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'xgboost', runtime => 'python', hyperparams => '{"n_estimators": 10}'); -- too slow
 SELECT * FROM pgml.train('Handwritten Digits', algorithm => 'xgboost', runtime => 'rust', hyperparams => '{"n_estimators": 10}');
