@@ -6,10 +6,10 @@ OpenSourceAI is a drop in replacement for OpenAI's chat completion endpoint.
 
 Follow the instillation section in [getting-started.md](../api/client-sdk/getting-started.md "mention")
 
-When done, set the environment variable `DATABASE_URL` to your PostgresML database url.
+When done, set the environment variable `KORVUS_DATABASE_URL` to your PostgresML database url.
 
 ```bash
-export DATABASE_URL=postgres://user:pass@.db.cloud.postgresml.org:6432/pgml
+export KORVUS_DATABASE_URL=postgres://user:pass@.db.cloud.postgresml.org:6432/pgml
 ```
 
 Note that an alternative to setting the environment variable is passing the url to the constructor of `OpenSourceAI`
@@ -17,15 +17,15 @@ Note that an alternative to setting the environment variable is passing the url 
 {% tabs %}
 {% tab title="JavaScript" %}
 ```javascript
-const pgml = require("pgml");
-const client = pgml.newOpenSourceAI(YOUR_DATABASE_URL);
+const korvus = require("korvus");
+const client = korvus.newOpenSourceAI(YOUR_DATABASE_URL);
 ```
 {% endtab %}
 
 {% tab title="Python" %}
 ```python
-import pgml
-client = pgml.OpenSourceAI(YOUR_DATABASE_URL)
+import korvus
+client = korvus.OpenSourceAI(YOUR_DATABASE_URL)
 ```
 {% endtab %}
 {% endtabs %}
@@ -59,8 +59,8 @@ Here is a simple example using zephyr-7b-beta, one of the best 7 billion paramet
 {% tabs %}
 {% tab title="JavaScript" %}
 ```javascript
-const pgml = require("pgml");
-const client = pgml.newOpenSourceAI();
+const korvus = require("korvus");
+const client = korvus.newOpenSourceAI();
 const results = client.chat_completions_create(
   "meta-llama/Meta-Llama-3-8B-Instruct",
   [
@@ -80,8 +80,8 @@ console.log(results);
 
 {% tab title="Python" %}
 ```python
-import pgml
-client = pgml.OpenSourceAI()
+import korvus
+client = korvus.OpenSourceAI()
 results = client.chat_completions_create(
     "meta-llama/Meta-Llama-3-8B-Instruct",
     [
@@ -138,8 +138,8 @@ Here is an example of streaming with the popular `meta-llama/Meta-Llama-3-8B-Ins
 {% tabs %}
 {% tab title="JavaScript" %}
 ```javascript
-const pgml = require("pgml");
-const client = pgml.newOpenSourceAI();
+const korvus = require("korvus");
+const client = korvus.newOpenSourceAI();
 const it = client.chat_completions_create_stream(
   "meta-llama/Meta-Llama-3-8B-Instruct",
   [
@@ -163,8 +163,8 @@ while (!result.done) {
 
 {% tab title="Python" %}
 ```python
-import pgml
-client = pgml.OpenSourceAI()
+import korvus
+client = korvus.OpenSourceAI()
 results = client.chat_completions_create_stream(
      "meta-llama/Meta-Llama-3-8B-Instruct",
      [
@@ -231,8 +231,8 @@ We also have asynchronous versions of the `chat_completions_create` and `chat_co
 {% tabs %}
 {% tab title="JavaScript" %}
 ```javascript
-const pgml = require("pgml");
-const client = pgml.newOpenSourceAI();
+const korvus = require("korvus");
+const client = korvus.newOpenSourceAI();
 const results = await client.chat_completions_create_async(
   "meta-llama/Meta-Llama-3-8B-Instruct",
   [
@@ -252,8 +252,8 @@ console.log(results);
 
 {% tab title="Python" %}
 ```python
-import pgml
-client = pgml.OpenSourceAI()
+import korvus
+client = korvus.OpenSourceAI()
 results = await client.chat_completions_create_async(
     "meta-llama/Meta-Llama-3-8B-Instruct",
     [
@@ -300,8 +300,8 @@ Notice the return types for the sync and async variations are the same.
 {% tabs %}
 {% tab title="JavaScript" %}
 ```javascript
-const pgml = require("pgml");
-const client = pgml.newOpenSourceAI();
+const korvus = require("korvus");
+const client = korvus.newOpenSourceAI();
 const it = await client.chat_completions_create_stream_async(
   "meta-llama/Meta-Llama-3-8B-Instruct",
   [
@@ -325,8 +325,8 @@ while (!result.done) {
 
 {% tab title="Python" %}
 ```python
-import pgml
-client = pgml.OpenSourceAI()
+import korvus
+client = korvus.OpenSourceAI()
 results = await client.chat_completions_create_stream_async(
     "meta-llama/Meta-Llama-3-8B-Instruct",
     [

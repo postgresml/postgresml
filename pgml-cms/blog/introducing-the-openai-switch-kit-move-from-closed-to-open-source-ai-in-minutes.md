@@ -41,8 +41,8 @@ The Switch Kit is an open-source AI SDK that provides a drop in replacement for 
 {% tabs %}
 {% tab title="JavaScript" %}
 ```javascript
-const pgml = require("pgml");
-const client = pgml.newOpenSourceAI();
+const korvus = require("korvus");
+const client = korvus.newOpenSourceAI();
 const results = client.chat_completions_create(
       "meta-llama/Meta-Llama-3-8B-Instruct",
       [
@@ -62,8 +62,8 @@ console.log(results);
 
 {% tab title="Python" %}
 ```python
-import pgml
-client = pgml.OpenSourceAI()
+import korvus
+client = korvus.OpenSourceAI()
 results = client.chat_completions_create(
     "meta-llama/Meta-Llama-3-8B-Instruct",
     [
@@ -117,17 +117,15 @@ The above is an example using our open-source AI SDK with Meta-Llama-3-8B-Instru
 
 Notice there is near one to one relation between the parameters and return type of OpenAI’s `chat.completions.create` and our `chat_completion_create`.
 
-The best part of using open-source AI is the flexibility with models. Unlike OpenAI, we are not restricted to using a few censored models, but have access to almost any model out there.
-
-Here is an example of streaming with the popular Mythalion model, an uncensored MythoMax variant designed for chatting.
+Here is an example of streaming:
 
 {% tabs %}
 {% tab title="JavaScript" %}
 ```javascript
-const pgml = require("pgml");
-const client = pgml.newOpenSourceAI();
+const korvus = require("korvus");
+const client = korvus.newOpenSourceAI();
 const it = client.chat_completions_create_stream(
-      "PygmalionAI/mythalion-13b",
+      "meta-llama/Meta-Llama-3-8B-Instruct",
       [
           {
               role: "system",
@@ -149,10 +147,10 @@ while (!result.done) {
 
 {% tab title="Python" %}
 ```python
-import pgml
-client = pgml.OpenSourceAI()
+import korvus
+client = korvus.OpenSourceAI()
 results = client.chat_completions_create_stream(
-     "PygmalionAI/mythalion-13b",
+     "meta-llama/Meta-Llama-3-8B-Instruct",
      [
          {
              "role": "system",
@@ -184,7 +182,7 @@ for c in results:
   ],
   "created": 1701296792,
   "id": "62a817f5-549b-43e0-8f0c-a7cb204ab897",
-  "model": "PygmalionAI/mythalion-13b",
+  "model": "meta-llama/Meta-Llama-3-8B-Instruct",
   "object": "chat.completion.chunk",
   "system_fingerprint": "f366d657-75f9-9c33-8e57-1e6be2cf62f3"
 }
@@ -200,7 +198,7 @@ for c in results:
   ],
   "created": 1701296792,
   "id": "62a817f5-549b-43e0-8f0c-a7cb204ab897",
-  "model": "PygmalionAI/mythalion-13b",
+  "model": "meta-llama/Meta-Llama-3-8B-Instruct",
   "object": "chat.completion.chunk",
   "system_fingerprint": "f366d657-75f9-9c33-8e57-1e6be2cf62f3"
 }
@@ -212,15 +210,15 @@ We have truncated the output to two items
 
 !!!
 
-We also have asynchronous versions of the create and `create_stream` functions relatively named `create_async` and `create_stream_async`. Checkout [our documentation](https://postgresml.org/docs/introduction/machine-learning/sdks/opensourceai) for a complete guide of the open-source AI SDK including guides on how to specify custom models.
+We also have asynchronous versions of the create and `create_stream` functions relatively named `create_async` and `create_stream_async`. Checkout [our documentation](https://postgresml.org/docs/guides/opensourceai) for a complete guide of the open-source AI SDK including guides on how to specify custom models.
 
-PostgresML is free and open source. To run the above examples yourself[ create an account](https://postgresml.org/signup), install pgml, and get running!
+PostgresML is free and open source. To run the above examples yourself [create an account](https://postgresml.org/signup), install korvus, and get running!
 
 ### Why use open-source models on PostgresML?
 
 PostgresML is a complete MLOps platform in a simple PostgreSQL extension. It’s the tool our team wished they’d had scaling MLOps at Instacart during its peak years of growth. You can host your database with us or locally. However you want to engage, we know from experience that it’s better to bring your ML workload to the database rather than bringing the data to the codebase.
 
-Fundamentally, PostgresML enables PostgreSQL to act as a GPU-powered AI application database — where you can both save models and index data. That eliminates the need for the myriad of separate services you have to tie together for your ML workflow. Pgml + pgvector create a complete ML platform (vector DB, model store, inference service, open-source LLMs) all within open-source extensions for PostgreSQL. That takes a lot of the complexity out of your infra, and it's ultimately faster for your users.
+Fundamentally, PostgresML enables PostgreSQL to act as a GPU-powered AI application database — where you can both save models and index data. That eliminates the need for the myriad of separate services you have to tie together for your ML workflow. pgml + pgvector create a complete ML platform (vector DB, model store, inference service, open-source LLMs) all within open-source extensions for PostgreSQL. That takes a lot of the complexity out of your infra, and it's ultimately faster for your users.
 
 We're bullish on the power of in-database and open-source ML/AI, and we’re excited for you to see the power of this approach yourself. You can try it out in our serverless database for $0, with usage based billing starting at just five cents an hour per GB GPU cache. You can even mess with it for free on our homepage.
 
