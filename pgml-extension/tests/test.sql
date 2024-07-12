@@ -31,5 +31,6 @@ SELECT pgml.load_dataset('wine');
 \i examples/vectors.sql
 \i examples/chunking.sql
 \i examples/preprocessing.sql
+\i examples/embedding.sql
 -- transformers are generally too slow to run in the test suite
 --\i examples/transformers.sql

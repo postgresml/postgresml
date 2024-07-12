@@ -527,8 +527,8 @@ def rank(transformer, query, documents, kwargs):
     return rank_using(model, query, documents, kwargs)
 
 
-def create_embedding(transformer):
-    return SentenceTransformer(transformer)
+def create_embedding(transformer, kwargs):
+    return SentenceTransformer(transformer, **kwargs)
 
 
 def embed_using(model, transformer, inputs, kwargs):
@@ -545,16 +545,32 @@ def embed_using(model, transformer, inputs, kwargs):
 
 def embed(transformer, inputs, kwargs):
     kwargs = orjson.loads(kwargs)
-
     ensure_device(kwargs)
+
+    init_kwarg_keys = [
+        "device",
+        "trust_remote_code",
+        "revision",
+        "model_kwargs",
+        "tokenizer_kwargs",
+        "config_kwargs",
+        "truncate_dim",
+        "token",
+    ]
+    init_kwargs = {
+        key: value for key, value in kwargs.items() if key in init_kwarg_keys
+    }
+    encode_kwargs = {
+        key: value for key, value in kwargs.items() if key not in init_kwarg_keys
+    }
 
     if transformer not in __cache_sentence_transformer_by_name:
         __cache_sentence_transformer_by_name[transformer] = create_embedding(
-            transformer
+            transformer, init_kwargs
         )
     model = __cache_sentence_transformer_by_name[transformer]
 
-    return embed_using(model, transformer, inputs, kwargs)
+    return embed_using(model, transformer, inputs, encode_kwargs)
 
 
 def clear_gpu_cache(memory_usage: None):
