@@ -163,8 +163,8 @@
     @include gradient-border-card($gray-600, $gradient-green);
 }
 
-.main-gradient-border-card-hover {
-    @include gradient-border-card($gray-600, $gradient-main, true);
+.main-gradient-border-card-1-hover {
+    @include gradient-border-card($gray-600, $gradient-main, true, 1px);
 }
 
 .interactive-card {

@@ -13,7 +13,7 @@
 @mixin deployment-status($color) {
     @extend .badge;
     border-radius: calc($border-radius / 2);
-    border: 2px solid $color;
+    border: 1px solid $color;
 }
 
 .deployment-status-configuring, .deployment-status-creating, .deployment-status-Deploying, 
