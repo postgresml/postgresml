@@ -6,7 +6,7 @@ OpenSourceAI is a drop in replacement for OpenAI's chat completion endpoint.
 
 Follow the instillation section in [getting-started.md](../api/client-sdk/getting-started.md "mention")
 
-When done, set the environment variable `DATABASE_URL` to your PostgresML database url.
+When done, set the environment variable `KORVUS_DATABASE_URL` to your PostgresML database url.
 
 ```bash
 export KORVUS_DATABASE_URL=postgres://user:pass@.db.cloud.postgresml.org:6432/pgml
