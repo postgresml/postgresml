@@ -1,12 +1,6 @@
----
-description: >-
-  JavaScript and Python code snippets for using instructor models in more
-  advanced search use cases.
----
-
 # Semantic Search
 
-This tutorial demonstrates using the `pgml` SDK to create a collection, add documents, build a pipeline for vector search and make a sample query.
+This example demonstrates using the `korvus` SDK to create a collection, add documents, build a pipeline for vector search and make a sample query.
 
 [Link to full JavaScript implementation](https://github.com/postgresml/korvus/blob/main/korvus/javascript/examples/semantic_search.js)
 
