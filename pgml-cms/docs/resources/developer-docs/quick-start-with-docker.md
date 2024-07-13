@@ -18,7 +18,7 @@ docker run \
     -v postgresml_data:/var/lib/postgresql \
     -p 5433:5432 \
     -p 8000:8000 \
-    ghcr.io/postgresml/postgresml:2.7.13 \
+    ghcr.io/postgresml/postgresml:2.9.2 \
     sudo -u postgresml psql -d postgresml
 ```
 {% endtab %}
@@ -43,7 +43,7 @@ docker run \
     --gpus all \
     -p 5433:5432 \
     -p 8000:8000 \
-    ghcr.io/postgresml/postgresml:2.7.3 \
+    ghcr.io/postgresml/postgresml:2.9.2 \
     sudo -u postgresml psql -d postgresml
 ```
 
