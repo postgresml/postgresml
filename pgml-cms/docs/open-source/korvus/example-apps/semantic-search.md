@@ -47,7 +47,7 @@ const main = async () => {
 
   // Perform vector_search
   // We are querying for the string "Is Korvus fast?"
-  // Notice that the `mixedbread-ai/mxbai-embed-large-v1` embedding model takes a prompt paramter when embedding for search
+  // Notice that the `mixedbread-ai/mxbai-embed-large-v1` embedding model takes a prompt parameter when embedding for search
   // We specify that we only want to return the `id` of documents. If the `document` key was blank it would return the entire document with every result
   // Limit the results to 5. In our case we only have two documents in our Collection so we will only get two results
   const results = await collection.vector_search(
@@ -122,7 +122,7 @@ async def main():
 
     # Perform vector_search
     # We are querying for the string "Is Korvus fast?"
-    # Notice that the `mixedbread-ai/mxbai-embed-large-v1` embedding model takes a prompt paramter when embedding for search
+    # Notice that the `mixedbread-ai/mxbai-embed-large-v1` embedding model takes a prompt parameter when embedding for search
     # We specify that we only want to return the `id` of documents. If the `document` key was blank it would return the entire document with every result
     # Limit the results to 5. In our case we only have two documents in our Collection so we will only get two results
     results = await collection.vector_search(
