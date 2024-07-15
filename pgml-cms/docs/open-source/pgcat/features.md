@@ -11,7 +11,7 @@ PgCat has many features currently in various stages of readiness and development
 <div class="row">
 	<div class="col-12 col-lg-6">
 		<figure class="my-4">
-			<img class="mb-3" src="../../.gitbook/assets/pgcat_3.png" alt="PgCat load balancing">
+			<img class="mb-3" src="../../.gitbook/assets/PgCat_Load-Balancing-Diagram.svg" alt="PgCat load balancing">
 		</figure>
 	</div>
 	<div class="col-12 col-lg-6">
@@ -32,7 +32,7 @@ Least active connections assumes queries have different costs and replicas have 
 <div class="row">
 	<div class="col-12 col-lg-6">
 		<figure class="my-4">
-			<img class="mb-3" src="../../.gitbook/assets/pgcat_5.png" alt="PgCat high availability">
+			<img class="mb-3" src="../../.gitbook/assets/PgCat_High-Availability-Diagram.svg" alt="PgCat high availability">
 		</figure>
 	</div>
 	<div class="col-12 col-lg-6">
@@ -49,7 +49,7 @@ High availability is important for production deployments because database error
 <div class="row">
 	<div class="col-12 col-lg-6">
 		<figure class="my-4">
-			<img class="mb-3" src="../../.gitbook/assets/pgcat_6.png" alt="PgCat read/write separation">
+			<img class="mb-3" src="../../.gitbook/assets/PgCat_Read-Write-Diagram.svg" alt="PgCat read/write separation">
 		</figure>
 	</div>
 	<div class="col-12 col-lg-6">
@@ -66,7 +66,7 @@ Removing read traffic from the primary can help scale it beyond its normal capac
 <div class="row">
 	<div class="col-12 col-lg-6">
 		<figure class="my-4">
-			<img class="mb-3" src="../../.gitbook/assets/pgcat_7.png" alt="PgCat read/write separation">
+			<img class="mb-3" src="../../.gitbook/assets/PgCat_Sharding-Diagram.svg" alt="PgCat read/write separation">
 		</figure>
 	</div>
 	<div class="col-12 col-lg-6">

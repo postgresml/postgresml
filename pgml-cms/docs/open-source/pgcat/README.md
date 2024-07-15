@@ -29,7 +29,7 @@ PgCat, like PostgresML, is free and open source, distributed under the MIT licen
 PgCat implements the PostgreSQL wire protocol and can understand and optimally route queries & transactions based on their characteristics. For example, if your database deployment consists of a primary and replica, PgCat can send all `SELECT` queries to the replica, and all other queries to the primary, creating a read/write traffic separation.
 
 <figure>
-	<img class="mb-3" src="../../.gitbook/assets/pgcat_4.png" alt="PgCat architecture" width="95%" height="auto">
+	<img class="mb-3" src="../../.gitbook/assets/PgCat_Scale-Diagram.svg" alt="PgCat architecture" width="95%" height="auto">
 	<figcaption><i>PgCat deployment at scale</i></figcaption>
 </figure>
 
