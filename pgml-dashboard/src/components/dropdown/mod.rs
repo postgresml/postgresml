@@ -72,7 +72,7 @@ pub struct Dropdown {
     /// Position of the dropdown menu.
     offset: String,
 
-    /// Whether or not the dropdown responds to horizontal collapse, i.e. in product left nav.
+    /// Whether or not the dropdown is collapsable.
     collapsable: bool,
     offset_collapsed: String,
 
