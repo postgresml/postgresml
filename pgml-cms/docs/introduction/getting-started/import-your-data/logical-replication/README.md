@@ -6,7 +6,7 @@ description: Stream data from your primary database to PostgresML in real time u
 
 Logical replication allows your PostgresML database to copy data from your primary database to PostgresML in real time. As soon as your customers make changes to their data on your website, those changes will become available in PostgresML.
 
-<figure class="my-3 py-3"><img src="../../../../.gitbook/assets/logical_replication_1.png" alt="Logical replication" width="80%"><figcaption></figcaption></figure>
+<figure class="my-3 py-3"><img src="../../../../.gitbook/assets/Getting-Started_Logical-Replication-Diagram.svg" alt="Logical replication" width="80%"><figcaption></figcaption></figure>
 
 ## Getting started
 
