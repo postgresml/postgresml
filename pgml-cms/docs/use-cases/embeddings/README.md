@@ -34,7 +34,7 @@ Let's use the `pgml.embed` function to generate embeddings for tweets, so we can
 SELECT pgml.load_dataset('tweet_eval', 'sentiment');
 ```
 
-View some tweets and their topics.
+View some tweets and their 
 
 ```postgresql
 SELECT *
