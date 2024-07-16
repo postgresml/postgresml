@@ -1,14 +1,16 @@
 <%
   use crate::components::Dropdown;
+  use crate::components::stimulus::stimulus_action::{StimulusAction, StimulusEvents};
+
 %>
 <div data-controller="inputs-text-search-search"
   data-search-frame-id="<%= id %>"
   data-search-frame-url="<%= search_url %>"
->
+  data-action='click@document->inputs-text-search-search#hideDropdown'>
+  
   <%+ input %>
 
   <%+ Dropdown::new_no_button()
       .frame(id, search_url.as_str())
-      .collapsable() 
   %>
 </div>
