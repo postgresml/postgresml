@@ -34,7 +34,7 @@
     </div>
     <div class="w-100 d-flex flex-column align-items-center">
       <h1 class="text-center">PostgresML</br><span class="text-gradient-green">Documentation</span></h1>
-      <p class="w-75 text-center">PostgresML is a open-source database extension that turns Postgres into an end-to-end machine learning platform. Build, train, and deploy ML/AI models directly within your Postgres database without moving data between systems.</p>
+      <p class="w-75 text-center">Build, train, and deploy ML/AI models directly where your data resides.</p>
     </div>
 
     <div class="w-100 mx-auto" style="max-width: 40rem;">
@@ -117,23 +117,23 @@
             }
           %>
           <%+ Accordian::new().html_titles(vec![
-              "What is PostgresML?",
+              "What is PGML?",
               "What is a DB extension?",
               "How does it work?",
               "What are the benefits?",
               "What are the cons?",
-              "What is hosted PostgresML?"
+              "What is PostgresML Cloud?"
             ])
             .html_contents(
               vec![
-                &accordian_paragraph("PostgresML is an open-source database extension that turns Postgres into an end-to-end machine learning platform. It allows you to build, train, and deploy ML models directly within your Postgres database without moving data between systems."),
+                &accordian_paragraph("PGML is an open-source database extension that turns Postgres into an end-to-end machine learning platform. It allows you to build, train, and deploy ML models directly within your Postgres database without moving data between systems."),
                 &accordian_paragraph("A database extension is software that extends the capabilities of a database. Postgres allows extensions to add new data types, functions, operators, indexes, etc. PostgresML uses extensions to bring machine learning capabilities natively into Postgres."),
                 &accordian_paragraph("PostgresML installs as extensions in Postgres. It provides SQL API functions for each step of the ML workflow like importing data, transforming features, training models, making predictions, etc. Models are stored back into Postgres tables. This unified approach eliminates complexity."),
                 &accordian_paragraph("Benefits include faster development cycles, reduced latency, tighter integration between ML and applications, leveraging Postgres' reliability and ACID transactions, and horizontal scaling."),
                 &accordian_paragraph("PostgresML requires using Postgres as the database. If your data currently resides in a different database, there would be some upfront effort required to migrate the data into Postgres in order to utilize PostgresML's capabilities."),
                 &accordian_paragraph(r##"
-                <p>Hosted PostgresML is a fully managed cloud service that provides all the capabilities of open source PostgresML without the need to run your own database infrastructure.</p>
-                <p>With hosted PostgresML, you get:</p>
+                <p>Hosted PostgresML is a fully managed cloud service that provides all the capabilities of open source PGML without the need to run your own database infrastructure.</p>
+                <p>With PostgresML Cloud, you get:</p>
                 <ul>
                   <li>Flexible compute resources - Choose CPU, RAM or GPU machines tailored to your workload</li>
                   <li>Horizontally scalable inference with read-only replicas </li>
@@ -142,7 +142,7 @@
                   <li>Automated backups and point-in-time restore </li>
                   <li>Monitoring dashboard with metrics and logs </li>
                   </ul>
-                <p>In summary, hosted PostgresML removes the operational burden so you can focus on developing machine learning applications, while still getting the benefits of the unified PostgresML architecture.</p>
+                <p>In summary, PostgresML Cloud removes the operational burden so you can focus on developing machine learning applications, while still getting the benefits of the unified PostgresML architecture.</p>
                 "##)
               ])
           %>
