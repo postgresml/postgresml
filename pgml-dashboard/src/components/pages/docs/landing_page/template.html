@@ -55,7 +55,7 @@
 
     <div class="mt-5">
       <%- section_title(
-        "<h2>SQL Extension</h2>",
+        "<h2>PGML SQL Extension</h2>",
         "The SQL extension provides end-to-end ML & AI functionality from inference to deployment. It can be used in any combination to implement bespoke models across use cases.") %>
       
       <div class="d-flex flex-column gap-4_5">
@@ -76,13 +76,13 @@
       <div class="d-flex flex-column gap-3 align-items-center">
         <%- section_title(
           r#"<div class="d-flex gap-2">
-            <h2>Client SDK</h2>
+            <h2>Korvus SDK</h2>
             <div class="language-logos p-2 d-flex gap-2 h-100 rounded-2">
               <img  width="28px" height="28px" src="/dashboard/static/images/logos/javascript.png"/>
               <img  width="28px" height="28px" src="/dashboard/static/images/logos/python.png"/>
             </div>
           </div>"#, 
-          "Our Client SDK implements the best practices to streamline development of common ML/AI use cases in JavaScript or Python.")%>
+          "Korvus implements the best practices to streamline development of common ML/AI use cases in JavaScript, Python, C and Rust.")%>
       </div>
       <div class="d-flex flex-column gap-4_5">
         <div class="d-flex flex-column">
@@ -94,11 +94,6 @@
           <%- section_links(korvus_tutorials)%>
         </div>
       </div>
-    </div>
-
-    <div class="mt-5">
-      <%- section_title("<h2>Benchmarks</h2>", "")%>
-      <%- section_links(benchmarks)%>
     </div>
 
     <div class="container mt-5">

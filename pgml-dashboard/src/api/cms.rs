@@ -563,19 +563,19 @@ impl Collection {
                                                             .href(&url.to_string_lossy());
                                                         links.push(parent);
                                                     }
-                                                    _ => error!("unhandled link child: {node:?}"),
+                                                    _ => warn!("unhandled link child: {node:?}"),
                                                 }
                                             }
                                         }
-                                        _ => error!("unhandled paragraph child: {node:?}"),
+                                        _ => warn!("unhandled paragraph child: {node:?}"),
                                     }
                                 }
                             }
-                            _ => error!("unhandled list_item child: {node:?}"),
+                            _ => warn!("unhandled list_item child: {node:?}"),
                         }
                     }
                 }
-                _ => error!("unhandled list child: {node:?}"),
+                _ => warn!("unhandled list child: {node:?}"),
             }
         }
         Ok(links)

@@ -1,3 +1,8 @@
+---
+description: >-
+  An example application built with Korvus to perform Semantic Search.
+---
+
 # Semantic Search
 
 This example demonstrates using the `korvus` SDK to create a collection, add documents, build a pipeline for vector search and make a sample query.
