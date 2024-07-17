@@ -11,3 +11,5 @@ For example apps checkout our [Example apps section](../example-apps/).
 - [Constructing Pipelines](constructing-pipelines)
 - [RAG](rag)
 - [Vector Search](vector-search)
+- [Document Search](document-search)
+- [OpenSourceAI](opensourceai)

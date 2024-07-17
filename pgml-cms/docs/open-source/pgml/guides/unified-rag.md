@@ -18,7 +18,7 @@ RAG has grown rapidly in popularity. It is not an esoteric practice run only by 
 
 As quick reminder, the typical modern RAG workflow looks like this:
 
-<figure><img src="../.gitbook/assets/rag-flow-with-reranking.png" alt=""><figcaption><p>Steps one through three prepare our RAG system, and steps four through eight are RAG itself.</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/rag-flow-with-reranking.png" alt=""><figcaption><p>Steps one through three prepare our RAG system, and steps four through eight are RAG itself.</p></figcaption></figure>
  
 
 ## Unified RAG

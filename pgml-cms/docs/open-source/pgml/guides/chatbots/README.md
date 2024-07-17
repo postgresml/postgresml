@@ -30,7 +30,7 @@ Here is an example flowing from:
 
 text -> tokens -> LLM -> probability distribution -> predicted token -> text
 
-<figure><img src="../../.gitbook/assets/Chatbots_Limitations-Diagram.svg" alt=""><figcaption><p>The flow of inputs through an LLM. In this case the inputs are "What is Baldur's Gate 3?" and the output token "14" maps to the word "I"</p></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/Chatbots_Limitations-Diagram.svg" alt=""><figcaption><p>The flow of inputs through an LLM. In this case the inputs are "What is Baldur's Gate 3?" and the output token "14" maps to the word "I"</p></figcaption></figure>
 
 {% hint style="info" %}
 We have simplified the tokenization process. Words do not always map directly to tokens. For instance, the word "Baldur's" may actually map to multiple tokens. For more information on tokenization checkout [HuggingFace's summary](https://huggingface.co/docs/transformers/tokenizer\_summary).
@@ -108,11 +108,11 @@ What does an `embedding` look like? `Embeddings` are just vectors (for our use c
 embedding_1 = embed("King") # embed returns something like [0.11, -0.32, 0.46, ...]
 ```
 
-<figure><img src="../../.gitbook/assets/Chatbots_King-Diagram.svg" alt=""><figcaption><p>The flow of word -> token -> embedding</p></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/Chatbots_King-Diagram.svg" alt=""><figcaption><p>The flow of word -> token -> embedding</p></figcaption></figure>
 
 `Embeddings` aren't limited to words, we have models that can embed entire sentences.
 
-<figure><img src="../../.gitbook/assets/Chatbots_Tokens-Diagram.svg" alt=""><figcaption><p>The flow of sentence -> tokens -> embedding</p></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/Chatbots_Tokens-Diagram.svg" alt=""><figcaption><p>The flow of sentence -> tokens -> embedding</p></figcaption></figure>
 
 Why do we care about `embeddings`? `Embeddings` have a very interesting property. Words and sentences that have close [semantic similarity](https://en.wikipedia.org/wiki/Semantic\_similarity) sit closer to one another in vector space than words and sentences that do not have close semantic similarity.
 
@@ -157,7 +157,7 @@ print(context)
 
 There is a lot going on with this, let's check out this diagram and step through it.
 
-<figure><img src="../../.gitbook/assets/Chatbots_Flow-Diagram.svg" alt=""><figcaption><p>The flow of taking a document, splitting it into chunks, embedding those chunks, and then retrieving a chunk based off of a users query</p></figcaption></figure>
+<figure><img src="../../../../.gitbook/assets/Chatbots_Flow-Diagram.svg" alt=""><figcaption><p>The flow of taking a document, splitting it into chunks, embedding those chunks, and then retrieving a chunk based off of a users query</p></figcaption></figure>
 
 Step 1: We take the document and split it into chunks. Chunks are typically a paragraph or two in size. There are many ways to split documents into chunks, for more information check out [this guide](https://www.pinecone.io/learn/chunking-strategies/).
 

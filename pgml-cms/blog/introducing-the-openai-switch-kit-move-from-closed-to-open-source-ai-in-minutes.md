@@ -210,7 +210,7 @@ We have truncated the output to two items
 
 !!!
 
-We also have asynchronous versions of the create and `create_stream` functions relatively named `create_async` and `create_stream_async`. Checkout [our documentation](https://postgresml.org/docs/guides/opensourceai) for a complete guide of the open-source AI SDK including guides on how to specify custom models.
+We also have asynchronous versions of the create and `create_stream` functions relatively named `create_async` and `create_stream_async`. Checkout [our documentation](https://postgresml.org/docs/open-source/pgml/guides/opensourceai) for a complete guide of the open-source AI SDK including guides on how to specify custom models.
 
 PostgresML is free and open source. To run the above examples yourself [create an account](https://postgresml.org/signup), install korvus, and get running!
 

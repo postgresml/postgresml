@@ -18,7 +18,7 @@ Vectors can be stored in columns, just like any other data type. To add a vector
 
 #### Adding a vector column
 
-Using the example from [Tabular data](../resources/data-storage-and-retrieval/README.md), let's add a vector column to our USA House Prices table:
+Using the example from [Tabular data](../../../introduction/import-your-data/storage-and-retrieval/README.md), let's add a vector column to our USA House Prices table:
 
 {% tabs %}
 {% tab title="SQL" %}
@@ -288,4 +288,4 @@ CREATE INDEX
 
 #### Maintaining an HNSW index
 
-HNSW requires little to no maintenance. When new vectors are added, they are automatically inserted at the optimal place in the graph. However, as the graph gets bigger, rebalancing it becomes more expensive, and inserting new rows becomes slower. We address this trade-off and how to solve this problem in [Partitioning](../resources/data-storage-and-retrieval/partitioning.md).
+HNSW requires little to no maintenance. When new vectors are added, they are automatically inserted at the optimal place in the graph. However, as the graph gets bigger, rebalancing it becomes more expensive, and inserting new rows becomes slower. We address this trade-off and how to solve this problem in [Partitioning](../../../introduction/import-your-data/storage-and-retrieval/partitioning.md).

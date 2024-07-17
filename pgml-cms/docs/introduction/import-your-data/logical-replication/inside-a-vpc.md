@@ -3,7 +3,7 @@
 If your database doesn't have Internet access, PostgresML will need a service to proxy connections to your database. Any TCP proxy will do,
 and we also provide an nginx-based Docker image than can be used without any additional configuration.
 
-<figure><img src="../../../../.gitbook/assets/vpc_1.png" alt="VPC"><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/vpc_1.png" alt="VPC"><figcaption></figcaption></figure>
 
 ## PostgresML IPs by region
 

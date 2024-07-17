@@ -120,7 +120,7 @@ LIMIT 5;
 
 ## Generating embeddings from natural language text
 
-PostgresML provides a simple interface to generate embeddings from text in your database. You can use the [`pgml.embed`](https://postgresml.org/docs/guides/transformers/embeddings) function to generate embeddings for a column of text. The function takes a transformer name and a text value. The transformer will automatically be downloaded and cached on your connection process for reuse. You can see a list of potential good candidate models to generate embeddings on the [Massive Text Embedding Benchmark leaderboard](https://huggingface.co/spaces/mteb/leaderboard).
+PostgresML provides a simple interface to generate embeddings from text in your database. You can use the [`pgml.embed`](https://postgresml.org/docs/open-source/pgml/guides/transformers/embeddings) function to generate embeddings for a column of text. The function takes a transformer name and a text value. The transformer will automatically be downloaded and cached on your connection process for reuse. You can see a list of potential good candidate models to generate embeddings on the [Massive Text Embedding Benchmark leaderboard](https://huggingface.co/spaces/mteb/leaderboard).
 
 Since our corpus of documents (movie reviews) are all relatively short and similar in style, we don't need a large model. [`Alibaba-NLP/gte-base-en-v1.5`](https://huggingface.co/Alibaba-NLP/gte-base-en-v1.5) will be a good first attempt. The great thing about PostgresML is you can always regenerate your embeddings later to experiment with different embedding models.
 
