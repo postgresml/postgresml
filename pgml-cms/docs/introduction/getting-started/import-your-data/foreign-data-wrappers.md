@@ -6,7 +6,7 @@ description: Connect your production database to PostgresML using Foreign Data W
 
 Foreign data wrappers are a set of Postgres extensions that allow making direct connections to other databases from inside your PostgresML database. Other databases can be your production Postgres database on RDS or Azure, or another database engine like MySQL, Snowflake, or even an S3 bucket.
 
-<figure class="my-3 py-3"><img src="../../../.gitbook/assets/fdw_1.png" alt="Foreign data wrappers" width="80%"><figcaption></figcaption></figure>
+<figure class="my-3 py-3"><img src="../../../.gitbook/assets/Getting-Started_FDW-Diagram.svg" alt="Foreign data wrappers" width="80%"><figcaption></figcaption></figure>
 
 ## Getting started
 
