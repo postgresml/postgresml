@@ -39,7 +39,7 @@ Vectors can be stored in the native Postgres [`ARRAY[]`](https://www.postgresql.
 
 !!! warning
 
-Other cloud providers claim to offer embeddings "inside the database", but [benchmarks](../../resources/benchmarks/mindsdb-vs-postgresml.md) show that they are orders of magnitude slower than PostgresML. The reason is they don't actually run inside the database with hardware acceleration. They are thin wrapper functions that make network calls to remote service providers. PostgresML is the only cloud that puts GPU hardware in the database for full acceleration, and it shows.
+Other cloud providers claim to offer embeddings "inside the database", but [benchmarks](../../../../resources/benchmarks/mindsdb-vs-postgresml.md) show that they are orders of magnitude slower than PostgresML. The reason is they don't actually run inside the database with hardware acceleration. They are thin wrapper functions that make network calls to remote service providers. PostgresML is the only cloud that puts GPU hardware in the database for full acceleration, and it shows.
 
 !!!
 

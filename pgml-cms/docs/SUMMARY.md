@@ -72,20 +72,20 @@
 
 ## Guides
 
-* [Embeddings](guides/embeddings/README.md)
-  * [In-database Generation](guides/embeddings/in-database-generation.md)
-  * [Dimensionality Reduction](guides/embeddings/dimensionality-reduction.md)
-  * [Aggregation](guides/embeddings/vector-aggregation.md)
-  * [Similarity](guides/embeddings/vector-similarity.md)
-  * [Normalization](guides/embeddings/vector-normalization.md) 
-* [Search](guides/improve-search-results-with-machine-learning.md)
-* [Chatbots](guides/chatbots/README.md)
+* [Embeddings](open-source/pgml/guides/embeddings/README.md)
+  * [In-database Generation](open-source/pgml/guides/embeddings/in-database-generation.md)
+  * [Dimensionality Reduction](open-source/pgml/guides/embeddings/dimensionality-reduction.md)
+  * [Aggregation](open-source/pgml/guides/embeddings/vector-aggregation.md)
+  * [Similarity](open-source/pgml/guides/embeddings/vector-similarity.md)
+  * [Normalization](open-source/pgml/guides/embeddings/vector-normalization.md) 
+* [Search](open-source/pgml/guides/improve-search-results-with-machine-learning.md)
+* [Chatbots](open-source/pgml/guides/chatbots/README.md)
   * [Example Application](use-cases/chatbots.md)
-* [Supervised Learning](guides/supervised-learning.md)
-* [Unified RAG](guides/unified-rag.md)
-* [OpenSourceAI](guides/opensourceai.md)
-* [Natural Language Processing](guides/natural-language-processing.md)
-* [Vector database](guides/vector-database.md)
+* [Supervised Learning](open-source/pgml/guides/supervised-learning.md)
+* [Unified RAG](open-source/pgml/guides/unified-rag.md)
+* [OpenSourceAI](open-source/pgml/guides/opensourceai.md)
+* [Natural Language Processing](open-source/pgml/guides/natural-language-processing.md)
+* [Vector database](open-source/pgml/guides/vector-database.md)
 
 ## Resources
 

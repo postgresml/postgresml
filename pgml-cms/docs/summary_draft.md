@@ -53,21 +53,21 @@
 
 ## Guides
 
-* [Embeddings](guides/embeddings/README.md)
-  * [In-database Generation](guides/embeddings/in-database-generation.md)
-  * [Dimensionality Reduction](guides/embeddings/dimensionality-reduction.md)
-  * [Aggregation](guides/embeddings/vector-aggregation.md)
-  * [Similarity](guides/embeddings/vector-similarity.md)
-  * [Normalization](guides/embeddings/vector-normalization.md) 
+* [Embeddings](open-source/pgml/guides/embeddings/README.md)
+  * [In-database Generation](open-source/pgml/guides/embeddings/in-database-generation.md)
+  * [Dimensionality Reduction](open-source/pgml/guides/embeddings/dimensionality-reduction.md)
+  * [Aggregation](open-source/pgml/guides/embeddings/vector-aggregation.md)
+  * [Similarity](open-source/pgml/guides/embeddings/vector-similarity.md)
+  * [Normalization](open-source/pgml/guides/embeddings/vector-normalization.md) 
   <!-- * [Indexing w/ pgvector](guides/embeddings/indexing-w-pgvector.md) -->
   <!-- * [Re-ranking nearest neighbors](guides/embeddings/re-ranking-nearest-neighbors.md) -->
   <!-- * [Proprietary Models](guides/embeddings/proprietary-models.md) --> 
-* [Search](guides/improve-search-results-with-machine-learning.md)
-* [Chatbots](guides/chatbots/README.md)
+* [Search](open-source/pgml/guides/improve-search-results-with-machine-learning.md)
+* [Chatbots](open-source/pgml/guides/chatbots/README.md)
   * [Example Application](use-cases/chatbots.md)
-* [Supervised Learning](guides/supervised-learning.md)
-* [OpenSourceAI](guides/opensourceai.md)
-* [Natural Language Processing](guides/natural-language-processing.md)
+* [Supervised Learning](open-source/pgml/guides/supervised-learning.md)
+* [OpenSourceAI](open-source/pgml/guides/opensourceai.md)
+* [Natural Language Processing](open-source/pgml/guides/natural-language-processing.md)
 
 <!--
 * [Search]()
