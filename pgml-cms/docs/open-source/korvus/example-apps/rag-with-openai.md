@@ -1,3 +1,7 @@
+---
+description: An example application performing RAG with Korvus and OpenAI.
+---
+
 # Rag with OpenAI
 
 This example shows how to use third-party LLM providers like OpenAI to perform RAG with Korvus.

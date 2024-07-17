@@ -20,7 +20,7 @@ lazy_static! {
         ("collections", "overview_key"),
         ("pipelines", "climate_mini_split"),
         ("semantic search", "book"),
-        ("semantic search using instructor model", "book"),
+        ("rag with openai", "book"),
         ("postgresml is 8-40x faster than python http microservices", "fit_page"),
         ("scaling to 1 million requests per second", "bolt"),
         ("mindsdb vs postgresml", "arrow_split"),
@@ -42,7 +42,7 @@ lazy_static! {
         .into_iter()
         .map(|s| s.to_owned())
         .collect();
-    static ref TUTORIAL_TARGETS: Vec<String> = Vec::from(["semantic search"])
+    static ref TUTORIAL_TARGETS: Vec<String> = Vec::from(["semantic search", "rag with openai"])
         .into_iter()
         .map(|s| s.to_owned())
         .collect();
@@ -63,7 +63,6 @@ lazy_static! {
 pub struct LandingPage {
     pgml_ai: Vec<DocCard>,
     pgml_ml: Vec<DocCard>,
-    benchmarks: Vec<DocCard>,
     korvus_overview: Vec<DocCard>,
     korvus_tutorials: Vec<DocCard>,
     feature_banner: FeatureBanner,
@@ -80,14 +79,12 @@ impl LandingPage {
     pub async fn parse_sections(mut self, links: Vec<IndexLink>) -> Self {
         let mut children: Vec<IndexLink> = links.clone();
 
-        let mut benchmarks_folder: Vec<IndexLink> = Vec::new();
         let mut extension_folder: Vec<IndexLink> = Vec::new();
         let mut korvus_folder: Vec<IndexLink> = Vec::new();
         while !children.is_empty() {
             let link = children.pop().unwrap();
 
             match link.title.to_lowercase().as_ref() {
-                "benchmarks" => benchmarks_folder = link.children,
                 "pgml" => extension_folder = link.children,
                 "korvus" => korvus_folder = link.children,
                 _ => {
@@ -121,16 +118,10 @@ impl LandingPage {
             out
         };
 
-        let benchmarks = find_targets(benchmarks_folder, &BENCHMARKS_TARGETS);
         let korvus_overview = find_targets(korvus_folder.clone(), &OVERVIEW_TARGETS);
         let korvus_tutorials = find_targets(korvus_folder, &TUTORIAL_TARGETS);
         let pgml_ai = find_targets(extension_folder.clone(), &AI_TARGETS);
         let pgml_ml = find_targets(extension_folder, &ML_TARGETS);
-
-        for item in benchmarks {
-            let card = DocCard::from_index_link(&item).await;
-            self.benchmarks.push(card);
-        }
 
         for item in korvus_overview {
             let card = DocCard::from_index_link(&item).await;
