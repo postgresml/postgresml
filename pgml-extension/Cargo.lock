@@ -197,29 +197,6 @@ dependencies = [
 
 [[package]]
 name = "bindgen"
-version = "0.68.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "726e4313eb6ec35d2730258ad4e15b547ee75d6afaa1361a922e78e59b7d8078"
-dependencies = [
- "bitflags 2.4.1",
- "cexpr",
- "clang-sys",
- "lazy_static",
- "lazycell",
- "log",
- "peeking_take_while",
- "prettyplease",
- "proc-macro2",
- "quote 1.0.35",
- "regex",
- "rustc-hash",
- "shlex",
- "syn 2.0.46",
- "which",
-]
-
-[[package]]
-name = "bindgen"
 version = "0.69.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a00dc851838a2120612785d195287475a3ac45514741da670b735818822129a0"
@@ -1200,7 +1177,7 @@ dependencies = [
 [[package]]
 name = "lightgbm"
 version = "0.2.3"
-source = "git+https://github.com/postgresml/lightgbm-rs?branch=main#e20d7b905b28a29d8e8bd2bed84f70835c342eea"
+source = "git+https://github.com/postgresml/lightgbm-rs?branch=main#978dd69f6c7aafb8500ecb255f2248fde80ebc97"
 dependencies = [
  "derive_builder 0.5.1",
  "libc",
@@ -1211,9 +1188,9 @@ dependencies = [
 [[package]]
 name = "lightgbm-sys"
 version = "0.3.0"
-source = "git+https://github.com/postgresml/lightgbm-rs?branch=main#e20d7b905b28a29d8e8bd2bed84f70835c342eea"
+source = "git+https://github.com/postgresml/lightgbm-rs?branch=main#978dd69f6c7aafb8500ecb255f2248fde80ebc97"
 dependencies = [
- "bindgen 0.68.1",
+ "bindgen",
  "cmake",
  "libc",
 ]
@@ -1712,12 +1689,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "peeking_take_while"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "19b17cddbe7ec3f8bc800887bab5e717348c95ea2ca0b1bf0837fb964dc67099"
-
-[[package]]
 name = "percent-encoding"
 version = "2.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1841,7 +1812,7 @@ version = "0.11.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3f40315259c41fede51eb23b791b48d0a112b0f47d0dcb6862b798d1fa1db6ea"
 dependencies = [
- "bindgen 0.69.4",
+ "bindgen",
  "clang-sys",
  "eyre",
  "libc",
@@ -3433,7 +3404,7 @@ name = "xgboost-sys"
 version = "0.2.0"
 source = "git+https://github.com/postgresml/rust-xgboost?branch=master#a11d05d486395dcc059abf9106af84f70b2f5291"
 dependencies = [
- "bindgen 0.69.4",
+ "bindgen",
  "cmake",
  "libc",
 ]
