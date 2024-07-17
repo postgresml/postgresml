@@ -2,7 +2,7 @@
 description: PostgresML Frequently Asked Questions
 ---
 
-# FAQs
+# FAQ
 
 ## What is PostgresML?
 

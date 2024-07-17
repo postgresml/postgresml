@@ -1,0 +1,16 @@
+# Guides
+
+* [Embeddings](open-source/pgml/guides/embeddings/README.md)
+  * [In-database Generation](open-source/pgml/guides/embeddings/in-database-generation.md)
+  * [Dimensionality Reduction](open-source/pgml/guides/embeddings/dimensionality-reduction.md)
+  * [Aggregation](open-source/pgml/guides/embeddings/vector-aggregation.md)
+  * [Similarity](open-source/pgml/guides/embeddings/vector-similarity.md)
+  * [Normalization](open-source/pgml/guides/embeddings/vector-normalization.md)
+* [Search](open-source/pgml/guides/improve-search-results-with-machine-learning.md)
+* [Chatbots](open-source/pgml/guides/chatbots/README.md)
+  * [Example Application](TODO/chatbots.md)
+* [Supervised Learning](open-source/pgml/guides/supervised-learning.md)
+* [Unified RAG](open-source/pgml/guides/unified-rag.md)
+* [OpenSourceAI](open-source/pgml/guides/opensourceai.md)
+* [Natural Language Processing](open-source/pgml/guides/natural-language-processing.md)
+* [Vector database](open-source/pgml/guides/vector-database.md)
