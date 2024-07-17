@@ -25,7 +25,7 @@ accelerate your machine learning use cases and removes the need for moving data 
 
 Foreign data wrappers are a set of PostgreSQL extensions that allow making direct connections from inside the database directly to other databases, even if they aren't running on Postgres. For example, Postgres has foreign data wrappers for MySQL, S3, Snowflake and many others.
 
-<figure class="my-3 py-3"><img src="../../../.gitbook/assets/Getting-Started_FDW-Diagram" alt="Foreign data wrappers" width="80%"><figcaption></figcaption></figure>
+<figure class="my-3 py-3"><img src="../../../.gitbook/assets/Getting-Started_FDW-Diagram.svg" alt="Foreign data wrappers" width="80%"><figcaption></figcaption></figure>
 
 FDWs are useful when data access is infrequent and not latency-sensitive. For many use cases, like offline batch workloads and not very busy websites, this approach is suitable and easy to get started with.
 
