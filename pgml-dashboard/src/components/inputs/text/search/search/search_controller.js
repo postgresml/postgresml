@@ -30,4 +30,11 @@ export default class extends Controller {
   search(id, url) {
     this.element.querySelector(`turbo-frame[id=${id}]`).src = url;
   }
+
+  // Hide the dropdown if the user clicks outside of it.
+  hideDropdown(e) {
+    if (!this.element.contains(e.target)) {
+      this.endSearch();
+    }
+  }
 }
