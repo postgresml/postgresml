@@ -30,9 +30,9 @@ impl<'r> FromRequest<'r> for User {
             .map(|c| User {
                 chatbot_session_id: c.value().to_string(),
             })
-            .or_forward(Status::Unauthorized)
+            .or_forward(Status::Unauthorized) 
     }
-}
+} 
 
 #[derive(Serialize, Deserialize, PartialEq, Eq)]
 enum ChatRole {
