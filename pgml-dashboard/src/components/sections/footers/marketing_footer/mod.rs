@@ -22,10 +22,19 @@ impl MarketingFooter {
                 StaticNavLink::new("VPC".into(), "/docs/cloud/enterprise/vpc".into()),
             ],
             solutions: vec![
-                StaticNavLink::new("NLP".into(), "/docs/open-source/pgml/guides/natural-language-processing".into()),
-                StaticNavLink::new("Supervised Learning".into(), "/docs/open-source/pgml/guides/supervised-learning".into()),
+                StaticNavLink::new(
+                    "NLP".into(),
+                    "/docs/open-source/pgml/guides/natural-language-processing".into(),
+                ),
+                StaticNavLink::new(
+                    "Supervised Learning".into(),
+                    "/docs/open-source/pgml/guides/supervised-learning".into(),
+                ),
                 StaticNavLink::new("Embedding".into(), "/docs/open-source/pgml/guides/embeddings/".into()),
-                StaticNavLink::new("Vector Database".into(), "/docs/open-source/pgml/guides/vector-database".into()),
+                StaticNavLink::new(
+                    "Vector Database".into(),
+                    "/docs/open-source/pgml/guides/vector-database".into(),
+                ),
                 StaticNavLink::new(
                     "Search".into(),
                     "/docs/open-source/pgml/guides/improve-search-results-with-machine-learning".into(),

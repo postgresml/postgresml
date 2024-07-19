@@ -3,6 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use rocket::response::Redirect;
 use std::str::FromStr;
 
 use comrak::{format_html_with_plugins, parse_document, Arena, ComrakPlugins};
@@ -63,6 +64,10 @@ lazy_static! {
             ("guides/predictions/overview", "api/sql-extension/pgml.predict/"),
             ("machine-learning/supervised-learning/data-pre-processing", "api/sql-extension/pgml.train/data-pre-processing"),
             ("api/client-sdk/getting-started", "api/client-sdk/"),
+            ("introduction/getting-started/import-your-data/", "introduction/import-your-data/"),
+            ("introduction/getting-started/import-your-data/foreign-data-wrapper", "introduction/import-your-data/foreign-data-wrappers"),
+            ("use-cases/embeddings/generating-llm-embeddings-with-open-source-models-in-postgresml", "open-source/pgml/guides/embeddings/in-database-generation"),
+            ("use-cases/natural-language-processing", "open-source/pgml/guides/natural-language-processing"),
         ])
     );
 }
@@ -857,6 +862,56 @@ pub async fn careers_apply(title: PathBuf, cluster: &Cluster) -> Result<Response
     Ok(ResponseOk(layout.render(page)))
 }
 
+/// Redirect api to open-source
+#[get("/docs/api/<path..>")]
+pub async fn api_redirect(path: PathBuf) -> Redirect {
+    match path.to_str().unwrap() {
+        "apis" => Redirect::permanent("/docs/open-source/overview"),
+        "client-sdk/search" => {
+            Redirect::permanent("/docs/open-source/pgml/guides/improve-search-results-with-machine-learning")
+        }
+        "client-sdk/getting-started" => Redirect::permanent("/docs/open-source/pgml/guides/getting-started"),
+        "sql-extensions/pgml.predict/" => Redirect::permanent("/docs/open-source/pgml/api/pgml.predict/"),
+        "sql-extensions/pgml.deploy" => Redirect::permanent("/docs/open-source/pgml/api/pgml.deploy"),
+        _ => Redirect::permanent("/docs/open-source/".to_owned() + path.to_str().unwrap()),
+    }
+}
+
+/// Redirect our old sql-extension path.
+#[get("/docs/open-source/sql-extension/<path..>")]
+pub async fn sql_extension_redirect(path: PathBuf) -> Redirect {
+    Redirect::permanent("/docs/open-source/pgml/api/".to_owned() + path.to_str().unwrap())
+}
+
+/// Redirect our old pgcat path.
+#[get("/docs/product/pgcat/<path..>")]
+pub async fn pgcat_redirect(path: PathBuf) -> Redirect {
+    Redirect::permanent("/docs/open-source/pgcat/".to_owned() + path.to_str().unwrap())
+}
+
+/// Redirect our old cloud-database path.
+#[get("/docs/product/cloud-database/<path..>")]
+pub async fn cloud_database_redirect(path: PathBuf) -> Redirect {
+    let path = path.to_str().unwrap();
+    if path.is_empty() {
+        Redirect::permanent("/docs/cloud/overview")
+    } else {
+        Redirect::permanent("/docs/cloud/".to_owned() + path)
+    }
+}
+
+/// Redirect our old pgml docs.
+#[get("/docs/open-source/client-sdk/<path..>")]
+pub async fn pgml_redirect(path: PathBuf) -> Redirect {
+    Redirect::permanent("/docs/open-source/korvus/api/".to_owned() + path.to_str().unwrap())
+}
+
+/// Redirect our old MkDocs paths to the new ones under `/docs`.
+#[get("/user_guides/<path..>")]
+pub async fn user_guides_redirect(path: PathBuf) -> Redirect {
+    Redirect::permanent("/docs/guides/".to_owned() + path.to_str().unwrap())
+}
+
 #[get("/docs/<path..>", rank = 5)]
 async fn get_docs(
     path: PathBuf,
@@ -1003,6 +1058,12 @@ pub fn routes() -> Vec<Route> {
         search,
         search_blog,
         demo,
+        sql_extension_redirect,
+        api_redirect,
+        pgcat_redirect,
+        pgml_redirect,
+        cloud_database_redirect,
+        user_guides_redirect,
     ]
 }
 
