@@ -63,7 +63,6 @@ lazy_static! {
             ("transformers/fine_tuning/", "api/sql-extension/pgml.tune"),
             ("guides/predictions/overview", "api/sql-extension/pgml.predict/"),
             ("machine-learning/supervised-learning/data-pre-processing", "api/sql-extension/pgml.train/data-pre-processing"),
-            ("api/client-sdk/getting-started", "api/client-sdk/"),
             ("introduction/getting-started/import-your-data/", "introduction/import-your-data/"),
             ("introduction/getting-started/import-your-data/foreign-data-wrapper", "introduction/import-your-data/foreign-data-wrappers"),
             ("use-cases/embeddings/generating-llm-embeddings-with-open-source-models-in-postgresml", "open-source/pgml/guides/embeddings/in-database-generation"),
@@ -866,9 +865,9 @@ pub async fn careers_apply(title: PathBuf, cluster: &Cluster) -> Result<Response
 #[get("/docs/api/<path..>")]
 pub async fn api_redirect(path: PathBuf) -> Redirect {
     match path.to_str().unwrap() {
-        "apis" => Redirect::permanent("/docs/open-source/overview"),
+        "apis" => Redirect::permanent("/docs/open-source/korvus/"),
         "client-sdk/search" => {
-            Redirect::permanent("/docs/open-source/pgml/guides/improve-search-results-with-machine-learning")
+            Redirect::permanent("/docs/open-source/korvus/guides/document-search")
         }
         "client-sdk/getting-started" => Redirect::permanent("/docs/open-source/pgml/guides/getting-started"),
         "sql-extensions/pgml.predict/" => Redirect::permanent("/docs/open-source/pgml/api/pgml.predict/"),
