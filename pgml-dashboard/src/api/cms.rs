@@ -906,12 +906,6 @@ pub async fn pgml_redirect(path: PathBuf) -> Redirect {
     Redirect::permanent("/docs/open-source/korvus/api/".to_owned() + path.to_str().unwrap())
 }
 
-/// Redirect our old MkDocs paths to the new ones under `/docs`.
-#[get("/user_guides/<path..>")]
-pub async fn user_guides_redirect(path: PathBuf) -> Redirect {
-    Redirect::permanent("/docs/guides/".to_owned() + path.to_str().unwrap())
-}
-
 #[get("/docs/<path..>", rank = 5)]
 async fn get_docs(
     path: PathBuf,
@@ -991,6 +985,7 @@ async fn docs_landing_page(cluster: &Cluster) -> Result<ResponseOk, crate::respo
     Ok(ResponseOk(doc_layout.render(page)))
 }
 
+/// Redirect our old MkDocs paths to the new ones under `/docs`.
 #[get("/user_guides/<path..>", rank = 5)]
 async fn get_user_guides(path: PathBuf) -> Result<Response, crate::responses::NotFound> {
     Ok(Response::redirect(format!("/docs/{}", path.display().to_string())))
@@ -1062,8 +1057,7 @@ pub fn routes() -> Vec<Route> {
         api_redirect,
         pgcat_redirect,
         pgml_redirect,
-        cloud_database_redirect,
-        user_guides_redirect,
+        cloud_database_redirect
     ]
 }
 
