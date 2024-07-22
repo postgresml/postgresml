@@ -13,4 +13,8 @@ div[data-controller="cms-index-link"] {
     text-decoration: underline;
     text-underline-offset: 2px;
   }
+
+  .material-symbols-outlined {
+    user-select: none;
+  }
 }

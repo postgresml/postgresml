@@ -6,6 +6,7 @@
       "guides" => "menu_book",
       "resources" => "school",
       "introduction" => "list_alt",
+      "cloud" => "cloud",
       _ => "dashboard",
     }
   }
@@ -26,7 +27,7 @@
 <% if !mobile { %>
 <div class="doc-leftnav-container"  id="doc-leftnav-container" data-controller="navigation-left-nav-docs" data-turbo-permanent>
   <nav class="doc-leftnav" data-scroll="0" data-navigation-left-nav-docs-target="leftNav">
-    <div class="d-flex flex-column justify-content-between">
+    <div class="d-flex flex-column justify-content-between doc-leftnav-inner">
       <div class="d-xl-flex flex-column py-4">
         <div class="pt-2 ps-2 d-flex flex-column gap-4_5">
           <% for doc_link in index.clone().into_iter() { %>
