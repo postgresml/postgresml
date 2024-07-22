@@ -869,7 +869,7 @@ pub async fn api_redirect(path: PathBuf) -> Redirect {
         "client-sdk/search" => {
             Redirect::permanent("/docs/open-source/korvus/guides/document-search")
         }
-        "client-sdk/getting-started" => Redirect::permanent("/docs/open-source/pgml/guides/getting-started"),
+        "client-sdk/getting-started" => Redirect::permanent("/docs/open-source/korvus/"),
         "sql-extensions/pgml.predict/" => Redirect::permanent("/docs/open-source/pgml/api/pgml.predict/"),
         "sql-extensions/pgml.deploy" => Redirect::permanent("/docs/open-source/pgml/api/pgml.deploy"),
         _ => Redirect::permanent("/docs/open-source/".to_owned() + path.to_str().unwrap()),
