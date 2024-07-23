@@ -48,7 +48,7 @@ Here is an example of the pgml.transform function
 SELECT pgml.transform(
   task   => ''{
     "task": "text-generation",
-    "model": "meta-llama/Meta-Llama-3-8B-Instruct"
+    "model": "meta-llama/Meta-LLama-3.1-8B-Instruct"
   }''::JSONB,
   inputs  => ARRAY[''AI is going to''],
   args   => ''{
@@ -61,7 +61,7 @@ Here is another example of the pgml.transform function
 SELECT pgml.transform(
   task   => ''{
     "task": "text-generation",
-    "model": "meta-llama/Meta-Llama-3-70B-Instruct"
+    "model": "meta-llama/Meta-LLama-3.1-70B-Instruct"
   }''::JSONB,
   inputs  => ARRAY[''AI is going to''],
   args   => ''{
@@ -142,9 +142,9 @@ SELECT * FROM chunks limit 10;
 |  id  |                          chunk                                                                                                                                                                                                            |  chunk_index  |  document_id  |
 | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- | ------------- |
 |  1   |  Here is an example of the pgml.transform function                                                                                                                                                                                        |            1  |          1    |
-|  2   |  SELECT pgml.transform(\n task   => ''{\n "task": "text-generation",\n "model": "meta-llama/Meta-Llama-3-8B-Instruct"\n }''::JSONB,\n inputs  => ARRAY[''AI is going to''],\n args   => ''{\n "max_new_tokens": 100\n }''::JSONB\n );     |            2  |          1    |
+|  2   |  SELECT pgml.transform(\n task   => ''{\n "task": "text-generation",\n "model": "meta-llama/Meta-LLama-3.1-8B-Instruct"\n }''::JSONB,\n inputs  => ARRAY[''AI is going to''],\n args   => ''{\n "max_new_tokens": 100\n }''::JSONB\n );     |            2  |          1    |
 |  3   |  Here is another example of the pgml.transform function                                                                                                                                                                                   |            3  |          1    |
-|  4   |  SELECT pgml.transform(\n task   => ''{\n "task": "text-generation",\n "model": "meta-llama/Meta-Llama-3-70B-Instruct"\n }''::JSONB,\n inputs  => ARRAY[''AI is going to''],\n args   => ''{\n "max_new_tokens": 100\n }''::JSONB\n );    |            4  |          1    |
+|  4   |  SELECT pgml.transform(\n task   => ''{\n "task": "text-generation",\n "model": "meta-llama/Meta-LLama-3.1-70B-Instruct"\n }''::JSONB,\n inputs  => ARRAY[''AI is going to''],\n args   => ''{\n "max_new_tokens": 100\n }''::JSONB\n );    |            4  |          1    |
 |  5   |  Here is a third example of the pgml.transform function                                                                                                                                                                                   |            5  |          1    |
 |  6   |  SELECT pgml.transform(\n task   => ''{\n "task": "text-generation",\n "model": "microsoft/Phi-3-mini-128k-instruct"\n }''::JSONB,\n inputs  => ARRAY[''AI is going to''],\n args   => ''{\n "max_new_tokens": 100\n }''::JSONB\n );      |            6  |          1    |
 |  7   |  ae94d3413ae82367c3d0592a67302b25                                                                                                                                                                                                         |            1  |          2    |
@@ -250,8 +250,8 @@ LIMIT 6;
 |  1  |  0.09044166306461232  |  Here is an example of the pgml.transform function                                                                                                                                                                                                                     |
 |  3  |  0.10787954026965096  |  Here is another example of the pgml.transform function                                                                                                                                                                                                                |
 |  5  |  0.11683694289239333  |  Here is a third example of the pgml.transform function                                                                                                                                                                                                                |
-|  2  |  0.17699128851412282  |  SELECT pgml.transform(\n task   => ''{\n "task": "text-generation",\n "model": "meta-llama/Meta-Llama-3-8B-Instruct"\n }''::JSONB,\n inputs  => ARRAY[''AI is going to''],\n args   => ''{\n "max_new_tokens": 100\n }''::JSONB\n );                                  |
-|  4  |  0.17844729798760672  |  SELECT pgml.transform(\n task   => ''{\n "task": "text-generation",\n "model": "meta-llama/Meta-Llama-3-70B-Instruct"\n }''::JSONB,\n inputs  => ARRAY[''AI is going to''],\n args   => ''{\n "max_new_tokens": 100\n }''::JSONB\n );                                 |
+|  2  |  0.17699128851412282  |  SELECT pgml.transform(\n task   => ''{\n "task": "text-generation",\n "model": "meta-llama/Meta-LLama-3.1-8B-Instruct"\n }''::JSONB,\n inputs  => ARRAY[''AI is going to''],\n args   => ''{\n "max_new_tokens": 100\n }''::JSONB\n );                                  |
+|  4  |  0.17844729798760672  |  SELECT pgml.transform(\n task   => ''{\n "task": "text-generation",\n "model": "meta-llama/Meta-LLama-3.1-70B-Instruct"\n }''::JSONB,\n inputs  => ARRAY[''AI is going to''],\n args   => ''{\n "max_new_tokens": 100\n }''::JSONB\n );                                 |
 |  6  |  0.17520464423854842  |  SELECT pgml.transform(\n task   => ''{\n "task": "text-generation",\n "model": "microsoft/Phi-3-mini-128k-instruct"\n }''::JSONB,\n inputs  => ARRAY[''AI is going to''],\n args   => ''{\n "max_new_tokens": 100\n }''::JSONB\n );                                   |
 
 !!!
@@ -327,8 +327,8 @@ FROM (
 
 |    cosine_distance   |      rank_score      |                         chunk                                                                                                                                                                                                         |
 | -------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | 
-|   0.2124727254737595 |   0.3427378833293915 | SELECT pgml.transform(\n task   => ''{\n "task": "text-generation",\n "model": "meta-llama/Meta-Llama-3-70B-Instruct"\n }''::JSONB,\n inputs  => ARRAY[''AI is going to''],\n args   => ''{\n "max_new_tokens": 100\n }''::JSONB\n ); |
-|   0.2109014406365579 |    0.342184841632843 | SELECT pgml.transform(\n task   => ''{\n "task": "text-generation",\n "model": "meta-llama/Meta-Llama-3-8B-Instruct"\n }''::JSONB,\n inputs  => ARRAY[''AI is going to''],\n args   => ''{\n "max_new_tokens": 100\n }''::JSONB\n );  |
+|   0.2124727254737595 |   0.3427378833293915 | SELECT pgml.transform(\n task   => ''{\n "task": "text-generation",\n "model": "meta-llama/Meta-LLama-3.1-70B-Instruct"\n }''::JSONB,\n inputs  => ARRAY[''AI is going to''],\n args   => ''{\n "max_new_tokens": 100\n }''::JSONB\n ); |
+|   0.2109014406365579 |    0.342184841632843 | SELECT pgml.transform(\n task   => ''{\n "task": "text-generation",\n "model": "meta-llama/Meta-LLama-3.1-8B-Instruct"\n }''::JSONB,\n inputs  => ARRAY[''AI is going to''],\n args   => ''{\n "max_new_tokens": 100\n }''::JSONB\n );  |
 |  0.21259646694819168 |   0.3332781493663788 | SELECT pgml.transform(\n task   => ''{\n "task": "text-generation",\n "model": "microsoft/Phi-3-mini-128k-instruct"\n }''::JSONB,\n inputs  => ARRAY[''AI is going to''],\n args   => ''{\n "max_new_tokens": 100\n }''::JSONB\n );   |
 |  0.19483324929456136 |  0.03163915500044823 | Here is an example of the pgml.transform function                                                                                                                                                                                     |
 |   0.1685870257610742 | 0.031176624819636345 | Here is a third example of the pgml.transform function                                                                                                                                                                                |
@@ -402,7 +402,7 @@ SELECT
     pgml.transform (
       task => '{
         "task": "conversational",
-        "model": "meta-llama/Meta-Llama-3-8B-Instruct"
+        "model": "meta-llama/Meta-LLama-3.1-8B-Instruct"
       }'::jsonb, 
       inputs => ARRAY['{"role": "system", "content": "You are a friendly and helpful chatbot."}'::jsonb, jsonb_build_object('role', 'user', 'content', replace('Given the context answer the following question: How do I write a select statement with pgml.transform? Context:\n\n{CONTEXT}', '{CONTEXT}', chunk))], 
       args => '{
@@ -417,7 +417,7 @@ FROM
 !!! results
 
 ```text
-["To write a SELECT statement with pgml.transform, you can use the following syntax:\n\n```sql\nSELECT pgml.transform(\n  task   => '{\n    \"task\": \"text-generation\",\n    \"model\": \"meta-llama/Meta-Llama-3-70B-Instruct\"\n  }'::JSONB,\n  inputs  => ARRAY['AI is going to'],\n  args   => '{\n    \"max_new_tokens\": 100\n  }'::JSONB\n"]
+["To write a SELECT statement with pgml.transform, you can use the following syntax:\n\n```sql\nSELECT pgml.transform(\n  task   => '{\n    \"task\": \"text-generation\",\n    \"model\": \"meta-llama/Meta-LLama-3.1-70B-Instruct\"\n  }'::JSONB,\n  inputs  => ARRAY['AI is going to'],\n  args   => '{\n    \"max_new_tokens\": 100\n  }'::JSONB\n"]
 ```
 
 !!!
@@ -426,7 +426,7 @@ FROM
 
 We have now combined the embedding api call, the semantic search api call, the rerank api call and the text generation api call from our RAG flow into one sql query.
 
-We are using `meta-llama/Meta-Llama-3-8B-Instruct` to perform text generation. We have a number of different models available for text generation, but for our use case `meta-llama/Meta-Llama-3-8B-Instruct` is a fantastic mix between speed and capability. For this simple example we are only passing the top search result as context to the LLM. In real world use cases, you will want to pass more results.
+We are using `meta-llama/Meta-LLama-3.1-8B-Instruct` to perform text generation. We have a number of different models available for text generation, but for our use case `meta-llama/Meta-LLama-3.1-8B-Instruct` is a fantastic mix between speed and capability. For this simple example we are only passing the top search result as context to the LLM. In real world use cases, you will want to pass more results.
 
 We can stream from the database by using the `pgml.transform_stream` function and cursors. Here is a query measuring time to first token.
 
@@ -486,7 +486,7 @@ SELECT
     pgml.transform_stream(
       task => '{
         "task": "conversational",
-        "model": "meta-llama/Meta-Llama-3-8B-Instruct"
+        "model": "meta-llama/Meta-LLama-3.1-8B-Instruct"
       }'::jsonb, 
       inputs => ARRAY['{"role": "system", "content": "You are a friendly and helpful chatbot."}'::jsonb, jsonb_build_object('role', 'user', 'content', replace('Given the context answer the following question: How do I write a select statement with pgml.transform? Context:\n\n{CONTEXT}', '{CONTEXT}', chunk))], 
       args => '{

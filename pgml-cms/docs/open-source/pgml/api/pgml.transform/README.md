@@ -123,7 +123,7 @@ pgml.transform(
 SELECT pgml.transform(
   task   => '{
     "task": "text-generation",
-    "model": "meta-llama/Meta-Llama-3-8B-Instruct",
+    "model": "meta-llama/Meta-LLama-3.1-8B-Instruct",
     "model_type": "mistral",
     "revision": "main",
     "device_map": "auto"
@@ -148,7 +148,7 @@ def transform(task, call, inputs):
 transform(
     {
         "task": "text-generation",
-        "model": "meta-llama/Meta-Llama-3-8B-Instruct",
+        "model": "meta-llama/Meta-LLama-3.1-8B-Instruct",
         "model_type": "mistral",
         "revision": "main",
     },

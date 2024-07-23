@@ -202,7 +202,7 @@ Let's take this hypothetical example and make it a reality. For the rest of this
 * The chatbot remembers our past conversation
 * The chatbot can answer questions correctly about Baldur's Gate 3
 
-In reality we haven't created a SOTA LLM, but fortunately other people have and we will be using the incredibly popular `meta-llama/Meta-Llama-3-8B-Instruct`. We will be using pgml our own Python library for the remainder of this tutorial. If you want to follow along and have not installed it yet:
+In reality we haven't created a SOTA LLM, but fortunately other people have and we will be using the incredibly popular `meta-llama/Meta-LLama-3.1-8B-Instruct`. We will be using pgml our own Python library for the remainder of this tutorial. If you want to follow along and have not installed it yet:
 
 ```
 pip install pgml
@@ -220,7 +220,7 @@ Let's setup a basic chat loop with our model:
 from pgml import TransformerPipeline
 import asyncio
 
-model = TransformerPipeline("text-generation", "meta-llama/Meta-Llama-3-8B-Instruct")
+model = TransformerPipeline("text-generation", "meta-llama/Meta-LLama-3.1-8B-Instruct")
 
 
 async def main():
@@ -266,7 +266,7 @@ Remember LLM's are just function approximators that are designed to predict the 
 
 We need to understand that LLMs have a special format for the inputs specifically for conversations. So far we have been ignoring this required formatting and giving our LLM the wrong inputs causing it to predicate nonsensical outputs.
 
-What do the right inputs look like? That actually depends on the model. Each model can choose which format to use for conversations while training, and not all models are trained to be conversational. `meta-llama/Meta-Llama-3-8B-Instruct` has been trained to be conversational and expects us to format text meant for conversations like so:
+What do the right inputs look like? That actually depends on the model. Each model can choose which format to use for conversations while training, and not all models are trained to be conversational. `meta-llama/Meta-LLama-3.1-8B-Instruct` has been trained to be conversational and expects us to format text meant for conversations like so:
 
 ```
 <|begin_of_text|><|start_header_id|>system<|end_header_id|>
@@ -284,7 +284,7 @@ This is the style of input our LLM has been trained on. Let's do a simple test w
 from pgml import TransformerPipeline
 import asyncio
 
-model = TransformerPipeline("text-generation", "meta-llama/Meta-Llama-3-8B-Instruct")
+model = TransformerPipeline("text-generation", "meta-llama/Meta-LLama-3.1-8B-Instruct")
 
 user_input = """
 <|begin_of_text|><|start_header_id|>system<|end_header_id|>
@@ -315,7 +315,7 @@ That was perfect! We got the exact response we wanted for the first question, bu
 from pgml import TransformerPipeline
 import asyncio
 
-model = TransformerPipeline("text-generation", "meta-llama/Meta-Llama-3-8B-Instruct")
+model = TransformerPipeline("text-generation", "meta-llama/Meta-LLama-3.1-8B-Instruct")
 
 user_input = """
 <|begin_of_text|><|start_header_id|>system<|end_header_id|>
@@ -346,7 +346,7 @@ By chaining these special tags we can build a conversation that Llama has been t
 This example highlights that modern LLM's are stateless function approximators. Notice we have included the first question we asked and the models response in our input. Every time we ask it a new question in our conversation, we will have to supply the entire conversation history if we want it to know what we already discussed. LLMs have no built in way to remember past questions and conversations.
 {% endhint %}
 
-Doing this by hand seems very tedious, how do we actually accomplish this in the real world? We use [Jinja](https://jinja.palletsprojects.com/en/3.1.x/) templates. Conversational models on HuggingFace typical come with a Jinja template which can be found in the `tokenizer_config.json`. [Checkout `meta-llama/Meta-Llama-3-8B-Instruct`'s Jinja template in the `tokenizer_config.json`](https://huggingface.co/meta-llama/Meta-Llama-3-8B-Instruct/blob/main/tokenizer_config.json). For more information on Jinja templating check out [HuggingFace's introduction](https://huggingface.co/docs/transformers/main/chat_templating).
+Doing this by hand seems very tedious, how do we actually accomplish this in the real world? We use [Jinja](https://jinja.palletsprojects.com/en/3.1.x/) templates. Conversational models on HuggingFace typical come with a Jinja template which can be found in the `tokenizer_config.json`. [Checkout `meta-llama/Meta-LLama-3.1-8B-Instruct`'s Jinja template in the `tokenizer_config.json`](https://huggingface.co/meta-llama/Meta-Llama-3-8B-Instruct/blob/main/tokenizer_config.json). For more information on Jinja templating check out [HuggingFace's introduction](https://huggingface.co/docs/transformers/main/chat_templating).
 
 Luckily for everyone reading this, our `pgml` library automatically handles templating and formatting inputs correctly so we can skip a bunch of boring code. We do want to change up our program a little bit to take advantage of this automatic templating:
 

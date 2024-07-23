@@ -123,7 +123,7 @@ parser.add_argument(
     "--chat_completion_model",
     dest="chat_completion_model",
     type=str,
-    default="meta-llama/Meta-Llama-3-8B-Instruct",
+    default="meta-llama/Meta-LLama-3.1-8B-Instruct",
 )
 
 parser.add_argument(

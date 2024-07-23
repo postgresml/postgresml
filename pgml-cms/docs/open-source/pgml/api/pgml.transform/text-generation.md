@@ -14,7 +14,7 @@ Use this for conversational AI applications or when you need to provide instruct
 SELECT pgml.transform(
     task => '{
         "task": "text-generation",
-        "model": "meta-llama/Meta-Llama-3-8B-Instruct"
+        "model": "meta-llama/Meta-LLama-3.1-8B-Instruct"
     }'::JSONB,
     inputs => ARRAY[
         '{"role": "system", "content": "You are a friendly and helpful chatbot"}'::JSONB,
@@ -53,7 +53,7 @@ An example with some common parameters:
 SELECT pgml.transform(
     task => '{
         "task": "text-generation",
-        "model": "meta-llama/Meta-Llama-3-8B-Instruct"
+        "model": "meta-llama/Meta-LLama-3.1-8B-Instruct"
     }'::JSONB,
     inputs => ARRAY[
         '{"role": "system", "content": "You are a friendly and helpful chatbot"}'::JSONB,
@@ -80,7 +80,7 @@ Use this for simpler text-generation tasks like completing sentences or generati
 SELECT pgml.transform(
     task => '{
         "task": "text-generation",
-        "model": "meta-llama/Meta-Llama-3-8B-Instruct"
+        "model": "meta-llama/Meta-LLama-3.1-8B-Instruct"
     }'::JSONB,
     inputs => ARRAY[
         'Three Rings for the Elven-kings under the sky, Seven for the Dwarf-lords in their halls of stone'
@@ -118,7 +118,7 @@ An example with some common parameters:
 SELECT pgml.transform(
     task => '{
         "task": "text-generation",
-        "model": "meta-llama/Meta-Llama-3-8B-Instruct"
+        "model": "meta-llama/Meta-LLama-3.1-8B-Instruct"
     }'::JSONB,
     inputs => ARRAY[
         'Three Rings for the Elven-kings under the sky, Seven for the Dwarf-lords in their halls of stone'
