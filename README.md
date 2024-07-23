@@ -1,37 +1,28 @@
-<p align="center">
-  <a href="https://postgresml.org/">
-    <img src="https://postgresml.org/dashboard/static/images/owl_gradient.svg" width="175" alt="PostgresML">
-  </a>
-</p>
-  
-<h2 align="center">
-  <a href="https://postgresml.org/">
-    <svg version="1.1"
-        xmlns="http://www.w3.org/2000/svg"
-        xmlns:xlink="http://www.w3.org/1999/xlink"
-        width="200" height="50"
-    >
-        <text font-size="32" x="20" y="32">
-            <tspan fill="white" style="mix-blend-mode: difference;">Postgres</tspan><tspan fill="dodgerblue">ML</tspan>
-        </text>
-    </svg>
-  </a>
-</h2>
+<div align="center">
+   <picture>
+     <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/5d5510da-6014-4cf3-849f-566050e053da">
+     <source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/aea1c38a-15bf-4270-8365-3d5e6311f5fc">
+     <img alt="Logo" src="" width="520">
+   </picture>
+</div>
 
 <p align="center">
-    Generative AI and Simple ML with 
-    <a href="https://www.postgresql.org/" target="_blank">PostgreSQL</a>
+   <p align="center"><b>Generative AI and Simple ML with PostgreSQL.</b></p>
 </p>
 
 <p align="center">
-    <img alt="CI" src="https://github.com/postgresml/postgresml/actions/workflows/ci.yml/badge.svg" />
-    <a href="https://discord.gg/DmyJP3qJ7U" target="_blank">
-        <img src="https://img.shields.io/discord/1013868243036930099" alt="Join our Discord!" />
-    </a>
+| <a href="https://postgresml.org/docs/"><b>Documentation</b></a> | <a href="https://postgresml.org/blog"><b>Blog</b></a> | <a href="https://discord.gg/DmyJP3qJ7U"><b>Discord</b></a> |
 </p>
 
-# Table of contents
-- [Introduction](#introduction)
+---
+PostgresML is a complete ML/AI platform built inside PostgreSQL. Our operating principle is:
+
+Move models to the database, rather than constantly moving data to the models.
+
+Data for ML & AI systems is inherently larger and more dynamic than the models. It's more efficient, manageable and reliable to move models to the database, rather than continuously moving data to the models.
+
+
+<b> Table of contents </b>
 - [Installation](#installation)
 - [Getting started](#getting-started)
 - [Natural Language Processing](#nlp-tasks)
@@ -51,9 +42,6 @@
     - [Conversation](#conversation)
 <!-- - [Regression](#regression)
 - [Classification](#classification) -->
-
-# Introduction
-PostgresML is a machine learning extension for PostgreSQL that enables you to perform training and inference on text and tabular data using SQL queries. With PostgresML, you can seamlessly integrate machine learning models into your PostgreSQL database and harness the power of cutting-edge algorithms to process data efficiently.
 
 ## Text Data
 - Perform natural language processing (NLP) tasks like sentiment analysis, question and answering, translation, summarization and text generation
