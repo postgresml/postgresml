@@ -1,6 +1,6 @@
 ---
 description: >-
-  Today we’re taking the next steps towards open source AI becoming the industry standard. We’re releasing Llama 3.1 405B, the first frontier-level open source AI model, as well as new and improved Llama 3.1 70B and 8B models. In addition to having significantly better cost/performance relative to closed models.
+  Today we’re taking the next steps towards open source AI becoming the industry standard. We’re adding support for Llama 3.1 405B, the first frontier-level open source AI model, as well as new and improved Llama 3.1 70B and 8B models.
 featured: false
 tags: [engineering]
 image: ".gitbook/assets/image (2) (2).png"
