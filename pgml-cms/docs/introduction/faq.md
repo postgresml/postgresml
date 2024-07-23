@@ -4,9 +4,9 @@ description: PostgresML Frequently Asked Questions
 
 # FAQ
 
-## What is PostgresML?
+## What is PGML?
 
-PostgresML is an open-source database extension that turns Postgres into an end-to-end machine learning platform. It allows you to build, train, and deploy ML models directly within your Postgres database without moving data between systems.
+PGML is an open-source database extension that turns Postgres into an end-to-end machine learning platform. It allows you to build, train, and deploy ML models directly within your Postgres database without moving data between systems.
 
 ## What is a DB extension?
 
@@ -24,11 +24,11 @@ Benefits include faster development cycles, reduced latency, tighter integration
 
 PostgresML requires using Postgres as the database. If your data currently resides in a different database, there would be some upfront effort required to migrate the data into Postgres in order to utilize PostgresML's capabilities.
 
-## What is hosted PostgresML?
+## What is PostgresML Cloud?
 
-Hosted PostgresML is a fully managed cloud service that provides all the capabilities of open source PostgresML without the need to run your own database infrastructure.
+Hosted PostgresML is a fully managed cloud service that provides all the capabilities of open source PGML without the need to run your own database infrastructure.
 
-With hosted PostgresML, you get:
+With PostgresML Cloud, you get:
 
 * Flexible compute resources - Choose CPU, RAM or GPU machines tailored to your workload
 * Horizontally scalable inference with read-only replicas
@@ -37,4 +37,4 @@ With hosted PostgresML, you get:
 * Automated backups and point-in-time restore
 * Monitoring dashboard with metrics and logs
 
-In summary, hosted PostgresML removes the operational burden so you can focus on developing machine learning applications, while still getting the benefits of the unified PostgresML architecture.
+In summary, PostgresML Cloud removes the operational burden so you can focus on developing machine learning applications, while still getting the benefits of the unified PostgresML architecture.
