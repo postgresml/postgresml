@@ -146,7 +146,7 @@
   * [Explain plans]()
   * [Composition]()
 * [LLMs]()
-  * [LLama]()
+  * [Llama]()
   * [GPT]()
   * [Facon]()
 * [Glossary]()

@@ -62,7 +62,7 @@ Here is a simple example using zephyr-7b-beta, one of the best 7 billion paramet
 const korvus = require("korvus");
 const client = korvus.newOpenSourceAI();
 const results = client.chat_completions_create(
-  "meta-llama/Meta-LLama-3.1-8B-Instruct",
+  "meta-llama/Meta-Llama-3.1-8B-Instruct",
   [
     {
       role: "system",
@@ -83,7 +83,7 @@ console.log(results);
 import korvus
 client = korvus.OpenSourceAI()
 results = client.chat_completions_create(
-    "meta-llama/Meta-LLama-3.1-8B-Instruct",
+    "meta-llama/Meta-Llama-3.1-8B-Instruct",
     [
         {
             "role": "system",
@@ -114,7 +114,7 @@ print(results)
   ],
   "created": 1701291672,
   "id": "abf042d2-9159-49cb-9fd3-eef16feb246c",
-  "model": "meta-llama/Meta-LLama-3.1-8B-Instruct",
+  "model": "meta-llama/Meta-Llama-3.1-8B-Instruct",
   "object": "chat.completion",
   "system_fingerprint": "eecec9d4-c28b-5a27-f90b-66c3fb6cee46",
   "usage": {
@@ -133,7 +133,7 @@ Notice there is near one to one relation between the parameters and return type 
 
 The best part of using open-source AI is the flexibility with models. Unlike OpenAI, we are not restricted to using a few censored models, but have access to almost any model out there.
 
-Here is an example of streaming with the popular `meta-llama/Meta-LLama-3.1-8B-Instruct` model.
+Here is an example of streaming with the popular `meta-llama/Meta-Llama-3.1-8B-Instruct` model.
 
 {% tabs %}
 {% tab title="JavaScript" %}
@@ -141,7 +141,7 @@ Here is an example of streaming with the popular `meta-llama/Meta-LLama-3.1-8B-I
 const korvus = require("korvus");
 const client = korvus.newOpenSourceAI();
 const it = client.chat_completions_create_stream(
-  "meta-llama/Meta-LLama-3.1-8B-Instruct",
+  "meta-llama/Meta-Llama-3.1-8B-Instruct",
   [
     {
       role: "system",
@@ -166,7 +166,7 @@ while (!result.done) {
 import korvus
 client = korvus.OpenSourceAI()
 results = client.chat_completions_create_stream(
-     "meta-llama/Meta-LLama-3.1-8B-Instruct",
+     "meta-llama/Meta-Llama-3.1-8B-Instruct",
      [
          {
              "role": "system",
@@ -196,7 +196,7 @@ for c in results:
   ],
   "created": 1701296792,
   "id": "62a817f5-549b-43e0-8f0c-a7cb204ab897",
-  "model": "meta-llama/Meta-LLama-3.1-8B-Instruct",
+  "model": "meta-llama/Meta-Llama-3.1-8B-Instruct",
   "object": "chat.completion.chunk",
   "system_fingerprint": "f366d657-75f9-9c33-8e57-1e6be2cf62f3"
 }
@@ -212,7 +212,7 @@ for c in results:
   ],
   "created": 1701296792,
   "id": "62a817f5-549b-43e0-8f0c-a7cb204ab897",
-  "model": "meta-llama/Meta-LLama-3.1-8B-Instruct",
+  "model": "meta-llama/Meta-Llama-3.1-8B-Instruct",
   "object": "chat.completion.chunk",
   "system_fingerprint": "f366d657-75f9-9c33-8e57-1e6be2cf62f3"
 }
@@ -234,7 +234,7 @@ We also have asynchronous versions of the `chat_completions_create` and `chat_co
 const korvus = require("korvus");
 const client = korvus.newOpenSourceAI();
 const results = await client.chat_completions_create_async(
-  "meta-llama/Meta-LLama-3.1-8B-Instruct",
+  "meta-llama/Meta-Llama-3.1-8B-Instruct",
   [
     {
       role: "system",
@@ -255,7 +255,7 @@ console.log(results);
 import korvus
 client = korvus.OpenSourceAI()
 results = await client.chat_completions_create_async(
-    "meta-llama/Meta-LLama-3.1-8B-Instruct",
+    "meta-llama/Meta-Llama-3.1-8B-Instruct",
     [
         {
             "role": "system",
@@ -284,7 +284,7 @@ results = await client.chat_completions_create_async(
   ],
   "created": 1701291672,
   "id": "abf042d2-9159-49cb-9fd3-eef16feb246c",
-  "model": "meta-llama/Meta-LLama-3.1-8B-Instruct",
+  "model": "meta-llama/Meta-Llama-3.1-8B-Instruct",
   "object": "chat.completion",
   "system_fingerprint": "eecec9d4-c28b-5a27-f90b-66c3fb6cee46",
   "usage": {
@@ -303,7 +303,7 @@ Notice the return types for the sync and async variations are the same.
 const korvus = require("korvus");
 const client = korvus.newOpenSourceAI();
 const it = await client.chat_completions_create_stream_async(
-  "meta-llama/Meta-LLama-3.1-8B-Instruct",
+  "meta-llama/Meta-Llama-3.1-8B-Instruct",
   [
     {
       role: "system",
@@ -328,7 +328,7 @@ while (!result.done) {
 import korvus
 client = korvus.OpenSourceAI()
 results = await client.chat_completions_create_stream_async(
-    "meta-llama/Meta-LLama-3.1-8B-Instruct",
+    "meta-llama/Meta-Llama-3.1-8B-Instruct",
     [
         {
             "role": "system",
@@ -359,7 +359,7 @@ async for c in results:
   ],
   "created": 1701296792,
   "id": "62a817f5-549b-43e0-8f0c-a7cb204ab897",
-  "model": "meta-llama/Meta-LLama-3.1-8B-Instruct",
+  "model": "meta-llama/Meta-Llama-3.1-8B-Instruct",
   "object": "chat.completion.chunk",
   "system_fingerprint": "f366d657-75f9-9c33-8e57-1e6be2cf62f3"
 }
@@ -375,7 +375,7 @@ async for c in results:
   ],
   "created": 1701296792,
   "id": "62a817f5-549b-43e0-8f0c-a7cb204ab897",
-  "model": "meta-llama/Meta-LLama-3.1-8B-Instruct",
+  "model": "meta-llama/Meta-Llama-3.1-8B-Instruct",
   "object": "chat.completion.chunk",
   "system_fingerprint": "f366d657-75f9-9c33-8e57-1e6be2cf62f3"
 }
@@ -389,8 +389,8 @@ We have truncated the output to two items
 
 We have tested the following models and verified they work with the OpenSourceAI:
 
-* meta-llama/Meta-LLama-3.1-8B-Instruct
-* meta-llama/Meta-LLama-3.1-70B-Instruct
+* meta-llama/Meta-Llama-3.1-8B-Instruct
+* meta-llama/Meta-Llama-3.1-70B-Instruct
 * microsoft/Phi-3-mini-128k-instruct
 * mistralai/Mixtral-8x7B-Instruct-v0.1
 * mistralai/Mistral-7B-Instruct-v0.2

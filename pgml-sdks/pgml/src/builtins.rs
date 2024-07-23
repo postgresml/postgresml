@@ -169,7 +169,7 @@ mod tests {
         let builtins = Builtins::new(None);
         let task = Json::from(serde_json::json!({
             "task": "text-generation",
-            "model": "meta-llama/Meta-LLama-3.1-8B-Instruct"
+            "model": "meta-llama/Meta-Llama-3.1-8B-Instruct"
         }));
         let inputs = vec!["test1".to_string(), "test2".to_string()];
         let results = builtins.transform(task, inputs, None).await?;

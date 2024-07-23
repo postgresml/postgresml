@@ -196,7 +196,7 @@ it("can rag", async () => {
         aggregate: { join: "\n" },
       },
       completion: {
-        model: "meta-llama/Meta-LLama-3.1-8B-Instruct",
+        model: "meta-llama/Meta-Llama-3.1-8B-Instruct",
         prompt: "Some text with {CONTEXT}",
         max_tokens: 10,
       },
@@ -237,7 +237,7 @@ it("can rag stream", async () => {
         aggregate: { join: "\n" },
       },
       completion: {
-        model: "meta-llama/Meta-LLama-3.1-8B-Instruct",
+        model: "meta-llama/Meta-Llama-3.1-8B-Instruct",
         prompt: "Some text with {CONTEXT}",
         max_tokens: 10,
       },
@@ -314,13 +314,13 @@ it("can order documents", async () => {
 ///////////////////////////////////////////////////
 
 it("can transformer pipeline", async () => {
-  const t = pgml.newTransformerPipeline("text-generation", "meta-llama/Meta-LLama-3.1-8B-Instruct");
+  const t = pgml.newTransformerPipeline("text-generation", "meta-llama/Meta-Llama-3.1-8B-Instruct");
   const it = await t.transform(["AI is going to"], { max_tokens: 5 });
   expect(it.length).toBeGreaterThan(0)
 });
 
 it("can transformer pipeline stream", async () => {
-  const t = pgml.newTransformerPipeline("text-generation", "meta-llama/Meta-LLama-3.1-8B-Instruct");
+  const t = pgml.newTransformerPipeline("text-generation", "meta-llama/Meta-Llama-3.1-8B-Instruct");
   const it = await t.transform_stream("AI is going to", { max_tokens: 5 });
   let result = await it.next();
   let output = [];

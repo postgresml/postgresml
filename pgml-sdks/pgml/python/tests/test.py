@@ -250,7 +250,7 @@ async def test_can_rag():
                 "aggregate": {"join": "\n"},
             },
             "completion": {
-                "model": "meta-llama/Meta-LLama-3.1-8B-Instruct",
+                "model": "meta-llama/Meta-Llama-3.1-8B-Instruct",
                 "prompt": "Some text with {CONTEXT}",
                 "max_tokens": 10,
             },

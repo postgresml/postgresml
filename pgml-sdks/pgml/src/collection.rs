@@ -1185,7 +1185,7 @@ impl Collection {
     ///           "sql": "SELECT 'test'"
     ///       },
     ///       "chat": {
-    ///           "model": "meta-llama/Meta-LLama-3.1-8B-Instruct",
+    ///           "model": "meta-llama/Meta-Llama-3.1-8B-Instruct",
     ///           "messages": [
     ///               {
     ///                   "role": "system",

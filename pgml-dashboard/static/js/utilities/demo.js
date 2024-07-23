@@ -40,7 +40,7 @@ SELECT
   pgml.transform(
     task => '{
       "task": "conversational",
-      "model": "meta-llama/Meta-LLama-3.1-8B-Instruct"
+      "model": "meta-llama/Meta-Llama-3.1-8B-Instruct"
     }'::jsonb,
     inputs => ARRAY['{"role": "system", "content": "You are a friendly and helpful chatbot."}'::jsonb, jsonb_build_object('role', 'user', 'content', replace('Given the context answer the following question. ${userInput}? Context:\n{CONTEXT}', '{CONTEXT}', chunk))],
     args => '{
@@ -258,8 +258,8 @@ export const generateModels = (task) => {
       ];
     case "text-generation":
       return [
-        "meta-llama/Meta-LLama-3.1-8B-Instruct",
-        "meta-llama/Meta-LLama-3.1-70B-Instruct",
+        "meta-llama/Meta-Llama-3.1-8B-Instruct",
+        "meta-llama/Meta-Llama-3.1-70B-Instruct",
         "mistralai/Mixtral-8x7B-Instruct-v0.1",
         "mistralai/Mistral-7B-Instruct-v0.2",
       ];
