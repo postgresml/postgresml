@@ -8,7 +8,7 @@ use sailfish::TemplateOnce;
 pub struct ServerlessModels {
     style_type: String,
     embedding_models: [Component; 4],
-    instruct_models: [Component; 5],
+    instruct_models: [Component; 6],
     summarization_models: [Component; 1],
 }
 
@@ -48,38 +48,45 @@ impl ServerlessModels {
             ],
             instruct_models: [
                 Component::from(Row::new(&[
+                    "meta-llama/Meta-Llama-3.1-405B-Instruct".into(),
+                    "405".into(),
+                    "405".into(),
+                    "128k".into(),
+                    "Highest quality".into(),
+                ])),
+                Component::from(Row::new(&[
                     "meta-llama/Meta-Llama-3.1-70B-Instruct".into(),
-                    "70,000".into(),
-                    "70,000".into(),
-                    "8,000".into(),
+                    "70".into(),
+                    "70".into(),
+                    "128k".into(),
                     "Highest quality".into(),
                 ])),
                 Component::from(Row::new(&[
                     "meta-llama/Meta-Llama-3.1-8B-Instruct".into(),
-                    "8,000".into(),
-                    "8,000".into(),
-                    "8,000".into(),
+                    "8".into(),
+                    "8".into(),
+                    "128k".into(),
                     "High quality, low latency".into(),
                 ])),
                 Component::from(Row::new(&[
                     "microsoft/Phi-3-mini-128k-instruct".into(),
-                    "3,820".into(),
-                    "3,820".into(),
-                    "128,000".into(),
+                    "3.8".into(),
+                    "3.8".into(),
+                    "128k".into(),
                     "Lowest latency".into(),
                 ])),
                 Component::from(Row::new(&[
                     "mistralai/Mixtral-8x7B-Instruct-v0.1".into(),
-                    "56,000".into(),
-                    "12,900".into(),
-                    "32,768".into(),
+                    "56".into(),
+                    "12.9".into(),
+                    "32k".into(),
                     "MOE high quality".into(),
                 ])),
                 Component::from(Row::new(&[
                     "mistralai/Mistral-7B-Instruct-v0.2".into(),
-                    "7,000".into(),
-                    "7,000".into(),
-                    "32,768".into(),
+                    "7".into(),
+                    "7".into(),
+                    "32k".into(),
                     "High quality, low latency".into(),
                 ])),
             ],
@@ -87,7 +94,7 @@ impl ServerlessModels {
                 "google/pegasus-xsum".into(),
                 "568".into(),
                 "512".into(),
-                "8,000".into(),
+                "8k".into(),
             ]))],
         }
     }
