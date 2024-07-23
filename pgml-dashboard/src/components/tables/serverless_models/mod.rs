@@ -59,14 +59,14 @@ impl ServerlessModels {
                     "70".into(),
                     "70".into(),
                     "128k".into(),
-                    "Highest quality".into(),
+                    "High quality".into(),
                 ])),
                 Component::from(Row::new(&[
                     "meta-llama/Meta-Llama-3.1-8B-Instruct".into(),
                     "8".into(),
                     "8".into(),
                     "128k".into(),
-                    "High quality, low latency".into(),
+                    "Low latency".into(),
                 ])),
                 Component::from(Row::new(&[
                     "microsoft/Phi-3-mini-128k-instruct".into(),
@@ -87,7 +87,7 @@ impl ServerlessModels {
                     "7".into(),
                     "7".into(),
                     "32k".into(),
-                    "High quality, low latency".into(),
+                    "Low latency".into(),
                 ])),
             ],
             summarization_models: [Component::from(Row::new(&[
