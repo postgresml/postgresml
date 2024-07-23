@@ -21,7 +21,7 @@ First things first, make sure your primary database is configured to support log
 | `wal_level`             | `logical`      |
 | `wal_senders`           | Greater than 0 |
 | `max_replication_slots` | Greater than 0 |
-| `rds.logical_replicationion` (only on AWS RDS) | `1` |
+| `rds.logical_replication` (only on AWS RDS) | `1` |
 
 Make sure to **restart your database** after changing any of these settings.
 
