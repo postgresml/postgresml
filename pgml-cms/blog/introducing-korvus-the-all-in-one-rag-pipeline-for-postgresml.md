@@ -100,7 +100,7 @@ async def main():
                 "aggregate": {"join": "\n"},
             },
             "chat": {
-                "model": "meta-llama/Meta-Llama-3-8B-Instruct",
+                "model": "meta-llama/Meta-Llama-3.1-8B-Instruct",
                 "messages": [
                     {
                         "role": "system",

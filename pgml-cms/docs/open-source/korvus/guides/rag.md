@@ -114,7 +114,7 @@ const results = await collection.rag(
       aggregate: { "join": "\n" },
     },
     chat: {
-      model: "meta-llama/Meta-Llama-3-8B-Instruct",
+      model: "meta-llama/Meta-Llama-3.1-8B-Instruct",
       messages: [
         {
           role: "system",
@@ -155,7 +155,7 @@ results = await collection.rag(
             "aggregate": {"join": "\n"},
         },
         "chat": {
-            "model": "meta-llama/Meta-Llama-3-8B-Instruct",
+            "model": "meta-llama/Meta-Llama-3.1-8B-Instruct",
             "messages": [
                 {
                     "role": "system",
@@ -196,7 +196,7 @@ let results = collection.rag(serde_json::json!(
             "aggregate": {"join": "\n"},
         },
         "chat": {
-            "model": "meta-llama/Meta-Llama-3-8B-Instruct",
+            "model": "meta-llama/Meta-Llama-3.1-8B-Instruct",
             "messages": [
                 {
                     "role": "system",
@@ -236,7 +236,7 @@ char * results = korvus_collectionc_rag(collection,
       \"aggregate\": {\"join\": \"\\n\"}\
     },\
     \"chat\": {\
-      \"model\": \"meta-llama/Meta-Llama-3-8B-Instruct\",\
+      \"model\": \"meta-llama/Meta-Llama-3.1-8B-Instruct\",\
       \"messages\": [\
         {\
           \"role\": \"system\",\
@@ -314,7 +314,7 @@ const results = await collection.rag(
       aggregate: { "join": "\n" },
     },
     chat: {
-      model: "meta-llama/Meta-Llama-3-8B-Instruct",
+      model: "meta-llama/Meta-Llama-3.1-8B-Instruct",
       messages: [
         {
           role: "system",
@@ -356,7 +356,7 @@ results = await collection.rag(
             "aggregate": {"join": "\n"},
         },
         "chat": {
-            "model": "meta-llama/Meta-Llama-3-8B-Instruct",
+            "model": "meta-llama/Meta-Llama-3.1-8B-Instruct",
             "messages": [
                 {
                     "role": "system",
@@ -398,7 +398,7 @@ let results = collection.rag(serde_json::json!(
             "aggregate": {"join": "\n"},
         },
         "chat": {
-            "model": "meta-llama/Meta-Llama-3-8B-Instruct",
+            "model": "meta-llama/Meta-Llama-3.1-8B-Instruct",
             "messages": [
                 {
                     "role": "system",

@@ -231,7 +231,7 @@ mod tests {
         internal_init_logger(None, None).ok();
         let t = TransformerPipeline::new(
             "text-generation",
-            "meta-llama/Meta-Llama-3-8B-Instruct",
+            "meta-llama/Meta-Llama-3.1-8B-Instruct",
             None,
             None,
         );

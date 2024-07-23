@@ -30,13 +30,13 @@ pgml.transform_stream(
 | inputs | The input chat messages. | 
 | args | The additional arguments for the model. |
 
-A simple example using `meta-llama/Meta-Llama-3-8B-Instruct`:
+A simple example using `meta-llama/Meta-Llama-3.1-8B-Instruct`:
 
 ```postgresql
 SELECT pgml.transform_stream(
     task => '{
         "task": "conversational",
-        "model": "meta-llama/Meta-Llama-3-8B-Instruct"
+        "model": "meta-llama/Meta-Llama-3.1-8B-Instruct"
     }'::JSONB,
     inputs => ARRAY[
         '{"role": "system", "content": "You are a friendly and helpful chatbot"}'::JSONB,
@@ -85,7 +85,7 @@ An example with some common parameters:
 SELECT pgml.transform_stream(
     task => '{
         "task": "conversational",
-        "model": "meta-llama/Meta-Llama-3-8B-Instruct"
+        "model": "meta-llama/Meta-Llama-3.1-8B-Instruct"
     }'::JSONB,
     inputs => ARRAY[
         '{"role": "system", "content": "You are a friendly and helpful chatbot"}'::JSONB,
@@ -132,13 +132,13 @@ pgml.transform_stream(
 | input | The text to complete. | 
 | args | The additional arguments for the model. |
 
-A simple example using `meta-llama/Meta-Llama-3-8B-Instruct`:
+A simple example using `meta-llama/Meta-Llama-3.1-8B-Instruct`:
 
 ```postgresql
 SELECT pgml.transform_stream(
     task => '{
         "task": "text-generation",
-        "model": "meta-llama/Meta-Llama-3-8B-Instruct"
+        "model": "meta-llama/Meta-Llama-3.1-8B-Instruct"
     }'::JSONB,
     input => 'Three Rings for the Elven-kings under the sky, Seven for the Dwarf-lords in their halls of stone'
 ) AS answer;
@@ -189,7 +189,7 @@ An example with some common parameters:
 SELECT pgml.transform_stream(
     task => '{
         "task": "text-generation",
-        "model": "meta-llama/Meta-Llama-3-8B-Instruct"
+        "model": "meta-llama/Meta-Llama-3.1-8B-Instruct"
     }'::JSONB,
     input => 'Three Rings for the Elven-kings under the sky, Seven for the Dwarf-lords in their halls of stone',
     args => '{

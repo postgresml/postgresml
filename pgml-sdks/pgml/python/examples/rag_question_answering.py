@@ -80,7 +80,7 @@ async def main():
 
     # Using OpenSource LLMs for Chat Completion
     client = OpenSourceAI()
-    chat_completion_model = "meta-llama/Meta-Llama-3-8B-Instruct"
+    chat_completion_model = "meta-llama/Meta-Llama-3.1-8B-Instruct"
     console.print("Generating response using %s LLM..."%chat_completion_model)
     response = client.chat_completions_create(
         model=chat_completion_model,

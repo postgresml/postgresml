@@ -44,7 +44,7 @@ The Switch Kit is an open-source AI SDK that provides a drop in replacement for 
 const korvus = require("korvus");
 const client = korvus.newOpenSourceAI();
 const results = client.chat_completions_create(
-      "meta-llama/Meta-Llama-3-8B-Instruct",
+      "meta-llama/Meta-Llama-3.1-8B-Instruct",
       [
           {
               role: "system",
@@ -65,7 +65,7 @@ console.log(results);
 import korvus
 client = korvus.OpenSourceAI()
 results = client.chat_completions_create(
-    "meta-llama/Meta-Llama-3-8B-Instruct",
+    "meta-llama/Meta-Llama-3.1-8B-Instruct",
     [
         {
             "role": "system",
@@ -96,7 +96,7 @@ print(results)
   ],
   "created": 1701291672,
   "id": "abf042d2-9159-49cb-9fd3-eef16feb246c",
-  "model": "meta-llama/Meta-Llama-3-8B-Instruct",
+  "model": "meta-llama/Meta-Llama-3.1-8B-Instruct",
   "object": "chat.completion",
   "system_fingerprint": "eecec9d4-c28b-5a27-f90b-66c3fb6cee46",
   "usage": {
@@ -113,7 +113,7 @@ We don't charge per token, so OpenAI “usage” metrics are not particularly re
 
 !!!
 
-The above is an example using our open-source AI SDK with Meta-Llama-3-8B-Instruct, an incredibly popular and highly efficient 8 billion parameter model.
+The above is an example using our open-source AI SDK with Meta-Llama-3.1-8B-Instruct, an incredibly popular and highly efficient 8 billion parameter model.
 
 Notice there is near one to one relation between the parameters and return type of OpenAI’s `chat.completions.create` and our `chat_completion_create`.
 
@@ -125,7 +125,7 @@ Here is an example of streaming:
 const korvus = require("korvus");
 const client = korvus.newOpenSourceAI();
 const it = client.chat_completions_create_stream(
-      "meta-llama/Meta-Llama-3-8B-Instruct",
+      "meta-llama/Meta-Llama-3.1-8B-Instruct",
       [
           {
               role: "system",
@@ -150,7 +150,7 @@ while (!result.done) {
 import korvus
 client = korvus.OpenSourceAI()
 results = client.chat_completions_create_stream(
-     "meta-llama/Meta-Llama-3-8B-Instruct",
+     "meta-llama/Meta-Llama-3.1-8B-Instruct",
      [
          {
              "role": "system",
@@ -182,7 +182,7 @@ for c in results:
   ],
   "created": 1701296792,
   "id": "62a817f5-549b-43e0-8f0c-a7cb204ab897",
-  "model": "meta-llama/Meta-Llama-3-8B-Instruct",
+  "model": "meta-llama/Meta-Llama-3.1-8B-Instruct",
   "object": "chat.completion.chunk",
   "system_fingerprint": "f366d657-75f9-9c33-8e57-1e6be2cf62f3"
 }
@@ -198,7 +198,7 @@ for c in results:
   ],
   "created": 1701296792,
   "id": "62a817f5-549b-43e0-8f0c-a7cb204ab897",
-  "model": "meta-llama/Meta-Llama-3-8B-Instruct",
+  "model": "meta-llama/Meta-Llama-3.1-8B-Instruct",
   "object": "chat.completion.chunk",
   "system_fingerprint": "f366d657-75f9-9c33-8e57-1e6be2cf62f3"
 }

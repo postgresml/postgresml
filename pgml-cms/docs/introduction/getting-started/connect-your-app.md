@@ -42,7 +42,7 @@ const pgml = require("pgml");
 const main = () => {
     const client = pgml.newOpenSourceAI();
     const results = client.chat_completions_create(
-          "meta-llama/Meta-Llama-3-8B-Instruct",
+          "meta-llama/Meta-Llama-3.1-8B-Instruct",
           [
               {
                   role: "system",
@@ -66,7 +66,7 @@ import pgml
 async def main():
     client = pgml.OpenSourceAI()
     results = client.chat_completions_create(
-        "meta-llama/Meta-Llama-3-8B-Instruct",
+        "meta-llama/Meta-Llama-3.1-8B-Instruct",
         [
             {
                 "role": "system",
