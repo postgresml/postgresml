@@ -6,7 +6,7 @@ anyio==4.4.0
 async-timeout==4.0.3
 attrs==23.2.0
 auto_gptq==0.7.1
-bitsandbytes==0.43.1
+bitsandbytes==0.43.2
 catboost==1.2.5
 certifi==2024.7.4
 charset-normalizer==3.3.2
@@ -14,7 +14,6 @@ click==8.1.7
 cloudpickle==3.0.0
 cmake==3.30.1
 colorama==0.4.6
-coloredlogs==15.0.1
 contourpy==1.2.1
 ctransformers==0.2.27
 cycler==0.12.1
@@ -44,7 +43,6 @@ httpcore==1.0.5
 httptools==0.6.1
 httpx==0.27.0
 huggingface-hub==0.24.1
-humanfriendly==10.0
 idna==3.7
 interegular==0.3.3
 Jinja2==3.1.4
@@ -90,7 +88,6 @@ nvidia-nccl-cu12==2.20.5
 nvidia-nvjitlink-cu12==12.5.82
 nvidia-nvtx-cu12==12.1.105
 openai==1.37.0
-optimum==1.21.2
 orjson==3.10.6
 outlines==0.0.46
 packaging==24.1
@@ -148,7 +145,7 @@ torch==2.3.1
 torchaudio==2.3.1
 torchvision==0.18.1
 tqdm==4.66.4
-transformers==4.42.4
+transformers==4.43.1
 transformers-stream-generator==0.0.5
 triton==2.3.1
 trl==0.9.6

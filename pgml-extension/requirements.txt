@@ -30,7 +30,6 @@ ctransformers
 huggingface-hub
 deepspeed
 einops
-optimum
 peft
 tokenizers
 transformers
