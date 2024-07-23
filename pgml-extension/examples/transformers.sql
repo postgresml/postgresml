@@ -11,10 +11,11 @@ SELECT pgml.embed('mixedbread-ai/mxbai-embed-large-v1', 'test', '{"prompt": "tes
 SELECT pgml.transform_stream(
   task   => '{
     "task": "text-generation",
-    "model": "meta-llama/Meta-Llama-3-8B-Instruct",
+    "model": "meta-llama/Meta-Llama-3.1-8B-Instruct",
     "model_type": "mistral",
     "revision": "main",
-    "device_map": "auto"
+    "device_map": "auto",
+    "token": "hf_123"
   }'::JSONB,
   input => 'AI is going to',
   args   => '{

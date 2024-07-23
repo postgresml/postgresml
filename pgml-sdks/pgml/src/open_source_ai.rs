@@ -38,7 +38,7 @@ fn try_model_nice_name_to_model_name_and_parameters(
                 "task": "conversational",
                 "model": "meta-llama/Meta-Llama-3-8B-Instruct"
             })
-            .into(),
+                .into(),
         )),
         "meta-llama/Meta-Llama-3-70B-Instruct" => Some((
             "meta-llama/Meta-Llama-3-70B-Instruct",
@@ -46,7 +46,31 @@ fn try_model_nice_name_to_model_name_and_parameters(
                 "task": "conversational",
                 "model": "meta-llama/Meta-Llama-3-70B-Instruct"
             })
-            .into(),
+                .into(),
+        )),
+        "meta-llama/Meta-Llama-3.1-8B-Instruct" => Some((
+            "meta-llama/Meta-Llama-3.1-8B-Instruct",
+            serde_json::json!({
+                "task": "conversational",
+                "model": "meta-llama/Meta-Llama-3.1-8B-Instruct"
+            })
+                .into(),
+        )),
+        "meta-llama/Meta-Llama-3.1-70B-Instruct" => Some((
+            "meta-llama/Meta-Llama-3.1-70B-Instruct",
+            serde_json::json!({
+                "task": "conversational",
+                "model": "meta-llama/Meta-Llama-3.1-70B-Instruct"
+            })
+                .into(),
+        )),
+        "meta-llama/Meta-Llama-3.1-405B-Instruct" => Some((
+            "meta-llama/Meta-Llama-3.1-405B-Instruct",
+            serde_json::json!({
+                "task": "conversational",
+                "model": "meta-llama/Meta-Llama-3.1-405B-Instruct"
+            })
+                .into(),
         )),
         "microsoft/Phi-3-mini-128k-instruct" => Some((
             "microsoft/Phi-3-mini-128k-instruct",
@@ -349,7 +373,7 @@ mod tests {
     #[test]
     fn can_open_source_ai_create() -> anyhow::Result<()> {
         let client = OpenSourceAI::new(None);
-        let results = client.chat_completions_create(Json::from_serializable("meta-llama/Meta-Llama-3-8B-Instruct"), vec![
+        let results = client.chat_completions_create(Json::from_serializable("meta-llama/Meta-Llama-3.1-8B-Instruct"), vec![
           serde_json::json!({"role": "system", "content": "You are a friendly chatbot who always responds in the style of a pirate"}).into(),
           serde_json::json!({"role": "user", "content": "How many helicopters can a human eat in one sitting?"}).into(),
         ], Some(10), None, Some(3), None)?;
@@ -360,7 +384,7 @@ mod tests {
     #[sqlx::test]
     fn can_open_source_ai_create_async() -> anyhow::Result<()> {
         let client = OpenSourceAI::new(None);
-        let results = client.chat_completions_create_async(Json::from_serializable("meta-llama/Meta-Llama-3-8B-Instruct"), vec![
+        let results = client.chat_completions_create_async(Json::from_serializable("meta-llama/Meta-Llama-3.1-8B-Instruct"), vec![
           serde_json::json!({"role": "system", "content": "You are a friendly chatbot who always responds in the style of a pirate"}).into(),
           serde_json::json!({"role": "user", "content": "How many helicopters can a human eat in one sitting?"}).into(),
         ], Some(10), None, Some(3), None).await?;
@@ -371,7 +395,7 @@ mod tests {
     #[sqlx::test]
     fn can_open_source_ai_create_stream_async() -> anyhow::Result<()> {
         let client = OpenSourceAI::new(None);
-        let mut stream = client.chat_completions_create_stream_async(Json::from_serializable("meta-llama/Meta-Llama-3-8B-Instruct"), vec![
+        let mut stream = client.chat_completions_create_stream_async(Json::from_serializable("meta-llama/Meta-Llama-3.1-8B-Instruct"), vec![
           serde_json::json!({"role": "system", "content": "You are a friendly chatbot who always responds in the style of a pirate"}).into(),
           serde_json::json!({"role": "user", "content": "How many helicopters can a human eat in one sitting?"}).into(),
         ], Some(10), None, Some(3), None).await?;
@@ -384,7 +408,7 @@ mod tests {
     #[test]
     fn can_open_source_ai_create_stream() -> anyhow::Result<()> {
         let client = OpenSourceAI::new(None);
-        let iterator = client.chat_completions_create_stream(Json::from_serializable("meta-llama/Meta-Llama-3-8B-Instruct"), vec![
+        let iterator = client.chat_completions_create_stream(Json::from_serializable("meta-llama/Meta-Llama-3.1-8B-Instruct"), vec![
           serde_json::json!({"role": "system", "content": "You are a friendly chatbot who always responds in the style of a pirate"}).into(),
           serde_json::json!({"role": "user", "content": "How many helicopters can a human eat in one sitting?"}).into(),
         ], Some(10), None, Some(3), None)?;

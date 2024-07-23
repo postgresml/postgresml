@@ -23,7 +23,7 @@ impl Editor {
             show_task: false,
             show_question_input: false,
             task: "text-generation".to_string(),
-            model: "meta-llama/Meta-Llama-3-8B-Instruct".to_string(),
+            model: "meta-llama/Meta-LLama-3.1-8B-Instruct".to_string(),
             btn_location: "text-area".to_string(),
             btn_style: "party".to_string(),
             is_editable: true,

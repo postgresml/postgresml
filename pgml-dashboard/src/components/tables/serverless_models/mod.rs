@@ -48,14 +48,14 @@ impl ServerlessModels {
             ],
             instruct_models: [
                 Component::from(Row::new(&[
-                    "meta-llama/Meta-Llama-3-70B-Instruct".into(),
+                    "meta-llama/Meta-LLama-3.1-70B-Instruct".into(),
                     "70,000".into(),
                     "70,000".into(),
                     "8,000".into(),
                     "Highest quality".into(),
                 ])),
                 Component::from(Row::new(&[
-                    "meta-llama/Meta-Llama-3-8B-Instruct".into(),
+                    "meta-llama/Meta-LLama-3.1-8B-Instruct".into(),
                     "8,000".into(),
                     "8,000".into(),
                     "8,000".into(),
