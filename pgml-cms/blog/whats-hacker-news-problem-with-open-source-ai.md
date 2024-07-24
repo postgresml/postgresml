@@ -16,9 +16,9 @@ image: ".gitbook/assets/keep-ai-open.png"
 
 Montana Low
 
-July 25, 2024
+July 24, 2024
 
-Open source AI is not the future. It’s here, now. Hacker News has spent the last 24 hours debating if Meta’s Llama models are really “open source” rather than talking about the ramifications of its launch. They similarly debate what “AI” is. Open source AI is important, not because of some pedantic definition by some pseudo-official body like OSI, it’s important because of the power and incentive structures that pervade our society.
+Open source AI is not the future. It’s here, now. Hacker News has spent the [last 24 hours debating](https://news.ycombinator.com/item?id=41046773) if Meta’s Llama models are really “open source” rather than talking about the ramifications of its launch. They similarly debate what “AI” is. Open source AI is important, not because of some pedantic definition by some pseudo-official body like OSI, it’s important because of the power and incentive structures that pervade our society.
 
 Open source AI is not just about LLMs and licenses. The term is more useful when it is used to describe the full stack required to create value for end users. LLMs alone are not enough to create AI, and training them is a cost without an economically defensible moat. That cost is going to increase and the value is going to approach zero as they are commoditized. Value creation happens as part of a larger process.
 
@@ -26,7 +26,7 @@ People on Hacker News should be discussing that process, since it involves a com
 
 ## Please move beyond pedantic definitions and personality cults
 
-Fanboys and haters are no more helpful in this discussion than they are in politics. It seems lost on many that Mark Zuckerberg may not be the villain in this story, and Sam Altman may not be the hero. They are both CEOs of powerful companies that are trying to shape the technology that has the most potential to change our society since the internet was created. What we also know is that Mark has consistently rationalized Meta’s interest in open source AI, and I trust him to look after his interests. Sam has inconsistently rationalized OpenAIs interest in AI, and I do not trust him to look after all of humanity's interests.
+Fanboys and haters are no more helpful in this discussion than they are in politics. It seems lost on many that Mark Zuckerberg may not be the villain in this story, and Sam Altman may not be the hero. They are both CEOs of powerful companies that are trying to shape the technology that has the most potential to change our society since the internet was created. What we also know is that Mark has _consistently_ rationalized Meta’s interest in open source AI, and I trust him to look after _his_ interests. Sam has _inconsistently_ rationalized OpenAIs interest in AI, and I do not trust him to look after _all of humanity's_ interests.
 
 PostgresML is part of the open source AI ecosystem and Llama is an important piece there.
 
