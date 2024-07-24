@@ -42,34 +42,34 @@ Meta has been contributing to open source AI beyond Llama for a long time. Pytor
 
 A complete open-source stack encompasses data preprocessing, model deployment, scaling, and monitoring. It’s the combination of these elements that allows for the creation of innovative, robust, and efficient AI-driven applications. Here’s why a fully open-source approach wins:
 
-### Transparency and Trust
+### Transparency and trust
 
 Transparency is a cornerstone of open-source projects. When every component of the stack is open, it’s easier to understand how data is being processed, how models are being trained, and how decisions are being made. This transparency builds trust with users and stakeholders, who can be assured that the system operates as claimed, free from hidden biases or unexplained behaviors.
 
-### Flexibility and Customization
+### Flexibility and customization
 
 Open source tools offer unmatched flexibility. Proprietary solutions often come with limitations, either through design or licensing. With an open-source stack, you have the freedom to customize every aspect to fit your unique needs. This can lead to more innovative solutions tailored to specific problems, giving you a competitive edge.
 
-### Cost Efficiency
+### Cost efficiency
 
 While the initial cost of developing an open-source AI stack may be significant, the long-term benefits far outweigh these initial investments. Proprietary solutions often come with ongoing licensing fees and usage costs that can quickly add up. An open-source stack, on the other hand, eliminates these recurring costs, providing a more sustainable and scalable solution.
 
-### Community and Collaboration
+### Community and collaboration
 
 The open-source community is a powerhouse of innovation and collaboration. By leveraging a fully open-source stack, you can tap into a vast pool of knowledge, resources, and support. This community-driven approach accelerates development, as you can build on the work of others and contribute your improvements back to the community.
 
-## The Pitfalls of Proprietary Models
+## The pitfalls of proprietary models
 Proprietary AI models are often touted for their performance and ease of use. However, they come with several significant drawbacks:
 
-### Lack of Transparency
+### Lack of transparency
 
 Proprietary models are black boxes. Without access to the underlying code, documentation or research, it’s impossible to fully understand how these models operate, leading to potential trust issues. This lack of transparency can be particularly problematic in sensitive applications where understanding model decisions is critical.
 
-### Vendor Lock-In
+### Vendor lock-in
 
 Relying on proprietary solutions often leads to vendor lock-in, where switching to another solution becomes prohibitively expensive or complex. This dependency can stifle innovation and limit your ability to adapt to new technologies or methodologies.
 
-### Ethical and Legal Concerns
+### Ethical and legal concerns
 
 Using proprietary models can raise ethical and legal concerns, particularly regarding data privacy and usage rights. Without visibility into how models are trained and designed, there’s a risk of inadvertently violating privacy regulations or getting biased results.
 
