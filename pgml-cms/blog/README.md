@@ -4,7 +4,9 @@ description: recent blog posts
 
 # Home
 
-* [announcing-the-release-of-our-rust-sdk](announcing-the-release-of-our-rust-sdk.md)
+* [What's Hacker News' problem with open source AI](whats-hacker-news-problem-with-open-source-ai.md "mention")
+* [announcing-support-for-meta-llama-3.1](announcing-support-for-meta-llama-3.1.md "mention")
+* [announcing-the-release-of-our-rust-sdk](announcing-the-release-of-our-rust-sdk.md "mention")
 * [meet-us-at-the-2024-ai-dev-summit-conference](meet-us-at-the-2024-ai-dev-summit-conference.md "mention")
 * [introducing-the-openai-switch-kit-move-from-closed-to-open-source-ai-in-minutes.md](introducing-the-openai-switch-kit-move-from-closed-to-open-source-ai-in-minutes.md "mention")
 * [speeding-up-vector-recall-5x-with-hnsw.md](speeding-up-vector-recall-5x-with-hnsw.md "mention")
