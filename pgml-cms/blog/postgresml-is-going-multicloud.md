@@ -1,3 +1,6 @@
+---
+image: ".gitbook/assets/Blog-Image_Multicloud.jpg"
+---
 # PostgresML is going multicloud
 
 <div align="left">
