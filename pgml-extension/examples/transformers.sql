@@ -8,16 +8,14 @@ SELECT pgml.embed('Alibaba-NLP/gte-base-en-v1.5', 'hi mom', '{"device": "cpu"}')
 SELECT pgml.embed('hkunlp/instructor-xl', 'hi mom', '{"instruction": "Encode it with love"}');
 SELECT pgml.embed('mixedbread-ai/mxbai-embed-large-v1', 'test', '{"prompt": "test prompt: "}');
 
-SELECT pgml.transform_stream(
+SELECT pgml.transform(
   task   => '{
     "task": "text-generation",
     "model": "meta-llama/Meta-Llama-3.1-8B-Instruct",
-    "model_type": "mistral",
-    "revision": "main",
-    "device_map": "auto",
-    "token": "hf_123"
+    "token": "hf_123",
+    "trust_remote_code": true
   }'::JSONB,
-  input => 'AI is going to',
+  inputs => ARRAY['AI is going to'],
   args   => '{
     "max_new_tokens": 100
   }'::JSONB
