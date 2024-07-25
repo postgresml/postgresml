@@ -1,24 +1,27 @@
-<% use crate::NotificationLevel; %>
-<turbo-frame id="notifications-banner" class="position-relative d-block">
-  <% if notification.is_some() {%>
-    <% let notification = notification.unwrap(); %>
-  <div data-controller="notifications-marketing-alert-banner">
-    <div class="<%- notification.level.to_string() %> W-100">
-      <div class="banner d-flex container p-1">
-        <div class="flex-grow-1 d-flex flex-column flex-md-row justify-content-center align-items-center row-gap-0 column-gap-3 fw-semibold overflow-hidden">
-          <div class="mx-3 overflow-hidden" style="max-width: 80%;">
-            <p class="m-0 text-center"><%- notification.message %></p>
+<% use crate::notifications::NotificationLevel; %>
+  <turbo-frame id="notifications-banner" class="position-relative d-block">
+    <% if notification.is_some() {%>
+      <% let notification=notification.unwrap(); %>
+        <div data-controller="notifications-marketing-alert-banner">
+          <div class="<%- notification.level.to_string() %> W-100">
+            <div class="banner d-flex container p-1">
+              <div
+                class="flex-grow-1 d-flex flex-column flex-md-row justify-content-center align-items-center row-gap-0 column-gap-3 fw-semibold overflow-hidden">
+                <div class="mx-3 overflow-hidden" style="max-width: 80%;">
+                  <p class="m-0 text-center"><%- notification.message %></p>
+                </div>
+              </div>
+
+              <% if notification.dismissible && notification.level !=NotificationLevel::Level3 {%>
+                <a class="w-0 overflow-visible d-flex align-items-center" style="right: 4vw"
+                  href="/dashboard/notifications/remove_banner?id=<%- notification.id%>&notification_type=alert">
+                  <span
+                    class="material-symbols-outlined <% if notification.level == NotificationLevel::Level2 {%>close-light<% } else {%>close-dark<% } %>">
+                    close
+                  </span></a>
+                <% } %>
+            </div>
           </div>
         </div>
-        
-        <% if notification.dismissible && notification.level != NotificationLevel::Level3 {%>
-        <a class="w-0 overflow-visible d-flex align-items-center" style="right: 4vw" href="/dashboard/notifications/remove_banner?id=<%- notification.id%>&notification_type=alert">
-          <span class="material-symbols-outlined <% if notification.level == NotificationLevel::Level2 {%>close-light<% } else {%>close-dark<% } %>">
-            close
-          </span></a>
         <% } %>
-      </div>
-    </div>
-  </div>
-  <% } %>
-</turbo-frame>
+  </turbo-frame>

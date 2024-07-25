@@ -1,37 +1,42 @@
-<% use crate::NotificationLevel; %>
-<turbo-frame id="marketing-notifications-banner-feature" class="position-relative z-1">
-  <% if notification.is_some() {%>
-    <% let notification = notification.unwrap(); %>
-  <div data-controller="notifications-marketing-feature-banner">
+<% use crate::notifications::NotificationLevel; %>
+  <turbo-frame id="marketing-notifications-banner-feature" class="position-relative z-1">
+    <% if notification.is_some() {%>
+      <% let notification=notification.unwrap(); %>
+        <div data-controller="notifications-marketing-feature-banner">
 
-    <div class="<%- notification.level.to_string() %> <% if notification.level == NotificationLevel::Feature3 {%>main-gradient-border-card<% } %> rounded-3 W-100">
-      <div class="banner d-flex container">
+          <div
+            class="<%- notification.level.to_string() %> <% if notification.level == NotificationLevel::Feature3 {%>main-gradient-border-card<% } %> rounded-3 W-100">
+            <div class="banner d-flex container">
 
-        <% let content = format!(
-          r#"
-          <{} class="{} flex-grow-1 d-flex flex-column flex-md-row justify-content-center align-items-center row-gap-0 column-gap-3 fw-semibold overflow-hidden">
-            <div class="px-3 py-3 py-sm-0 overflow-hidden">
-              <p class="m-0 text-center">{} {}</p>
+              <% let content=format!( r#" <{}
+                class="{} flex-grow-1 d-flex flex-column flex-md-row justify-content-center align-items-center row-gap-0 column-gap-3 fw-semibold overflow-hidden">
+                <div class="px-3 py-3 py-sm-0 overflow-hidden">
+                  <p class="m-0 text-center">{} {}</p>
+                </div>
+                </{}>
+                "#,
+                if notification.link.is_some() { format!(r#"a href="{}" data-turbo="false" "#,
+                notification.link.clone().unwrap()) } else { "div".to_string() },
+                if notification.link.is_some() { "btn btn-tertiary p-0 goto-arrow-hover-trigger" } else { "" },
+                notification.message,
+                if notification.link.is_some() { r#"<span
+                  class="material-symbols-outlined more-info position-relative goto-arrow-shift-animation"
+                  style="top: 2px;">arrow_forward</span>"# } else { "" },
+                if notification.link.is_some() { "a" } else { "div" },
+                ); %>
+
+                <%- content %>
+
+                  <% if notification.dismissible {%>
+                    <a class="w-0 btn btn-tertiary overflow-visible d-flex align-items-start p-2"
+                      style="height: fit-content"
+                      href="/dashboard/notifications/remove_banner?id=<%- notification.id%>&notification_type=feature">
+                      <span class="material-symbols-outlined close">
+                        close
+                      </span></a>
+                    <% } %>
             </div>
-          </{}>
-          "#,
-          if notification.link.is_some() { format!(r#"a href="{}" data-turbo="false" "#, notification.link.clone().unwrap()) } else { "div".to_string() },
-          if notification.link.is_some() { "btn btn-tertiary p-0 goto-arrow-hover-trigger" } else { "" },
-          notification.message,
-          if notification.link.is_some() { r#"<span class="material-symbols-outlined more-info position-relative goto-arrow-shift-animation" style="top: 2px;">arrow_forward</span>"# } else { "" },
-          if notification.link.is_some() { "a" } else { "div" },
-        ); %>
-        
-        <%- content %>
-
-        <% if notification.dismissible {%>
-        <a class="w-0 btn btn-tertiary overflow-visible d-flex align-items-start p-2" style="height: fit-content" href="/dashboard/notifications/remove_banner?id=<%- notification.id%>&notification_type=feature">
-          <span class="material-symbols-outlined close">
-            close
-          </span></a>
+          </div>
+        </div>
         <% } %>
-      </div>
-    </div>
-  </div>
-  <% } %>
-</turbo-frame>
+  </turbo-frame>

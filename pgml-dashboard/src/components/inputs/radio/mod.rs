@@ -16,7 +16,7 @@ pub struct RadioOption {
 impl RadioOption {
     pub fn new(label: Component, value: impl ToString) -> Self {
         RadioOption {
-            label: label,
+            label,
             value: value.to_string(),
             checked: false,
             actions: StimulusActions::default(),

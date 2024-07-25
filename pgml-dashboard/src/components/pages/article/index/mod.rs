@@ -5,7 +5,7 @@ use crate::components::cards::blog::ArticlePreview;
 use crate::components::notifications::marketing::FeatureBanner;
 use crate::components::sections::related_articles::RelatedArticles;
 use crate::guards::Cluster;
-use crate::Notification;
+use crate::notifications::Notification;
 use pgml_components::component;
 use sailfish::TemplateOnce;
 

@@ -1,7 +1,7 @@
 use crate::components::notifications::marketing::FeatureBanner;
-use crate::docs::TocLink;
 use crate::guards::Cluster;
-use crate::Notification;
+use crate::notifications::Notification;
+use crate::templates::docs::TocLink;
 use pgml_components::component;
 use sailfish::TemplateOnce;
 

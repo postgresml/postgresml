@@ -1,5 +1,7 @@
-use crate::utils::random_string;
-use crate::{Notification, NotificationLevel};
+use crate::{
+    notifications::{Notification, NotificationLevel},
+    utils::random_string,
+};
 use pgml_components::component;
 use sailfish::TemplateOnce;
 

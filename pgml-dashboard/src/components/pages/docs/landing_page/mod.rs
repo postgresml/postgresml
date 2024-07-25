@@ -2,7 +2,7 @@ use crate::api::cms::{Document, DOCS};
 use crate::components::cms::IndexLink;
 use crate::components::notifications::marketing::FeatureBanner;
 use crate::guards::Cluster;
-use crate::Notification;
+use crate::notifications::Notification;
 use lazy_static::lazy_static;
 use pgml_components::component;
 use sailfish::TemplateOnce;

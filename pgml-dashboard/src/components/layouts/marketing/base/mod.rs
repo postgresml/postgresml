@@ -2,7 +2,7 @@ use crate::components::layouts::Head;
 use crate::components::notifications::marketing::AlertBanner;
 use crate::guards::Cluster;
 use crate::models::User;
-use crate::Notification;
+use crate::notifications::Notification;
 use pgml_components::component;
 use sailfish::TemplateOnce;
 use std::fmt;

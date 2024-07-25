@@ -1,4 +1,6 @@
 use crate::components::sections::footers::marketing_footer::MarketingFooter;
+use crate::context::Context;
+use crate::notifications::Notification;
 use crate::templates::components::{StaticNav, StaticNavLink};
 use crate::utils::urls;
 use once_cell::sync::OnceCell;
@@ -9,7 +11,7 @@ use sqlx::{postgres::PgPoolOptions, Executor, PgPool};
 
 static POOL: OnceCell<PgPool> = OnceCell::new();
 
-use crate::{models, utils::config, Context, Notification};
+use crate::{models, utils::config};
 
 #[derive(Debug, Clone, Default)]
 pub struct Cluster {

@@ -1,7 +1,7 @@
 use crate::api::cms::Collection;
 use crate::components::notifications::marketing::FeatureBanner;
 use crate::guards::Cluster;
-use crate::Notification;
+use crate::notifications::Notification;
 use pgml_components::component;
 use sailfish::TemplateOnce;
 

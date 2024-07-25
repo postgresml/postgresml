@@ -1,4 +1,4 @@
-use crate::docs::TocLink;
+use crate::templates::docs::TocLink;
 use pgml_components::component;
 use sailfish::TemplateOnce;
 

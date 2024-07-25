@@ -2,7 +2,7 @@ use pgml_components::Component;
 use std::collections::HashMap;
 
 pub use crate::components::{self, cms::index_link::IndexLink, NavLink, StaticNav, StaticNavLink};
-use crate::{Notification, NotificationLevel};
+use crate::notifications::{Notification, NotificationLevel};
 use components::notifications::marketing::{AlertBanner, FeatureBanner};
 use components::notifications::product::ProductBanner;
 

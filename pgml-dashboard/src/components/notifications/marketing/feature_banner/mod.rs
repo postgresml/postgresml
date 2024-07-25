@@ -1,6 +1,7 @@
-use crate::Notification;
 use pgml_components::component;
 use sailfish::TemplateOnce;
+
+use crate::notifications::Notification;
 
 #[derive(TemplateOnce, Default, Clone)]
 #[template(path = "notifications/marketing/feature_banner/template.html")]

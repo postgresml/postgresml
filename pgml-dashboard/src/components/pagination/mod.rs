@@ -16,7 +16,7 @@ impl Pagination {
         Pagination {
             count,
             timed: false,
-            identifier: identifier,
+            identifier,
             active_index: None,
             clickable: true,
         }
