@@ -28,7 +28,7 @@ People on Hacker News should be discussing that process, since it involves a com
 
 Fanboys and haters are no more helpful in this discussion than they are in politics. It seems lost on many that Mark Zuckerberg may not be the villain in this story, and Sam Altman may not be the hero. They are both CEOs of powerful companies that are trying to shape the technology that has the most potential to change our society since the internet was created. What we also know is that Mark has _consistently_ rationalized Meta’s interest in open source AI, and I trust him to look after _his_ interests. Sam has _inconsistently_ rationalized OpenAIs interest in AI, and I do not trust him to look after _all of humanity's_ interests.
 
-PostgresML is part of the open source AI ecosystem and Llama is an important piece there.
+Llama is an important piece in the open source AI ecosystem.
 
 - You are free to run it on your laptop or in your datacenter, unless you have 700,000,000 users. Many open source licenses come with restrictions on use and this is a generous one.
 - You are free to modify it with fine-tuning, quantization, cut-and-paste layers or any other way you want.
