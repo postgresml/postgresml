@@ -12,8 +12,6 @@ default-run = "pgml-dashboard"
 
 [dependencies]
 anyhow = "1"
-aho-corasick = "0.7"
-base64 = "0.21"
 comrak = "0.17"
 chrono = { version = "0.4", features = ["serde"] }
 csv-async = "1"
@@ -37,7 +35,6 @@ regex = "1.9"
 reqwest = { version = "0.11", features = ["json"] }
 rocket = { git = "https://github.com/SergioBenitez/Rocket", features = ["secrets", "json"] }
 sailfish = "0.8.0" # 0.8.1 has breaking changes
-scraper = "0.17"
 serde = "1"
 sentry = "0.31"
 sentry-log = "0.31"
@@ -45,7 +42,6 @@ sentry-anyhow = "0.31"
 serde_json = "1"
 sqlparser = "0.38"
 sqlx = { version = "0.7.3", features = [ "runtime-tokio-rustls", "postgres", "json", "migrate", "time", "uuid", "bigdecimal"] }
-tantivy = "0.19"
 time = "0.3"
 tokio = { version = "1", features = ["full"] }
 url = "2.4"
@@ -53,6 +49,9 @@ yaml-rust = "0.4"
 zoomies = { git="https://github.com/HyperparamAI/zoomies.git", branch="master" }
 ws = { package = "rocket_ws", git = "https://github.com/SergioBenitez/Rocket" }
 futures = "0.3.29"
+
+[dev-dependencies]
+scraper = "0.17"
 
 [build-dependencies]
 glob = "*"
