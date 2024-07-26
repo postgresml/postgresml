@@ -48,7 +48,7 @@ Some of the use cases include:
 
 ## Our mission
 
-PostgresML strives to provide access to open source AI for everyone. We are continuously developping PostgresML to keep up with the rapidly evolving use cases for ML & AI, but we remain committed to never breaking user facing APIs. We welcome contributions to our [open source code and documentation](https://github.com/postgresml) from the community.
+PostgresML strives to provide access to open source AI for everyone. We are continuously developing PostgresML to keep up with the rapidly evolving use cases for ML & AI, but we remain committed to never breaking user facing APIs. We welcome contributions to our [open source code and documentation](https://github.com/postgresml) from the community.
 
 ## Managed cloud
 
