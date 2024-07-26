@@ -1,54 +1,76 @@
-use log::error;
-
-use rocket::{catchers, fs::FileServer};
-
-use pgml_dashboard::{
-    catchers::{error_catcher, not_authorized_catcher, not_found_handler},
-    guards,
-    routes::{error, index},
-    sentry::configure_reporting,
-    utils::{config, markdown},
-};
-
-#[rocket::main]
+#[cfg(feature = "ssr")]
+#[tokio::main]
 async fn main() {
-    #[cfg(tokio_unstable)]
-    console_subscriber::init();
+    use axum::Router;
+    use leptos::*;
+    use leptos_axum::{generate_route_list, LeptosRoutes};
+    use pgml_dashboard::app::*;
+    use pgml_dashboard::fileserv::file_and_error_handler;
 
-    dotenv::dotenv().ok();
-    // it's important to hang on to sentry so it isn't dropped and stops reporting
-    let _sentry = configure_reporting().await;
+    // Setting get_configuration(None) means we'll be using cargo-leptos's env values
+    // For deployment these variables are:
+    // <https://github.com/leptos-rs/start-axum#executing-a-server-on-a-remote-machine-without-the-toolchain>
+    // Alternately a file can be specified such as Some("Cargo.toml")
+    // The file would need to be included with the executable when moved to deployment
+    let conf = get_configuration(None).await.unwrap();
+    let leptos_options = conf.leptos_options;
+    let addr = leptos_options.site_addr;
+    let routes = generate_route_list(App);
 
-    let site_search = markdown::SiteSearch::new()
-        .await
-        .expect("Error initializing site search");
-    let mut site_search_copy = site_search.clone();
-    tokio::spawn(async move {
-        if let Err(e) = site_search_copy.build().await {
-            error!("Error building site search: {e}")
-        }
-    });
+    // build our application with a route
+    let app = Router::new()
+        .leptos_routes(&leptos_options, routes, App)
+        .fallback(file_and_error_handler)
+        .with_state(leptos_options);
 
-    pgml_dashboard::migrate(guards::Cluster::default().pool())
-        .await
-        .unwrap();
+    let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
+    logging::log!("listening on http://{addr}");
+    axum::serve(listener, app.into_make_service()).await.unwrap();
 
-    let _ = rocket::build()
-        .manage(site_search)
-        .mount("/", rocket::routes![index, error])
-        .mount("/dashboard/static", FileServer::from(config::static_dir()))
-        .mount("/dashboard", pgml_dashboard::routes::routes())
-        .mount("/engine", pgml_dashboard::api::deployment::routes())
-        .mount("/", pgml_dashboard::api::routes())
-        .mount("/", rocket::routes![pgml_dashboard::routes::playground])
-        .register("/", catchers![error_catcher, not_authorized_catcher, not_found_handler])
-        .attach(pgml_dashboard::fairings::RequestMonitor::new())
-        .ignite()
-        .await
-        .expect("failed to ignite Rocket")
-        .launch()
-        .await
-        .expect("failed to shut down Rocket");
+    // #[cfg(tokio_unstable)]
+    //  console_subscriber::init();
+
+    //  dotenv::dotenv().ok();
+    //  // it's important to hang on to sentry so it isn't dropped and stops reporting
+    //  let _sentry = configure_reporting().await;
+
+    //  let site_search = markdown::SiteSearch::new()
+    //      .await
+    //      .expect("Error initializing site search");
+    //  let mut site_search_copy = site_search.clone();
+    //  tokio::spawn(async move {
+    //      if let Err(e) = site_search_copy.build().await {
+    //          error!("Error building site search: {e}")
+    //      }
+    //  });
+
+    //  pgml_dashboard::migrate(guards::Cluster::default().pool())
+    //      .await
+    //      .unwrap();
+
+    //  let _ = rocket::build()
+    //      .manage(site_search)
+    //      .mount("/", rocket::routes![index, error])
+    //      .mount("/dashboard/static", FileServer::from(config::static_dir()))
+    //      .mount("/dashboard", pgml_dashboard::routes::routes())
+    //      .mount("/engine", pgml_dashboard::api::deployment::routes())
+    //      .mount("/", pgml_dashboard::api::routes())
+    //      .mount("/", rocket::routes![pgml_dashboard::routes::playground])
+    //      .register("/", catchers![error_catcher, not_authorized_catcher, not_found_handler])
+    //      .attach(pgml_dashboard::fairings::RequestMonitor::new())
+    //      .ignite()
+    //      .await
+    //      .expect("failed to ignite Rocket")
+    //      .launch()
+    //      .await
+    //      .expect("failed to shut down Rocket");
+}
+
+#[cfg(not(feature = "ssr"))]
+pub fn main() {
+    // no client-side main function
+    // unless we want this to work with e.g., Trunk for a purely client-side app
+    // see lib.rs for hydration function instead
 }
 
 // #[cfg(test)]

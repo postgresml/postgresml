@@ -1,35 +1,41 @@
 #![allow(renamed_and_removed_lints)]
 
-#[macro_use]
-extern crate rocket;
+#[cfg(feature = "ssr")]
+pub mod migrate;
+// pub mod api;
+// pub mod catchers;
+// pub mod components;
+// pub mod context;
+// pub mod fairings;
+// pub mod forms;
+// pub mod guards;
+// pub mod models;
+// pub mod notifications;
+// pub mod responses;
+// pub mod routes;
+// pub mod sentry;
+// pub mod templates;
+// pub mod types;
+// pub mod utils;
 
-use sqlx::PgPool;
+pub mod app;
+pub mod error_template;
+#[cfg(feature = "ssr")]
+pub mod fileserv;
 
-pub mod api;
-pub mod catchers;
-pub mod components;
-pub mod context;
-pub mod fairings;
-pub mod forms;
-pub mod guards;
-pub mod models;
-pub mod notifications;
-pub mod responses;
-pub mod routes;
-pub mod sentry;
-pub mod templates;
-pub mod types;
-pub mod utils;
+#[cfg(feature = "hydrate")]
+#[wasm_bindgen::prelude::wasm_bindgen]
+pub fn hydrate() {
+    use crate::app::*;
+    console_error_panic_hook::set_once();
+    leptos::mount_to_body(App);
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct ClustersSettings {
     pub max_connections: u32,
     pub idle_timeout: u64,
     pub min_connections: u32,
-}
-
-pub async fn migrate(pool: &PgPool) -> anyhow::Result<()> {
-    Ok(sqlx::migrate!("./migrations").run(pool).await?)
 }
 
 // #[cfg(test)]

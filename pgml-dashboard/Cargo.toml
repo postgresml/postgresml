@@ -10,48 +10,149 @@ repository = "https://github.com/postgremsl/postgresml"
 include = ["src/", "sqlx-data.json", "templates/", "migrations/", "static/"]
 default-run = "pgml-dashboard"
 
+[lib]
+crate-type = ["cdylib", "rlib"]
+
 [dependencies]
 anyhow = "1"
-comrak = "0.17"
-chrono = { version = "0.4", features = ["serde"] }
-csv-async = "1"
-console-subscriber = "*"
-convert_case = "0.6"
-dotenv = "0.15"
-env_logger = "0.10"
-glob = "*"
-itertools = "0.10"
-parking_lot = "0.12"
-lazy_static = "1.4"
-log = "0.4"
-markdown = "1.0.0-alpha.14"
-num-traits = "0.2"
-once_cell = "1.18"
-pgml = { path = "../pgml-sdks/pgml/" }
-pgml-components = { path = "../packages/pgml-components" }
-pgvector = { version = "0.3", features = [ "sqlx", "postgres" ] }
-rand = "0.8"
-regex = "1.9"
-reqwest = { version = "0.11", features = ["json"] }
-rocket = { git = "https://github.com/SergioBenitez/Rocket", features = ["secrets", "json"] }
-sailfish = "0.8.0" # 0.8.1 has breaking changes
-serde = "1"
-sentry = "0.31"
-sentry-log = "0.31"
-sentry-anyhow = "0.31"
-serde_json = "1"
-sqlparser = "0.38"
-sqlx = { version = "0.7.3", features = [ "runtime-tokio-rustls", "postgres", "json", "migrate", "time", "uuid", "bigdecimal"] }
-time = "0.3"
-tokio = { version = "1", features = ["full"] }
-url = "2.4"
-yaml-rust = "0.4"
-zoomies = { git="https://github.com/HyperparamAI/zoomies.git", branch="master" }
-ws = { package = "rocket_ws", git = "https://github.com/SergioBenitez/Rocket" }
-futures = "0.3.29"
+# comrak = "0.17"
+# chrono = { version = "0.4", features = ["serde"] }
+# csv-async = "1"
+# console-subscriber = "*"
+# convert_case = "0.6"
+# dotenv = "0.15"
+# env_logger = "0.10"
+# glob = "*"
+# itertools = "0.10"
+# parking_lot = "0.12"
+# lazy_static = "1.4"
+# log = "0.4"
+# markdown = "1.0.0-alpha.14"
+# num-traits = "0.2"
+# once_cell = "1.18"
+pgml = { path = "../pgml-sdks/pgml/", optional = true }
+# pgml-components = { path = "../packages/pgml-components" }
+# pgvector = { version = "0.3", features = [ "sqlx", "postgres" ] }
+# rand = "0.8"
+# regex = "1.9"
+# sailfish = "0.8.0" # 0.8.1 has breaking changes
+# serde = "1"
+sentry = { version = "0.31", optional = true }
+# sentry-log = "0.31"
+# sentry-anyhow = "0.31"
+# serde_json = "1"
+# sqlparser = "0.38"
+sqlx = { version = "0.7.3", features = [ "runtime-tokio-rustls", "postgres", "json", "migrate", "time", "uuid", "bigdecimal"], optional = true }
+# time = "0.3"
+# url = "2.4"
+# yaml-rust = "0.4"
+zoomies = { git = "https://github.com/HyperparamAI/zoomies.git", branch = "master", optional = true }
+# futures = "0.3.29"
+
+axum = { version = "0.7", optional = true }
+console_error_panic_hook = "0.1"
+leptos = { version = "0.6" }
+leptos_axum = { version = "0.6", optional = true }
+leptos_meta = { version = "0.6" }
+leptos_router = { version = "0.6" }
+tokio = { version = "1", features = ["rt-multi-thread", "sync"], optional = true }
+tower = { version = "0.4", optional = true }
+tower-http = { version = "0.5", features = ["fs"], optional = true }
+wasm-bindgen = "=0.2.92"
+thiserror = "1"
+tracing = { version = "0.1", optional = true }
+http = "1"
 
 [dev-dependencies]
 scraper = "0.17"
 
 [build-dependencies]
 glob = "*"
+
+[features]
+hydrate = ["leptos/hydrate", "leptos_meta/hydrate", "leptos_router/hydrate"]
+ssr = [
+    "dep:axum",
+    "dep:tokio",
+    "dep:tower",
+    "dep:tower-http",
+    "dep:leptos_axum",
+    "dep:sqlx",
+    "dep:zoomies",
+    "dep:sentry",
+    "dep:pgml",
+    "leptos/ssr",
+    "leptos_meta/ssr",
+    "leptos_router/ssr",
+    "dep:tracing",
+]
+
+# Defines a size-optimized profile for the WASM bundle in release mode
+[profile.wasm-release]
+inherits = "release"
+opt-level = 'z'
+lto = true
+codegen-units = 1
+panic = "abort"
+
+[package.metadata.leptos]
+# The name used by wasm-bindgen/cargo-leptos for the JS/WASM bundle. Defaults to the crate name
+output-name = "pgml_dashboard"
+
+# The site root folder is where cargo-leptos generate all output. WARNING: all content of this folder will be erased on a rebuild. Use it in your server setup.
+site-root = "target/site"
+
+# The site-root relative folder where all compiled output (JS, WASM and CSS) is written
+# Defaults to pkg
+site-pkg-dir = "pkg"
+
+# [Optional] The source CSS file. If it ends with .sass or .scss then it will be compiled by dart-sass into CSS. The CSS is optimized by Lightning CSS before being written to <site-root>/<site-pkg>/app.css
+# style-file = "style/main.scss"
+# Assets source dir. All files found here will be copied and synchronized to site-root.
+# The assets-dir cannot have a sub directory with the same name/path as site-pkg-dir.
+#
+# Optional. Env: LEPTOS_ASSETS_DIR.
+assets-dir = "public"
+
+# The IP and port (ex: 127.0.0.1:3000) where the server serves the content. Use it in your server setup.
+site-addr = "127.0.0.1:3000"
+
+# The port to use for automatic reload monitoring
+reload-port = 3001
+
+# [Optional] Command to use when running end2end tests. It will run in the end2end dir.
+#   [Windows] for non-WSL use "npx.cmd playwright test"
+#   This binary name can be checked in Powershell with Get-Command npx
+end2end-cmd = "npx playwright test"
+end2end-dir = "end2end"
+
+#  The browserlist query used for optimizing the CSS.
+browserquery = "defaults"
+
+# The environment Leptos will run in, usually either "DEV" or "PROD"
+env = "DEV"
+
+# The features to use when compiling the bin target
+#
+# Optional. Can be over-ridden with the command line parameter --bin-features
+bin-features = ["ssr"]
+
+# If the --no-default-features flag should be used when compiling the bin target
+#
+# Optional. Defaults to false.
+bin-default-features = false
+
+# The features to use when compiling the lib target
+#
+# Optional. Can be over-ridden with the command line parameter --lib-features
+lib-features = ["hydrate"]
+
+# If the --no-default-features flag should be used when compiling the lib target
+#
+# Optional. Defaults to false.
+lib-default-features = false
+
+# The profile to use for the lib target when compiling for release
+#
+# Optional. Defaults to "release".
+lib-profile-release = "wasm-release"
