@@ -2,7 +2,7 @@
 description: A hands-on test of the most popular retrieval systems for retrieval augmented generation (RAG).
 featured: true
 tags: [product]
-image: ".gitbook/assets/Blog-Image_Korvus-Release.jpg"
+image: ".gitbook/assets/Blog-Image_Evergreen-9.png"
 ---
 
 # A Speed Comparison of the Most Popular Retrieval Systems for RAG
@@ -16,6 +16,8 @@ image: ".gitbook/assets/Blog-Image_Korvus-Release.jpg"
 Silas Marvin
 
 July 30, 2024
+
+<figure><img src=".gitbook/assets/Blog-Image_RAG-Retrieval-Speed@2x.png" alt=""><figcaption><p>The average retreival speed for RAG in seconds.</p></figcaption></figure>
 
 ## Methodology
 
