@@ -15,7 +15,7 @@ image: ".gitbook/assets/Blog-Image_Korvus-Firecrawl.jpg"
 
 Silas Marvin
 
-July 30, 2024
+August 8, 2024
 
 We’re excited to share a quick guide on how you use the power of Korvus’ single query RAG along with Firecrawl to quickly and easily standup a retrieval augmented generation system with data from any website. 
 
