@@ -1,5 +1,5 @@
 ---
-description: How to perform all-in-one RAG over any website with Fire Crawl and Korvus.
+description: How to perform all-in-one RAG over any website with Firecrawl and Korvus.
 featured: true
 tags: [engineering]
 image: ".gitbook/assets/Blog-Image_Korvus-Firecrawl.jpg"
