@@ -59,7 +59,7 @@ from rich import print
 firecrawl = FirecrawlApp(api_key=os.environ["FIRECRAWL_API_KEY"])
 ```
 
-Here we're importing `korvus`, `firecrawl`, and some other convenient libraries, and initializing the `FirecrawlApp` with an API key stored in an environment variable. This setup allows us to use Fire Crawl for web scraping.
+Here we're importing `korvus`, `firecrawl`, and some other convenient libraries, and initializing the `FirecrawlApp` with an API key stored in an environment variable. This setup allows us to use Firecrawl for web scraping.
 
 ### Defining the Pipeline and Collection
 
@@ -88,9 +88,9 @@ This Pipeline configuration tells Korvus how to process our documents. It specif
 
 See the [Korvus guide to construction Pipelines](https://postgresml.org/docs/open-source/korvus/guides/constructing-pipelines) for more information on Collections and Pipelines.
 
-### Web Crawling with Fire Crawl
+### Web Crawling with Firecrawl
 
-The `crawl()` function demonstrates how to use Fire Crawl to scrape a website:
+The `crawl()` function demonstrates how to use Firecrawl to scrape a website:
 
 ```python
 def crawl():
@@ -227,12 +227,8 @@ asyncio.run(main())
 
 This loop allows users to input queries and receive RAG-powered responses based on the crawled and indexed content from the PostgresML blog.
 
-## Conclusion
+## Wrapping up
 
-In this guide, we've demonstrated how to create a powerful RAG system using Fire Crawl and Korvus. Here's a summary of what we've accomplished:
+We've demonstrated how to create a powerful RAG system using [Firecrawl](https://firecrawl.dev) and [Korvus](https://github.com/postgresml/korvus) – but it’s just a small example of the simplicity of doing RAG in-database, with fewer microservices. 
 
-1. Used Fire Crawl to efficiently scrape content from the PostgresML blog.
-2. Processed and indexed the scraped data using Korvus's Pipeline and Collection.
-3. Implemented RAG with vector search with reranking for accurate information retrieval.
-
-This is just a small example of what can be done with [Fire Crawl](https://firecrawl.dev) and [Korvus](https://github.com/postgresml/korvus). We can't wait to see what you will make!
+It’s faster, cheaper and easier to manage than the common approach to RAG (Vector DB + frameworks + moving your data to the models). But don’t take our word for it. Try out Firecrawl and Korvus on PostgresML, and see the performance benefits yourself. And as always, let us know what you think. 
