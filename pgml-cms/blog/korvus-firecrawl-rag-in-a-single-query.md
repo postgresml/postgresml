@@ -1,11 +1,11 @@
 ---
-description: A quick guide on performing RAG over your site with Fire Crawl and Korvus.
+description: How to perform all-in-one RAG over any website with Fire Crawl and Korvus.
 featured: true
 tags: [engineering]
-image: ".gitbook/assets/Blog-Image_Evergreen-9.png"
+image: ".gitbook/assets/Blog-Image_Korvus-Firecrawl.jpg"
 ---
 
-# Fire
+# Korvus x Firecrawl: RAG in a single query
 
 <div align="left">
 
@@ -17,15 +17,25 @@ Silas Marvin
 
 July 30, 2024
 
-## Some Background
+We’re excited to share a quick guide on how you use the power of Korvus’ single query RAG along with Firecrawl to quickly and easily standup a retrieval augmented generation system with data from any website. 
 
-Retrieval-Augmented Generation (RAG) is a technique in AI and machine learning that integrates large language models with specific, current datasets. By combining the vast knowledge of large language models with specific up-to-date information from a curated dataset, RAG has emerged as a powerful technique for enhancing the accuracy and relevance of AI-generated responses.
+You’ll learn how to:
 
-Today, we're going to explore how to implement RAG using two open-source tools: [Fire Crawl](https://firecrawl.dev) and [Korvus](https://github.com/postgresml/korvus). Fire Crawl is a nifty web scraper that turns websites into clean, structured markdown data. Korvus - our Python, JavaScript, Rust and C RAG SDK - handles the heavy lifting of document processing, vector search, and response generation. Together they form a powerful duo for building RAG systems based on web content.
+1. Use Firecrawl to efficiently scrape web content (we’re using our blog as an example)
+2. Process and index the scraped data using Korvus's Pipeline and Collection
+3. Perform vector search, text generation and reranking (RAG) in a single query, using open-source models
 
-In this guide, we'll walk you through the process of crawling a website, processing the data, and performing RAG queries. Let's dive in!
+[Firecrawl](https://firecrawl.dev) is a nifty web scraper that turns websites into clean, structured markdown data — perfect to create a knowledge base for RAG applications. 
 
-## The Code
+[Korvus](https://github.com/postgresml/korvus) is the Python, JavaScript, Rust or C SDK for PostgresML. It handles the heavy lifting of document processing, vector search, and response generation in a single query. 
+
+[PostgresML](https://postgresml.org) is an in-database ML/AI engine built by the ML engineers at Instacart. It lets you train, test and deploy models right inside Postgres. With Korvus, you can get all the efficiencies of in-database machine learning without SQL or database management. 
+
+These three tools are all you’ll need to deploy a flexible and powerful RAG stack grounded in web data. Since your data is stored right where you're performing inference, you won’t need a vector database or an additional framework like LlamaIndex or Langchain to tie everything together. Mo’ microservices = more problems. 
+
+Let’s dive in!
+
+## Getting Started
 
 To follow along you will need to set both the `FIRECRAWL_API_KEY` and `KORVUS_DATABASE_URL` env variables.
 
@@ -46,7 +56,7 @@ import asyncio
 from rich import print
 
 # Initialize the FirecrawlApp with your API key
-app = FirecrawlApp(api_key=os.environ["FIRECRAWL_API_KEY"])
+firecrawl = FirecrawlApp(api_key=os.environ["FIRECRAWL_API_KEY"])
 ```
 
 Here we're importing `korvus`, `firecrawl`, and some other convenient libraries, and initializing the `FirecrawlApp` with an API key stored in an environment variable. This setup allows us to use Fire Crawl for web scraping.
@@ -93,10 +103,10 @@ def crawl():
         },
         "pageOptions": {"onlyMainContent": True},
     }
-    job = app.crawl_url(crawl_url, params=params, wait_until_done=False)
+    job = firecrawl.crawl_url(crawl_url, params=params, wait_until_done=False)
     while True:
         print("Scraping...")
-        status = app.check_crawl_status(job["jobId"])
+        status = firecrawl.check_crawl_status(job["jobId"])
         if not status["status"] == "active":
             break
         time.sleep(5)
