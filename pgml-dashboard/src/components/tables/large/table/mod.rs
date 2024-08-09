@@ -33,7 +33,7 @@ impl Table {
     }
 
     pub fn alt_style(mut self) -> Self {
-        self.classes.push_str(" alt_style");
+        self.classes.push_str(" alt-style");
         self
     }
 }

@@ -12,12 +12,12 @@
     <% } %>
   </tbody>
   <% if !footers.is_empty() {%>
-    <footer>
+    <tfoot>
       <tr>
         <% for footer in footers { %>
           <td><%+ footer %></td>
         <% } %>
       </tr>
-    </footer>
+    </tfoot>
   <% } %>
 </table>
