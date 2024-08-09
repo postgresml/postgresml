@@ -16,6 +16,9 @@ pub mod badges;
 pub mod breadcrumbs;
 pub use breadcrumbs::Breadcrumbs;
 
+// src/components/buttons
+pub mod buttons;
+
 // src/components/cards
 pub mod cards;
 

@@ -11,4 +11,13 @@
     <%+ row %>
     <% } %>
   </tbody>
+  <% if !footers.is_empty() {%>
+    <footer>
+      <tr>
+        <% for footer in footers { %>
+          <td><%+ footer %></td>
+        <% } %>
+      </tr>
+    </footer>
+  <% } %>
 </table>
