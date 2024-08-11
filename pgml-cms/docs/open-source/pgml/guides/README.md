@@ -8,7 +8,7 @@
   * [Normalization](embeddings/vector-normalization.md)
 * [Search](improve-search-results-with-machine-learning.md)
 * [Chatbots](chatbots/)
-* [Supervised Learning](supervised-learning.md)
+* [Supervised Learning](supervised-learning/supervised-learning.md)
 * [Unified RAG](unified-rag.md)
 * [Natural Language Processing](natural-language-processing.md)
 * [Vector Database](vector-database.md)

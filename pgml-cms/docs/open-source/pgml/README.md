@@ -18,7 +18,7 @@ See the [API](api/) for a full list of all functions provided by `pgml`.
 Common tasks include:
 - [Splitting text - pgml.chunk()](api/pgml.chunk)
 - [Generating embeddings - pgml.embed()](api/pgml.embed)
-- [Generating text - pgml.transform()](api/pgml.transform/text-generation)
+- [Generating text - pgml.transform()](guides/llms/text-generation.md)
 - [Streaming generated text - pgml.transform_stream()](api/pgml.transform_stream)
 
 ## Open-source LLMs
