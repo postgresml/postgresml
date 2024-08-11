@@ -97,7 +97,7 @@ SELECT pgml.transform(
 ```
 
 ## Tabular data
-- [47+ classification and regression algorithms](https://postgresml.org/docs/api/sql-extension/pgml.train/)
+- [47+ classification and regression algorithms](/docs/open-source/pgml/api/pgml.train)
 - [8 - 40X faster inference than HTTP based model serving](https://postgresml.org/blog/postgresml-is-8x-faster-than-python-http-microservices)
 - [Millions of transactions per second](https://postgresml.org/blog/scaling-postgresml-to-one-million-requests-per-second)
 - [Horizontal scalability](https://github.com/postgresml/pgcat)
@@ -142,7 +142,7 @@ docker run \
     sudo -u postgresml psql -d postgresml
 ```
 
-For more details, take a look at our [Quick Start with Docker](https://postgresml.org/docs/resources/developer-docs/quick-start-with-docker) documentation.
+For more details, take a look at our [Quick Start with Docker](https://postgresml.org/docs/open-source/pgml/developers/quick-start-with-docker) documentation.
 
 # Getting Started
 
@@ -1105,7 +1105,7 @@ pgml: SELECT logs->>'epoch' AS epoch, logs->>'step' AS step, logs->>'loss' AS lo
 During training, model is periodically uploaded to Hugging Face Hub. You will find the model at `https://huggingface.co/<username>/<project_name>`. An example model that was automatically pushed to Hugging Face Hub is [here](https://huggingface.co/santiadavani/imdb_review_sentiement).
 
 ### 6. Inference using fine-tuned model
-Now, that we have fine-tuned model on Hugging Face Hub, we can use [`pgml.transform`](https://postgresml.org/docs/introduction/apis/sql-extensions/pgml.transform/text-classification) to perform real-time predictions as well as batch predictions. 
+Now, that we have fine-tuned model on Hugging Face Hub, we can use [`pgml.transform`](/docs/open-source/pgml/guides/llms/text-classification) to perform real-time predictions as well as batch predictions. 
 
 **Real-time predictions**
 

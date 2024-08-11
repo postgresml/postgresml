@@ -29,7 +29,7 @@ Note that the input vectors have been reduced from 64 dimensions to 3, which exp
 
 ## Algorithms
 
-All decomposition algorithms implemented by PostgresML are online versions. You may use the [pgml.decompose](../../../api/sql-extension/pgml.decompose "mention") function to decompose novel data points after the model has been trained.
+All decomposition algorithms implemented by PostgresML are online versions. You may use the [pgml.decompose](/docs/open-source/pgml/api/pgml.decompose "mention") function to decompose novel data points after the model has been trained.
 
 | Algorithm                 | Reference                                                                                                           |
 |---------------------------|---------------------------------------------------------------------------------------------------------------------|

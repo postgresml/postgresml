@@ -146,8 +146,8 @@ not bad for less than an hour of coding.
 
 ### Final Thoughts
 
-This app is far from complete but does show an easy and scalable way to get started with ML in Express. From here I encourage you to head over to our [docs](https://postgresml.org/docs/api/sql-extension/) and see what other features could be added.
+This app is far from complete but does show an easy and scalable way to get started with ML in Express. From here I encourage you to head over to our [docs](https://postgresml.org/docs/) and see what other features could be added.
 
-If SQL is not your thing, no worries. Check out or [JS SDK](https://postgresml.org/docs/api/client-sdk/getting-started) to streamline all our best practices with simple JavaScript.&#x20;
+If SQL is not your thing, no worries. Check out or [JS SDK](https://postgresml.org/docs/open-source/korvus) to streamline all our best practices with simple JavaScript.&#x20;
 
 We love hearing from you — please reach out to us on [Discord ](https://discord.gg/DmyJP3qJ7U)or simply [Contact Us](https://postgresml.org/contact) here if you have any questions or feedback.&#x20;

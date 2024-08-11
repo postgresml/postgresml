@@ -10,7 +10,7 @@ In Postgres, a vector is just another data type that can be stored in regular ta
 
 ### Installing pgvector
 
-If you're using our [cloud](https://postgresml.org/signup) or our Docker image, your database has _pgvector_ installed already. If you're self-hosting PostgresML, take a look at our [Self-hosting](../resources/developer-docs/self-hosting/) documentation.
+If you're using our [cloud](https://postgresml.org/signup) or our Docker image, your database has _pgvector_ installed already. If you're self-hosting PostgresML, take a look at our [Self-hosting](/docs/open-source/pgml/developers/self-hosting/README) documentation.
 
 ### Working with vectors
 
@@ -43,7 +43,7 @@ ALTER TABLE
 
 #### Generating embeddings
 
-At first, the column is empty. To generate embeddings, we can use the PostgresML [pgml.embed()](/docs/api/sql-extension/pgml.embed) function and generate an embedding of another column in the same (or different) table. This is where machine learning inside the database really shines:
+At first, the column is empty. To generate embeddings, we can use the PostgresML [pgml.embed()](/docs/open-source/pgml/api/pgml.embed) function and generate an embedding of another column in the same (or different) table. This is where machine learning inside the database really shines:
 
 {% tabs %}
 {% tab title="SQL" %}
@@ -142,7 +142,7 @@ LIMIT 3;
 {% endtab %}
 {% endtabs %}
 
-This query uses [pgml.embed()](/docs/api/sql-extension/pgml.embed) to generate an embedding on the fly and finds the exact closest neighbors to that embedding in the entire dataset.
+This query uses [pgml.embed()](/docs/open-source/pgml/api/pgml.embed) to generate an embedding on the fly and finds the exact closest neighbors to that embedding in the entire dataset.
 
 ### Approximate nearest neighbors
 

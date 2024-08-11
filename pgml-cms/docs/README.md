@@ -23,16 +23,14 @@ PostgresML allows you to take advantage of the fundamental relationship between 
 
 These capabilities are primarily provided by two open-source software projects, that may be used independently, but are designed to be used together with the rest of the Postgres ecosystem:
 
-* [**pgml**](/docs/api/sql-extension/) - an open source extension for PostgreSQL. It adds support for GPUs and the latest ML & AI algorithms _inside_ the database with a SQL API and no additional infrastructure, networking latency, or reliability costs.
-* [**PgCat**](/docs/product/pgcat/) - an open source connection pooler for PostgreSQL. It abstracts the scalability and reliability concerns of managing a distributed cluster of Postgres databases. Client applications connect only to the pooler, which handles load balancing, sharding, and failover, outside of any single database server.
+* [**pgml**](/docs/open-source/pgml/) - an open source extension for PostgreSQL. It adds support for GPUs and the latest ML & AI algorithms _inside_ the database with a SQL API and no additional infrastructure, networking latency, or reliability costs.
+* [**PgCat**](/docs/open-source/pgcat/) - an open source connection pooler for PostgreSQL. It abstracts the scalability and reliability concerns of managing a distributed cluster of Postgres databases. Client applications connect only to the pooler, which handles load balancing, sharding, and failover, outside of any single database server.
 
 <figure><img src=".gitbook/assets/architecture.png" alt="PostgresML architectural diagram"><figcaption></figcaption></figure>
 
-To learn more about how we designed PostgresML, take a look at our [architecture overview](/docs/resources/architecture/).
-
 ## Client SDK
 
-The PostgresML team also provides [native language SDKs](/docs/api/client-sdk/) which implement best practices for common ML & AI applications. The JavaScript and Python SDKs are generated from the a core Rust library, which provides a uniform API, correctness and efficiency across all environments.
+The PostgresML team also provides [native language SDKs](/docs/open-source/korvus/) which implement best practices for common ML & AI applications. The JavaScript and Python SDKs are generated from the a core Rust library, which provides a uniform API, correctness and efficiency across all environments.
 
 While using the SDK is completely optional, SDK clients can perform advanced machine learning tasks in a single SQL request, without having to transfer additional data, models, hardware or dependencies to the client application.
 

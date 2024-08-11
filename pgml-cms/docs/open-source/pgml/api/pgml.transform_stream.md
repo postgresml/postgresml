@@ -2,7 +2,7 @@
 description: Stream generated text from state of the art models.
 ---
 
-# pgml.transform_stream
+# pgml.transform_stream()
 
 `pgml.transform_stream` mirrors `pgml.transform` with two caveats:
 - It returns a `SETOF JSONB` instead of `JSONB`.

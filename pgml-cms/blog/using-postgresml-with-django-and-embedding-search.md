@@ -28,7 +28,7 @@ PostgresML allows anyone to integrate advanced AI capabilities into their applic
 
 Advanced search engines like Google use this technique to extract the meaning of search queries and rank the results based on what the user actually _wants_, unlike simple keyword matches which can easily give irrelevant results.
 
-To accomplish this, for each document in our app, we include an embedding column stored as a vector. A vector is just an array of floating point numbers. For each item in our to-do list, we automatically generate the embedding using the PostgresML [`pgml.embed()`](https://postgresml.org/docs/introduction/apis/sql-extensions/pgml.embed) function. This function runs inside the database and doesn't require the Django app to install the model locally.
+To accomplish this, for each document in our app, we include an embedding column stored as a vector. A vector is just an array of floating point numbers. For each item in our to-do list, we automatically generate the embedding using the PostgresML [`pgml.embed()`](/docs/open-source/pgml/api/pgml.embed) function. This function runs inside the database and doesn't require the Django app to install the model locally.
 
 An embedding model running inside PostgresML is able to extract the meaning of search queries & compare it to the meaning of the documents it stores, just like a human being would if they were able to search millions of documents in just a few milliseconds.
 

@@ -12,7 +12,7 @@ Vector normalization converts a vector into a unit vector — that is, a vector 
 
 ## Storing and Normalizing Data
 
-Assume you've created a table in your database that stores embeddings generated using [pgml.embed()](../../api/sql-extension/pgml.embed.md), although you can normalize any vector.
+Assume you've created a table in your database that stores embeddings generated using [pgml.embed()](/docs/open-source/pgml/api/pgml.embed), although you can normalize any vector.
 
 ```postgresql
 CREATE TABLE documents (

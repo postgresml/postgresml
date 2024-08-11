@@ -30,7 +30,7 @@ If you'd like to use a different model you can also provision dedicated resource
 
 ## Creating Embeddings
 
-You can generate embeddings using [pgml.embed(model_name, text)](../../api/sql-extension/pgml.embed.md). For example:
+You can generate embeddings using [pgml.embed(model_name, text)](/docs/open-source/pgml/api/pgml.embed). For example:
 
 !!! generic
 
