@@ -866,9 +866,7 @@ pub async fn careers_apply(title: PathBuf, cluster: &Cluster) -> Result<Response
 pub async fn api_redirect(path: PathBuf) -> Redirect {
     match path.to_str().unwrap() {
         "apis" => Redirect::permanent("/docs/open-source/korvus/"),
-        "client-sdk/search" => {
-            Redirect::permanent("/docs/open-source/korvus/guides/document-search")
-        }
+        "client-sdk/search" => Redirect::permanent("/docs/open-source/korvus/guides/document-search"),
         "client-sdk/getting-started" => Redirect::permanent("/docs/open-source/korvus/"),
         "sql-extensions/pgml.predict/" => Redirect::permanent("/docs/open-source/pgml/api/pgml.predict/"),
         "sql-extensions/pgml.deploy" => Redirect::permanent("/docs/open-source/pgml/api/pgml.deploy"),
