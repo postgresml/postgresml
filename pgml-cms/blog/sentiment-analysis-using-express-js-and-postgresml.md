@@ -24,7 +24,7 @@ Express is a mature JS backend framework touted as being fast and flexible. It i
 
 Sentiment analysis is a valuable tool for understanding the emotional polarity of text. You can determine if the text is positive, negative, or neutral. Common use cases include understanding product reviews, survey questions, and social media posts.
 
-In this application, we'll be applying sentiment analysis to note taking. Note taking and journaling can be an excellent practice for work efficiency and self improvement. However, if you are like me, it quickly becomes impossible to find and make use of anything I've written down. Notes that are useful must be easy to navigate. With this motivation, let's create a demo that can record notes throughout the day. Each day will have a summary and sentiment score. That way, if I'm looking for that time a few weeks ago when we were frustrated with our old MLOps platform — it will be easy to find.&#x20;
+In this application, we'll be applying sentiment analysis to note taking. Note taking and journaling can be an excellent practice for work efficiency and self improvement. However, if you are like me, it quickly becomes impossible to find and make use of anything I've written down. Notes that are useful must be easy to navigate. With this motivation, let's create a demo that can record notes throughout the day. Each day will have a summary and sentiment score. That way, if I'm looking for that time a few weeks ago when we were frustrated with our old MLOps platform — it will be easy to find.
 
 We will perform all the Machine Learning heavy lifting with the pgml extension function `pgml.transform()`. This brings Hugging Face Transformers into our data layer.
 
@@ -36,7 +36,7 @@ You can see the full code on [GitHub](https://github.com/postgresml/example-expr
 
 This app is composed of three main parts, reading and writing to a database, performing sentiment analysis on entries, and creating a summary.
 
-We are going to use [postgresql-client](https://www.npmjs.com/package/postgresql-client) to connect to our DB.&#x20;
+We are going to use [postgresql-client](https://www.npmjs.com/package/postgresql-client) to connect to our DB.
 
 When the application builds we ensure we have two tables, one for notes and one for the the daily summary and sentiment score.
 
@@ -62,7 +62,7 @@ const day = await connection.execute(`
 
 We also have three endpoints to hit:
 
-* `app.get(“/", async (req, res, next)` which returns all the notes for that day and the daily summary.&#x20;
+* `app.get(“/", async (req, res, next)` which returns all the notes for that day and the daily summary.
 * `app.post(“/add", async (req, res, next)` which accepts a new note entry and performs a sentiment analysis. We simplify the score by converting it to 1, 0, -1 for positive, neutral, negative and save it in our notes table.
 
 ```postgresql
@@ -146,8 +146,8 @@ not bad for less than an hour of coding.
 
 ### Final Thoughts
 
-This app is far from complete but does show an easy and scalable way to get started with ML in Express. From here I encourage you to head over to our [docs](https://postgresml.org/docs/api/sql-extension/) and see what other features could be added.
+This app is far from complete but does show an easy and scalable way to get started with ML in Express. From here I encourage you to head over to our [docs](https://postgresml.org/docs) and see what other features could be added.
 
-If SQL is not your thing, no worries. Check out or [JS SDK](https://postgresml.org/docs/api/client-sdk/getting-started) to streamline all our best practices with simple JavaScript.&#x20;
+If SQL is not your thing, no worries. Check out or [JS SDK](https://postgresml.org/docs/open-source/korvus/) to streamline all our best practices with simple JavaScript.
 
-We love hearing from you — please reach out to us on [Discord ](https://discord.gg/DmyJP3qJ7U)or simply [Contact Us](https://postgresml.org/contact) here if you have any questions or feedback.&#x20;
+We love hearing from you — please reach out to us on [Discord ](https://discord.gg/DmyJP3qJ7U)or simply [Contact Us](https://postgresml.org/contact) here if you have any questions or feedback.

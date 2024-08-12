@@ -46,7 +46,7 @@ target |                                                                        
 
 ### Training a Model
 
-Now that we've got data, we're ready to train a model using an algorithm. We'll start with a classification task to demonstrate the basics. See [pgml.train](/docs/api/sql-extension/pgml.train/) for a complete list of available algorithms and tasks.
+Now that we've got data, we're ready to train a model using an algorithm. We'll start with a classification task to demonstrate the basics. See [pgml.train](/docs/open-source/pgml/api/pgml.train) for a complete list of available algorithms and tasks.
 
 ```postgresql
 SELECT * FROM pgml.train(
@@ -106,7 +106,7 @@ The `pgml.predict()` function is the key value proposition of PostgresML. It pro
 The API for predictions is very simple and only requires two arguments: the project name and the features used for prediction.
 
 ```postgresql
-select pgml.predict (
+select pgml.predict(
 	project_name TEXT,
 	features REAL[]
 )
@@ -195,7 +195,7 @@ SELECT * FROM pgml.deployed_models;
 
 PostgresML will automatically deploy a model only if it has better metrics than existing ones, so it's safe to experiment with different algorithms and hyperparameters.
 
-Take a look at [pgml.deploy](/docs/api/sql-extension/pgml.deploy) documentation for more details.
+Take a look at [pgml.deploy](/docs/open-source/pgml/api/pgml.deploy) documentation for more details.
 
 ### Specific Models
 

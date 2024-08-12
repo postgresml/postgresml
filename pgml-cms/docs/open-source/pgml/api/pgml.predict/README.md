@@ -11,7 +11,7 @@ description: >-
 The `pgml.predict()` function is the key value proposition of PostgresML. It provides online predictions using the best, automatically deployed model for a project. The API for predictions is very simple and only requires two arguments: the project name and the features used for prediction.
 
 ```postgresql
-select pgml.predict (
+select pgml.predict(
     project_name TEXT,
     features REAL[]
 )

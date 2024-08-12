@@ -20,15 +20,15 @@ This guide will introduce you to the fundamentals of embeddings within PostgresM
 
 In this guide, we will cover:
 
-* [In-database Generation](guides/embeddings/in-database-generation.md)
-* [Dimensionality Reduction](guides/embeddings/dimensionality-reduction.md)
-* [Aggregation](guides/embeddings/vector-aggregation.md)
-* [Similarity](guides/embeddings/vector-similarity.md)
-* [Normalization](guides/embeddings/vector-normalization.md)
+* [In-database Generation](in-database-generation.md)
+* [Dimensionality Reduction](dimensionality-reduction.md)
+* [Aggregation](vector-aggregation.md)
+* [Similarity](vector-similarity.md)
+* [Normalization](vector-normalization.md)
 <!--
-* [Indexing w/ pgvector](guides/embeddings/indexing-w-pgvector.md)
-* [Re-ranking nearest neighbors](guides/embeddings/re-ranking-nearest-neighbors.md)
-* [Proprietary Models](guides/embeddings/proprietary-models.md)
+* [Indexing w/ pgvector](indexing-w-pgvector.md)
+* [Re-ranking nearest neighbors](re-ranking-nearest-neighbors.md)
+* [Proprietary Models](proprietary-models.md)
 -->
 
 ## Embeddings are vectors
