@@ -1506,7 +1506,7 @@ Configuring these dataset arguments ensures that the model is trained on the app
 Once the fine-tuning is completed, you will see the model in your Hugging Face repository (example: https://huggingface.co/santiadavani/fingpt-llama2-7b-chat). Since we are using LoRA to fine tune the model we only save the adapter weights (~2MB) instead of all the 7B weights (14GB) in Llama2-7b model.  
 
 ## Inference
-For inference, we will be utilizing the [OpenSourceAI](https://postgresml.org/docs/use-cases/opensourceai) class from the [pgml SDK](https://postgresml.org/docs/api/client-sdk/getting-started). Here's an example code snippet:
+For inference, we will be utilizing the [OpenSourceAI](https://postgresml.org/docs/open-source/korvus/guides/opensourceai) class from the [pgml SDK](https://postgresml.org/docs/open-source/korvus/). Here's an example code snippet:
 
 ```python
 import pgml
