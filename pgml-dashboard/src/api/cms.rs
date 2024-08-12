@@ -66,7 +66,7 @@ lazy_static! {
             ("introduction/getting-started/import-your-data/", "introduction/import-your-data/"),
             ("introduction/getting-started/import-your-data/foreign-data-wrapper", "introduction/import-your-data/foreign-data-wrappers"),
             ("use-cases/embeddings/generating-llm-embeddings-with-open-source-models-in-postgresml", "open-source/pgml/guides/embeddings/in-database-generation"),
-            ("use-cases/natural-language-processing", "open-source/pgml/guides/natural-language-processing"),
+            ("use-cases/natural-language-processing", "open-source/pgml/guides/llms/"),
         ])
     );
 }

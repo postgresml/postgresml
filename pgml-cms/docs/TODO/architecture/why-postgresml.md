@@ -32,4 +32,4 @@ PostgresML simplifies things. By moving machine learning models to the database,
 </figure>
 
 
-For a detailed overview of how PostgresML works, take a look at our [architecture documentation](/docs/resources/architecture/).
+For a detailed overview of how PostgresML works, take a look at our [architecture documentation](/docs/).
