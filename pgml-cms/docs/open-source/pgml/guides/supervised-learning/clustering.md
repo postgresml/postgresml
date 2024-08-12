@@ -27,7 +27,7 @@ LIMIT 10;
 
 ## Algorithms
 
-All clustering algorithms implemented by PostgresML are online versions. You may use the [pgml.predict](/docs/open-source/pgml/api/pgml.predict "mention")function to cluster novel data points after the clustering model has been trained.
+All clustering algorithms implemented by PostgresML are online versions. You may use the [pgml.predict](/docs/open-source/pgml/api/pgml.predict/ "mention")function to cluster novel data points after the clustering model has been trained.
 
 | Algorithm              | Reference                                                                                                         |
 | ---------------------- | ----------------------------------------------------------------------------------------------------------------- |

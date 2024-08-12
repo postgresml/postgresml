@@ -1105,7 +1105,7 @@ pgml: SELECT logs->>'epoch' AS epoch, logs->>'step' AS step, logs->>'loss' AS lo
 During training, model is periodically uploaded to Hugging Face Hub. You will find the model at `https://huggingface.co/<username>/<project_name>`. An example model that was automatically pushed to Hugging Face Hub is [here](https://huggingface.co/santiadavani/imdb_review_sentiement).
 
 ### 6. Inference using fine-tuned model
-Now, that we have fine-tuned model on Hugging Face Hub, we can use [`pgml.transform`](/docs/open-source/pgml/guides/llms/text-classification) to perform real-time predictions as well as batch predictions. 
+Now, that we have fine-tuned model on Hugging Face Hub, we can use [`pgml.transform`](/docs/open-source/pgml/api/pgml.transform) to perform real-time predictions as well as batch predictions. 
 
 **Real-time predictions**
 

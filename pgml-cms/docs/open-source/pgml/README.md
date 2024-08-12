@@ -18,7 +18,7 @@ See the [API](api/) for a full list of all functions provided by `pgml`.
 Common tasks include:
 - [Splitting text - pgml.chunk()](api/pgml.chunk)
 - [Generating embeddings - pgml.embed()](api/pgml.embed)
-- [Generating text - pgml.transform()](guides/llms/text-generation.md)
+- [Generating text - pgml.transform()](api/pgml.transform)
 - [Streaming generated text - pgml.transform_stream()](api/pgml.transform_stream)
 
 ## Open-source LLMs
@@ -36,9 +36,9 @@ PostgresML defines four SQL functions which use [🤗 Hugging Face](https://hugg
 
 PostgresML defines four SQL functions which allow training regression, classification, and clustering models on tabular data:
 
-| Function | Description |
-|---------------|-------------|
+| Function | Description                                                                                                                                        |
+|---------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
 | [pgml.train()](api/pgml.train) | Train a model on PostgreSQL tables or views using any algorithm from Scikit-learn, with the additional support for XGBoost, LightGBM and Catboost. |
-| [pgml.predict()](api/pgml.predict/) | Run inference on live application data using a model trained with [pgml.train()](pgml.train). |
-| [pgml.deploy()](api/pgml.deploy) | Deploy a specific version of a model trained with pgml.train(), using your own accuracy metrics. |
-| [pgml.load_dataset()](api/pgml.load_dataset) | Load any of the toy datasets from Scikit-learn or any dataset from Hugging Face. |
+| [pgml.predict()](api/pgml.predict/) | Run inference on live application data using a model trained with [pgml.train()](api/pgml.train).                                                  |
+| [pgml.deploy()](api/pgml.deploy) | Deploy a specific version of a model trained with pgml.train(), using your own accuracy metrics.                                                   |
+| [pgml.load_dataset()](api/pgml.load_dataset) | Load any of the toy datasets from Scikit-learn or any dataset from Hugging Face.                                                                   |

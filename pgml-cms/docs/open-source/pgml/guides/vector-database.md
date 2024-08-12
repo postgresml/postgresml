@@ -10,7 +10,7 @@ In Postgres, a vector is just another data type that can be stored in regular ta
 
 ### Installing pgvector
 
-If you're using our [cloud](https://postgresml.org/signup) or our Docker image, your database has _pgvector_ installed already. If you're self-hosting PostgresML, take a look at our [Self-hosting](/docs/open-source/pgml/developers/self-hosting/README) documentation.
+If you're using our [cloud](https://postgresml.org/signup) or our Docker image, your database has _pgvector_ installed already. If you're self-hosting PostgresML, take a look at our [Self-hosting](/docs/open-source/pgml/developers/self-hosting/) documentation.
 
 ### Working with vectors
 
@@ -24,10 +24,8 @@ Using the example from [Tabular data](../../../introduction/import-your-data/sto
 {% tab title="SQL" %}
 
 ```postgresql
-ALTER TABLE
-    usa_house_prices
-ADD COLUMN
-    embedding VECTOR(384);
+ALTER TABLE usa_house_prices
+ADD COLUMN embedding VECTOR(384);
 ```
 
 {% endtab %}
@@ -49,8 +47,7 @@ At first, the column is empty. To generate embeddings, we can use the PostgresML
 {% tab title="SQL" %}
 
 ```postgresql
-UPDATE
-    usa_house_prices
+UPDATE usa_house_prices
 SET embedding = pgml.embed(
     'Alibaba-NLP/gte-base-en-v1.5',
     address
@@ -77,8 +74,7 @@ SELECT
     address,
     (embedding::real[])[1:5] 
 FROM usa_house_prices
-WHERE
-    address = '1 Infinite Loop, Cupertino, California';
+WHERE address = '1 Infinite Loop, Cupertino, California';
 
 ```
 
@@ -116,8 +112,7 @@ For example, if we wanted to find three closest matching addresses to `1 Infinit
 {% tab title="SQL" %}
 
 ```postgresql
-SELECT
-    address
+SELECT address
 FROM usa_house_prices
 ORDER BY 
     embedding <=> pgml.embed(
@@ -185,8 +180,7 @@ You can create an IVFFlat index with just one query:
 {% tab title="SQL" %}
 
 ```postgresql
-CREATE INDEX ON
-    usa_house_prices
+CREATE INDEX ON usa_house_prices
 USING ivfflat(embedding vector_cosine_ops)
 WITH (lists = 71);
 ```
@@ -207,8 +201,8 @@ CREATE INDEX
 {% tab title="SQL" %}
 
 ```postgresql
-EXPLAIN SELECT
-    address
+EXPLAIN 
+SELECT address
 FROM usa_house_prices
 ORDER BY 
     embedding <=> pgml.embed(
@@ -242,8 +236,7 @@ On the other hand, because of the nature of centroids, if the dataset changes in
 {% tab title="SQL" %}
 
 ```postgresql
-REINDEX INDEX CONCURRENTLY
-    usa_house_prices_embedding_idx;
+REINDEX INDEX CONCURRENTLY usa_house_prices_embedding_idx;
 ```
 
 {% endtab %}
@@ -270,10 +263,8 @@ You can create an HNSW index with just one query:
 {% tab title="SQL" %}
 
 ```postgresql
-CREATE INDEX ON
-    usa_house_prices
-USING
-    hnsw(embedding vector_cosine_ops);
+CREATE INDEX ON usa_house_prices
+USING hnsw(embedding vector_cosine_ops);
 ```
 
 {% endtab %}
