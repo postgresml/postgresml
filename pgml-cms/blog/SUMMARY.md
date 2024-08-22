@@ -1,6 +1,7 @@
 # Table of contents
 
 * [Home](README.md)
+* [Introducing postgresml-django: Seamless Integration of PostgresML and Django ORM](introducing-postgresml-django-seamless-integration-of-postgresml-and-django-orm.md)
 * [Sudowrite + PostgresML](sudowrite-postgresml.md)
 * [Korvus x Firecrawl: Rag in a single query](korvus-firecrawl-rag-in-a-single-query.md)
 * [A Speed Comparison of the Most Popular Retrieval Systems for RAG](a-speed-comparison-of-the-most-popular-retrieval-systems-for-rag.md)
