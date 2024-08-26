@@ -1,7 +1,7 @@
 ---
 description: >-
   How to implement semantic search in Postgres with nothing but SQL.
-featured: true
+featured: false
 tags: ["Engineering"]
 image: ".gitbook/assets/Blog-Image_Semantic-Search.jpg"
 ---

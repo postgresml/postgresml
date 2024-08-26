@@ -1,6 +1,7 @@
 # Table of contents
 
 * [Home](README.md)
+* [Sudowrite + PostgresML](sudowrite-postgresml.md)
 * [Korvus x Firecrawl: Rag in a single query](korvus-firecrawl-rag-in-a-single-query.md)
 * [A Speed Comparison of the Most Popular Retrieval Systems for RAG](a-speed-comparison-of-the-most-popular-retrieval-systems-for-rag.md)
 * [Korvus The All-in-One RAG Pipeline for PostgresML](introducing-korvus-the-all-in-one-rag-pipeline-for-postgresml.md)

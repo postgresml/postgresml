@@ -180,9 +180,9 @@
     background-color: #{$pink};
 }
 
-#ai-dev-summit-tip-container {
+.hide-admonition-title-container {
     .admonition-title {
-        display: none
+        display: none !important;
     }
 
     .admonition-tip {
