@@ -4,7 +4,7 @@ description: >-
   we announce our updated SDK that utilizes HNSW indexing to give world class
   performance in vector search.
 tags: [engineering]
-featured: true
+featured: false
 image: ".gitbook/assets/blog_image_hnsw.png"
 ---
 
