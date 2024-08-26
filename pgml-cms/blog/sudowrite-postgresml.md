@@ -37,7 +37,7 @@ James was sold on the simplicity of doing AI in Postgres, the database his engin
 !!! tip
 
 <p class="center">
-    "Why add yet another database to your stack if you don't have to? Being able to co-locate your data – to query across the same metadata stack – is a no brainer.”
+    <i>"Why add yet another database to your stack if you don't have to? Being able to co-locate your data – to query across the same metadata stack – is a no brainer.”</i>
 </p>
 
 <p><i>James Yu, Founder @Sudowrite</i></p>
@@ -75,7 +75,7 @@ Performance and scalability were initial concerns for Sudowrite, given their lar
 !!! tip
 
 <p class="center">
-“The quality – especially the RAG piece – has been great. In terms of scaling and everything, it’s been great.”
+<i>"The quality – especially the RAG piece – has been great. In terms of scaling and everything, it’s been great."</i>
 </p>
 
 !!!
@@ -100,7 +100,7 @@ James and his team are just getting started. They're cooking up plans to:
 !!! tip
 
 <p class="center">
-“PostgresML has given us a solid foundation for our product. Their RAG extends the capabilities of our LLMs. It’s an essential ingredient for us to create tools that help writers create even more amazing stories."
+<i>"PostgresML has given us a solid foundation for our product. Their RAG extends the capabilities of our LLMs. It’s an essential ingredient for us to create tools that help writers create even more amazing stories."</i>
 </p>
 
 !!!
