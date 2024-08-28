@@ -29,7 +29,7 @@ James Yu, Sudowrite’s founder and CTO, knew that meant standing up a RAG (retr
 
 PostgresML is simple – it’s PostgreSQL with GPUs for ML/AI apps. Along with GPUs, the PostgresML Cloud provides a full-featured machine learning platform right in the database; with functionality for search, embeddings, retrieval and more. 
 
-James was sold on the simplicity of doing AI in Postgres, the database his engineers already use and love
+James was sold on the simplicity of doing AI in Postgres, the database his engineers already use and love:
 
 
 <div class="hide-admonition-title-container">
