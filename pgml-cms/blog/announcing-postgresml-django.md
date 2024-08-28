@@ -1,11 +1,11 @@
 ---
-description: Introducing postgresml-django a Python module that seamlessly integrates PostgresML and Django.
+description: The Python module that seamlessly integrates PostgresML and Django ORM
 featured: true
-tags: [engineering]
+tags: [product]
 image: ".gitbook/assets/Blog-Image_Korvus-Firecrawl.jpg"
 ---
 
-# Introducing postgresml-django: Seamless Integration of PostgresML and Django ORM
+# Announcing postgresml-django
 
 <div align="left">
 
