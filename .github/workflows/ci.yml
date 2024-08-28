@@ -45,7 +45,7 @@ jobs:
             ~/.cargo
             pgml-extension/target
             ~/.pgrx
-          key: ${{ runner.os }}-rust-1.74-${{ hashFiles('pgml-extension/Cargo.lock') }}-bust2
+          key: ${{ runner.os }}-rust-1.79-${{ hashFiles('pgml-extension/Cargo.lock') }}-bust2
       - name: Install pgrx
         if: steps.pgml_extension_changed.outputs.PGML_EXTENSION_CHANGED_FILES != '0'
         run: |
