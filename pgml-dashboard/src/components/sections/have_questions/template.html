@@ -2,21 +2,6 @@
 
 <div class="d-flex flex-column gap-4" data-controller="sections-have-questions">
   <div class="w-100 justify-content-center d-flex flex-column text-center">
-    <h4>Have Questions?</h4>
-    <p><a class="text-decoration-underline" href="https://discord.gg/DmyJP3qJ7U">Join our Discord</a> and ask us anything! We're friendly and would love to talk about PostgresML and PgCat.</p>
+    <h4>Have more questions?</h4>
+    <p><a class="text-decoration-underline" href="https://discord.gg/DmyJP3qJ7U">Join our Discord</a> to chat with our team and the community.</p>
   </div>
-
-  <div class="w-100 text-center">
-    <p class="h3 m-0">🦉</p>
-  </div>
-  
-  <% if !standalone_dashboard() { %>
-  <div class="w-100 justify-content-center d-flex flex-column text-center">
-    <h4>Try PostresML using our free serverless cloud. </h4>
-  </div>
-
-  <div class="d-flex justify-content-center">
-    <a class="btn btn-primary" href="<%- crate::utils::config::signup_url() %>">Start Your Project</a>
-  </div>
-  <% } %>
-</div>
