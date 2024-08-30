@@ -23,10 +23,6 @@ pub mod cards;
 pub mod carousel;
 pub use carousel::Carousel;
 
-// src/components/chatbot
-pub mod chatbot;
-pub use chatbot::Chatbot;
-
 // src/components/cms
 pub mod cms;
 
