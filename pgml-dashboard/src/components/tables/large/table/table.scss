@@ -79,3 +79,44 @@ table.table.table-lg {
     height: 100%;
   }
 }
+
+table.table.table-lg.alt-style {
+  border: 1px solid #{$peach-tint-100};
+  border-spacing: 0px;
+  background: #{$gray-800};
+  border-radius: $border-radius;
+  --bs-table-hover-bg: #{$gray-800};
+
+  tbody {
+      tr td {
+      background-color: #{$gray-800};
+      border-radius: 0;
+    }
+  }
+
+  tfoot tr td {
+      background-color: #{$gray-700};
+      padding: 16px 0px;
+  }
+
+  td:first-child, td:last-child {
+    width: 67px;
+    padding: 0px
+  }
+
+  tr:first-child td:first-child {
+    border-top-left-radius: $border-radius;
+  }
+
+  tr:first-child td:last-child {
+    border-top-right-radius: $border-radius;
+  }
+
+  tr:last-child td:first-child {
+    border-bottom-left-radius: $border-radius;
+  }
+
+  tr:last-child td:last-child {
+    border-bottom-right-radius: $border-radius;
+  }
+}
