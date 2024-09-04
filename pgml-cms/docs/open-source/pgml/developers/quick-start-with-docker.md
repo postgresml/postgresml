@@ -4,7 +4,7 @@ To try PostgresML on your system for the first time, [Docker](https://docs.docke
 
 !!! tip
 
-If you're looking to get started with PostgresML as quickly as possible, [sign up](https://postgresml.org/signup) for our free serverless [cloud](https://postgresml.org/signup). You'll get a database in seconds, and will be able to use all the latest Hugging Face models on modern GPUs.
+If you're looking to get started with PostgresML as quickly as possible, [sign up](https://postgresml.org/signup) for our free serverless cloud. You'll get a database in seconds, and will be able to use all the latest Hugging Face models on modern GPUs.
 
 !!!
 

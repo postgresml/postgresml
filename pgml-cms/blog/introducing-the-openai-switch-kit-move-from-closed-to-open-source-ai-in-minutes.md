@@ -1,5 +1,5 @@
 ---
-featured: true
+featured: false
 tags: [engineering, product]
 description: >-
   Quickly and easily transition from the confines of the OpenAI APIs to higher

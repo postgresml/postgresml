@@ -1,8 +1,9 @@
 ---
 description: >-
   How to implement semantic search in Postgres with nothing but SQL.
-featured: true
+featured: false
 tags: ["Engineering"]
+image: ".gitbook/assets/Blog-Image_Semantic-Search.jpg"
 ---
 
 # Implementing Semantic Search in Postgres in 15 Minutes
@@ -55,7 +56,7 @@ SELECT pgml.embed('mixedbread-ai/mxbai-embed-large-v1', 'Generating embeddings i
 
 !!!
 
-We used the [pgml.embed](/docs/api/sql-extension/pgml.embed) PostresML function to generate an embedding of the sentence "Generating embeddings in Postgres is fun!" using the [mixedbread-ai/mxbai-embed-large-v1](https://huggingface.co/mixedbread-ai/mxbai-embed-large-v1) model from mixedbread.ai.
+We used the [pgml.embed](/docs/open-source/pgml/api/pgml.embed) PostresML function to generate an embedding of the sentence "Generating embeddings in Postgres is fun!" using the [mixedbread-ai/mxbai-embed-large-v1](https://huggingface.co/mixedbread-ai/mxbai-embed-large-v1) model from mixedbread.ai.
 
 The output size of the vector varies per model, and in `mxbai-embed-large-v1` outputs vectors with 1024 dimensions: each vector contains 1024 floating point numbers. 
 

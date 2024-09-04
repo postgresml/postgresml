@@ -4,7 +4,7 @@ description: Generate high quality embeddings with faster end-to-end vector oper
 
 # pgml.embed()
 
-The `pgml.embed()` function generates [embeddings](/docs/use-cases/embeddings/) from text, using in-database models downloaded from Hugging Face. Thousands of [open-source models](https://huggingface.co/models?library=sentence-transformers) are available and new and better ones are being published regularly.
+The `pgml.embed()` function generates [embeddings](/docs/open-source/pgml/guides/embeddings/) from text, using in-database models downloaded from Hugging Face. Thousands of [open-source models](https://huggingface.co/models?library=sentence-transformers) are available and new and better ones are being published regularly.
 
 ## API
 
@@ -79,3 +79,7 @@ LIMIT 1;
 ```
 
 This query will return the quote with the most similar meaning to `'Feel the force!'` by generating an embedding of that quote and comparing it to all other embeddings in the table, using vector cosine similarity as the measure of distance.
+
+## Examples 
+
+See the [embeddings](/docs/open-source/pgml/guides/embeddings/) guide for more examples.

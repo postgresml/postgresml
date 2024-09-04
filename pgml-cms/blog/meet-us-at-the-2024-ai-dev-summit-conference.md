@@ -1,5 +1,5 @@
 ---
-featured: true
+featured: false
 description: in South San Francisco May 29-30
 image: ".gitbook/assets/image/ai_dev_summit.png"
 ---
@@ -20,7 +20,7 @@ Excitement is brewing as the [AI DevSummit](https://aidevsummit.co/) approaches,
 
 AI DevSummit is the world’s largest artificial intelligence developer & engineering conference with tracks covering chatbots, machine learning, open source AI libraries, AI for the enterprise, and deep AI / neural networks. 
 
-<div id="ai-dev-summit-tip-container">
+<div class="hide-admonition-title-container">
 
 !!! tip
 
