@@ -29,7 +29,6 @@ log = "0.4"
 markdown = "1.0.0-alpha.14"
 num-traits = "0.2"
 once_cell = "1.18"
-pgml = { path = "../pgml-sdks/pgml/" }
 pgml-components = { path = "../packages/pgml-components" }
 pgvector = { version = "0.3", features = [ "sqlx", "postgres" ] }
 rand = "0.8"
@@ -53,6 +52,7 @@ yaml-rust = "0.4"
 zoomies = { git="https://github.com/HyperparamAI/zoomies.git", branch="master" }
 ws = { package = "rocket_ws", git = "https://github.com/SergioBenitez/Rocket" }
 futures = "0.3.29"
+korvus = "1.1.2"
 
 [build-dependencies]
 glob = "*"
