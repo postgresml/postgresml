@@ -2,7 +2,7 @@
 description: The Python module that seamlessly integrates PostgresML and Django ORM
 featured: true
 tags: [product]
-image: ".gitbook/assets/Blog-Image_Korvus-Firecrawl.jpg"
+image: ".gitbook/assets/django-pgml_blog-image.png"
 ---
 
 # Announcing postgresml-django
@@ -15,9 +15,9 @@ image: ".gitbook/assets/Blog-Image_Korvus-Firecrawl.jpg"
 
 Silas Marvin
 
-August 8, 2024
+September 10, 2024
 
-We're excited to announce the release of postgresml-django, a Python module that bridges the gap between PostgresML and Django ORM. This powerful tool enables automatic in-database embedding of Django models, simplifying the process of creating and searching vector embeddings for your text data.
+We're excited to announce the release of [postgresml-django](https://github.com/postgresml/postgresml-django), a Python module that bridges the gap between PostgresML and Django ORM. This powerful tool enables automatic in-database embedding of Django models, simplifying the process of creating and searching vector embeddings for your text data.
 
 With postgresml-django, you can:
 - Automatically generate in-database embeddings for specified fields in your Django models
