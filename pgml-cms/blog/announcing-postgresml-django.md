@@ -26,7 +26,7 @@ With postgresml-django, you can:
 
 Whether you're building a recommendation system, a semantic search engine, or any application requiring text similarity comparisons, postgresml-django streamlines your workflow and enhances your Django projects with the power of PostgresML.
 
-## Quick Start
+## Quick start
 
 Here's a simple example of how to use postgresml-django with a Django model:
 
@@ -48,7 +48,7 @@ results = Document.vector_search("text_embedding", "query to search against")
 
 In this example, we define a `Document` model with a `text` field and a `text_embedding` VectorField. The VectorField automatically generates embeddings for the `text` field using the specified transformer. The `vector_search` method allows for easy similarity searches based on these embeddings.
 
-## Why We are Excited About this
+## Why we are excited about this
 
 There are ton of reasons we are excited for this release but they can all be summarized by two main points:
 
