@@ -95,6 +95,21 @@ export default class extends Controller {
     };
   }
 
+  onQuestionChange() {
+    let transaction = this.editor.state.update({
+      changes: {
+        from: 0,
+        to: this.editor.state.doc.length,
+        insert: generateSql(
+          this.currentTask(),
+          this.currentModel(),
+          this.questionInputTarget.value,
+        ),
+      },
+    });
+    this.editor.dispatch(transaction);
+  }
+
   currentTask() {
     return this.hasTaskTarget ? this.taskTarget.value : this.defaultTaskValue;
   }

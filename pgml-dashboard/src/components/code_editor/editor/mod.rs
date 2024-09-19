@@ -14,6 +14,7 @@ pub struct Editor {
     is_editable: bool,
     run_on_visible: bool,
     content: Option<String>,
+    default_result: String,
 }
 
 impl Editor {
@@ -29,6 +30,7 @@ impl Editor {
             is_editable: true,
             run_on_visible: false,
             content: None,
+            default_result: "AI is going to change the world!".to_string(),
         }
     }
 
@@ -44,10 +46,11 @@ impl Editor {
             is_editable: false,
             run_on_visible: false,
             content: None,
+            default_result: "Unified RAG is...".to_string(),
         }
     }
 
-    pub fn new_custom(content: &str) -> Editor {
+    pub fn new_custom(content: &str, default_result: &str) -> Editor {
         Editor {
             show_model: false,
             show_task: false,
@@ -59,7 +62,13 @@ impl Editor {
             is_editable: true,
             run_on_visible: false,
             content: Some(content.to_owned()),
+            default_result: default_result.to_string(),
         }
+    }
+
+    pub fn set_default_result(mut self, default_result: &str) -> Editor {
+        self.default_result = default_result.to_string();
+        self
     }
 
     pub fn set_show_model(mut self, show_model: bool) -> Self {
