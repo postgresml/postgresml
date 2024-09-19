@@ -4,7 +4,7 @@ export const generateSql = (task, model, userInput) => {
   let extraTaskArgs = generateTaskArgs(task, model, "sql");
 
   if (!userInput && task == "embedded-query") {
-    userInput ="What is Postgres?"
+    userInput ="What is Unified RAG?"
   }
 
   let argsOutput = "";
@@ -28,23 +28,29 @@ export const generateSql = (task, model, userInput) => {
 );`;
   } else if (task === "embedded-query") {
     return `WITH embedded_query AS (
-  SELECT pgml.embed('mixedbread-ai/mxbai-embed-large-v1', 'What is Postgres?', '{"prompt": "Represent this sentence for searching relevant passages: "}'::JSONB)::vector embedding
+  SELECT pgml.embed(
+    'mixedbread-ai/mxbai-embed-large-v1', 
+    '${userInput}', 
+    '{"prompt": "Represent this sentence for searching relevant passages: "}'::JSONB
+  )::vector embedding
 ),
 context_query AS (
-  SELECT chunks.chunk FROM chunks
-  INNER JOIN embeddings ON embeddings.chunk_id = chunks.id
-  ORDER BY embeddings.embedding <=> (SELECT embedding FROM embedded_query)
-  LIMIT 1
+  SELECT string_agg(chunk, '\n\n') as context FROM (
+      SELECT chunks.chunk FROM chunks 
+          INNER JOIN embeddings ON embeddings.chunk_id = chunks.id
+          ORDER BY embeddings.embedding <=> (SELECT embedding FROM embedded_query)
+          LIMIT 5
+  ) sub
 )
 SELECT
   pgml.transform(
     task => '{
       "task": "conversational",
-      "model": "meta-llama/Meta-Llama-3.1-8B-Instruct"
+      "model": "meta-llama/Meta-Llama-3.1-70B-Instruct"
     }'::jsonb,
-    inputs => ARRAY['{"role": "system", "content": "You are a friendly and helpful chatbot."}'::jsonb, jsonb_build_object('role', 'user', 'content', replace('Given the context answer the following question. ${userInput}? Context:\n{CONTEXT}', '{CONTEXT}', chunk))],
+    inputs => ARRAY['{"role": "system", "content": "You are a question answering chatbot. Answer the users question using the provided context."}'::jsonb, jsonb_build_object('role', 'user', 'content', replace('Question:\n\n${userInput}\n\nContext:\n\n{CONTEXT}', '{CONTEXT}', context))],
     args => '{
-      "max_new_tokens": 100
+      "max_new_tokens": 512
     }'::jsonb
   )
 FROM context_query;`
