@@ -11,7 +11,7 @@ table.table.table-sm {
       background: transparent;
       text-transform: uppercase;
       font-size: 12px;
-      padding: 12px 12px 12px 0;
+      padding: 12px 12px 12px 0.25rem;
       border-bottom: 1px solid #{$gray-600};
       font-weight: #{$font-weight-semibold};
     }
@@ -25,6 +25,18 @@ table.table.table-sm {
         &:hover {
             --bs-table-hover-bg: transparent;
         }
+    }
+  }
+
+  tfoot {
+    td {
+      color: #{$gray-300};
+      background: transparent;
+      text-transform: uppercase;
+      font-size: 12px;
+      padding: 12px 12px 0px .25rem;
+      border-top: 1px solid #{$gray-600};
+      font-weight: #{$font-weight-semibold};
     }
   }
 
