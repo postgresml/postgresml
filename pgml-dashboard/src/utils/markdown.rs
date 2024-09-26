@@ -1247,20 +1247,20 @@ pub struct SearchResult {
 
 #[derive(Clone)]
 pub struct SiteSearch {
-    collection: pgml::Collection,
-    pipeline: pgml::Pipeline,
+    collection: korvus::Collection,
+    pipeline: korvus::Pipeline,
 }
 
 impl SiteSearch {
     pub async fn new() -> anyhow::Result<Self> {
-        let collection = pgml::Collection::new(
+        let collection = korvus::Collection::new(
             &format!("{}-1", env!("CMS_HASH")),
             Some(
                 std::env::var("SITE_SEARCH_DATABASE_URL")
                     .context("Please set the `SITE_SEARCH_DATABASE_URL` environment variable")?,
             ),
         )?;
-        let pipeline = pgml::Pipeline::new(
+        let pipeline = korvus::Pipeline::new(
             "hypercloud-site-search-p-0",
             Some(
                 serde_json::json!({
@@ -1390,7 +1390,7 @@ impl SiteSearch {
                         .is_empty()
             })
             .collect();
-        let documents: Vec<pgml::types::Json> = documents
+        let documents: Vec<korvus::types::Json> = documents
             .into_iter()
             .map(|d| {
                 let mut document_json = serde_json::to_value(d).unwrap();

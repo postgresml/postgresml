@@ -9,6 +9,7 @@ pub struct Slider {
     image: String,
     bullets: Vec<String>,
     state: String,
+    text: String,
 }
 
 impl Slider {
@@ -19,6 +20,7 @@ impl Slider {
             image: String::new(),
             bullets: Vec::new(),
             state: String::new(),
+            text: String::new(),
         }
     }
 
@@ -39,6 +41,11 @@ impl Slider {
 
     pub fn bullets(mut self, bullets: Vec<String>) -> Self {
         self.bullets = bullets;
+        self
+    }
+
+    pub fn text<T: Into<String>>(mut self, text: T) -> Self {
+        self.text = text.into();
         self
     }
 

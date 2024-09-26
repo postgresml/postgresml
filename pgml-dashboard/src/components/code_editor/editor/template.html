@@ -113,7 +113,7 @@
           <div class="d-flex flex-row position-relative pt-3 pb-3 ps-4 pe-4">
             <div class="d-flex align-items-lg-center gap-lg-3 flex-fill flex-column flex-lg-row question-input">
               <label class=""><strong class="text-uppercase text-white">Question:</strong></label>
-              <input type="text" class="form-control" placeholder="Ask a question about PGML" data-code-editor-editor-target="questionInput">
+              <input type="text" class="form-control" placeholder="Ask a question about PGML" data-code-editor-editor-target="questionInput" data-action="code-editor-editor#onQuestionChange">
             </div>
             <% if btn_location == "question-header" {%>
               <div class="d-flex align-items-center">
@@ -156,7 +156,7 @@
         </div>
         
         <div id="editor-play-result-stream" data-code-editor-editor-target="resultStream">
-          AI is going to change the world!
+          <%= default_result %>
         </div>
         
       </div>
