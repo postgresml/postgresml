@@ -7,6 +7,7 @@ pub struct Table {
     classes: String,
     headers: Vec<String>,
     rows: Vec<Component>,
+    footers: Vec<Component>,
 }
 
 impl Table {
@@ -15,7 +16,13 @@ impl Table {
             headers: headers.iter().map(|h| h.to_string()).collect(),
             classes: "table table-sm".into(),
             rows: rows.to_vec(),
+            footers: vec![],
         }
+    }
+
+    pub fn footers(mut self, footer: Vec<Component>) -> Self {
+        self.footers = footer;
+        self
     }
 }
 
