@@ -56,6 +56,7 @@ CREATE TABLE IF NOT EXISTS pgml.projects(
 SELECT pgml.auto_updated_at('pgml.projects');
 CREATE UNIQUE INDEX IF NOT EXISTS projects_name_idx ON pgml.projects(name);
 
+ALTER TABLE pgml.projects ALTER COLUMN id SET DEFAULT snowflake.nextval();
 
 ---
 --- Snapshots freeze data for training
@@ -75,6 +76,7 @@ CREATE TABLE IF NOT EXISTS pgml.snapshots(
 );
 SELECT pgml.auto_updated_at('pgml.snapshots');
 
+ALTER TABLE pgml.snapshots ALTER COLUMN id SET DEFAULT snowflake.nextval();
 
 ---
 --- Models save the learned parameters
@@ -101,7 +103,7 @@ CREATE INDEX IF NOT EXISTS models_project_id_idx ON pgml.models(project_id);
 CREATE INDEX IF NOT EXISTS models_snapshot_id_idx ON pgml.models(snapshot_id);
 SELECT pgml.auto_updated_at('pgml.models');
 
-
+ALTER TABLE pgml.models ALTER COLUMN id SET DEFAULT snowflake.nextval();
 ---
 --- Deployments determine which model is live
 ---
@@ -118,6 +120,7 @@ CREATE INDEX IF NOT EXISTS deployments_project_id_created_at_idx ON pgml.deploym
 CREATE INDEX IF NOT EXISTS deployments_model_id_created_at_idx ON pgml.deployments(model_id);
 SELECT pgml.auto_updated_at('pgml.deployments');
 
+ALTER TABLE pgml.deployments ALTER COLUMN id SET DEFAULT snowflake.nextval();
 ---
 --- Distribute serialized models consistently for HA
 ---
@@ -134,6 +137,7 @@ CREATE TABLE IF NOT EXISTS pgml.files(
 CREATE UNIQUE INDEX IF NOT EXISTS files_model_id_path_part_idx ON pgml.files(model_id, path, part);
 SELECT pgml.auto_updated_at('pgml.files');
 
+ALTER TABLE pgml.files ALTER COLUMN id SET DEFAULT snowflake.nextval();
 ---
 --- Quick status check on the system.
 ---
