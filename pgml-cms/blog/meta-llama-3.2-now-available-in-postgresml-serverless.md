@@ -5,7 +5,7 @@ tags: [product]
 image: ".gitbook/assets/Blog-Image_Llama-3.2.jpg"
 ---
 
-# Meta’s Llama 3.2 now available in PostgresML serverless
+# Llama 3.2 now available in PostgresML serverless
 
 <div align="left">
 
@@ -16,7 +16,6 @@ image: ".gitbook/assets/Blog-Image_Llama-3.2.jpg"
 Cassandra Stummer
 
 September 27, 2024
-
   
 Today, we're excited to announce that PostgresML now supports Llama 3.2, a development that not only enhances our capabilities, but also aligns with our core philosophy: bring the models to your data, not the other way around.
 
@@ -32,6 +31,10 @@ As models become smaller and datasets grow larger, the traditional approach of m
 
 ## What this means for you
 
+The Instruct variants, LLama 3.2 1B and 3B, are now standard models included with all Serverless Databases at **no additional cost**. You can try them now. 
+
+## Getting Started
+
 Integrating Llama 3.2 with PostgresML is straightforward. Here's a quick example:
 
 ```postgresql
@@ -43,10 +46,6 @@ SELECT pgml.transform(
   inputs  => Array['AI is going to'] 
 );
 ```
-
-## What this means for you
-
-LLama 3.2 is now a standard model included with all Serverless Databases at no additional cost. You can try it now. 
 
 ## The road ahead
 
