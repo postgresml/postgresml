@@ -1,6 +1,7 @@
 # Table of contents
 
 * [Home](README.md)
+* [Meta’s Llama 3.2 Now Available in PostgresML Serverless](meta-llama-3.2-now-available-in-postgresml-serverless.md)
 * [Announcing postgresml-django](announcing-postgresml-django.md)
 * [Sudowrite + PostgresML](sudowrite-postgresml.md)
 * [Korvus x Firecrawl: Rag in a single query](korvus-firecrawl-rag-in-a-single-query.md)
