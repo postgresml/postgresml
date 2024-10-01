@@ -21,116 +21,38 @@ Move models to the database, rather than constantly moving data to the models.
 
 Data for ML & AI systems is inherently larger and more dynamic than the models. It's more efficient, manageable and reliable to move models to the database, rather than continuously moving data to the models.
 
-
 <b> Table of contents </b>
-- [Installation](#installation)
 - [Getting started](#getting-started)
-- [Natural Language Processing](#nlp-tasks)
-    - [Text Classification](#text-classification)
-    - [Zero-Shot Classification](#zero-shot-classification)
-    - [Token Classification](#token-classification)
-    - [Translation](#translation)
-    - [Summarization](#summarization)
-    - [Question Answering](#question-answering)
-    - [Text Generation](#text-generation)
-    - [Text-to-Text Generation](#text-to-text-generation)
-    - [Fill-Mask](#fill-mask)
+    - [PostgresML Cloud](#postgresml-cloud)
+    - [Self-hosted](#self-hosted)
+    - [Ecosystem](#ecosystem)
+- [Large Language Models](#large-language-models)
+    - [Chunk](#chunk)
+    - [Embed](#embed)
+    - [Rank](#rank)
+    - [Transform](#transform)
+- [Classical Machine Learning](#classical-machine-learning)
 - [Vector Database](#vector-database)
 - [LLM Fine-tuning](#llm-fine-tuning)
     - [Text Classification - 2 classes](#text-classification-2-classes)
     - [Text Classification - 9 classes](#text-classification-9-classes)
     - [Conversation](#conversation)
-<!-- - [Regression](#regression)
-- [Classification](#classification) -->
 
-## Text Data
-- Perform natural language processing (NLP) tasks like sentiment analysis, question and answering, translation, summarization and text generation
-- Access 1000s of state-of-the-art language models like GPT-2, GPT-J, GPT-Neo from :hugs: HuggingFace model hub
-- Fine tune large language models (LLMs) on your own text data for different tasks
-- Use your existing PostgreSQL database as a vector database by generating embeddings from text stored in the database.
+<b>TODO: INSERT DIAGRAM HERE AND SHORT EXPLANATION HERE</b>
 
-**Translation**
+# Getting Started
 
-*SQL query*
-
-```postgresql
-SELECT pgml.transform(
-    'translation_en_to_fr',
-    inputs => ARRAY[
-        'Welcome to the future!',
-        'Where have you been all this time?'
-    ]
-) AS french;
-```
-*Result*
-
-```postgresql
-                         french                                 
-------------------------------------------------------------
-
-[
-    {"translation_text": "Bienvenue à l'avenir!"},
-    {"translation_text": "Où êtes-vous allé tout ce temps?"}
-]
-```
-
-**Sentiment Analysis**
-*SQL query*
-
-```postgresql
-SELECT pgml.transform(
-    task   => 'text-classification',
-    inputs => ARRAY[
-        'I love how amazingly simple ML has become!', 
-        'I hate doing mundane and thankless tasks. ☹️'
-    ]
-) AS positivity;
-```
-*Result*
-```postgresql
-                    positivity
-------------------------------------------------------
-[
-    {"label": "POSITIVE", "score": 0.9995759129524232}, 
-    {"label": "NEGATIVE", "score": 0.9903519749641418}
-]
-```
-
-## Tabular data
-- [47+ classification and regression algorithms](https://postgresml.org/docs/open-source/pgml/api/pgml.train)
-- [8 - 40X faster inference than HTTP based model serving](https://postgresml.org/blog/postgresml-is-8x-faster-than-python-http-microservices)
-- [Millions of transactions per second](https://postgresml.org/blog/scaling-postgresml-to-one-million-requests-per-second)
-- [Horizontal scalability](https://postgresml.org/docs/open-source/pgcat/)
-
-**Training a classification model**
-
-*Training*
-```postgresql
-SELECT * FROM pgml.train(
-    'Handwritten Digit Image Classifier',
-    algorithm => 'xgboost',
-    'classification',
-    'pgml.digits',
-    'target'
-);
-```
-
-*Inference*
-```postgresql
-SELECT pgml.predict(
-    'My Classification Project', 
-    ARRAY[0.1, 2.0, 5.0]
-) AS prediction;
-```
-
-# Installation
-PostgresML installation consists of three parts: PostgreSQL database, Postgres extension for machine learning and a dashboard app. The extension provides all the machine learning functionality and can be used independently using any SQL IDE. The dashboard app provides an easy to use interface for writing SQL notebooks, performing and tracking ML experiments and ML models.
+The only prerequisites for using PostgresML is a Postgres database with our open-source `pgml` extension installed.
 
 ## Serverless Cloud
 
-If you want to check out the functionality without the hassle of Docker, [sign up for a free PostgresML account](https://postgresml.org/signup). You'll get a free database in seconds, with access to GPUs and state of the art LLMs.
+Our serverless cloud is the easiest and recommend way to get started.
 
-## Docker
+[Sign up for a free PostgresML account](https://postgresml.org/signup). You'll get a free database in seconds, with access to GPUs and state of the art LLMs.
+
+## Self-hosted
+
+If you don't want to use our cloud you can self host it.
 
 ```
 docker run \
@@ -144,52 +66,74 @@ docker run \
 
 For more details, take a look at our [Quick Start with Docker](https://postgresml.org/docs/open-source/pgml/developers/quick-start-with-docker) documentation.
 
-# Getting Started
+## Ecosystem
 
-## Option 1
+We have a number of other tools and libraries that are specifically designed to work with PostgreML. Remeber PostgresML is a postgres extension running inside of Postgres so you can connect with `psql` and use any of your favorite tooling and client libraries like [psycopg](https://www.psycopg.org/psycopg3/) to connect and run queries.
 
-- On the cloud console click on the **Dashboard** button to connect to your instance with a SQL notebook, or connect directly with tools listed below.
-- On local installation, go to dashboard app at `http://localhost:8000/` to use SQL notebooks.
+<b>PostgresML Specific Client Libraries:</b>
+- [Korvus](https://github.com/postgresml/korvus) - Korvus is a Python, JavaScript, Rust and C search SDK that unifies the entire RAG pipeline in a single database query.
+- [postgresml-django](https://github.com/postgresml/postgresml-django) - postgresml-django is a Python module that integrates PostgresML with Django ORM.
 
-## Option 2
+<b>Recommended Postgres Poolers:</b>
+- [pgcat](https://github.com/postgresml/pgcat) - pgcat is a PostgreSQL pooler with sharding, load balancing and failover support.
 
-- Use any of these popular tools to connect to PostgresML and write SQL queries
-  - <a href="https://superset.apache.org/" target="_blank">Apache Superset</a>
-  - <a href="https://dbeaver.io/" target="_blank">DBeaver</a>
-  - <a href="https://www.jetbrains.com/datagrip/" target="_blank">Data Grip</a>
-  - <a href="https://eggerapps.at/postico2/" target="_blank">Postico 2</a>
-  - <a href="https://popsql.com/" target="_blank">Popsql</a>
-  - <a href="https://www.tableau.com/" target="_blank">Tableau</a>
-  - <a href="https://powerbi.microsoft.com/en-us/" target="_blank">PowerBI</a>
-  - <a href="https://jupyter.org/" target="_blank">Jupyter</a>
-  - <a href="https://code.visualstudio.com/" target="_blank">VSCode</a>
+# Large Language Models
 
-## Option 3
+PostgresML integrates state-of-the-art NLP models into the data layer. There are tens of thousands of pre-trained models with pipelines to turn raw text in your database into useful results. Many state of the art deep learning architectures have been published and made available from Hugging Face <a href= "https://huggingface.co/models" target="_blank">model hub</a>.
 
-- Connect directly to the database with your favorite programming language
-  - C++: <a href="https://www.tutorialspoint.com/postgresql/postgresql_c_cpp.htm" target="_blank">libpqxx</a>
-  - C#: <a href="https://github.com/npgsql/npgsql" target="_blank">Npgsql</a>,<a href="https://github.com/DapperLib/Dapper" target="_blank">Dapper</a>, or <a href="https://github.com/dotnet/efcore" target="_blank">Entity Framework Core</a>
-  - Elixir: <a href="https://github.com/elixir-ecto/ecto" target="_blank">ecto</a> or <a href="https://github.com/elixir-ecto/postgrex" target="_blank">Postgrex</a>
-  - Go: <a href="https://github.com/jackc/pgx" target="_blank">pgx</a>, <a href="https://github.com/go-pg/pg" target="_blank">pg</a> or <a href="https://github.com/uptrace/bun" target="_blank">Bun</a>
-  - Haskell: <a href="https://hackage.haskell.org/package/postgresql-simple" target="_blank">postgresql-simple</a>
-  - Java & Scala: <a href="https://jdbc.postgresql.org/" target="_blank">JDBC</a> or <a href="https://github.com/slick/slick" target="_blank">Slick</a> 
-  - Julia: <a href="https://github.com/iamed2/LibPQ.jl" target="_blank">LibPQ.jl</a> 
-  - Lua: <a href="https://github.com/leafo/pgmoon" target="_blank">pgmoon</a>
-  - Node: <a href="https://github.com/brianc/node-postgres" target="_blank">node-postgres</a>, <a href="https://github.com/vitaly-t/pg-promise" target="_blank">pg-promise</a>, or <a href="https://sequelize.org/" target="_blank">Sequelize</a>
-  - Perl: <a href="https://github.com/bucardo/dbdpg" target="_blank">DBD::Pg</a>
-  - PHP: <a href="https://laravel.com/" target="_blank">Laravel</a> or <a href="https://www.php.net/manual/en/book.pgsql.php" target="_blank">PHP</a> 
-  - Python: <a href="https://github.com/psycopg/psycopg2/" target="_blank">psycopg2</a>, <a href="https://www.sqlalchemy.org/" target="_blank">SQLAlchemy</a>, or <a href="https://www.djangoproject.com/" target="_blank">Django</a>
-  - R: <a href="https://github.com/r-dbi/DBI" target="_blank">DBI</a> or <a href="https://github.com/ankane/dbx" target="_blank">dbx</a>
-  - Ruby: <a href="https://github.com/ged/ruby-pg" target="_blank">pg</a> or <a href="https://rubyonrails.org/" target="_blank">Rails</a>
-  - Rust: <a href="https://crates.io/crates/postgres" target="_blank">postgres</a>, <a href="https://github.com/launchbadge/sqlx" target="_blank">SQLx</a> or <a href="https://github.com/diesel-rs/diesel" target="_blank">Diesel</a>
-  - Swift: <a href="https://github.com/vapor/postgres-nio" target="_blank">PostgresNIO</a> or <a href="https://github.com/codewinsdotcom/PostgresClientKit" target="_blank">PostgresClientKit</a> 
-  - ... open a PR to add your favorite language and connector.
+There are four SQL functions used to interact with LLMs:
+- [Chunk](#chunk)
+- [Embed](#embed)
+- [Rank](#rank)
+- [Transform](#transform)
 
-# NLP Tasks
+## Chunk
 
-PostgresML integrates 🤗 Hugging Face Transformers to bring state-of-the-art NLP models into the data layer. There are tens of thousands of pre-trained models with pipelines to turn raw text in your database into useful results. Many state of the art deep learning architectures have been published and made available from Hugging Face <a href= "https://huggingface.co/models" target="_blank">model hub</a>.
+The `pgml.chunk` function chunks documents using the specified splitter. This is typically done before embedding.
 
-You can call different NLP tasks and customize using them using the following SQL query.
+```postgresql
+pgml.chunk(
+    splitter TEXT,    -- splitter name
+    text TEXT,        -- text to embed
+    kwargs JSON       -- optional arguments (see below)
+)
+```
+
+See [pgml.chunk docs](https://postgresml.org/docs/open-source/pgml/api/pgml.chunk) for more information.
+
+## Embed
+
+The `pgml.embed` function generates embeddings from text using in-database models.
+
+```postgresql
+pgml.embed(
+    transformer TEXT,
+    "text" TEXT,
+    kwargs JSONB
+)
+```
+See [pgml.embed docs](https://postgresml.org/docs/open-source/pgml/api/pgml.embed) for more information.
+
+## Rank
+
+The `pgml.rank` function uses [Cross-Encoders](https://www.sbert.net/examples/applications/cross-encoder/README.html) to score sentence pairs.
+
+This is typically used as a re-ranking step when performing search.
+
+```postgresl
+pgml.rank(
+    transformer TEXT,
+    query TEXT,
+    documents TEXT[],
+    kwargs JSONB
+)
+```
+
+Docs coming soon.
+
+## Transform
+
+You can call different NLP tasks and customize them using the following SQL query.
 
 ```postgresql
 SELECT pgml.transform(
@@ -198,13 +142,25 @@ SELECT pgml.transform(
     args   => JSONB              -- (optional) arguments to the pipeline.
 )
 ```
-## Text Classification
+
+Available tasks are:
+- [Text Classification](#text-classification)
+- [Zero-Shot Classification](#zero-shot-classification)
+- [Token Classification](#token-classification)
+- [Translation](#translation)
+- [Summarization](#summarization)
+- [Question Answering](#question-answering)
+- [Text Generation](#text-generation)
+- [Text-to-Text Generation](#text-to-text-generation)
+- [Fill-Mask](#fill-mask)
+
+### Text Classification
 
 Text classification involves assigning a label or category to a given text. Common use cases include sentiment analysis, natural language inference, and the assessment of grammatical correctness.
 
 ![text classification](pgml-cms/docs/images/text-classification.png)
 
-### Sentiment Analysis
+#### Sentiment Analysis
 Sentiment analysis is a type of natural language processing technique that involves analyzing a piece of text to determine the sentiment or emotion expressed within it. It can be used to classify a text as positive, negative, or neutral, and has a wide range of applications in fields such as marketing, customer service, and political analysis.
 
 *Basic usage*
@@ -212,7 +168,7 @@ Sentiment analysis is a type of natural language processing technique that invol
 SELECT pgml.transform(
     task   => 'text-classification',
     inputs => ARRAY[
-        'I love how amazingly simple ML has become!', 
+        'I love how amazingly simple ML has become!',
         'I hate doing mundane and thankless tasks. ☹️'
     ]
 ) AS positivity;
@@ -220,7 +176,7 @@ SELECT pgml.transform(
 *Result*
 ```json
 [
-    {"label": "POSITIVE", "score": 0.9995759129524232}, 
+    {"label": "POSITIVE", "score": 0.9995759129524232},
     {"label": "NEGATIVE", "score": 0.9903519749641418}
 ]
 ```
@@ -233,10 +189,10 @@ To use one of the over 19,000 models available on Hugging Face, include the name
 ```postgresql
 SELECT pgml.transform(
     inputs => ARRAY[
-        'I love how amazingly simple ML has become!', 
+        'I love how amazingly simple ML has become!',
         'I hate doing mundane and thankless tasks. ☹️'
     ],
-    task  => '{"task": "text-classification", 
+    task  => '{"task": "text-classification",
               "model": "finiteautomata/bertweet-base-sentiment-analysis"
              }'::JSONB
 ) AS positivity;
@@ -244,7 +200,7 @@ SELECT pgml.transform(
 *Result*
 ```json
 [
-    {"label": "POS", "score": 0.992932200431826}, 
+    {"label": "POS", "score": 0.992932200431826},
     {"label": "NEG", "score": 0.975599765777588}
 ]
 ```
@@ -256,10 +212,10 @@ By selecting a model that has been specifically designed for a particular indust
 ```postgresql
 SELECT pgml.transform(
     inputs => ARRAY[
-        'Stocks rallied and the British pound gained.', 
+        'Stocks rallied and the British pound gained.',
         'Stocks making the biggest moves midday: Nvidia, Palantir and more'
     ],
-    task => '{"task": "text-classification", 
+    task => '{"task": "text-classification",
               "model": "ProsusAI/finbert"
              }'::JSONB
 ) AS market_sentiment;
@@ -268,12 +224,12 @@ SELECT pgml.transform(
 *Result*
 ```json
 [
-    {"label": "positive", "score": 0.8983612656593323}, 
+    {"label": "positive", "score": 0.8983612656593323},
     {"label": "neutral", "score": 0.8062630891799927}
 ]
 ```
 
-### Natural Language Inference (NLI)
+#### Natural Language Inference (NLI)
 NLI, or Natural Language Inference, is a type of model that determines the relationship between two texts. The model takes a premise and a hypothesis as inputs and returns a class, which can be one of three types:
 - Entailment: This means that the hypothesis is true based on the premise.
 - Contradiction: This means that the hypothesis is false based on the premise.
@@ -288,7 +244,7 @@ SELECT pgml.transform(
     inputs => ARRAY[
         'A soccer game with multiple males playing. Some men are playing a sport.'
     ],
-    task => '{"task": "text-classification", 
+    task => '{"task": "text-classification",
               "model": "roberta-large-mnli"
              }'::JSONB
 ) AS nli;
@@ -299,7 +255,7 @@ SELECT pgml.transform(
     {"label": "ENTAILMENT", "score": 0.98837411403656}
 ]
 ```
-### Question Natural Language Inference (QNLI)
+#### Question Natural Language Inference (QNLI)
 The QNLI task involves determining whether a given question can be answered by the information in a provided document. If the answer can be found in the document, the label assigned is "entailment". Conversely, if the answer cannot be found in the document, the label assigned is "not entailment".
 
 If you want to use an QNLI model, you can find them on the :hugs: Hugging Face model hub. Look for models with "qnli".
@@ -309,7 +265,7 @@ SELECT pgml.transform(
     inputs => ARRAY[
         'Where is the capital of France?, Paris is the capital of France.'
     ],
-    task => '{"task": "text-classification", 
+    task => '{"task": "text-classification",
               "model": "cross-encoder/qnli-electra-base"
              }'::JSONB
 ) AS qnli;
@@ -322,7 +278,7 @@ SELECT pgml.transform(
 ]
 ```
 
-### Quora Question Pairs (QQP)
+#### Quora Question Pairs (QQP)
 The Quora Question Pairs model is designed to evaluate whether two given questions are paraphrases of each other. This model takes the two questions and assigns a binary value as output. LABEL_0 indicates that the questions are paraphrases of each other and LABEL_1 indicates that the questions are not paraphrases. The benchmark dataset used for this task is the Quora Question Pairs dataset within the GLUE benchmark, which contains a collection of question pairs and their corresponding labels.
 
 If you want to use an QQP model, you can find them on the :hugs: Hugging Face model hub. Look for models with `qqp`.
@@ -332,7 +288,7 @@ SELECT pgml.transform(
     inputs => ARRAY[
         'Which city is the capital of France?, Where is the capital of France?'
     ],
-    task => '{"task": "text-classification", 
+    task => '{"task": "text-classification",
               "model": "textattack/bert-base-uncased-QQP"
              }'::JSONB
 ) AS qqp;
@@ -345,8 +301,8 @@ SELECT pgml.transform(
 ]
 ```
 
-### Grammatical Correctness
-Linguistic Acceptability is a task that involves evaluating the grammatical correctness of a sentence. The model used for this task assigns one of two classes to the sentence, either "acceptable" or "unacceptable". LABEL_0 indicates acceptable and LABEL_1 indicates unacceptable. The benchmark dataset used for training and evaluating models for this task is the Corpus of Linguistic Acceptability (CoLA), which consists of a collection of texts along with their corresponding labels. 
+#### Grammatical Correctness
+Linguistic Acceptability is a task that involves evaluating the grammatical correctness of a sentence. The model used for this task assigns one of two classes to the sentence, either "acceptable" or "unacceptable". LABEL_0 indicates acceptable and LABEL_1 indicates unacceptable. The benchmark dataset used for training and evaluating models for this task is the Corpus of Linguistic Acceptability (CoLA), which consists of a collection of texts along with their corresponding labels.
 
 If you want to use a grammatical correctness model, you can find them on the :hugs: Hugging Face model hub. Look for models with `cola`.
 
@@ -355,7 +311,7 @@ SELECT pgml.transform(
     inputs => ARRAY[
         'I will walk to home when I went through the bus.'
     ],
-    task => '{"task": "text-classification", 
+    task => '{"task": "text-classification",
               "model": "textattack/distilbert-base-uncased-CoLA"
              }'::JSONB
 ) AS grammatical_correctness;
@@ -367,7 +323,7 @@ SELECT pgml.transform(
 ]
 ```
 
-## Zero-Shot Classification
+### Zero-Shot Classification
 Zero Shot Classification is a task where the model predicts a class that it hasn't seen during the training phase. This task leverages a pre-trained language model and is a type of transfer learning. Transfer learning involves using a model that was initially trained for one task in a different application. Zero Shot Classification is especially helpful when there is a scarcity of labeled data available for the specific task at hand.
 
 ![zero-shot classification](pgml-cms/docs/images/zero-shot-classification.png)
@@ -382,7 +338,7 @@ SELECT pgml.transform(
         'I have a problem with my iphone that needs to be resolved asap!!'
     ],
     task => '{
-                "task": "zero-shot-classification", 
+                "task": "zero-shot-classification",
                 "model": "facebook/bart-large-mnli"
              }'::JSONB,
     args => '{
@@ -395,18 +351,18 @@ SELECT pgml.transform(
 ```json
 [
     {
-        "labels": ["urgent", "phone", "computer", "not urgent", "tablet"], 
-        "scores": [0.503635, 0.47879, 0.012600, 0.002655, 0.002308], 
+        "labels": ["urgent", "phone", "computer", "not urgent", "tablet"],
+        "scores": [0.503635, 0.47879, 0.012600, 0.002655, 0.002308],
         "sequence": "I have a problem with my iphone that needs to be resolved asap!!"
     }
 ]
 ```
-## Token Classification
+### Token Classification
 Token classification is a task in natural language understanding, where labels are assigned to certain tokens in a text. Some popular subtasks of token classification include Named Entity Recognition (NER) and Part-of-Speech (PoS) tagging. NER models can be trained to identify specific entities in a text, such as individuals, places, and dates. PoS tagging, on the other hand, is used to identify the different parts of speech in a text, such as nouns, verbs, and punctuation marks.
 
 ![token classification](pgml-cms/docs/images/token-classification.png)
 
-### Named Entity Recognition
+#### Named Entity Recognition
 Named Entity Recognition (NER) is a task that involves identifying named entities in a text. These entities can include the names of people, locations, or organizations. The task is completed by labeling each token with a class for each named entity and a class named "0" for tokens that don't contain any entities. In this task, the input is text, and the output is the annotated text with named entities.
 
 ```postgresql
@@ -420,14 +376,14 @@ SELECT pgml.transform(
 *Result*
 ```json
 [[
-    {"end": 9,  "word": "Omar", "index": 3,  "score": 0.997110, "start": 5,  "entity": "I-PER"}, 
-    {"end": 27, "word": "New",  "index": 8,  "score": 0.999372, "start": 24, "entity": "I-LOC"}, 
-    {"end": 32, "word": "York", "index": 9,  "score": 0.999355, "start": 28, "entity": "I-LOC"}, 
+    {"end": 9,  "word": "Omar", "index": 3,  "score": 0.997110, "start": 5,  "entity": "I-PER"},
+    {"end": 27, "word": "New",  "index": 8,  "score": 0.999372, "start": 24, "entity": "I-LOC"},
+    {"end": 32, "word": "York", "index": 9,  "score": 0.999355, "start": 28, "entity": "I-LOC"},
     {"end": 37, "word": "City", "index": 10, "score": 0.999431, "start": 33, "entity": "I-LOC"}
 ]]
 ```
 
-### Part-of-Speech (PoS) Tagging
+#### Part-of-Speech (PoS) Tagging
 PoS tagging is a task that involves identifying the parts of speech, such as nouns, pronouns, adjectives, or verbs, in a given text. In this task, the model labels each word with a specific part of speech.
 
 Look for models with `pos` to use a zero-shot classification model on the :hugs: Hugging Face model hub.
@@ -436,7 +392,7 @@ select pgml.transform(
 	inputs => array [
   	'I live in Amsterdam.'
 	],
-	task => '{"task": "token-classification", 
+	task => '{"task": "token-classification",
               "model": "vblagoje/bert-english-uncased-finetuned-pos"
     }'::JSONB
 ) as pos;
@@ -447,11 +403,11 @@ select pgml.transform(
     {"end": 1,  "word": "i",         "index": 1, "score": 0.999, "start": 0,  "entity": "PRON"},
     {"end": 6,  "word": "live",      "index": 2, "score": 0.998, "start": 2,  "entity": "VERB"},
     {"end": 9,  "word": "in",        "index": 3, "score": 0.999, "start": 7,  "entity": "ADP"},
-    {"end": 19, "word": "amsterdam", "index": 4, "score": 0.998, "start": 10, "entity": "PROPN"}, 
+    {"end": 19, "word": "amsterdam", "index": 4, "score": 0.998, "start": 10, "entity": "PROPN"},
     {"end": 20, "word": ".",         "index": 5, "score": 0.999, "start": 19, "entity": "PUNCT"}
 ]]
 ```
-## Translation
+### Translation
 Translation is the task of converting text written in one language into another language.
 
 ![translation](pgml-cms/docs/images/translation.png)
@@ -463,9 +419,9 @@ select pgml.transform(
     inputs => array[
             	'How are you?'
     ],
-	task => '{"task": "translation", 
+	task => '{"task": "translation",
               "model": "Helsinki-NLP/opus-mt-en-fr"
-    }'::JSONB	
+    }'::JSONB
 );
 ```
 *Result*
@@ -474,14 +430,14 @@ select pgml.transform(
     {"translation_text": "Comment allez-vous ?"}
 ]
 ```
-## Summarization
+### Summarization
 Summarization involves creating a condensed version of a document that includes the important information while reducing its length. Different models can be used for this task, with some models extracting the most relevant text from the original document, while other models generate completely new text that captures the essence of the original content.
 
 ![summarization](pgml-cms/docs/images/summarization.png)
 
 ```postgresql
 select pgml.transform(
-	task => '{"task": "summarization", 
+	task => '{"task": "summarization",
               "model": "sshleifer/distilbart-cnn-12-6"
     }'::JSONB,
 	inputs => array[
@@ -499,7 +455,7 @@ You can control the length of summary_text by passing `min_length` and `max_leng
 
 ```postgresql
 select pgml.transform(
-	task => '{"task": "summarization", 
+	task => '{"task": "summarization",
               "model": "sshleifer/distilbart-cnn-12-6"
     }'::JSONB,
 	inputs => array[
@@ -515,10 +471,10 @@ select pgml.transform(
 ```json
 [
     {"summary_text": " Paris is the capital and most populous city of France, with an estimated population of 2,175,601 residents as of 2018 . City of Paris is centre and seat of government of the region and province of Île-de-France, or Paris Region, which has an estimated 12,174,880, or about 18 percent"
-    }  
+    }
 ]
 ```
-## Question Answering
+### Question Answering
 Question Answering models are designed to retrieve the answer to a question from a given text, which can be particularly useful for searching for information within a document. It's worth noting that some question answering models are capable of generating answers even without any contextual information.
 
 ![question answering](pgml-cms/docs/images/question-answering.png)
@@ -538,16 +494,16 @@ SELECT pgml.transform(
 
 ```json
 {
-    "end"   :  39, 
-    "score" :  0.9538117051124572, 
-    "start" :  31, 
+    "end"   :  39,
+    "score" :  0.9538117051124572,
+    "start" :  31,
     "answer": "İstanbul"
 }
 ```
 <!-- ## Table Question Answering
 ![table question answering](pgml-cms/docs/images/table-question-answering.png) -->
 
-## Text Generation
+### Text Generation
 Text generation is the task of producing new text, such as filling in incomplete sentences or paraphrasing existing text. It has various use cases, including code generation and story generation. Completion generation models can predict the next word in a text sequence, while text-to-text generation models are trained to learn the mapping between pairs of texts, such as translating between languages. Popular models for text generation include GPT-based models, T5, T0, and BART. These models can be trained to accomplish a wide range of tasks, including text classification, summarization, and translation.
 
 ![text generation](pgml-cms/docs/images/text-generation.png)
@@ -602,7 +558,7 @@ SELECT pgml.transform(
     ],
     args => '{
 			"max_length" : 200
-		}'::JSONB 
+		}'::JSONB
 ) AS answer;
 ```
 *Result*
@@ -624,15 +580,15 @@ SELECT pgml.transform(
     ],
     args => '{
 			"num_return_sequences" : 3
-		}'::JSONB 
+		}'::JSONB
 ) AS answer;
 ```
 *Result*
 ```json
 [
     [
-        {"generated_text": "Three Rings for the Elven-kings under the sky, Seven for the Dwarf-lords in their halls of stone, and Thirteen for the human-men in their hall of fire.\n\nAll of us, our families, and our people"}, 
-        {"generated_text": "Three Rings for the Elven-kings under the sky, Seven for the Dwarf-lords in their halls of stone, and the tenth for a King! As each of these has its own special story, so I have written them into the game."}, 
+        {"generated_text": "Three Rings for the Elven-kings under the sky, Seven for the Dwarf-lords in their halls of stone, and Thirteen for the human-men in their hall of fire.\n\nAll of us, our families, and our people"},
+        {"generated_text": "Three Rings for the Elven-kings under the sky, Seven for the Dwarf-lords in their halls of stone, and the tenth for a King! As each of these has its own special story, so I have written them into the game."},
         {"generated_text": "Three Rings for the Elven-kings under the sky, Seven for the Dwarf-lords in their halls of stone… What's left in the end is your heart's desire after all!\n\nHans: (Trying to be brave)"}
     ]
 ]
@@ -651,7 +607,7 @@ SELECT pgml.transform(
     args => '{
 			"num_beams" : 5,
 			"early_stopping" : true
-		}'::JSONB 
+		}'::JSONB
 ) AS answer;
 ```
 
@@ -661,7 +617,7 @@ SELECT pgml.transform(
     {"generated_text": "Three Rings for the Elven-kings under the sky, Seven for the Dwarf-lords in their halls of stone, Nine for the Dwarves in their caverns of ice, Ten for the Elves in their caverns of fire, Eleven for the"}
 ]]
 ```
-Sampling methods involve selecting the next word or sequence of words at random from the set of possible candidates, weighted by their probabilities according to the language model. This can result in more diverse and creative text, as well as avoiding repetitive patterns. In its most basic form, sampling means randomly picking the next word $w_t$ according to its conditional probability distribution: 
+Sampling methods involve selecting the next word or sequence of words at random from the set of possible candidates, weighted by their probabilities according to the language model. This can result in more diverse and creative text, as well as avoiding repetitive patterns. In its most basic form, sampling means randomly picking the next word $w_t$ according to its conditional probability distribution:
 $$ w_t \approx P(w_t|w_{1:t-1})$$
 
 However, the randomness of the sampling method can also result in less coherent or inconsistent text, depending on the quality of the model and the chosen sampling parameters such as temperature, top-k, or top-p. Therefore, choosing an appropriate sampling method and parameters is crucial for achieving the desired balance between creativity and coherence in generated text.
@@ -681,7 +637,7 @@ SELECT pgml.transform(
     args => '{
 			"do_sample" : true,
 			"temperature" : 0.9
-		}'::JSONB 
+		}'::JSONB
 ) AS answer;
 ```
 *Result*
@@ -702,14 +658,14 @@ SELECT pgml.transform(
     args => '{
 			"do_sample" : true,
 			"top_p" : 0.8
-		}'::JSONB 
+		}'::JSONB
 ) AS answer;
 ```
 *Result*
 ```json
 [[{"generated_text": "Three Rings for the Elven-kings under the sky, Seven for the Dwarf-lords in their halls of stone, Four for the Elves of the forests and fields, and Three for the Dwarfs and their warriors.\" ―Lord Rohan [src"}]]
 ```
-## Text-to-Text Generation
+### Text-to-Text Generation
 Text-to-text generation methods, such as T5, are neural network architectures designed to perform various natural language processing tasks, including summarization, translation, and question answering. T5 is a transformer-based architecture pre-trained on a large corpus of text data using denoising autoencoding. This pre-training process enables the model to learn general language patterns and relationships between different tasks, which can be fine-tuned for specific downstream tasks. During fine-tuning, the T5 model is trained on a task-specific dataset to learn how to perform the specific task.
 ![text-to-text](pgml-cms/docs/images/text-to-text-generation.png)
 
@@ -746,7 +702,7 @@ SELECT pgml.transform(
 ) AS answer;
 
 ```
-## Fill-Mask
+### Fill-Mask
 Fill-mask refers to a task where certain words in a sentence are hidden or "masked", and the objective is to predict what words should fill in those masked positions. Such models are valuable when we want to gain statistical insights about the language used to train the model.
 ![fill mask](pgml-cms/docs/images/fill-mask.png)
 
@@ -764,11 +720,40 @@ SELECT pgml.transform(
 *Result*
 ```json
 [
-    {"score": 0.679, "token": 812,   "sequence": "Paris is the capital of France.",    "token_str": " capital"}, 
-    {"score": 0.051, "token": 32357, "sequence": "Paris is the birthplace of France.", "token_str": " birthplace"}, 
-    {"score": 0.038, "token": 1144,  "sequence": "Paris is the heart of France.",      "token_str": " heart"}, 
-    {"score": 0.024, "token": 29778, "sequence": "Paris is the envy of France.",       "token_str": " envy"}, 
+    {"score": 0.679, "token": 812,   "sequence": "Paris is the capital of France.",    "token_str": " capital"},
+    {"score": 0.051, "token": 32357, "sequence": "Paris is the birthplace of France.", "token_str": " birthplace"},
+    {"score": 0.038, "token": 1144,  "sequence": "Paris is the heart of France.",      "token_str": " heart"},
+    {"score": 0.024, "token": 29778, "sequence": "Paris is the envy of France.",       "token_str": " envy"},
     {"score": 0.022, "token": 1867,  "sequence": "Paris is the Capital of France.",    "token_str": " Capital"}]
+```
+
+# Classical Machine Learning
+
+<b>Some highlights:</b>
+- [47+ classification and regression algorithms](https://postgresml.org/docs/open-source/pgml/api/pgml.train)
+- [8 - 40X faster inference than HTTP based model serving](https://postgresml.org/blog/postgresml-is-8x-faster-than-python-http-microservices)
+- [Millions of transactions per second](https://postgresml.org/blog/scaling-postgresml-to-one-million-requests-per-second)
+- [Horizontal scalability](https://postgresml.org/docs/open-source/pgcat/)
+
+**Training a classification model**
+
+*Training*
+```postgresql
+SELECT * FROM pgml.train(
+    'Handwritten Digit Image Classifier',
+    algorithm => 'xgboost',
+    'classification',
+    'pgml.digits',
+    'target'
+);
+```
+
+*Inference*
+```postgresql
+SELECT pgml.predict(
+    'My Classification Project',
+    ARRAY[0.1, 2.0, 5.0]
+) AS prediction;
 ```
 
 # Vector Database
@@ -785,12 +770,12 @@ In the following section, we will demonstrate how to use PostgresML to generate 
 ```postgresql
 SELECT pgml.load_dataset('tweet_eval', 'sentiment');
 
-SELECT * 
+SELECT *
 FROM pgml.tweet_eval
 LIMIT 10;
 
 CREATE TABLE tweet_embeddings AS
-SELECT text, pgml.embed('distilbert-base-uncased', text) AS embedding 
+SELECT text, pgml.embed('distilbert-base-uncased', text) AS embedding
 FROM pgml.tweet_eval;
 
 SELECT * from tweet_embeddings limit 2;
@@ -849,7 +834,7 @@ Sentence Similarity involves determining the degree of similarity between two te
 <!-- # Regression
 # Classification -->
 
-# LLM Fine-tuning 
+# LLM Fine-tuning
 
 In this section, we will provide a step-by-step walkthrough for fine-tuning a Language Model (LLM) for differnt tasks.
 
@@ -863,7 +848,7 @@ In this section, we will provide a step-by-step walkthrough for fine-tuning a La
 
 ### 1. Loading the Dataset
 
-To begin, create a table to store your dataset. In this example, we use the 'imdb' dataset from Hugging Face. IMDB dataset contains three splits: train (25K rows), test (25K rows) and unsupervised (50K rows). In train and test splits, negative class has label 0 and positive class label 1. All rows in unsupervised split has a label of -1. 
+To begin, create a table to store your dataset. In this example, we use the 'imdb' dataset from Hugging Face. IMDB dataset contains three splits: train (25K rows), test (25K rows) and unsupervised (50K rows). In train and test splits, negative class has label 0 and positive class label 1. All rows in unsupervised split has a label of -1.
 ```postgresql
 SELECT pgml.load_dataset('imdb');
 ```
@@ -872,7 +857,7 @@ SELECT pgml.load_dataset('imdb');
 
 We will create a view of the dataset by performing the following operations:
 
-- Add a new text column named "class" that has positive and negative classes. 
+- Add a new text column named "class" that has positive and negative classes.
 - Shuffled view of the dataset to ensure randomness in the distribution of data.
 - Remove all the unsupervised splits that have label = -1.
 
@@ -978,7 +963,7 @@ SELECT pgml.tune(
             "per_device_eval_batch_size": 16,
             "num_train_epochs": 20,
             "weight_decay": 0.01,
-            "hub_token" : "YOUR_HUB_TOKEN", 
+            "hub_token" : "YOUR_HUB_TOKEN",
             "push_to_hub" : true
         },
         "dataset_args" : { "text_column" : "text", "class_column" : "class" }
@@ -1047,7 +1032,7 @@ INFO:  {
 }
 ```
 
-Once the training is completed, model will be evaluated against the validation dataset. You will see the below in the client terminal. Accuracy on the evaluation dataset is 0.934 and F1-score is 0.93. 
+Once the training is completed, model will be evaluated against the validation dataset. You will see the below in the client terminal. Accuracy on the evaluation dataset is 0.934 and F1-score is 0.93.
 
 ```json
 INFO:  {
@@ -1074,7 +1059,7 @@ INFO:  {
 }
 ```
 
-Once the training is completed, you can check query pgml.logs table using the model_id or by finding the latest model on the project. 
+Once the training is completed, you can check query pgml.logs table using the model_id or by finding the latest model on the project.
 
 ```bash
 pgml: SELECT logs->>'epoch' AS epoch, logs->>'step' AS step, logs->>'loss' AS loss FROM pgml.logs WHERE model_id = 993 AND jsonb_exists(logs, 'loss');
@@ -1105,7 +1090,7 @@ pgml: SELECT logs->>'epoch' AS epoch, logs->>'step' AS step, logs->>'loss' AS lo
 During training, model is periodically uploaded to Hugging Face Hub. You will find the model at `https://huggingface.co/<username>/<project_name>`. An example model that was automatically pushed to Hugging Face Hub is [here](https://huggingface.co/santiadavani/imdb_review_sentiement).
 
 ### 6. Inference using fine-tuned model
-Now, that we have fine-tuned model on Hugging Face Hub, we can use [`pgml.transform`](/docs/open-source/pgml/api/pgml.transform) to perform real-time predictions as well as batch predictions. 
+Now, that we have fine-tuned model on Hugging Face Hub, we can use [`pgml.transform`](/docs/open-source/pgml/api/pgml.transform) to perform real-time predictions as well as batch predictions.
 
 **Real-time predictions**
 
@@ -1292,7 +1277,7 @@ OFFSET (SELECT COUNT(*) * 0.8 FROM pgml.fingpt_sentiment_shuffled_view);
 ```
 
 ### 4. Fine-Tune the Model for 9 Classes
-In the final section, we kick off the fine-tuning process using the `pgml.tune` function. The model will be internally configured for sentiment analysis with 9 classes. The training is executed on the 80% of the train view and evaluated on the remaining 20% of the train view. The test view is reserved for evaluating the model's accuracy after training is completed. Please note that the option `hub_private_repo: true` is used to push the model to a private Hugging Face repository. 
+In the final section, we kick off the fine-tuning process using the `pgml.tune` function. The model will be internally configured for sentiment analysis with 9 classes. The training is executed on the 80% of the train view and evaluated on the remaining 20% of the train view. The test view is reserved for evaluating the model's accuracy after training is completed. Please note that the option `hub_private_repo: true` is used to push the model to a private Hugging Face repository.
 
 ```postgresql
 -- Fine-tune the model for 9 classes without HUB token
@@ -1390,7 +1375,7 @@ SELECT pgml.tune(
             "per_device_eval_batch_size": 4,
             "num_train_epochs": 1,
             "weight_decay": 0.01,
-            "hub_token" : "HF_TOKEN", 
+            "hub_token" : "HF_TOKEN",
             "push_to_hub" : true,
             "optim" : "adamw_bnb_8bit",
             "gradient_accumulation_steps" : 4,
@@ -1503,7 +1488,7 @@ Expanding on the `dataset_args` within the `hyperparams` argument provides insig
 
 Configuring these dataset arguments ensures that the model is trained on the appropriate input-output pairs, enabling it to learn from the conversational data and generate contextually relevant responses.
 
-Once the fine-tuning is completed, you will see the model in your Hugging Face repository (example: https://huggingface.co/santiadavani/fingpt-llama2-7b-chat). Since we are using LoRA to fine tune the model we only save the adapter weights (~2MB) instead of all the 7B weights (14GB) in Llama2-7b model.  
+Once the fine-tuning is completed, you will see the model in your Hugging Face repository (example: https://huggingface.co/santiadavani/fingpt-llama2-7b-chat). Since we are using LoRA to fine tune the model we only save the adapter weights (~2MB) instead of all the 7B weights (14GB) in Llama2-7b model.
 
 ## Inference
 For inference, we will be utilizing the [OpenSourceAI](https://postgresml.org/docs/open-source/korvus/guides/opensourceai) class from the [pgml SDK](https://postgresml.org/docs/open-source/korvus/). Here's an example code snippet:
