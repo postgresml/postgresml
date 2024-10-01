@@ -158,8 +158,6 @@ Available tasks are:
 
 Text classification involves assigning a label or category to a given text. Common use cases include sentiment analysis, natural language inference, and the assessment of grammatical correctness.
 
-![text classification](pgml-cms/docs/images/text-classification.png)
-
 #### Sentiment Analysis
 Sentiment analysis is a type of natural language processing technique that involves analyzing a piece of text to determine the sentiment or emotion expressed within it. It can be used to classify a text as positive, negative, or neutral, and has a wide range of applications in fields such as marketing, customer service, and political analysis.
 
