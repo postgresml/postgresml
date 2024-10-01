@@ -8,7 +8,7 @@ use sailfish::TemplateOnce;
 pub struct ServerlessModels {
     style_type: String,
     embedding_models: [Component; 4],
-    instruct_models: [Component; 6],
+    instruct_models: [Component; 8],
     summarization_models: [Component; 1],
 }
 
@@ -48,6 +48,20 @@ impl ServerlessModels {
             ],
             instruct_models: [
                 Component::from(Row::new(&[
+                    "meta-llama/Llama-3.2-1B-Instruct".into(),
+                    "1".into(),
+                    "1".into(),
+                    "128".into(),
+                    "Lowest latency".into(),
+                ])),
+                Component::from(Row::new(&[
+                    "meta-llama/Llama-3.2-3B-Instruct".into(),
+                    "3".into(),
+                    "3".into(),
+                    "128".into(),
+                    "Low latency".into(),
+                ])),
+                Component::from(Row::new(&[
                     "meta-llama/Meta-Llama-3.1-405B-Instruct".into(),
                     "405".into(),
                     "405".into(),
@@ -73,7 +87,7 @@ impl ServerlessModels {
                     "3.8".into(),
                     "3.8".into(),
                     "128k".into(),
-                    "Lowest latency".into(),
+                    "Low latency".into(),
                 ])),
                 Component::from(Row::new(&[
                     "mistralai/Mixtral-8x7B-Instruct-v0.1".into(),
