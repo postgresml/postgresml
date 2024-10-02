@@ -42,7 +42,7 @@ Data for ML & AI systems is inherently larger and more dynamic than the models. 
 
 The only prerequisites for using PostgresML is a Postgres database with our open-source `pgml` extension installed.
 
-## Serverless Cloud
+## PostgresML Cloud
 
 Our serverless cloud is the easiest and recommend way to get started.
 
