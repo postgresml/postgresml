@@ -267,20 +267,20 @@ pub enum NotificationLevel {
     ProductMarketing,
 }
 
-#[get("/serverless_models/turboframe?<style>")]
+// #[get("/serverless_models/turboframe?<style>")]
 pub fn serverless_models_turboframe(style: String) -> ResponseOk {
     let comp = ServerlessModels::new().set_style_type(&style);
     ResponseOk(ServerlessModelsTurbo::new(comp.into()).render_once().unwrap())
 }
 
-#[get("/serverless_pricing/turboframe?<style>")]
+// #[get("/serverless_pricing/turboframe?<style>")]
 pub fn serverless_pricing_turboframe(style: String) -> ResponseOk {
     let comp = ServerlessPricing::new().set_style_type(&style);
     ResponseOk(ServerlessPricingTurbo::new(comp.into()).render_once().unwrap())
 }
 
 // Reroute old style query style dashboard links.
-#[get("/?<tab>&<id>")]
+// #[get("/?<tab>&<id>")]
 pub async fn dashboard(tab: Option<&str>, id: Option<i64>) -> Redirect {
     let tab = tab.unwrap_or("Notebooks");
 
@@ -318,14 +318,14 @@ pub async fn dashboard(tab: Option<&str>, id: Option<i64>) -> Redirect {
     }
 }
 
-#[get("/playground")]
+// #[get("/playground")]
 pub async fn playground(cluster: &Cluster) -> Result<ResponseOk, Error> {
     let mut layout = crate::templates::WebAppBase::new("Playground", &cluster);
     Ok(ResponseOk(layout.render(templates::Playground {})))
 }
 
 // Remove Alert and Feature banners after user exits out of the message.
-#[get("/notifications/remove_banner?<id>&<notification_type>")]
+// #[get("/notifications/remove_banner?<id>&<notification_type>")]
 pub fn remove_banner(id: String, notification_type: String, cookies: &CookieJar<'_>, context: &Cluster) -> ResponseOk {
     let mut viewed = Notifications::get_viewed(cookies);
 
@@ -379,7 +379,7 @@ pub fn remove_banner(id: String, notification_type: String, cookies: &CookieJar<
 }
 
 // Replace a product banner after user exits out of the message.
-#[get("/notifications/product/replace_banner?<id>&<deployment_id>")]
+// #[get("/notifications/product/replace_banner?<id>&<deployment_id>")]
 pub fn replace_banner_product(
     id: String,
     deployment_id: Option<String>,
@@ -447,7 +447,7 @@ pub fn replace_banner_product(
 }
 
 // Remove a product banners after user exits out of the message.
-#[get("/notifications/product/remove_banner?<id>&<target>")]
+// #[get("/notifications/product/remove_banner?<id>&<target>")]
 pub fn remove_banner_product(id: String, target: String, cookies: &CookieJar<'_>) -> Result<Response, Error> {
     let mut all_notification_cookies = Notifications::get_viewed(cookies);
 
@@ -479,7 +479,7 @@ pub fn remove_banner_product(id: String, target: String, cookies: &CookieJar<'_>
 }
 
 // Update cookie to show the user has viewed the modal.
-#[get("/notifications/product/modal/remove_modal?<id>")]
+// #[get("/notifications/product/modal/remove_modal?<id>")]
 pub fn remove_modal_product(id: String, cookies: &CookieJar<'_>) {
     let mut all_notification_cookies = Notifications::get_viewed(cookies);
 

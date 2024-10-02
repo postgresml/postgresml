@@ -1,4 +1,7 @@
-use axum::{http::StatusCode, response::IntoResponse};
+use axum::{
+    http::{header, HeaderMap, StatusCode},
+    response::IntoResponse,
+};
 use sentry_anyhow::capture_anyhow;
 
 use crate::{models::User, templates, utils::config};
@@ -29,23 +32,23 @@ impl IntoResponse for NotFound {
 
 /// A response that doesn't crash and can be returned from any Rocket route.
 pub struct Response {
-    pub status: Status,
+    pub status: StatusCode,
     pub body: Option<String>,
     pub location: Option<String>,
     pub user: Option<User>,
-    pub content_type: ContentType,
+    pub content_type: String,
     pub no_cache: bool,
 }
 
 impl Response {
     /// Create new response.
-    fn new(status: Status) -> Response {
+    fn new(status: StatusCode) -> Response {
         Response {
             status,
             body: None,
             location: None,
             user: None,
-            content_type: ContentType::new("text", "html"),
+            content_type: "text/html".to_string(),
             no_cache: false,
         }
     }
@@ -64,27 +67,27 @@ impl Response {
 
     /// 500
     pub fn server_error(body: String) -> Response {
-        Self::new(Status::InternalServerError).body(body)
+        Self::new(StatusCode::INTERNAL_SERVER_ERROR).body(body)
     }
 
     /// Create a 303.
     pub fn redirect(to: String) -> Response {
-        Self::new(Status::SeeOther).location(to)
+        Self::new(StatusCode::SEE_OTHER).location(to)
     }
 
     /// Create a 200.
     pub fn ok(body: String) -> Response {
-        Self::new(Status::Ok).body(body)
+        Self::new(StatusCode::OK).body(body)
     }
 
     /// Create a 400.
     pub fn bad_request(body: String) -> Response {
-        Self::new(Status::BadRequest).body(body)
+        Self::new(StatusCode::BAD_REQUEST).body(body)
     }
 
     /// Create a 404.
     pub fn not_found() -> Response {
-        Self::new(Status::NotFound)
+        Self::new(StatusCode::NOT_FOUND)
     }
 
     /// Set the user on the response, if any.
@@ -93,7 +96,7 @@ impl Response {
         self
     }
 
-    pub fn content_type(mut self, content_type: ContentType) -> Response {
+    pub fn content_type(mut self, content_type: String) -> Response {
         self.content_type = content_type;
         self
     }
@@ -104,40 +107,40 @@ impl Response {
     }
 
     pub fn json(body: String) -> Response {
-        Self::new(Status::Ok)
+        Self::new(StatusCode::OK)
             .body(body)
-            .content_type(ContentType::new("application", "json"))
+            .content_type("application/json".to_string())
     }
 
     pub fn turbo_stream(body: String) -> Response {
-        Self::new(Status::Ok)
+        Self::new(StatusCode::Ok)
             .body(body)
-            .content_type(ContentType::new("text", "vnd.turbo-stream.html"))
+            .content_type("text/vnd.turbo-stream.html".to_string())
             .no_cache()
     }
 }
 
-impl<'r> response::Responder<'r, 'r> for Response {
-    fn respond_to(self, request: &request::Request<'_>) -> response::Result<'r> {
-        let body = match self.body {
-            Some(body) => body,
-            None => match self.status.code {
-                404 => templates::Layout::new("Internal Server Error", None).render(templates::NotFound {}),
-                _ => "".into(),
-            },
-        };
+impl IntoResponse for Response {
+    fn into_response(self) -> axum::response::Response {
+        let body = self.body.unwrap_or_else(|| match self.status {
+            StatusCode::NOT_FOUND => {
+                templates::Layout::new("Internal Server Error", None).render(templates::NotFound {})
+            }
+            _ => "".into(),
+        });
 
-        let mut binding = response::Response::build_from(body.respond_to(request)?);
-        let mut response = binding.header(self.content_type);
+        let mut headers = HeaderMap::new();
+        headers.insert(header::CONTENT_TYPE, self.content_type);
+
         if self.no_cache {
-            response = response.header(Header::new("Cache-Control", "no-store"));
+            headers.insert(header::CACHE_CONTROL, "no-store".into());
         }
 
-        if self.location.is_some() {
-            response = response.header(Header::new("Location", self.location.unwrap()));
+        if let Some(location) = self.location {
+            headers.insert(header::LOCATION, location);
         }
 
-        response.status(self.status).ok()
+        (headers, body)
     }
 }
 
@@ -166,8 +169,8 @@ where
     }
 }
 
-impl<'r> response::Responder<'r, 'r> for Error {
-    fn respond_to(self, request: &request::Request<'_>) -> response::Result<'r> {
+impl IntoResponse for Error {
+    fn into_response(self) -> axum::response::Response {
         capture_anyhow(&self.0);
 
         let error = if config::dev_mode() {
@@ -178,10 +181,11 @@ impl<'r> response::Responder<'r, 'r> for Error {
 
         let body = templates::Layout::new("Internal Server Error", None).render(templates::Error { error });
 
-        response::Response::build_from(body.respond_to(request)?)
-            .header(ContentType::new("text", "html"))
-            .status(Status::InternalServerError)
-            .ok()
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            [(header::CONTENT_TYPE, "text/html")],
+            body,
+        )
     }
 }
 
