@@ -15,13 +15,12 @@
 </p>
 
 ---
-PostgresML is a complete ML/AI platform built inside PostgreSQL. Our operating principle is:
+Postgres with GPUs for ML/AI applications. 
 
-Move models to the database, rather than constantly moving data to the models.
+Why do ML/AI in Postgres?
 
-Data for ML & AI systems is inherently larger and more dynamic than the models. It's more efficient, manageable and reliable to move models to the database, rather than continuously moving data to the models.
+Data for ML & AI systems is inherently larger and more dynamic than the models. It's more efficient, manageable and reliable to move models to the database, rather than constantly moving data to the models.
 
-<b> Table of contents </b>
 - [Getting started](#getting-started)
     - [PostgresML Cloud](#postgresml-cloud)
     - [Self-hosted](#self-hosted)
