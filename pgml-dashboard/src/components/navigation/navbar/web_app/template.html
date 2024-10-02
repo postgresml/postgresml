@@ -5,6 +5,8 @@
   use crate::models::Cluster;
 
   let standalone_dashboard = config::standalone_dashboard();
+
+  let home_link = if standalone_dashboard {"/"} else {"/deployments"};
 %>
 
   <div class="fixed-top-nav font-family-primary" data-controller="navigation-navbar-web-app">
@@ -20,7 +22,7 @@
         </button>
 
         <div class="web-app-left-nav-sized-container">
-          <%+ PostgresLogo::new("/").hide_owl() %>
+          <%+ PostgresLogo::new(home_link).hide_owl() %>
         </div>
   
         <!-- Button to toggle collapsed menu for less than lg screens -->
