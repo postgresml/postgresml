@@ -9,8 +9,6 @@ use sqlx::{postgres::PgPoolOptions, Executor, PgPool, Row};
 
 use crate::responses::ResponseOk;
 
-use rocket::route::Route;
-
 static READONLY_POOL: OnceCell<PgPool> = OnceCell::new();
 static ERROR: &str =
     "Thanks for trying PostgresML! If you would like to run more queries, sign up for an account and create a database.";

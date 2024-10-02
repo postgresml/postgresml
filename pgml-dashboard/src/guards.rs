@@ -2,8 +2,6 @@ use crate::components::sections::footers::marketing_footer::MarketingFooter;
 use crate::templates::components::{StaticNav, StaticNavLink};
 use crate::utils::urls;
 use once_cell::sync::OnceCell;
-use rocket::http::Status;
-use rocket::request::{self, FromRequest, Request};
 use sailfish::TemplateOnce;
 use sqlx::{postgres::PgPoolOptions, Executor, PgPool};
 

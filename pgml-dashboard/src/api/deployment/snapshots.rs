@@ -1,4 +1,3 @@
-use rocket::route::Route;
 use sailfish::TemplateOnce;
 
 use crate::{

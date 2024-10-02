@@ -1,11 +1,5 @@
 #![allow(renamed_and_removed_lints)]
 
-#[macro_use]
-extern crate rocket;
-
-use rocket::http::CookieJar;
-use rocket::response::Redirect;
-use rocket::route::Route;
 use sailfish::TemplateOnce;
 use sqlx::PgPool;
 
@@ -526,13 +520,10 @@ mod test {
     use super::*;
     use crate::components::sections::footers::MarketingFooter;
     use crate::guards::Cluster;
-    use rocket::fairing::AdHoc;
-    use rocket::http::{Cookie, Status};
-    use rocket::local::asynchronous::Client;
 
     #[sqlx::test]
     async fn test_remove_modal() {
-        let rocket = rocket::build().mount("/", routes());
+        // let rocket = rocket::build().mount("/", routes());
         let client = Client::untracked(rocket).await.unwrap();
 
         let cookie = vec![

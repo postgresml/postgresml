@@ -3,13 +3,11 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use rocket::response::Redirect;
 use std::str::FromStr;
 
 use comrak::{format_html_with_plugins, parse_document, Arena, ComrakPlugins};
 use lazy_static::lazy_static;
 use markdown::mdast::Node;
-use rocket::{fs::NamedFile, http::uri::Origin, route::Route, State};
 use yaml_rust::YamlLoader;
 
 use crate::{
@@ -1063,9 +1061,6 @@ mod test {
     use super::*;
     use crate::utils::markdown::options;
     use regex::Regex;
-    use rocket::http::Status;
-    use rocket::local::asynchronous::Client;
-    use rocket::{Build, Rocket};
 
     #[test]
     fn test_wrapping_tables() {

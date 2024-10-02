@@ -1,7 +1,5 @@
 use log::{error, info, warn};
 
-use rocket::{catch, catchers, fs::FileServer, get, http::Status, request::Request, response::Redirect};
-
 use pgml_dashboard::{
     guards,
     responses::{self, BadRequest, Response},
@@ -133,9 +131,6 @@ mod test {
     use pgml_dashboard::guards::Cluster;
     use pgml_dashboard::utils::urls;
     use pgml_dashboard::utils::{config, markdown};
-    use rocket::fs::FileServer;
-    use rocket::local::asynchronous::Client;
-    use rocket::{Build, Rocket};
     use scraper::{Html, Selector};
     use std::vec::Vec;
 

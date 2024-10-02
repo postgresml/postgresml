@@ -1,6 +1,4 @@
 use chrono;
-use rocket::http::{Cookie, CookieJar};
-use rocket::serde::{Deserialize, Serialize};
 use time::Duration;
 
 /// Session data.

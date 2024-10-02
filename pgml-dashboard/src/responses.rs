@@ -1,7 +1,3 @@
-use rocket::{
-    http::{ContentType, Header, Status},
-    request, response,
-};
 use sentry_anyhow::capture_anyhow;
 
 use crate::{models::User, templates, utils::config};
