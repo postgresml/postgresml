@@ -52,6 +52,7 @@ zoomies = { git="https://github.com/HyperparamAI/zoomies.git", branch="master" }
 futures = "0.3.29"
 korvus = "1.1.2"
 axum = { version = "0.7.7", features = ["ws"] }
+cookie = { version = "0.18.1", features = ["private"] }
 
 [build-dependencies]
 glob = "*"

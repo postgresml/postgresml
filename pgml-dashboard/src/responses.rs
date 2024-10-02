@@ -1,18 +1,31 @@
+use axum::{http::StatusCode, response::IntoResponse};
 use sentry_anyhow::capture_anyhow;
 
 use crate::{models::User, templates, utils::config};
 
-#[derive(Responder)]
-#[response(status = 200, content_type = "text/html")]
 pub struct ResponseOk(pub String);
 
-#[derive(Responder)]
-#[response(status = 400, content_type = "text/html")]
+impl IntoResponse for ResponseOk {
+    fn into_response(self) -> axum::response::Response {
+        (StatusCode::OK, self.0)
+    }
+}
+
 pub struct BadRequest(pub String);
 
-#[derive(Responder)]
-#[response(status = 404, content_type = "text/html")]
+impl IntoResponse for BadRequest {
+    fn into_response(self) -> axum::response::Response {
+        (StatusCode::BAD_REQUEST, self.0)
+    }
+}
+
 pub struct NotFound(pub String);
+
+impl IntoResponse for NotFound {
+    fn into_response(self) -> axum::response::Response {
+        (StatusCode::NOT_FOUND, self.0)
+    }
+}
 
 /// A response that doesn't crash and can be returned from any Rocket route.
 pub struct Response {
