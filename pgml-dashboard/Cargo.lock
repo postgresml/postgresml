@@ -1904,6 +1904,43 @@ dependencies = [
 ]
 
 [[package]]
+name = "korvus"
+version = "1.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d70457bd5491bf05dfea5aca6b6e33358a988f0e459ee2ad06ae885557f9f542"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "chrono",
+ "clap",
+ "colored",
+ "ctrlc",
+ "futures",
+ "indicatif",
+ "inquire",
+ "is-terminal",
+ "itertools",
+ "lopdf",
+ "md5",
+ "once_cell",
+ "parking_lot",
+ "regex",
+ "reqwest",
+ "sea-query",
+ "sea-query-binder",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "sqlx",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "url",
+ "uuid",
+ "walkdir",
+]
+
+[[package]]
 name = "lazy_static"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2534,41 +2571,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e3148f5046208a5d56bcfc03053e3ca6334e51da8dfb19b6cdc8b306fae3283e"
 
 [[package]]
-name = "pgml"
-version = "1.1.1"
-dependencies = [
- "anyhow",
- "async-trait",
- "chrono",
- "clap",
- "colored",
- "ctrlc",
- "futures",
- "indicatif",
- "inquire",
- "is-terminal",
- "itertools",
- "lopdf",
- "md5",
- "once_cell",
- "parking_lot",
- "regex",
- "reqwest",
- "sea-query",
- "sea-query-binder",
- "serde",
- "serde_json",
- "serde_with",
- "sqlx",
- "tokio",
- "tracing",
- "tracing-subscriber",
- "url",
- "uuid",
- "walkdir",
-]
-
-[[package]]
 name = "pgml-components"
 version = "0.1.0"
 dependencies = [
@@ -2592,13 +2594,13 @@ dependencies = [
  "futures",
  "glob",
  "itertools",
+ "korvus",
  "lazy_static",
  "log",
  "markdown",
  "num-traits",
  "once_cell",
  "parking_lot",
- "pgml",
  "pgml-components",
  "pgvector",
  "rand",
