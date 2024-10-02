@@ -7,7 +7,7 @@
 </div>
 
 <p align="center">
-   <p align="center"><b>Generative AI and Simple ML with PostgreSQL.</b></p>
+   <p align="center"><b>Postgres + GPUs for ML/AI applications.</b></p>
 </p>
 
 <p align="center">
@@ -15,11 +15,10 @@
 </p>
 
 ---
-Postgres with GPUs for ML/AI applications. 
-
 Why do ML/AI in Postgres?
 
-Data for ML & AI systems is inherently larger and more dynamic than the models. It's more efficient, manageable and reliable to move models to the database, rather than constantly moving data to the models.
+Data for ML & AI systems is inherently larger and more dynamic than the models. It's more efficient, manageable and reliable to move models to the database, rather than constantly moving data to the models.</b></p>
+</p>
 
 - [Getting started](#getting-started)
     - [PostgresML Cloud](#postgresml-cloud)
