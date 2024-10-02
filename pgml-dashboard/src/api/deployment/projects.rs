@@ -14,7 +14,7 @@ use crate::utils::tabs;
 use crate::utils::urls;
 
 // Returns the deployments projects page.
-#[get("/projects")]
+// #[get("/projects")]
 pub async fn projects(cluster: &Cluster, _connected: ConnectedCluster<'_>) -> Result<ResponseOk, Error> {
     let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster);
     layout.breadcrumbs(vec![NavLink::new("Projects", &urls::deployment_projects()).active()]);
@@ -30,7 +30,7 @@ pub async fn projects(cluster: &Cluster, _connected: ConnectedCluster<'_>) -> Re
 }
 
 // Return the specified project page.
-#[get("/projects/<project_id>")]
+// #[get("/projects/<project_id>")]
 pub async fn project(
     cluster: &Cluster,
     project_id: i64,
@@ -55,7 +55,7 @@ pub async fn project(
 }
 
 // Returns all the deployments for the project in a turbo frame.
-#[get("/projects_turboframe")]
+// #[get("/projects_turboframe")]
 pub async fn project_index(cluster: ConnectedCluster<'_>) -> Result<ResponseOk, Error> {
     Ok(ResponseOk(
         templates::Projects {
@@ -67,7 +67,7 @@ pub async fn project_index(cluster: ConnectedCluster<'_>) -> Result<ResponseOk, 
 }
 
 // Returns the specified project page.
-#[get("/projects_turboframe/<id>")]
+// #[get("/projects_turboframe/<id>")]
 pub async fn project_get(cluster: ConnectedCluster<'_>, id: i64) -> Result<ResponseOk, Error> {
     let project = models::Project::get_by_id(cluster.pool(), id).await?;
     let models = models::Model::get_by_project_id(cluster.pool(), id).await?;

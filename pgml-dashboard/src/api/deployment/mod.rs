@@ -16,7 +16,7 @@ pub mod projects;
 pub mod snapshots;
 pub mod uploader;
 
-#[get("/deployments")]
+// #[get("/deployments")]
 pub async fn deployments_index(cluster: ConnectedCluster<'_>) -> Result<ResponseOk, Error> {
     let projects = models::Project::all(cluster.pool()).await?;
     let mut deployments = HashMap::new();
@@ -33,7 +33,7 @@ pub async fn deployments_index(cluster: ConnectedCluster<'_>) -> Result<Response
     ))
 }
 
-#[get("/deployments/<id>")]
+// #[get("/deployments/<id>")]
 pub async fn deployments_get(cluster: ConnectedCluster<'_>, id: i64) -> Result<ResponseOk, Error> {
     let deployment = models::Deployment::get_by_id(cluster.pool(), id).await?;
     let project = models::Project::get_by_id(cluster.pool(), deployment.project_id).await?;

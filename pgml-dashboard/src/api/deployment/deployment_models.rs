@@ -16,7 +16,7 @@ use crate::utils::urls;
 use std::collections::HashMap;
 
 // Returns models page
-#[get("/models")]
+// #[get("/models")]
 pub async fn deployment_models(cluster: &Cluster, _connected: ConnectedCluster<'_>) -> Result<ResponseOk, Error> {
     let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster);
     layout.breadcrumbs(vec![NavLink::new("Models", &urls::deployment_models()).active()]);
@@ -32,7 +32,7 @@ pub async fn deployment_models(cluster: &Cluster, _connected: ConnectedCluster<'
 }
 
 // Returns models page
-#[get("/models/<model_id>")]
+// #[get("/models/<model_id>")]
 pub async fn model(cluster: &Cluster, model_id: i64, _connected: ConnectedCluster<'_>) -> Result<ResponseOk, Error> {
     let model = models::Model::get_by_id(cluster.pool(), model_id).await?;
     let project = models::Project::get_by_id(cluster.pool(), model.project_id).await?;
@@ -54,7 +54,7 @@ pub async fn model(cluster: &Cluster, model_id: i64, _connected: ConnectedCluste
     Ok(ResponseOk(layout.render(templates::Dashboard::new(nav_tabs))))
 }
 
-#[get("/models_turboframe")]
+// #[get("/models_turboframe")]
 pub async fn models_index(cluster: ConnectedCluster<'_>) -> Result<ResponseOk, Error> {
     let projects = models::Project::all(cluster.pool()).await?;
     let mut models = HashMap::new();
@@ -87,7 +87,7 @@ pub async fn models_index(cluster: ConnectedCluster<'_>) -> Result<ResponseOk, E
     ))
 }
 
-#[get("/models_turboframe/<id>")]
+// #[get("/models_turboframe/<id>")]
 pub async fn models_get(cluster: ConnectedCluster<'_>, id: i64) -> Result<ResponseOk, Error> {
     let model = models::Model::get_by_id(cluster.pool(), id).await?;
     let snapshot = if let Some(snapshot_id) = model.snapshot_id {

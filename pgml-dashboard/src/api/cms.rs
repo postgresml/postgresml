@@ -707,7 +707,7 @@ impl Collection {
     }
 }
 
-#[get("/search?<query>", rank = 20)]
+// #[get("/search?<query>", rank = 20)]
 async fn search(query: &str, site_search: &State<crate::utils::markdown::SiteSearch>) -> ResponseOk {
     let results = site_search
         .search(query, None, None)
@@ -756,7 +756,7 @@ async fn search(query: &str, site_search: &State<crate::utils::markdown::SiteSea
     )
 }
 
-#[get("/search_blog?<query>&<tag>", rank = 20)]
+// #[get("/search_blog?<query>&<tag>", rank = 20)]
 async fn search_blog(query: &str, tag: &str, site_search: &State<crate::utils::markdown::SiteSearch>) -> ResponseOk {
     let tag = if tag.len() > 0 {
         Some(Vec::from([tag.to_string()]))
@@ -799,22 +799,22 @@ async fn search_blog(query: &str, tag: &str, site_search: &State<crate::utils::m
     )
 }
 
-#[get("/blog/.gitbook/assets/<path>", rank = 10)]
+// #[get("/blog/.gitbook/assets/<path>", rank = 10)]
 pub async fn get_blog_asset(path: &str) -> Option<NamedFile> {
     BLOG.get_asset(path).await
 }
 
-#[get("/careers/.gitbook/assets/<path>", rank = 10)]
+// #[get("/careers/.gitbook/assets/<path>", rank = 10)]
 pub async fn get_careers_asset(path: &str) -> Option<NamedFile> {
     CAREERS.get_asset(path).await
 }
 
-#[get("/docs/.gitbook/assets/<path>", rank = 10)]
+// #[get("/docs/.gitbook/assets/<path>", rank = 10)]
 pub async fn get_docs_asset(path: &str) -> Option<NamedFile> {
     DOCS.get_asset(path).await
 }
 
-#[get("/blog/<path..>", rank = 5)]
+// #[get("/blog/<path..>", rank = 5)]
 async fn get_blog(
     path: PathBuf,
     cluster: &Cluster,
@@ -831,7 +831,7 @@ async fn get_blog(
     BLOG.render(&content_path.into(), &canonical, cluster).await
 }
 
-#[get("/careers/<path..>", rank = 5)]
+// #[get("/careers/<path..>", rank = 5)]
 async fn get_careers(
     path: PathBuf,
     cluster: &Cluster,
@@ -848,7 +848,7 @@ async fn get_careers(
     CAREERS.render(&content_path.into(), &canonical, cluster).await
 }
 
-#[get("/careers/apply/<title>", rank = 4)]
+// #[get("/careers/apply/<title>", rank = 4)]
 pub async fn careers_apply(title: PathBuf, cluster: &Cluster) -> Result<ResponseOk, crate::responses::NotFound> {
     let layout =
         crate::components::layouts::marketing::Base::new("Apply for a career", Some(&cluster)).no_transparent_nav();
@@ -860,7 +860,7 @@ pub async fn careers_apply(title: PathBuf, cluster: &Cluster) -> Result<Response
 }
 
 /// Redirect api to open-source
-#[get("/docs/api/<path..>")]
+// #[get("/docs/api/<path..>")]
 pub async fn api_redirect(path: PathBuf) -> Redirect {
     match path.to_str().unwrap() {
         "apis" => Redirect::permanent("/docs/open-source/korvus/"),
@@ -873,19 +873,19 @@ pub async fn api_redirect(path: PathBuf) -> Redirect {
 }
 
 /// Redirect our old sql-extension path.
-#[get("/docs/open-source/sql-extension/<path..>")]
+// #[get("/docs/open-source/sql-extension/<path..>")]
 pub async fn sql_extension_redirect(path: PathBuf) -> Redirect {
     Redirect::permanent("/docs/open-source/pgml/api/".to_owned() + path.to_str().unwrap())
 }
 
 /// Redirect our old pgcat path.
-#[get("/docs/product/pgcat/<path..>")]
+// #[get("/docs/product/pgcat/<path..>")]
 pub async fn pgcat_redirect(path: PathBuf) -> Redirect {
     Redirect::permanent("/docs/open-source/pgcat/".to_owned() + path.to_str().unwrap())
 }
 
 /// Redirect our old cloud-database path.
-#[get("/docs/product/cloud-database/<path..>")]
+// #[get("/docs/product/cloud-database/<path..>")]
 pub async fn cloud_database_redirect(path: PathBuf) -> Redirect {
     let path = path.to_str().unwrap();
     if path.is_empty() {
@@ -896,12 +896,12 @@ pub async fn cloud_database_redirect(path: PathBuf) -> Redirect {
 }
 
 /// Redirect our old pgml docs.
-#[get("/docs/open-source/client-sdk/<path..>")]
+// #[get("/docs/open-source/client-sdk/<path..>")]
 pub async fn pgml_redirect(path: PathBuf) -> Redirect {
     Redirect::permanent("/docs/open-source/korvus/api/".to_owned() + path.to_str().unwrap())
 }
 
-#[get("/docs/<path..>", rank = 5)]
+// #[get("/docs/<path..>", rank = 5)]
 async fn get_docs(
     path: PathBuf,
     cluster: &Cluster,
@@ -937,7 +937,7 @@ async fn get_docs(
     Err(crate::responses::NotFound(layout.render(page)))
 }
 
-#[get("/blog")]
+// #[get("/blog")]
 async fn blog_landing_page(cluster: &Cluster) -> Result<ResponseOk, crate::responses::NotFound> {
     let layout = Base::new(
         "PostgresML blog landing page, home of technical tutorials, general updates and all things AI/ML.",
@@ -967,7 +967,7 @@ async fn blog_landing_page(cluster: &Cluster) -> Result<ResponseOk, crate::respo
     )))
 }
 
-#[get("/docs")]
+// #[get("/docs")]
 async fn docs_landing_page(cluster: &Cluster) -> Result<ResponseOk, crate::responses::NotFound> {
     let index = DOCS.open_index(&PathBuf::from("/docs"));
 
@@ -981,12 +981,12 @@ async fn docs_landing_page(cluster: &Cluster) -> Result<ResponseOk, crate::respo
 }
 
 /// Redirect our old MkDocs paths to the new ones under `/docs`.
-#[get("/user_guides/<path..>", rank = 5)]
+// #[get("/user_guides/<path..>", rank = 5)]
 async fn get_user_guides(path: PathBuf) -> Result<Response, crate::responses::NotFound> {
     Ok(Response::redirect(format!("/docs/{}", path.display().to_string())))
 }
 
-#[get("/careers")]
+// #[get("/careers")]
 async fn careers_landing_page(cluster: &Cluster) -> Result<ResponseOk, crate::responses::NotFound> {
     let layout = Base::new(
         "PostgresML careers landing page, Join us to help build the future of AI infrastructure.",
@@ -1001,7 +1001,7 @@ async fn careers_landing_page(cluster: &Cluster) -> Result<ResponseOk, crate::re
     Ok(ResponseOk(layout.render(page)))
 }
 
-#[get("/components-library-demo?<search>")]
+// #[get("/components-library-demo?<search>")]
 async fn demo(search: Option<String>) -> Result<Response, Error> {
     #[cfg(not(debug_assertions))]
     {

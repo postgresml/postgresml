@@ -15,7 +15,7 @@ use crate::templates;
 use crate::utils::urls;
 
 // Returns notebook page
-#[get("/notebooks")]
+// #[get("/notebooks")]
 pub async fn notebooks(cluster: &Cluster, _connected: ConnectedCluster<'_>) -> Result<ResponseOk, Error> {
     let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster);
     layout.breadcrumbs(vec![NavLink::new("Notebooks", &urls::deployment_notebooks()).active()]);
@@ -31,7 +31,7 @@ pub async fn notebooks(cluster: &Cluster, _connected: ConnectedCluster<'_>) -> R
 }
 
 // Returns the specified notebook page.
-#[get("/notebooks/<notebook_id>")]
+// #[get("/notebooks/<notebook_id>")]
 pub async fn notebook(
     cluster: &Cluster,
     notebook_id: i64,
@@ -56,7 +56,7 @@ pub async fn notebook(
 }
 
 // Returns all the notebooks for a deployment in a turbo frame.
-#[get("/notebooks_turboframe?<new>")]
+// #[get("/notebooks_turboframe?<new>")]
 pub async fn notebook_index(cluster: ConnectedCluster<'_>, new: Option<&str>) -> Result<ResponseOk, Error> {
     Ok(ResponseOk(
         templates::Notebooks {
@@ -69,7 +69,7 @@ pub async fn notebook_index(cluster: ConnectedCluster<'_>, new: Option<&str>) ->
 }
 
 // Creates a new named notebook and redirects to that specific notebook.
-#[post("/notebooks", data = "<data>")]
+// #[post("/notebooks", data = "<data>")]
 pub async fn notebook_create(cluster: &Cluster, data: Form<forms::Notebook<'_>>) -> Result<Redirect, Error> {
     let notebook = crate::models::Notebook::create(cluster.pool(), data.name).await?;
 
@@ -79,7 +79,7 @@ pub async fn notebook_create(cluster: &Cluster, data: Form<forms::Notebook<'_>>)
 }
 
 // Returns the notebook in a turbo frame.
-#[get("/notebooks_turboframe/<notebook_id>")]
+// #[get("/notebooks_turboframe/<notebook_id>")]
 pub async fn notebook_get(cluster: ConnectedCluster<'_>, notebook_id: i64) -> Result<ResponseOk, Error> {
     let notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
     let cells = notebook.cells(cluster.pool()).await?;
@@ -89,7 +89,7 @@ pub async fn notebook_get(cluster: ConnectedCluster<'_>, notebook_id: i64) -> Re
     ))
 }
 
-#[post("/notebooks/<notebook_id>/reset")]
+// #[post("/notebooks/<notebook_id>/reset")]
 pub async fn notebook_reset(cluster: ConnectedCluster<'_>, notebook_id: i64) -> Result<Redirect, Error> {
     let notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
     notebook.reset(cluster.pool()).await?;
@@ -101,7 +101,7 @@ pub async fn notebook_reset(cluster: ConnectedCluster<'_>, notebook_id: i64) -> 
     )))
 }
 
-#[post("/notebooks/<notebook_id>/cell", data = "<cell>")]
+// #[post("/notebooks/<notebook_id>/cell", data = "<cell>")]
 pub async fn cell_create(
     cluster: ConnectedCluster<'_>,
     notebook_id: i64,
@@ -122,7 +122,7 @@ pub async fn cell_create(
     )))
 }
 
-#[post("/notebooks/<notebook_id>/reorder", data = "<cells>")]
+// #[post("/notebooks/<notebook_id>/reorder", data = "<cells>")]
 pub async fn notebook_reorder(
     cluster: ConnectedCluster<'_>,
     notebook_id: i64,
@@ -148,7 +148,7 @@ pub async fn notebook_reorder(
     )))
 }
 
-#[get("/notebooks/<notebook_id>/cell/<cell_id>")]
+// #[get("/notebooks/<notebook_id>/cell/<cell_id>")]
 pub async fn cell_get(cluster: ConnectedCluster<'_>, notebook_id: i64, cell_id: i64) -> Result<ResponseOk, Error> {
     let notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
     let cell = models::Cell::get_by_id(cluster.pool(), cell_id).await?;
@@ -165,7 +165,7 @@ pub async fn cell_get(cluster: ConnectedCluster<'_>, notebook_id: i64, cell_id: 
     ))
 }
 
-#[post("/notebooks/<notebook_id>/cell/<cell_id>/cancel")]
+// #[post("/notebooks/<notebook_id>/cell/<cell_id>/cancel")]
 pub async fn cell_cancel(cluster: ConnectedCluster<'_>, notebook_id: i64, cell_id: i64) -> Result<Redirect, Error> {
     let cell = models::Cell::get_by_id(cluster.pool(), cell_id).await?;
     cell.cancel(cluster.pool()).await?;
@@ -177,7 +177,7 @@ pub async fn cell_cancel(cluster: ConnectedCluster<'_>, notebook_id: i64, cell_i
     )))
 }
 
-#[post("/notebooks/<notebook_id>/cell/<cell_id>/edit", data = "<data>")]
+// #[post("/notebooks/<notebook_id>/cell/<cell_id>/edit", data = "<data>")]
 pub async fn cell_edit(
     cluster: ConnectedCluster<'_>,
     notebook_id: i64,
@@ -206,7 +206,7 @@ pub async fn cell_edit(
     ))
 }
 
-#[get("/notebooks/<notebook_id>/cell/<cell_id>/edit")]
+// #[get("/notebooks/<notebook_id>/cell/<cell_id>/edit")]
 pub async fn cell_trigger_edit(
     cluster: ConnectedCluster<'_>,
     notebook_id: i64,
@@ -227,7 +227,7 @@ pub async fn cell_trigger_edit(
     ))
 }
 
-#[post("/notebooks/<notebook_id>/cell/<cell_id>/play")]
+// #[post("/notebooks/<notebook_id>/cell/<cell_id>/play")]
 pub async fn cell_play(cluster: ConnectedCluster<'_>, notebook_id: i64, cell_id: i64) -> Result<ResponseOk, Error> {
     let notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
     let mut cell = models::Cell::get_by_id(cluster.pool(), cell_id).await?;
@@ -245,7 +245,7 @@ pub async fn cell_play(cluster: ConnectedCluster<'_>, notebook_id: i64, cell_id:
     ))
 }
 
-#[post("/notebooks/<notebook_id>/cell/<cell_id>/remove")]
+// #[post("/notebooks/<notebook_id>/cell/<cell_id>/remove")]
 pub async fn cell_remove(cluster: ConnectedCluster<'_>, notebook_id: i64, cell_id: i64) -> Result<ResponseOk, Error> {
     let notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
     let cell = models::Cell::get_by_id(cluster.pool(), cell_id).await?;
@@ -264,7 +264,7 @@ pub async fn cell_remove(cluster: ConnectedCluster<'_>, notebook_id: i64, cell_i
     ))
 }
 
-#[post("/notebooks/<notebook_id>/cell/<cell_id>/delete")]
+// #[post("/notebooks/<notebook_id>/cell/<cell_id>/delete")]
 pub async fn cell_delete(cluster: ConnectedCluster<'_>, notebook_id: i64, cell_id: i64) -> Result<Redirect, Error> {
     let _notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
     let cell = models::Cell::get_by_id(cluster.pool(), cell_id).await?;

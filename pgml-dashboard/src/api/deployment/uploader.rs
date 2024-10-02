@@ -15,7 +15,7 @@ use crate::utils::tabs;
 use crate::utils::urls;
 
 // Returns the uploader page.
-#[get("/uploader")]
+// #[get("/uploader")]
 pub async fn uploader(cluster: &Cluster, _connected: ConnectedCluster<'_>) -> Result<ResponseOk, Error> {
     let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster);
     layout.breadcrumbs(vec![NavLink::new("Upload Data", &urls::deployment_uploader()).active()]);
@@ -31,12 +31,12 @@ pub async fn uploader(cluster: &Cluster, _connected: ConnectedCluster<'_>) -> Re
 }
 
 // Returns uploader module in a turboframe.
-#[get("/uploader_turboframe")]
+// #[get("/uploader_turboframe")]
 pub async fn uploader_index() -> ResponseOk {
     ResponseOk(templates::Uploader { error: None }.render_once().unwrap())
 }
 
-#[post("/uploader", data = "<form>")]
+// #[post("/uploader", data = "<form>")]
 pub async fn uploader_upload(
     cluster: ConnectedCluster<'_>,
     form: Form<forms::Upload<'_>>,
@@ -62,7 +62,7 @@ pub async fn uploader_upload(
     }
 }
 
-#[get("/uploader_turboframe/done?<table_name>")]
+// #[get("/uploader_turboframe/done?<table_name>")]
 pub async fn uploaded_index(cluster: ConnectedCluster<'_>, table_name: &str) -> ResponseOk {
     let sql = templates::Sql::new(cluster.pool(), &format!("SELECT * FROM {} LIMIT 10", table_name))
         .await

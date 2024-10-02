@@ -15,7 +15,7 @@ use crate::utils::urls;
 use std::collections::HashMap;
 
 // Returns snapshots page
-#[get("/snapshots")]
+// #[get("/snapshots")]
 pub async fn snapshots(cluster: &Cluster, _connected: ConnectedCluster<'_>) -> Result<ResponseOk, Error> {
     let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster);
     layout.breadcrumbs(vec![NavLink::new("Snapshots", &urls::deployment_snapshots()).active()]);
@@ -31,7 +31,7 @@ pub async fn snapshots(cluster: &Cluster, _connected: ConnectedCluster<'_>) -> R
 }
 
 // Returns the specific snapshot page
-#[get("/snapshots/<snapshot_id>")]
+// #[get("/snapshots/<snapshot_id>")]
 pub async fn snapshot(
     cluster: &Cluster,
     snapshot_id: i64,
@@ -56,7 +56,7 @@ pub async fn snapshot(
 }
 
 // Returns all snapshots for the deployment in a turboframe.
-#[get("/snapshots_turboframe")]
+// #[get("/snapshots_turboframe")]
 pub async fn snapshots_index(cluster: ConnectedCluster<'_>) -> Result<ResponseOk, Error> {
     let snapshots = models::Snapshot::all(cluster.pool()).await?;
 
@@ -64,7 +64,7 @@ pub async fn snapshots_index(cluster: ConnectedCluster<'_>) -> Result<ResponseOk
 }
 
 // Returns a specific snapshot for the deployment in a turboframe.
-#[get("/snapshots_turboframe/<id>")]
+// #[get("/snapshots_turboframe/<id>")]
 pub async fn snapshots_get(cluster: ConnectedCluster<'_>, id: i64) -> Result<ResponseOk, Error> {
     let snapshot = models::Snapshot::get_by_id(cluster.pool(), id).await?;
     let samples = snapshot.samples(cluster.pool(), 500).await?;

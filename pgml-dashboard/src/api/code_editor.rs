@@ -220,7 +220,7 @@ impl<'a> AsyncResult<'a> {
     }
 }
 
-#[get("/code_editor/play/stream")]
+// #[get("/code_editor/play/stream")]
 pub async fn play_stream(ws: ws::WebSocket) -> ws::Stream!['static] {
     ws::Stream! { ws =>
         for await message in ws {
@@ -269,7 +269,7 @@ pub async fn play_stream(ws: ws::WebSocket) -> ws::Stream!['static] {
     }
 }
 
-#[get("/code_editor/embed?<id>")]
+// #[get("/code_editor/embed?<id>")]
 pub fn embed_editor(id: String) -> ResponseOk {
     let comp = Editor::new();
 
