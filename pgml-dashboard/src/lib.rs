@@ -25,6 +25,7 @@ use components::notifications::product::ProductBanner;
 use guards::Cluster;
 use responses::{BadRequest, Error, Response, ResponseOk};
 use templates::{components::StaticNav, *};
+use utils::markdown::SiteSearch;
 
 use crate::components::tables::serverless_models::{ServerlessModels, ServerlessModelsTurbo};
 use crate::components::tables::serverless_pricing::{ServerlessPricing, ServerlessPricingTurbo};
@@ -549,11 +550,25 @@ pub async fn error_catcher(status: StatusCode, request: Request<()>) -> Result<B
     Err(responses::Error(anyhow::anyhow!("{}\n{:?}", status, request)))
 }
 
-pub fn app() -> Router {
+pub async fn app() -> Router<SiteSearch> {
+    let site_search = utils::markdown::SiteSearch::new()
+        .await
+        .expect("Error initializing site search");
+    let mut site_search_copy = site_search.clone();
+    tokio::spawn(async move {
+        match site_search_copy.build().await {
+            Err(e) => {
+                error!("Error building site search: {e}")
+            }
+            _ => {}
+        };
+    });
+
     Router::new()
         .route("/", get(|| async { Redirect::permanent("/dashboard") }))
         .layer(Extension(Cluster::default()))
         .fallback(not_found_handler)
+        .with_state(site_search)
 }
 
 // TODO: Fix tests

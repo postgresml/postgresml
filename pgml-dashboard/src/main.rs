@@ -9,24 +9,11 @@ async fn main() {
     // it's important to hang on to sentry so it isn't dropped and stops reporting
     let _sentry = configure_reporting().await;
 
-    let site_search = markdown::SiteSearch::new()
-        .await
-        .expect("Error initializing site search");
-    let mut site_search_copy = site_search.clone();
-    tokio::spawn(async move {
-        match site_search_copy.build().await {
-            Err(e) => {
-                error!("Error building site search: {e}")
-            }
-            _ => {}
-        };
-    });
-
     pgml_dashboard::migrate(guards::Cluster::default().pool())
         .await
         .unwrap();
 
-    let app = pgml_dashboard::app();
+    let app = pgml_dashboard::app().await;
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     axum::serve(listener, app).await.unwrap();
