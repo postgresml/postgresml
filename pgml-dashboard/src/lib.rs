@@ -1,12 +1,14 @@
 #![allow(renamed_and_removed_lints)]
 
+use axum::extract::Query;
 use axum::http::{Request, StatusCode};
 use axum::response::Redirect;
 use axum::routing::get;
-use axum::{Extension, Router};
-use cookie::CookieJar;
+use axum::Extension;
+use axum_extra::extract::CookieJar;
 use log::{error, info};
 use sailfish::TemplateOnce;
+use serde::Deserialize;
 use sqlx::PgPool;
 
 pub mod api;
@@ -25,6 +27,8 @@ use components::notifications::product::ProductBanner;
 use guards::Cluster;
 use responses::{BadRequest, Error, Response, ResponseOk};
 use templates::{components::StaticNav, *};
+use tower_http::services::ServeDir;
+use utils::config;
 use utils::markdown::SiteSearch;
 
 use crate::components::tables::serverless_models::{ServerlessModels, ServerlessModelsTurbo};
@@ -34,6 +38,8 @@ use crate::utils::urls;
 use chrono;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
+
+type Router = axum::Router<SiteSearch>;
 
 #[derive(Debug, Default, Clone)]
 pub struct ClustersSettings {
@@ -271,24 +277,32 @@ pub enum NotificationLevel {
     ProductMarketing,
 }
 
-// #[get("/serverless_models/turboframe?<style>")]
-pub fn serverless_models_turboframe(style: String) -> ResponseOk {
+#[derive(Deserialize)]
+struct ServerlessParams {
+    style: String,
+}
+
+async fn serverless_models_turboframe(Query(ServerlessParams { style }): Query<ServerlessParams>) -> ResponseOk {
     let comp = ServerlessModels::new().set_style_type(&style);
     ResponseOk(ServerlessModelsTurbo::new(comp.into()).render_once().unwrap())
 }
 
-// #[get("/serverless_pricing/turboframe?<style>")]
-pub fn serverless_pricing_turboframe(style: String) -> ResponseOk {
+async fn serverless_pricing_turboframe(Query(ServerlessParams { style }): Query<ServerlessParams>) -> ResponseOk {
     let comp = ServerlessPricing::new().set_style_type(&style);
     ResponseOk(ServerlessPricingTurbo::new(comp.into()).render_once().unwrap())
 }
 
-// Reroute old style query style dashboard links.
-// #[get("/?<tab>&<id>")]
-pub async fn dashboard(tab: Option<&str>, id: Option<i64>) -> Redirect {
-    let tab = tab.unwrap_or("Notebooks");
+#[derive(Deserialize)]
+struct DashboardParams {
+    tab: Option<String>,
+    id: Option<i64>,
+}
 
-    match tab {
+// Reroute old style query style dashboard links.
+async fn dashboard(Query(DashboardParams { tab, id }): Query<DashboardParams>) -> Redirect {
+    let tab = tab.unwrap_or("Notebooks".into());
+
+    match tab.as_str() {
         "Notebooks" => Redirect::to(&urls::deployment_notebooks()),
 
         "Notebook" => match id {
@@ -322,15 +336,23 @@ pub async fn dashboard(tab: Option<&str>, id: Option<i64>) -> Redirect {
     }
 }
 
-// #[get("/playground")]
-pub async fn playground(cluster: &Cluster) -> Result<ResponseOk, Error> {
+pub async fn playground(Extension(cluster): Extension<Cluster>) -> Result<ResponseOk, Error> {
     let mut layout = crate::templates::WebAppBase::new("Playground", &cluster);
     Ok(ResponseOk(layout.render(templates::Playground {})))
 }
 
+#[derive(Deserialize)]
+struct RemoveBannerParams {
+    id: String,
+    notification_type: String,
+}
+
 // Remove Alert and Feature banners after user exits out of the message.
-// #[get("/notifications/remove_banner?<id>&<notification_type>")]
-pub fn remove_banner(id: String, notification_type: String, cookies: CookieJar, context: &Cluster) -> ResponseOk {
+async fn remove_banner(
+    Query(RemoveBannerParams { id, notification_type }): Query<RemoveBannerParams>,
+    cookies: CookieJar,
+    Extension(context): Extension<Cluster>,
+) -> ResponseOk {
     let mut viewed = Notifications::get_viewed(&cookies);
 
     viewed.push(NotificationCookie {
@@ -382,13 +404,17 @@ pub fn remove_banner(id: String, notification_type: String, cookies: CookieJar, 
     }
 }
 
-// Replace a product banner after user exits out of the message.
-// #[get("/notifications/product/replace_banner?<id>&<deployment_id>")]
-pub fn replace_banner_product(
+#[derive(Deserialize)]
+struct ReplaceBannerParams {
     id: String,
     deployment_id: Option<String>,
+}
+
+// Replace a product banner after user exits out of the message.
+async fn replace_banner_product(
+    Query(ReplaceBannerParams { id, deployment_id }): Query<ReplaceBannerParams>,
     cookies: CookieJar,
-    context: &Cluster,
+    Extension(context): Extension<Cluster>,
 ) -> Result<Response, Error> {
     let mut all_notification_cookies = Notifications::get_viewed(&cookies);
     let current_notification_cookie = all_notification_cookies.iter().position(|x| x.id == id);
@@ -450,9 +476,17 @@ pub fn replace_banner_product(
     return Ok(Response::turbo_stream(turbo_stream));
 }
 
+#[derive(Deserialize)]
+struct RemoveBannerProductParams {
+    id: String,
+    target: String,
+}
+
 // Remove a product banners after user exits out of the message.
-// #[get("/notifications/product/remove_banner?<id>&<target>")]
-pub fn remove_banner_product(id: String, target: String, cookies: CookieJar) -> Result<Response, Error> {
+async fn remove_banner_product(
+    Query(RemoveBannerProductParams { id, target }): Query<RemoveBannerProductParams>,
+    cookies: CookieJar,
+) -> Result<Response, Error> {
     let mut all_notification_cookies = Notifications::get_viewed(&cookies);
 
     let current_notification_cookie = all_notification_cookies.iter().position(|x| x.id == id);
@@ -482,9 +516,13 @@ pub fn remove_banner_product(id: String, target: String, cookies: CookieJar) -> 
     return Ok(Response::turbo_stream(turbo_stream));
 }
 
+#[derive(Deserialize)]
+struct RemoveModalParams {
+    id: String,
+}
+
 // Update cookie to show the user has viewed the modal.
-// #[get("/notifications/product/modal/remove_modal?<id>")]
-pub fn remove_modal_product(id: String, cookies: CookieJar) {
+async fn remove_modal_product(Query(RemoveModalParams { id }): Query<RemoveModalParams>, cookies: CookieJar) {
     let mut all_notification_cookies = Notifications::get_viewed(&cookies);
 
     let current_notification_cookie = all_notification_cookies.iter().position(|x| x.id == id);
@@ -506,29 +544,27 @@ pub fn remove_modal_product(id: String, cookies: CookieJar) {
 }
 
 pub fn routes() -> Router {
-    Router::new()
-    // routes![
-    //     dashboard,
-    //     remove_banner,
-    //     playground,
-    //     serverless_models_turboframe,
-    //     serverless_pricing_turboframe,
-    //     replace_banner_product,
-    //     remove_modal_product,
-    //     remove_banner_product
-    // ]
+    axum::Router::new()
+        .route("/", get(index))
+        .route("/", get(dashboard))
+        .route("/notifications/remove_banner", get(remove_banner))
+        .route("/playground", get(playground))
+        .route("/serverless_models/turboframe", get(serverless_models_turboframe))
+        .route("/serverless_pricing/turboframe", get(serverless_pricing_turboframe))
+        .route("/error", get(error))
+        .route("/notifications/product/replace_banner", get(replace_banner_product))
+        .route("/notifications/product/modal/remove_modal", get(remove_modal_product))
+        .route("/notifications/product/remove_banner", get(remove_banner_product))
 }
 
 pub async fn migrate(pool: &PgPool) -> anyhow::Result<()> {
     Ok(sqlx::migrate!("./migrations").run(pool).await?)
 }
 
-// #[rocket::get("/")]
 async fn index() -> Redirect {
     Redirect::to("/dashboard")
 }
 
-// #[get("/error")]
 pub async fn error() -> Result<(), BadRequest> {
     info!("This is additional information for the test");
     error!("This is a test");
@@ -550,7 +586,7 @@ pub async fn error_catcher(status: StatusCode, request: Request<()>) -> Result<B
     Err(responses::Error(anyhow::anyhow!("{}\n{:?}", status, request)))
 }
 
-pub async fn app() -> Router<SiteSearch> {
+pub async fn app() -> axum::Router {
     let site_search = utils::markdown::SiteSearch::new()
         .await
         .expect("Error initializing site search");
@@ -566,7 +602,11 @@ pub async fn app() -> Router<SiteSearch> {
 
     Router::new()
         .route("/", get(|| async { Redirect::permanent("/dashboard") }))
+        .nest("/dashboard", routes())
+        .nest("/engine", api::deployment::routes())
+        .nest("/", api::routes())
         .layer(Extension(Cluster::default()))
+        .nest_service("/dashboard/static", ServeDir::new(config::static_dir()))
         .fallback(not_found_handler)
         .with_state(site_search)
 }

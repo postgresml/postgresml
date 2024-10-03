@@ -1,4 +1,4 @@
-use log::{error, info, warn};
+use log::{info, warn};
 
 #[tokio::main]
 async fn main() {
@@ -9,7 +9,7 @@ async fn main() {
     // it's important to hang on to sentry so it isn't dropped and stops reporting
     let _sentry = configure_reporting().await;
 
-    pgml_dashboard::migrate(guards::Cluster::default().pool())
+    pgml_dashboard::migrate(pgml_dashboard::guards::Cluster::default().pool())
         .await
         .unwrap();
 
@@ -17,23 +17,6 @@ async fn main() {
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     axum::serve(listener, app).await.unwrap();
-
-    // let _ = rocket::build()
-    //     .manage(site_search)
-    //     .mount("/", rocket::routes![index, error])
-    //     .mount("/dashboard/static", FileServer::from(config::static_dir()))
-    //     .mount("/dashboard", pgml_dashboard::routes())
-    //     .mount("/engine", pgml_dashboard::api::deployment::routes())
-    //     .mount("/", pgml_dashboard::api::routes())
-    //     .mount("/", rocket::routes![pgml_dashboard::playground])
-    //     .register("/", catchers![error_catcher, not_authorized_catcher, not_found_handler])
-    //     .attach(pgml_dashboard::fairings::RequestMonitor::new())
-    //     .ignite()
-    //     .await
-    //     .expect("failed to ignite Rocket")
-    //     .launch()
-    //     .await
-    //     .expect("failed to shut down Rocket");
 }
 
 async fn configure_reporting() -> Option<sentry::ClientInitGuard> {
@@ -41,7 +24,7 @@ async fn configure_reporting() -> Option<sentry::ClientInitGuard> {
     log_builder.format_timestamp_micros();
 
     // TODO move sentry into a once_cell
-    let sentry = match config::sentry_dsn() {
+    let sentry = match pgml_dashboard::utils::config::sentry_dsn() {
         Some(dsn) => {
             // Don't log debug or trace to sentry, regardless of environment
             let logger = log_builder.build();

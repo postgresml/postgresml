@@ -1,5 +1,5 @@
+use axum_extra::extract::{cookie::Cookie, CookieJar};
 use chrono;
-use cookie::{Cookie, CookieJar};
 use serde::{Deserialize, Serialize};
 use time::Duration;
 
@@ -38,12 +38,12 @@ impl From<NotificationsCookieOld> for NotificationCookie {
 
 impl Notifications {
     /// Update the viewed notifications in the session.
-    pub fn update_viewed(notifications: &[NotificationCookie], mut cookies: CookieJar) {
+    pub fn update_viewed(notifications: &[NotificationCookie], cookies: CookieJar) -> CookieJar {
         let session = Notifications::safe_serialize_session(notifications);
 
         let mut cookie = Cookie::new("session", session);
         cookie.set_max_age(Duration::weeks(52 * 100)); // Keep the cookie "forever"
-        cookies.add(cookie);
+        cookies.add(cookie)
     }
 
     /// Get viewed notifications from the session.

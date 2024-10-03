@@ -1,10 +1,10 @@
-use axum::{extract::Path, routing::get, Extension, Router};
+use axum::{extract::Path, routing::get, Extension};
 use sailfish::TemplateOnce;
 
 use crate::{
-    guards::Cluster,
-    guards::ConnectedCluster,
+    guards::{Cluster, ConnectedCluster},
     responses::{Error, ResponseOk},
+    Router,
 };
 
 use crate::templates::{components::NavLink, *};

@@ -1,11 +1,11 @@
-use axum::{extract::Query, routing::get, Extension, Router};
+use axum::{extract::Query, routing::get, Extension};
 use sailfish::TemplateOnce;
 use serde::Deserialize;
 
 use crate::{
-    guards::Cluster,
-    guards::ConnectedCluster,
+    guards::{Cluster, ConnectedCluster},
     responses::{Error, ResponseOk},
+    Router,
 };
 
 use crate::templates::{components::NavLink, *};
@@ -73,7 +73,7 @@ struct UploadedIndexParams {
     table_name: String,
 }
 
-pub async fn uploaded_index(
+async fn uploaded_index(
     cluster: ConnectedCluster,
     Query(UploadedIndexParams { table_name }): Query<UploadedIndexParams>,
 ) -> ResponseOk {

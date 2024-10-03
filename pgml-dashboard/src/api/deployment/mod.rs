@@ -1,9 +1,10 @@
-use axum::{extract::Path, routing::get, Router};
+use axum::{extract::Path, routing::get};
 use sailfish::TemplateOnce;
 
 use crate::{
     guards::ConnectedCluster,
     responses::{Error, ResponseOk},
+    Router,
 };
 
 use crate::models;
@@ -18,8 +19,6 @@ pub mod snapshots;
 pub mod uploader;
 
 pub fn routes() -> Router {
-    // let mut routes = routes![deployments_index, deployments_get,];
-
     Router::new()
         .route("/deployments", get(deployments_index))
         .route("/deployments/:id", get(deployments_get))

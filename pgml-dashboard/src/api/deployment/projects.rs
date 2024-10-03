@@ -1,10 +1,10 @@
-use axum::{extract::Path, routing::get, Extension, Router};
+use axum::{extract::Path, routing::get, Extension};
 use sailfish::TemplateOnce;
 
 use crate::{
-    guards::Cluster,
-    guards::ConnectedCluster,
+    guards::{Cluster, ConnectedCluster},
     responses::{Error, ResponseOk},
+    Router,
 };
 
 use crate::templates::{components::NavLink, *};
@@ -20,7 +20,6 @@ pub fn routes() -> Router {
         .route("/projects/:project_id", get(project))
         .route("/projects_turboframe", get(project_index))
         .route("/projects_turboframe/:id", get(project_get))
-    // routes![projects, project, project_index, project_get,]
 }
 
 // Returns the deployments projects page.

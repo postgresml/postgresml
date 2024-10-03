@@ -1,5 +1,5 @@
-use crate::components::code_editor::Editor;
 use crate::components::turbo::TurboFrame;
+use crate::{components::code_editor::Editor, utils::markdown::SiteSearch};
 use anyhow::Context;
 use axum::{
     extract::{
@@ -287,7 +287,7 @@ struct EmbedEditorParams {
     id: String,
 }
 
-pub async fn embed_editor(Query(EmbedEditorParams { id }): Query<EmbedEditorParams>) -> ResponseOk {
+async fn embed_editor(Query(EmbedEditorParams { id }): Query<EmbedEditorParams>) -> ResponseOk {
     let comp = Editor::new();
 
     let rsp = TurboFrame::new().set_target_id(&id).set_content(comp.into());
@@ -295,7 +295,7 @@ pub async fn embed_editor(Query(EmbedEditorParams { id }): Query<EmbedEditorPara
     ResponseOk(rsp.render_once().unwrap())
 }
 
-pub fn routes() -> Router {
+pub fn routes() -> Router<SiteSearch> {
     Router::new()
         .route("/code_editor/embed", get(embed_editor))
         .route("/code_editor/play/stream", get(play_stream))

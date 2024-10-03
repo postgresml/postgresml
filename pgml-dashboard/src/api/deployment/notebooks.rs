@@ -1,9 +1,9 @@
-use crate::forms;
+use crate::{forms, Router};
 use axum::{
     extract::{Path, Query},
     response::Redirect,
     routing::{get, post},
-    Extension, Form, Json, Router,
+    Extension, Form, Json,
 };
 use log::debug;
 use sailfish::TemplateOnce;
@@ -89,7 +89,7 @@ struct NotebookIndexParams {
 }
 
 // Returns all the notebooks for a deployment in a turbo frame.
-pub async fn notebook_index(
+async fn notebook_index(
     cluster: ConnectedCluster,
     Query(NotebookIndexParams { new }): Query<NotebookIndexParams>,
 ) -> Result<ResponseOk, Error> {
@@ -109,7 +109,7 @@ struct NotebookForm {
 }
 
 // Creates a new named notebook and redirects to that specific notebook.
-pub async fn notebook_create(
+async fn notebook_create(
     Extension(cluster): Extension<Cluster>,
     Form(data): Form<NotebookForm>,
 ) -> Result<Redirect, Error> {
@@ -146,7 +146,7 @@ struct CellForm {
     cell_type: String,
 }
 
-pub async fn cell_create(
+async fn cell_create(
     cluster: ConnectedCluster,
     Path(notebook_id): Path<i64>,
     Form(cell): Form<CellForm>,
@@ -227,7 +227,7 @@ pub async fn cell_cancel(
     )))
 }
 
-pub async fn cell_edit(
+async fn cell_edit(
     cluster: ConnectedCluster,
     Path(notebook_id): Path<i64>,
     Path(cell_id): Path<i64>,

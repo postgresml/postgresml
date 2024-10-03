@@ -1,10 +1,10 @@
-use axum::{extract::Path, routing::get, Extension, Router};
+use axum::{extract::Path, routing::get, Extension};
 use sailfish::TemplateOnce;
 
 use crate::{
-    guards::Cluster,
-    guards::ConnectedCluster,
+    guards::{Cluster, ConnectedCluster},
     responses::{Error, ResponseOk},
+    Router,
 };
 
 use crate::templates::{components::NavLink, *};
@@ -21,7 +21,6 @@ pub fn routes() -> Router {
         .route("/snapshots/:snapshot_id", get(snapshot))
         .route("/snapshots_turboframe", get(snapshots_index))
         .route("/snapshots_turboframe/:id", get(snapshots_get))
-    // routes![snapshots, snapshot, snapshots_index, snapshots_get,]
 }
 
 // Returns snapshots page
