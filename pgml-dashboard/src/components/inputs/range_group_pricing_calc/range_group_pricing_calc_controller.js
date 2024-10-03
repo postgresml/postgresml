@@ -1,5 +1,8 @@
 import { Controller } from "@hotwired/stimulus";
-import { numberToCompact, compactToNumber } from "../../../../static/js/utilities/compact_number";
+import {
+  numberToCompact,
+  compactToNumber,
+} from "../../../../static/js/utilities/compact_number";
 
 export default class extends Controller {
   static targets = ["textInput", "range"];
