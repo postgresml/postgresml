@@ -25,7 +25,7 @@ use crate::utils::urls;
 pub fn routes() -> Router {
     Router::new()
         .route("/notebooks", get(notebooks))
-        .route("/notebooks/:id", get(notebook))
+        .route("/notebooks/:notebook_id", get(notebook))
         .route("/notebooks_turboframe", get(notebook_index))
         .route("/notebooks", post(notebook_create))
         .route("/notebooks_turboframe/:notebook_id", get(notebook_get))

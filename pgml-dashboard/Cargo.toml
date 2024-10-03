@@ -51,11 +51,13 @@ yaml-rust = "0.4"
 zoomies = { git="https://github.com/HyperparamAI/zoomies.git", branch="master" }
 futures = "0.3.29"
 korvus = "1.1.2"
-axum = { version = "0.7.7", features = ["ws"] }
+axum = { version = "0.7.7", features = ["tracing", "ws"] }
 cookie = { version = "0.18.1", features = ["private"] }
 mime_guess = "2.0.5"
 axum-extra = { version = "0.9.4", features = ["cookie"] }
-tower-http = { version = "0.6.1", features = ["fs"] }
+tower-http = { version = "0.6.1", features = ["fs", "trace"] }
+tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
+tracing = "0.1.40"
 
 [build-dependencies]
 glob = "*"

@@ -28,6 +28,7 @@ use guards::Cluster;
 use responses::{BadRequest, Error, Response, ResponseOk};
 use templates::{components::StaticNav, *};
 use tower_http::services::ServeDir;
+use tower_http::trace::TraceLayer;
 use utils::config;
 use utils::markdown::SiteSearch;
 
@@ -545,8 +546,7 @@ async fn remove_modal_product(Query(RemoveModalParams { id }): Query<RemoveModal
 
 pub fn routes() -> Router {
     axum::Router::new()
-        .route("/", get(index))
-        .route("/", get(dashboard))
+        .route("/dashboard", get(dashboard))
         .route("/notifications/remove_banner", get(remove_banner))
         .route("/playground", get(playground))
         .route("/serverless_models/turboframe", get(serverless_models_turboframe))
@@ -559,10 +559,6 @@ pub fn routes() -> Router {
 
 pub async fn migrate(pool: &PgPool) -> anyhow::Result<()> {
     Ok(sqlx::migrate!("./migrations").run(pool).await?)
-}
-
-async fn index() -> Redirect {
-    Redirect::to("/dashboard")
 }
 
 pub async fn error() -> Result<(), BadRequest> {
@@ -606,6 +602,7 @@ pub async fn app() -> axum::Router {
         .nest("/engine", api::deployment::routes())
         .nest("/", api::routes())
         .layer(Extension(Cluster::default()))
+        .layer(TraceLayer::new_for_http())
         .nest_service("/dashboard/static", ServeDir::new(config::static_dir()))
         .fallback(not_found_handler)
         .with_state(site_search)

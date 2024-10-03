@@ -10,7 +10,7 @@ pub struct ResponseOk(pub String);
 
 impl IntoResponse for ResponseOk {
     fn into_response(self) -> axum::response::Response {
-        (StatusCode::OK, self.0).into_response()
+        (StatusCode::OK, [(header::CONTENT_TYPE, "text/html")], self.0).into_response()
     }
 }
 
