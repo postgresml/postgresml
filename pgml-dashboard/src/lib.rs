@@ -2,7 +2,7 @@
 
 use axum::response::Redirect;
 use axum::routing::get;
-use axum::Router;
+use axum::{Extension, Router};
 use sailfish::TemplateOnce;
 use sqlx::PgPool;
 
@@ -553,6 +553,7 @@ pub async fn error_catcher(status: Status, request: &Request<'_>) -> Result<BadR
 pub fn app() -> Router {
     Router::new()
         .route("/", get(|| async { Redirect::permanent("/dashboard") }))
+        .layer(Extension(Cluster::default()))
         .fallback(not_found_handler)
 }
 

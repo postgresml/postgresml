@@ -1,6 +1,11 @@
 use crate::components::sections::footers::marketing_footer::MarketingFooter;
 use crate::templates::components::{StaticNav, StaticNavLink};
 use crate::utils::urls;
+use axum::extract::FromRequestParts;
+use axum::http::request::Parts;
+use axum::http::StatusCode;
+use axum::response::Response;
+use axum::{async_trait, Extension};
 use once_cell::sync::OnceCell;
 use sailfish::TemplateOnce;
 use sqlx::{postgres::PgPoolOptions, Executor, PgPool};
@@ -66,47 +71,64 @@ impl Cluster {
     }
 }
 
-#[rocket::async_trait]
-impl<'r> FromRequest<'r> for &'r Cluster {
-    type Error = ();
+// #[rocket::async_trait]
+// impl<'r> FromRequest<'r> for &'r Cluster {
+//     type Error = ();
 
-    async fn from_request(request: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
-        request::Outcome::Success(request.local_cache(|| Cluster::default()))
-    }
-}
+//     async fn from_request(request: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
+//         request::Outcome::Success(request.local_cache(|| Cluster::default()))
+//     }
+// }
 
 #[derive(Debug)]
-pub struct ConnectedCluster<'a> {
-    pub inner: &'a Cluster,
+pub struct ConnectedCluster {
+    pub inner: Cluster,
 }
 
 // 404 rather than 500 if the cluster is not connected.
-#[rocket::async_trait]
-impl<'r> FromRequest<'r> for ConnectedCluster<'r> {
-    type Error = ();
+// #[rocket::async_trait]
+// impl<'r> FromRequest<'r> for ConnectedCluster<'r> {
+//     type Error = ();
 
-    async fn from_request(request: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
-        let cluster = match request.guard::<&Cluster>().await {
-            request::Outcome::Success(cluster) => cluster,
-            _ => return request::Outcome::Forward(Status::NotFound),
-        };
+//     async fn from_request(request: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
+//         let cluster = match request.guard::<&Cluster>().await {
+//             request::Outcome::Success(cluster) => cluster,
+//             _ => return request::Outcome::Forward(Status::NotFound),
+//         };
 
-        if cluster.pool.as_ref().is_some() {
-            request::Outcome::Success(ConnectedCluster { inner: cluster })
-        } else {
-            request::Outcome::Forward(Status::NotFound)
+//         if cluster.pool.as_ref().is_some() {
+//             request::Outcome::Success(ConnectedCluster { inner: cluster })
+//         } else {
+//             request::Outcome::Forward(Status::NotFound)
+//         }
+//     }
+// }
+
+#[async_trait]
+impl<S> FromRequestParts<S> for ConnectedCluster
+where
+    S: Send + Sync,
+{
+    type Rejection = Response;
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        use axum::RequestPartsExt;
+
+        match parts.extract::<Extension<Cluster>>().await {
+            Ok(Extension(cluster)) if cluster.pool.as_ref().is_some() => Ok(ConnectedCluster { inner: cluster }),
+            _ => StatusCode::NOT_FOUND.into_response(),
         }
     }
 }
 
-impl<'a> Cluster {
-    pub fn pool(&'a self) -> &'a PgPool {
+impl Cluster {
+    pub fn pool(&self) -> &PgPool {
         self.pool.as_ref().unwrap()
     }
 }
 
-impl<'a> ConnectedCluster<'_> {
-    pub fn pool(&'a self) -> &'a PgPool {
+impl ConnectedCluster {
+    pub fn pool(&self) -> &PgPool {
         self.inner.pool()
     }
 }

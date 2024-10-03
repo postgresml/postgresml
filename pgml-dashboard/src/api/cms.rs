@@ -5,9 +5,15 @@ use std::{
 
 use std::str::FromStr;
 
+use axum::{
+    http::{header, StatusCode},
+    response::IntoResponse,
+};
 use comrak::{format_html_with_plugins, parse_document, Arena, ComrakPlugins};
 use lazy_static::lazy_static;
+use log::{debug, error, warn};
 use markdown::mdast::Node;
+use tokio::fs;
 use yaml_rust::YamlLoader;
 
 use crate::{
@@ -414,10 +420,16 @@ impl Collection {
         collection
     }
 
-    pub async fn get_asset(&self, path: &str) -> Option<NamedFile> {
+    pub async fn get_asset(&self, path: &str) -> impl IntoResponse {
         debug!("get_asset: {} {path}", self.name);
-
-        NamedFile::open(self.asset_dir.join(path)).await.ok()
+        match fs::read(path).await {
+            Ok(bytes) => {
+                // Determine the MIME type or default to 'application/octet-stream'
+                let content_type = mime_guess::from_path(path).first_or_octet_stream();
+                ([(header::CONTENT_TYPE, content_type.to_string().as_str())], bytes).into_response()
+            }
+            Err(_) => StatusCode::NOT_FOUND.into_response(),
+        }
     }
 
     /// Get the actual path on disk to the content being requested.
@@ -427,7 +439,7 @@ impl Collection {
     /// * `path` - The path to the content being requested.
     /// * `origin` - The HTTP origin of the request.
     ///
-    pub async fn get_content_path(&self, mut path: PathBuf, origin: &Origin<'_>) -> ContentPath {
+    pub async fn get_content_path(&self, mut path: PathBuf, origin: &Origin) -> ContentPath {
         debug!("get_content: {} | {path:?}", self.name);
 
         match self
