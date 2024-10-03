@@ -1,4 +1,4 @@
-use axum::{extract::Query, routing::get, Router};
+use axum::{extract::Query, routing::get, Extension, Router};
 use sailfish::TemplateOnce;
 use serde::Deserialize;
 
@@ -22,7 +22,10 @@ pub fn routes() -> Router {
 }
 
 // Returns the uploader page.
-pub async fn uploader(cluster: &Cluster, _connected: ConnectedCluster) -> Result<ResponseOk, Error> {
+pub async fn uploader(
+    Extension(cluster): Extension<Cluster>,
+    _connected: ConnectedCluster,
+) -> Result<ResponseOk, Error> {
     let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster);
     layout.breadcrumbs(vec![NavLink::new("Upload Data", &urls::deployment_uploader()).active()]);
 

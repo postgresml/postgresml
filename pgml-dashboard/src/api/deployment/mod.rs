@@ -1,3 +1,4 @@
+use axum::{extract::Path, routing::get, Router};
 use sailfish::TemplateOnce;
 
 use crate::{
@@ -16,8 +17,20 @@ pub mod projects;
 pub mod snapshots;
 pub mod uploader;
 
-// #[get("/deployments")]
-pub async fn deployments_index(cluster: ConnectedCluster<'_>) -> Result<ResponseOk, Error> {
+pub fn routes() -> Router {
+    // let mut routes = routes![deployments_index, deployments_get,];
+
+    Router::new()
+        .route("/deployments", get(deployments_index))
+        .route("/deployments/:id", get(deployments_get))
+        .merge(deployment_models::routes())
+        .merge(notebooks::routes())
+        .merge(projects::routes())
+        .merge(snapshots::routes())
+        .merge(uploader::routes())
+}
+
+pub async fn deployments_index(cluster: ConnectedCluster) -> Result<ResponseOk, Error> {
     let projects = models::Project::all(cluster.pool()).await?;
     let mut deployments = HashMap::new();
 
@@ -33,8 +46,7 @@ pub async fn deployments_index(cluster: ConnectedCluster<'_>) -> Result<Response
     ))
 }
 
-// #[get("/deployments/<id>")]
-pub async fn deployments_get(cluster: ConnectedCluster<'_>, id: i64) -> Result<ResponseOk, Error> {
+pub async fn deployments_get(cluster: ConnectedCluster, Path(id): Path<i64>) -> Result<ResponseOk, Error> {
     let deployment = models::Deployment::get_by_id(cluster.pool(), id).await?;
     let project = models::Project::get_by_id(cluster.pool(), deployment.project_id).await?;
     let model = models::Model::get_by_id(cluster.pool(), deployment.model_id).await?;
@@ -48,15 +60,4 @@ pub async fn deployments_get(cluster: ConnectedCluster<'_>, id: i64) -> Result<R
         .render_once()
         .unwrap(),
     ))
-}
-
-pub fn routes() -> Vec<Route> {
-    let mut routes = routes![deployments_index, deployments_get,];
-
-    routes.extend(deployment_models::routes());
-    routes.extend(notebooks::routes());
-    routes.extend(projects::routes());
-    routes.extend(snapshots::routes());
-    routes.extend(uploader::routes());
-    routes
 }

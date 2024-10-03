@@ -1,4 +1,6 @@
 use chrono;
+use cookie::{Cookie, CookieJar};
+use serde::{Deserialize, Serialize};
 use time::Duration;
 
 /// Session data.
@@ -36,17 +38,17 @@ impl From<NotificationsCookieOld> for NotificationCookie {
 
 impl Notifications {
     /// Update the viewed notifications in the session.
-    pub fn update_viewed(notifications: &[NotificationCookie], cookies: &CookieJar<'_>) {
+    pub fn update_viewed(notifications: &[NotificationCookie], mut cookies: CookieJar) {
         let session = Notifications::safe_serialize_session(notifications);
 
         let mut cookie = Cookie::new("session", session);
         cookie.set_max_age(Duration::weeks(52 * 100)); // Keep the cookie "forever"
-        cookies.add_private(cookie);
+        cookies.add(cookie);
     }
 
     /// Get viewed notifications from the session.
-    pub fn get_viewed(cookies: &CookieJar<'_>) -> Vec<NotificationCookie> {
-        match cookies.get_private("session") {
+    pub fn get_viewed(cookies: &CookieJar) -> Vec<NotificationCookie> {
+        match cookies.get("session") {
             Some(session) => Notifications::safe_deserialize_session(session.value()),
             None => vec![],
         }

@@ -4,7 +4,7 @@ use crate::utils::urls;
 use axum::extract::FromRequestParts;
 use axum::http::request::Parts;
 use axum::http::StatusCode;
-use axum::response::Response;
+use axum::response::{IntoResponse, Response};
 use axum::{async_trait, Extension};
 use once_cell::sync::OnceCell;
 use sailfish::TemplateOnce;
@@ -111,12 +111,12 @@ where
 {
     type Rejection = Response;
 
-    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
         use axum::RequestPartsExt;
 
         match parts.extract::<Extension<Cluster>>().await {
             Ok(Extension(cluster)) if cluster.pool.as_ref().is_some() => Ok(ConnectedCluster { inner: cluster }),
-            _ => StatusCode::NOT_FOUND.into_response(),
+            _ => Err(StatusCode::NOT_FOUND.into_response()),
         }
     }
 }

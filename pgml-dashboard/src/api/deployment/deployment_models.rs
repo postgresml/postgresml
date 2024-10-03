@@ -1,3 +1,4 @@
+use axum::{extract::Path, routing::get, Extension, Router};
 use sailfish::TemplateOnce;
 
 use crate::{
@@ -15,9 +16,19 @@ use crate::utils::urls;
 
 use std::collections::HashMap;
 
+pub fn routes() -> Router {
+    Router::new()
+        .route("/models", get(deployment_models))
+        .route("/models/:model_id", get(model))
+        .route("/models_turboframe", get(models_index))
+        .route("/models_turboframe/:id", get(models_get))
+}
+
 // Returns models page
-// #[get("/models")]
-pub async fn deployment_models(cluster: &Cluster, _connected: ConnectedCluster<'_>) -> Result<ResponseOk, Error> {
+pub async fn deployment_models(
+    Extension(cluster): Extension<Cluster>,
+    _connected: ConnectedCluster,
+) -> Result<ResponseOk, Error> {
     let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster);
     layout.breadcrumbs(vec![NavLink::new("Models", &urls::deployment_models()).active()]);
 
@@ -32,8 +43,11 @@ pub async fn deployment_models(cluster: &Cluster, _connected: ConnectedCluster<'
 }
 
 // Returns models page
-// #[get("/models/<model_id>")]
-pub async fn model(cluster: &Cluster, model_id: i64, _connected: ConnectedCluster<'_>) -> Result<ResponseOk, Error> {
+pub async fn model(
+    Extension(cluster): Extension<Cluster>,
+    Path(model_id): Path<i64>,
+    _connected: ConnectedCluster,
+) -> Result<ResponseOk, Error> {
     let model = models::Model::get_by_id(cluster.pool(), model_id).await?;
     let project = models::Project::get_by_id(cluster.pool(), model.project_id).await?;
 
@@ -54,8 +68,7 @@ pub async fn model(cluster: &Cluster, model_id: i64, _connected: ConnectedCluste
     Ok(ResponseOk(layout.render(templates::Dashboard::new(nav_tabs))))
 }
 
-// #[get("/models_turboframe")]
-pub async fn models_index(cluster: ConnectedCluster<'_>) -> Result<ResponseOk, Error> {
+pub async fn models_index(cluster: ConnectedCluster) -> Result<ResponseOk, Error> {
     let projects = models::Project::all(cluster.pool()).await?;
     let mut models = HashMap::new();
     // let mut max_scores = HashMap::new();
@@ -87,8 +100,7 @@ pub async fn models_index(cluster: ConnectedCluster<'_>) -> Result<ResponseOk, E
     ))
 }
 
-// #[get("/models_turboframe/<id>")]
-pub async fn models_get(cluster: ConnectedCluster<'_>, id: i64) -> Result<ResponseOk, Error> {
+pub async fn models_get(cluster: ConnectedCluster, Path(id): Path<i64>) -> Result<ResponseOk, Error> {
     let model = models::Model::get_by_id(cluster.pool(), id).await?;
     let snapshot = if let Some(snapshot_id) = model.snapshot_id {
         Some(models::Snapshot::get_by_id(cluster.pool(), snapshot_id).await?)
@@ -108,8 +120,4 @@ pub async fn models_get(cluster: ConnectedCluster<'_>, id: i64) -> Result<Respon
         .render_once()
         .unwrap(),
     ))
-}
-
-pub fn routes() -> Vec<Route> {
-    routes![deployment_models, model, models_index, models_get,]
 }

@@ -3,7 +3,7 @@ use axum::{
     extract::{Path, Query},
     response::Redirect,
     routing::{get, post},
-    Form, Json, Router,
+    Extension, Form, Json, Router,
 };
 use log::debug;
 use sailfish::TemplateOnce;
@@ -42,7 +42,10 @@ pub fn routes() -> Router {
 }
 
 // Returns notebook page
-pub async fn notebooks(cluster: &Cluster, _connected: ConnectedCluster) -> Result<ResponseOk, Error> {
+pub async fn notebooks(
+    Extension(cluster): Extension<Cluster>,
+    _connected: ConnectedCluster,
+) -> Result<ResponseOk, Error> {
     let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster);
     layout.breadcrumbs(vec![NavLink::new("Notebooks", &urls::deployment_notebooks()).active()]);
 
@@ -58,7 +61,7 @@ pub async fn notebooks(cluster: &Cluster, _connected: ConnectedCluster) -> Resul
 
 // Returns the specified notebook page.
 pub async fn notebook(
-    cluster: &Cluster,
+    Extension(cluster): Extension<Cluster>,
     Path(notebook_id): Path<i64>,
     _connected: ConnectedCluster,
 ) -> Result<ResponseOk, Error> {
@@ -106,7 +109,10 @@ struct NotebookForm {
 }
 
 // Creates a new named notebook and redirects to that specific notebook.
-pub async fn notebook_create(cluster: &Cluster, Form(data): Form<NotebookForm>) -> Result<Redirect, Error> {
+pub async fn notebook_create(
+    Extension(cluster): Extension<Cluster>,
+    Form(data): Form<NotebookForm>,
+) -> Result<Redirect, Error> {
     let notebook = crate::models::Notebook::create(cluster.pool(), &data.name).await?;
 
     models::Cell::create(cluster.pool(), &notebook, models::CellType::Sql as i32, "").await?;

@@ -1,3 +1,4 @@
+use axum::{extract::Path, routing::get, Extension, Router};
 use sailfish::TemplateOnce;
 
 use crate::{
@@ -14,9 +15,20 @@ use crate::utils::tabs;
 use crate::utils::urls;
 use std::collections::HashMap;
 
+pub fn routes() -> Router {
+    Router::new()
+        .route("/snapshots", get(snapshots))
+        .route("/snapshots/:snapshot_id", get(snapshot))
+        .route("/snapshots_turboframe", get(snapshots_index))
+        .route("/snapshots_turboframe/:id", get(snapshots_get))
+    // routes![snapshots, snapshot, snapshots_index, snapshots_get,]
+}
+
 // Returns snapshots page
-// #[get("/snapshots")]
-pub async fn snapshots(cluster: &Cluster, _connected: ConnectedCluster<'_>) -> Result<ResponseOk, Error> {
+pub async fn snapshots(
+    Extension(cluster): Extension<Cluster>,
+    _connected: ConnectedCluster,
+) -> Result<ResponseOk, Error> {
     let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster);
     layout.breadcrumbs(vec![NavLink::new("Snapshots", &urls::deployment_snapshots()).active()]);
 
@@ -31,11 +43,10 @@ pub async fn snapshots(cluster: &Cluster, _connected: ConnectedCluster<'_>) -> R
 }
 
 // Returns the specific snapshot page
-// #[get("/snapshots/<snapshot_id>")]
 pub async fn snapshot(
-    cluster: &Cluster,
-    snapshot_id: i64,
-    _connected: ConnectedCluster<'_>,
+    Extension(cluster): Extension<Cluster>,
+    Path(snapshot_id): Path<i64>,
+    _connected: ConnectedCluster,
 ) -> Result<ResponseOk, Error> {
     let snapshot = models::Snapshot::get_by_id(cluster.pool(), snapshot_id).await?;
 
@@ -56,16 +67,14 @@ pub async fn snapshot(
 }
 
 // Returns all snapshots for the deployment in a turboframe.
-// #[get("/snapshots_turboframe")]
-pub async fn snapshots_index(cluster: ConnectedCluster<'_>) -> Result<ResponseOk, Error> {
+pub async fn snapshots_index(cluster: ConnectedCluster) -> Result<ResponseOk, Error> {
     let snapshots = models::Snapshot::all(cluster.pool()).await?;
 
     Ok(ResponseOk(templates::Snapshots { snapshots }.render_once().unwrap()))
 }
 
 // Returns a specific snapshot for the deployment in a turboframe.
-// #[get("/snapshots_turboframe/<id>")]
-pub async fn snapshots_get(cluster: ConnectedCluster<'_>, id: i64) -> Result<ResponseOk, Error> {
+pub async fn snapshots_get(cluster: ConnectedCluster, Path(id): Path<i64>) -> Result<ResponseOk, Error> {
     let snapshot = models::Snapshot::get_by_id(cluster.pool(), id).await?;
     let samples = snapshot.samples(cluster.pool(), 500).await?;
 
@@ -86,8 +95,4 @@ pub async fn snapshots_get(cluster: ConnectedCluster<'_>, id: i64) -> Result<Res
         .render_once()
         .unwrap(),
     ))
-}
-
-pub fn routes() -> Vec<Route> {
-    routes![snapshots, snapshot, snapshots_index, snapshots_get,]
 }

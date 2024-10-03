@@ -1,14 +1,17 @@
 #![allow(renamed_and_removed_lints)]
 
+use axum::http::{Request, StatusCode};
 use axum::response::Redirect;
 use axum::routing::get;
 use axum::{Extension, Router};
+use cookie::CookieJar;
+use log::{error, info};
 use sailfish::TemplateOnce;
 use sqlx::PgPool;
 
 pub mod api;
 pub mod components;
-pub mod fairings;
+// pub mod fairings;
 pub mod forms;
 pub mod guards;
 pub mod models;
@@ -20,7 +23,7 @@ pub mod utils;
 use components::notifications::marketing::{AlertBanner, FeatureBanner};
 use components::notifications::product::ProductBanner;
 use guards::Cluster;
-use responses::{Error, Response, ResponseOk};
+use responses::{BadRequest, Error, Response, ResponseOk};
 use templates::{components::StaticNav, *};
 
 use crate::components::tables::serverless_models::{ServerlessModels, ServerlessModelsTurbo};
@@ -285,36 +288,36 @@ pub async fn dashboard(tab: Option<&str>, id: Option<i64>) -> Redirect {
     let tab = tab.unwrap_or("Notebooks");
 
     match tab {
-        "Notebooks" => Redirect::to(urls::deployment_notebooks()),
+        "Notebooks" => Redirect::to(&urls::deployment_notebooks()),
 
         "Notebook" => match id {
-            Some(id) => Redirect::to(urls::deployment_notebook_by_id(id)),
-            None => Redirect::to(urls::deployment_notebooks()),
+            Some(id) => Redirect::to(&urls::deployment_notebook_by_id(id)),
+            None => Redirect::to(&urls::deployment_notebooks()),
         },
 
-        "Projects" => Redirect::to(urls::deployment_projects()),
+        "Projects" => Redirect::to(&urls::deployment_projects()),
 
         "Project" => match id {
-            Some(id) => Redirect::to(urls::deployment_project_by_id(id)),
-            None => Redirect::to(urls::deployment_projects()),
+            Some(id) => Redirect::to(&urls::deployment_project_by_id(id)),
+            None => Redirect::to(&urls::deployment_projects()),
         },
 
-        "Models" => Redirect::to(urls::deployment_models()),
+        "Models" => Redirect::to(&urls::deployment_models()),
 
         "Model" => match id {
-            Some(id) => Redirect::to(urls::deployment_model_by_id(id)),
-            None => Redirect::to(urls::deployment_models()),
+            Some(id) => Redirect::to(&urls::deployment_model_by_id(id)),
+            None => Redirect::to(&urls::deployment_models()),
         },
 
-        "Snapshots" => Redirect::to(urls::deployment_snapshots()),
+        "Snapshots" => Redirect::to(&urls::deployment_snapshots()),
 
         "Snapshot" => match id {
-            Some(id) => Redirect::to(urls::deployment_snapshot_by_id(id)),
-            None => Redirect::to(urls::deployment_snapshots()),
+            Some(id) => Redirect::to(&urls::deployment_snapshot_by_id(id)),
+            None => Redirect::to(&urls::deployment_snapshots()),
         },
 
-        "Upload_Data" => Redirect::to(urls::deployment_uploader()),
-        _ => Redirect::to(urls::deployment_notebooks()),
+        "Upload_Data" => Redirect::to(&urls::deployment_uploader()),
+        _ => Redirect::to(&urls::deployment_notebooks()),
     }
 }
 
@@ -326,8 +329,8 @@ pub async fn playground(cluster: &Cluster) -> Result<ResponseOk, Error> {
 
 // Remove Alert and Feature banners after user exits out of the message.
 // #[get("/notifications/remove_banner?<id>&<notification_type>")]
-pub fn remove_banner(id: String, notification_type: String, cookies: &CookieJar<'_>, context: &Cluster) -> ResponseOk {
-    let mut viewed = Notifications::get_viewed(cookies);
+pub fn remove_banner(id: String, notification_type: String, cookies: CookieJar, context: &Cluster) -> ResponseOk {
+    let mut viewed = Notifications::get_viewed(&cookies);
 
     viewed.push(NotificationCookie {
         id: id.clone(),
@@ -383,10 +386,10 @@ pub fn remove_banner(id: String, notification_type: String, cookies: &CookieJar<
 pub fn replace_banner_product(
     id: String,
     deployment_id: Option<String>,
-    cookies: &CookieJar<'_>,
+    cookies: CookieJar,
     context: &Cluster,
 ) -> Result<Response, Error> {
-    let mut all_notification_cookies = Notifications::get_viewed(cookies);
+    let mut all_notification_cookies = Notifications::get_viewed(&cookies);
     let current_notification_cookie = all_notification_cookies.iter().position(|x| x.id == id);
 
     match current_notification_cookie {
@@ -448,8 +451,8 @@ pub fn replace_banner_product(
 
 // Remove a product banners after user exits out of the message.
 // #[get("/notifications/product/remove_banner?<id>&<target>")]
-pub fn remove_banner_product(id: String, target: String, cookies: &CookieJar<'_>) -> Result<Response, Error> {
-    let mut all_notification_cookies = Notifications::get_viewed(cookies);
+pub fn remove_banner_product(id: String, target: String, cookies: CookieJar) -> Result<Response, Error> {
+    let mut all_notification_cookies = Notifications::get_viewed(&cookies);
 
     let current_notification_cookie = all_notification_cookies.iter().position(|x| x.id == id);
 
@@ -480,8 +483,8 @@ pub fn remove_banner_product(id: String, target: String, cookies: &CookieJar<'_>
 
 // Update cookie to show the user has viewed the modal.
 // #[get("/notifications/product/modal/remove_modal?<id>")]
-pub fn remove_modal_product(id: String, cookies: &CookieJar<'_>) {
-    let mut all_notification_cookies = Notifications::get_viewed(cookies);
+pub fn remove_modal_product(id: String, cookies: CookieJar) {
+    let mut all_notification_cookies = Notifications::get_viewed(&cookies);
 
     let current_notification_cookie = all_notification_cookies.iter().position(|x| x.id == id);
 
@@ -491,7 +494,7 @@ pub fn remove_modal_product(id: String, cookies: &CookieJar<'_>) {
         }
         None => {
             all_notification_cookies.push(NotificationCookie {
-                id: id,
+                id,
                 time_viewed: None,
                 time_modal_viewed: Some(chrono::Utc::now()),
             });
@@ -501,17 +504,18 @@ pub fn remove_modal_product(id: String, cookies: &CookieJar<'_>) {
     Notifications::update_viewed(&all_notification_cookies, cookies);
 }
 
-pub fn routes() -> Vec<Route> {
-    routes![
-        dashboard,
-        remove_banner,
-        playground,
-        serverless_models_turboframe,
-        serverless_pricing_turboframe,
-        replace_banner_product,
-        remove_modal_product,
-        remove_banner_product
-    ]
+pub fn routes() -> Router {
+    Router::new()
+    // routes![
+    //     dashboard,
+    //     remove_banner,
+    //     playground,
+    //     serverless_models_turboframe,
+    //     serverless_pricing_turboframe,
+    //     replace_banner_product,
+    //     remove_modal_product,
+    //     remove_banner_product
+    // ]
 }
 
 pub async fn migrate(pool: &PgPool) -> anyhow::Result<()> {
@@ -531,23 +535,18 @@ pub async fn error() -> Result<(), BadRequest> {
 }
 
 // #[catch(403)]
-pub async fn not_authorized_catcher(_status: Status, _request: &Request<'_>) -> Redirect {
+pub async fn not_authorized_catcher() -> Redirect {
     Redirect::to("/login")
 }
 
 // #[catch(404)]
-pub async fn not_found_handler(_status: Status, _request: &Request<'_>) -> Response {
+pub async fn not_found_handler() -> Response {
     Response::not_found()
 }
 
 // #[catch(default)]
-pub async fn error_catcher(status: Status, request: &Request<'_>) -> Result<BadRequest, responses::Error> {
-    Err(responses::Error(anyhow::anyhow!(
-        "{} {}\n{:?}",
-        status.code,
-        status.reason().unwrap(),
-        request
-    )))
+pub async fn error_catcher(status: StatusCode, request: Request<()>) -> Result<BadRequest, responses::Error> {
+    Err(responses::Error(anyhow::anyhow!("{}\n{:?}", status, request)))
 }
 
 pub fn app() -> Router {

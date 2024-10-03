@@ -1,6 +1,7 @@
 use crate::api::cms::{DocType, Document};
 use crate::{templates::docs::TocLink, utils::config};
 use anyhow::Context;
+use log::warn;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::path::PathBuf;

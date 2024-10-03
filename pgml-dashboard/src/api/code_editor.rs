@@ -1,9 +1,20 @@
 use crate::components::code_editor::Editor;
 use crate::components::turbo::TurboFrame;
 use anyhow::Context;
+use axum::{
+    extract::{
+        ws::{self, Message, WebSocket},
+        Query, WebSocketUpgrade,
+    },
+    response::IntoResponse,
+    routing::get,
+    Router,
+};
+use futures::StreamExt;
+use log::info;
 use once_cell::sync::OnceCell;
 use sailfish::TemplateOnce;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use sqlparser::dialect::PostgreSqlDialect;
 use sqlx::{postgres::PgPoolOptions, Executor, PgPool, Row};
 
@@ -49,7 +60,7 @@ fn check_query(query: &str) -> anyhow::Result<()> {
     Ok(())
 }
 
-#[derive(FromForm, Debug)]
+#[derive(Debug)]
 pub struct PlayForm {
     pub query: String,
 }
@@ -100,8 +111,8 @@ struct AsyncResult<'a> {
 }
 
 impl<'a> AsyncResult<'a> {
-    async fn from_message(message: ws::Message) -> anyhow::Result<Self> {
-        if let ws::Message::Text(query) = message {
+    async fn from_message(message: Message) -> anyhow::Result<Self> {
+        if let Message::Text(query) = message {
             let request = serde_json::from_str::<serde_json::Value>(&query)?;
             let query = request["sql"]
                 .as_str()
@@ -220,64 +231,72 @@ impl<'a> AsyncResult<'a> {
     }
 }
 
-// #[get("/code_editor/play/stream")]
-pub async fn play_stream(ws: ws::WebSocket) -> ws::Stream!['static] {
-    ws::Stream! { ws =>
-        for await message in ws {
-            let message = match message {
-                Ok(message) => message,
-                Err(_err) => continue,
-            };
+async fn handle_message(ws: &mut WebSocket, message: Result<ws::Message, axum::Error>) -> Result<(), axum::Error> {
+    let message = message?;
+    let mut got_something = false;
 
-            let mut got_something = false;
-            match AsyncResult::from_message(message).await {
-                Ok(mut result) => {
-                    loop {
-                        match result.next().await {
-                            Ok(Some(result)) => {
-                                got_something = true;
-                                yield ws::Message::from(StreamResponse::from_result(&result).to_string());
-                            }
-
-                            Err(err) => {
-                                yield ws::Message::from(StreamResponse::from_error(&err.to_string()).to_string());
-                                break;
-                            }
-
-                            Ok(None) => {
-                                if !got_something {
-                                    yield ws::Message::from(StreamResponse::from_error(ERROR).to_string());
-                                }
-                                break;
-                            }
+    match AsyncResult::from_message(message).await {
+        Ok(mut result) => {
+            loop {
+                match result.next().await {
+                    Ok(Some(result)) => {
+                        got_something = true;
+                        ws.send(ws::Message::Text(StreamResponse::from_result(&result).to_string()))
+                            .await?;
+                    }
+                    Err(err) => {
+                        ws.send(ws::Message::Text(
+                            StreamResponse::from_error(&err.to_string()).to_string(),
+                        ))
+                        .await?;
+                        break;
+                    }
+                    Ok(None) => {
+                        if !got_something {
+                            ws.send(ws::Message::Text(StreamResponse::from_error(ERROR).to_string()))
+                                .await?;
                         }
-                    };
-
-                    match result.close().await {
-                        Ok(_) => (),
-                        Err(err) => {
-                            info!("[stream] error closing: {:?}", err);
-                        }
-                    };
-                }
-
-                Err(err) => {
-                    yield ws::Message::from(StreamResponse::from_error(&err.to_string()).to_string());
+                        break;
+                    }
                 }
             }
-        };
+            result.close().await.map_err(axum::Error::new)?;
+        }
+        Err(err) => {
+            ws.send(axum::extract::ws::Message::Text(
+                StreamResponse::from_error(&err.to_string()).to_string(),
+            ))
+            .await?;
+        }
     }
+    Ok(())
 }
 
-// #[get("/code_editor/embed?<id>")]
-pub fn embed_editor(id: String) -> ResponseOk {
+pub async fn play_stream(ws: WebSocketUpgrade) -> impl IntoResponse {
+    ws.on_upgrade(|mut socket| async move {
+        while let Some(message) = socket.next().await {
+            if handle_message(&mut socket, message).await.is_err() {
+                break;
+            }
+        }
+    })
+}
+
+#[derive(Deserialize)]
+struct EmbedEditorParams {
+    id: String,
+}
+
+pub async fn embed_editor(Query(EmbedEditorParams { id }): Query<EmbedEditorParams>) -> ResponseOk {
     let comp = Editor::new();
 
     let rsp = TurboFrame::new().set_target_id(&id).set_content(comp.into());
 
-    return ResponseOk(rsp.render_once().unwrap());
+    ResponseOk(rsp.render_once().unwrap())
 }
 
-pub fn routes() -> Vec<Route> {
-    routes![play_stream, embed_editor,]
+pub fn routes() -> Router {
+    Router::new()
+        .route("/code_editor/embed", get(embed_editor))
+        .route("/code_editor/play/stream", get(play_stream))
 }

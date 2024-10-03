@@ -1,3 +1,4 @@
+use log::{error, info};
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
 use std::io::Result;

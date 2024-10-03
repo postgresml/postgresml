@@ -10,7 +10,7 @@ pub struct ResponseOk(pub String);
 
 impl IntoResponse for ResponseOk {
     fn into_response(self) -> axum::response::Response {
-        (StatusCode::OK, self.0)
+        (StatusCode::OK, self.0).into_response()
     }
 }
 
@@ -18,7 +18,7 @@ pub struct BadRequest(pub String);
 
 impl IntoResponse for BadRequest {
     fn into_response(self) -> axum::response::Response {
-        (StatusCode::BAD_REQUEST, self.0)
+        (StatusCode::BAD_REQUEST, self.0).into_response()
     }
 }
 
@@ -26,7 +26,7 @@ pub struct NotFound(pub String);
 
 impl IntoResponse for NotFound {
     fn into_response(self) -> axum::response::Response {
-        (StatusCode::NOT_FOUND, self.0)
+        (StatusCode::NOT_FOUND, self.0).into_response()
     }
 }
 
@@ -113,7 +113,7 @@ impl Response {
     }
 
     pub fn turbo_stream(body: String) -> Response {
-        Self::new(StatusCode::Ok)
+        Self::new(StatusCode::OK)
             .body(body)
             .content_type("text/vnd.turbo-stream.html".to_string())
             .no_cache()
@@ -130,17 +130,17 @@ impl IntoResponse for Response {
         });
 
         let mut headers = HeaderMap::new();
-        headers.insert(header::CONTENT_TYPE, self.content_type);
+        headers.insert(header::CONTENT_TYPE, self.content_type.parse().unwrap());
 
         if self.no_cache {
-            headers.insert(header::CACHE_CONTROL, "no-store".into());
+            headers.insert(header::CACHE_CONTROL, "no-store".parse().unwrap());
         }
 
         if let Some(location) = self.location {
-            headers.insert(header::LOCATION, location);
+            headers.insert(header::LOCATION, location.parse().unwrap());
         }
 
-        (headers, body)
+        (headers, body).into_response()
     }
 }
 
@@ -186,6 +186,7 @@ impl IntoResponse for Error {
             [(header::CONTENT_TYPE, "text/html")],
             body,
         )
+            .into_response()
     }
 }
 
