@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus";
+import { numberToCompact, compactToNumber } from "../../../../static/js/utilities/compact_number";
 
 export default class extends Controller {
   static targets = ["textInput", "range"];
@@ -18,7 +19,7 @@ export default class extends Controller {
   updateText(e) {
     if (e.detail >= this.minValue && e.detail <= this.maxValue) {
       this.removeErrorState();
-      this.textInputTarget.value = e.detail;
+      this.textInputTarget.value = numberToCompact(e.detail);
       this.updateDatasetValue();
       this.inputUpdated();
     } else {
@@ -27,20 +28,22 @@ export default class extends Controller {
   }
 
   textUpdated() {
-    let value = Number(this.textInputTarget.value);
+    let value = compactToNumber(this.textInputTarget.value);
+
     if (!value) {
-      value = this.minValue;
-      this.textInputTarget.value = value;
+      this.textInputTarget.value = numberToCompact(this.minValue);
     }
 
     if (value > this.maxValue || value < this.minValue) {
       this.applyErrorState();
       value = value > this.maxValue ? this.maxValue : this.minValue;
       value = value < this.minValue ? this.minValue : value;
+      this.textInputTarget.value = numberToCompact(value);
       this.dispatchToRange(value);
     } else {
       this.removeErrorState();
       this.dispatchToRange(value);
+      this.textInputTarget.value = numberToCompact(value);
       this.updateDatasetValue();
       this.inputUpdated();
     }
