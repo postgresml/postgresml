@@ -34,7 +34,13 @@ Data for ML & AI systems is inherently larger and more dynamic than the models. 
     - [Transform](#transform)
 - [Machine Learning](#machine-learning)
 
-![PostgresML Architecture](https://github.com/user-attachments/assets/508678a7-a34b-4903-9049-a83995eff2fb)
+<div align="center">
+   <picture>
+     <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/e27f8bda-1fe6-49f8-b9d8-ef563e0150e5">
+     <source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/09bbed94-b73f-447b-95d9-2d4a7727c3aa">
+     <img alt="Logo" src="" width="784">
+   </picture>
+</div>
 
 # Getting Started
 
