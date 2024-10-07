@@ -34,6 +34,8 @@ Data for ML & AI systems is inherently larger and more dynamic than the models. 
     - [Transform](#transform)
 - [Machine Learning](#machine-learning)
 
+## Architecture
+
 <b>PostgresML is a powerful Postgres extension that seamlessly combines data storage and machine learning inference within your database</b>. By integrating these functionalities, PostgresML eliminates the need for separate systems and data transfers, enabling you to perform ML operations directly on your data where it resides.
 
 <div align="center">
@@ -43,6 +45,20 @@ Data for ML & AI systems is inherently larger and more dynamic than the models. 
      <img alt="Logo" src="" width="784">
    </picture>
 </div>
+
+## Features at a Glance
+
+- **In-Database ML/AI**: Run machine learning and AI operations directly within PostgreSQL.
+- **GPU Acceleration**: Leverage GPU power for faster computations and model inference.
+- **Large Language Models**: Integrate and use state-of-the-art LLMs from Hugging Face.
+- **RAG Pipeline**: Built-in functions for chunking, embedding, ranking, and transforming text.
+- **Vector Search**: Efficient similarity search using pgvector integration.
+- **Diverse ML Algorithms**: 47+ classification and regression algorithms available.
+- **High Performance**: 8-40X faster inference compared to HTTP-based model serving.
+- **Scalability**: Support for millions of transactions per second and horizontal scaling.
+- **NLP Tasks**: Wide range of natural language processing capabilities.
+- **Security**: Enhanced data privacy by keeping models and data together.
+- **Seamless Integration**: Works with existing PostgreSQL tools and client libraries.
 
 # Getting Started
 
@@ -80,12 +96,6 @@ We have a number of other tools and libraries that are specifically designed to 
 
 <b>Recommended Postgres Poolers:</b>
 - [pgcat](https://github.com/postgresml/pgcat) - pgcat is a PostgreSQL pooler with sharding, load balancing and failover support.
-
-# Large Language Models
-
-PostgresML brings models directly to your data, eliminating the need for costly and time-consuming data transfers. This approach significantly enhances performance, security, and scalability for AI-driven applications.
-
-<b>TODO: SOME MORE LANGUAGE ON THIS</b>
 
 # Large Language Models
 
