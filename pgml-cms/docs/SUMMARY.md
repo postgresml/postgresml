@@ -50,6 +50,7 @@
       * [Token Classification](open-source/pgml/guides/llms/token-classification.md)
       * [Translation](open-source/pgml/guides/llms/translation.md)
       * [Zero-shot Classification](open-source/pgml/guides/llms/zero-shot-classification.md)
+      * [Fine-tuning](open-source/pgml/guides/llms/fine-tuning.md)
     * [Supervised Learning](open-source/pgml/guides/supervised-learning/README.md)
       * [Regression](open-source/pgml/guides/supervised-learning/regression.md)
       * [Classification](open-source/pgml/guides/supervised-learning/classification.md)
