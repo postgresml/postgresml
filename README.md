@@ -34,6 +34,16 @@ Data for ML & AI systems is inherently larger and more dynamic than the models. 
     - [Transform](#transform)
 - [Machine Learning](#machine-learning)
 
+PostgresML is a powerful Postgres extension that seamlessly combines data storage and machine learning inference within your database. By integrating these functionalities, PostgresML eliminates the need for separate systems and data transfers, enabling you to perform ML operations directly on your data where it resides.
+
+Key benefits of PostgresML:
+
+1. Unified data and ML infrastructure
+2. Reduced latency for ML operations
+3. Enhanced data security and privacy
+4. Simplified deployment and management
+5. Scalability leveraging Postgres' robust architecture
+
 <div align="center">
    <picture>
      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/e27f8bda-1fe6-49f8-b9d8-ef563e0150e5">
