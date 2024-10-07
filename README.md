@@ -36,8 +36,6 @@ Data for ML & AI systems is inherently larger and more dynamic than the models. 
 
 ## Architecture
 
-<b>PostgresML is a powerful Postgres extension that seamlessly combines data storage and machine learning inference within your database</b>. By integrating these functionalities, PostgresML eliminates the need for separate systems and data transfers, enabling you to perform ML operations directly on your data where it resides.
-
 <div align="center">
    <picture>
      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/e27f8bda-1fe6-49f8-b9d8-ef563e0150e5">
@@ -46,21 +44,25 @@ Data for ML & AI systems is inherently larger and more dynamic than the models. 
    </picture>
 </div>
 
-## Features at a Glance
+<div align="center">
+<b>PostgresML is a powerful Postgres extension that seamlessly combines data storage and machine learning inference within your database</b>. By integrating these functionalities, PostgresML eliminates the need for separate systems and data transfers, enabling you to perform ML operations directly on your data where it resides.
+</div>
 
-- **In-Database ML/AI**: Run machine learning and AI operations directly within PostgreSQL.
-- **GPU Acceleration**: Leverage GPU power for faster computations and model inference.
-- **Large Language Models**: Integrate and use state-of-the-art LLMs from Hugging Face.
-- **RAG Pipeline**: Built-in functions for chunking, embedding, ranking, and transforming text.
-- **Vector Search**: Efficient similarity search using pgvector integration.
-- **Diverse ML Algorithms**: 47+ classification and regression algorithms available.
-- **High Performance**: 8-40X faster inference compared to HTTP-based model serving.
-- **Scalability**: Support for millions of transactions per second and horizontal scaling.
-- **NLP Tasks**: Wide range of natural language processing capabilities.
-- **Security**: Enhanced data privacy by keeping models and data together.
-- **Seamless Integration**: Works with existing PostgreSQL tools and client libraries.
+## Features at a glance
 
-# Getting Started
+- **In-Database ML/AI**: Run machine learning and AI operations directly within PostgreSQL
+- **GPU Acceleration**: Leverage GPU power for faster computations and model inference
+- **Large Language Models**: Integrate and use state-of-the-art LLMs from Hugging Face
+- **RAG Pipeline**: Built-in functions for chunking, embedding, ranking, and transforming text
+- **Vector Search**: Efficient similarity search using pgvector integration
+- **Diverse ML Algorithms**: 47+ classification and regression algorithms available
+- **High Performance**: 8-40X faster inference compared to HTTP-based model serving
+- **Scalability**: Support for millions of transactions per second and horizontal scaling
+- **NLP Tasks**: Wide range of natural language processing capabilities
+- **Security**: Enhanced data privacy by keeping models and data together
+- **Seamless Integration**: Works with existing PostgreSQL tools and client libraries
+
+# Getting started
 
 The only prerequisites for using PostgresML is a Postgres database with our open-source `pgml` extension installed.
 
@@ -97,7 +99,7 @@ We have a number of other tools and libraries that are specifically designed to 
 <b>Recommended Postgres Poolers:</b>
 - [pgcat](https://github.com/postgresml/pgcat) - pgcat is a PostgreSQL pooler with sharding, load balancing and failover support.
 
-# Large Language Models
+# Large language models
 
 PostgresML brings models directly to your data, eliminating the need for costly and time-consuming data transfers. This approach significantly enhances performance, security, and scalability for AI-driven applications.
 
@@ -116,11 +118,11 @@ PostgresML supports a wide range of state-of-the-art deep learning architectures
 - Utilize cutting-edge NLP, computer vision, and other AI models
 - Easily experiment with different architectures
 
-## OpenAI and Other Providers
+## OpenAI and other providers
 
 While cloud-based LLM providers offer powerful capabilities, making API calls from within the database can introduce latency, security risks, and potential compliance issues. Currently, PostgresML does not directly support integration with remote LLM providers like OpenAI.
 
-# Rag
+# RAG
 
 PostgresML transforms your PostgreSQL database into a powerful vector database for Retrieval-Augmented Generation (RAG) applications. It leverages pgvector for efficient storage and retrieval of embeddings.
 
@@ -193,7 +195,7 @@ See [pgml.transform docs](https://postgresml.org/docs/open-source/pgml/api/pgml.
 
 See our [Text Generation guide](https://postgresml.org/docs/open-source/pgml/guides/llms/text-generation) for a guide on generating text.
 
-# Machine Learning
+# Machine learning
 
 <b>Some highlights:</b>
 - [47+ classification and regression algorithms](https://postgresml.org/docs/open-source/pgml/api/pgml.train)
