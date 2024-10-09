@@ -1,6 +1,7 @@
 # Table of contents
 
 * [Home](README.md)
+* [Korvus x Trellis: Semantic search over YC jobs](korvus-trellis-semantic-search-over-yc-jobs.md)
 * [Meta’s Llama 3.2 Now Available in PostgresML Serverless](meta-llama-3.2-now-available-in-postgresml-serverless.md)
 * [Announcing postgresml-django](announcing-postgresml-django.md)
 * [Sudowrite + PostgresML](sudowrite-postgresml.md)
