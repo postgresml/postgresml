@@ -139,7 +139,7 @@ impl Model {
 
         let mut model = model.unwrap();
 
-        info!("Training {}", model);
+        notice!("Training {}", model);
         model.fit(&dataset);
 
         Spi::run_with_args(
@@ -222,7 +222,7 @@ impl Model {
         let id = model.id;
         let path = std::path::PathBuf::from(format!("/tmp/postgresml/models/{id}"));
 
-        info!("Tuning {}", model);
+        notice!("Tuning {}", model);
         let metrics: HashMap<String, f64>;
         match dataset {
             TextDatasetType::TextClassification(dataset) => {
@@ -267,7 +267,7 @@ impl Model {
         };
 
         model.metrics = Some(JsonB(json!(metrics)));
-        info!("Metrics: {:?}", &metrics);
+        notice!("Metrics: {:?}", &metrics);
 
         Spi::get_one_with_args::<i64>(
             "UPDATE pgml.models SET hyperparams = $1, metrics = $2 WHERE id = $3 RETURNING id",
@@ -439,7 +439,7 @@ impl Model {
             }
         }
 
-        info!("Model cache miss {:?}", id);
+        notice!("Model cache miss {:?}", id);
         let model = Arc::new(Model::find(id)?);
         let mut models = DEPLOYED_MODELS_BY_ID.lock();
         models.insert(id, Arc::clone(&model));
@@ -611,7 +611,7 @@ impl Model {
     // The box is borrowed so that it may be reused by the caller
     #[allow(clippy::borrowed_box)]
     fn test(&self, dataset: &Dataset) -> IndexMap<String, f32> {
-        info!("Testing {:?} estimator {:?}", self.project.task, self);
+        notice!("Testing {:?} estimator {:?}", self.project.task, self);
         // Test the estimator on the data
         let y_hat = self.predict_batch(&dataset.x_test).unwrap();
         let y_test = &dataset.y_test;
@@ -724,7 +724,7 @@ impl Model {
         dataset: &Dataset,
         hyperparams: &Hyperparams,
     ) -> (Box<dyn Bindings>, IndexMap<String, f32>) {
-        info!("Hyperparams: {}", serde_json::to_string_pretty(hyperparams).unwrap());
+        notice!("Hyperparams: {}", serde_json::to_string_pretty(hyperparams).unwrap());
 
         let fit = self.get_fit_function();
         let now = Instant::now();
@@ -737,7 +737,7 @@ impl Model {
 
         metrics.insert("fit_time".to_string(), fit_time.as_secs_f32());
         metrics.insert("score_time".to_string(), score_time.as_secs_f32());
-        info!("Metrics: {:?}", &metrics);
+        notice!("Metrics: {:?}", &metrics);
 
         let mut bindings = None;
         std::mem::swap(&mut self.bindings, &mut bindings);
@@ -804,7 +804,7 @@ impl Model {
         let mut all_bindings = Vec::with_capacity(all_hyperparams.len());
         let mut all_metrics = Vec::with_capacity(all_hyperparams.len());
 
-        info!(
+        notice!(
             "Hyperparameter searches: {}, cross validation folds: {}",
             all_hyperparams.len(),
             cv

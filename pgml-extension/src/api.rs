@@ -188,13 +188,13 @@ fn train_joint(
                 "You must pass a `relation_name` and `y_column_name` to snapshot the first time you train a model.",
             );
 
-            info!("Using existing snapshot from {}", snapshot.snapshot_name(),);
+            notice!("Using existing snapshot from {}", snapshot.snapshot_name(),);
 
             snapshot
         }
 
         Some(relation_name) => {
-            info!(
+            notice!(
                 "Snapshotting table \"{}\", this may take a little while...",
                 relation_name
             );
@@ -213,7 +213,7 @@ fn train_joint(
             );
 
             if materialize_snapshot {
-                info!(
+                notice!(
                     "Snapshot of table \"{}\" created and saved in {}",
                     relation_name,
                     snapshot.snapshot_name(),
@@ -276,9 +276,10 @@ fn train_joint(
                     let deployed_metric = deployed_metrics_obj
                         .get(&default_target_metric)
                         .and_then(|v| v.as_f64());
-                    info!(
+                    notice!(
                         "Comparing to deployed model {}: {:?}",
-                        default_target_metric, deployed_metric
+                        default_target_metric,
+                        deployed_metric
                     );
                     let new_metric = new_metrics.get(&default_target_metric).and_then(|v| v.as_f64());
 
@@ -888,13 +889,13 @@ fn tune(
                 "You must pass a `relation_name` and `y_column_name` to snapshot the first time you train a model.",
             );
 
-            info!("Using existing snapshot from {}", snapshot.snapshot_name(),);
+            notice!("Using existing snapshot from {}", snapshot.snapshot_name(),);
 
             snapshot
         }
 
         Some(relation_name) => {
-            info!(
+            notice!(
                 "Snapshotting table \"{}\", this may take a little while...",
                 relation_name
             );
@@ -909,7 +910,7 @@ fn tune(
             );
 
             if materialize_snapshot {
-                info!(
+                notice!(
                     "Snapshot of table \"{}\" created and saved in {}",
                     relation_name,
                     snapshot.snapshot_name(),
@@ -1619,7 +1620,7 @@ mod tests {
         // to test deployments.
         let setting = Spi::get_one::<String>("select setting from pg_settings where name = 'data_directory'").unwrap();
 
-        info!("Data directory: {}", setting.unwrap());
+        notice!("Data directory: {}", setting.unwrap());
 
         for runtime in [Runtime::python, Runtime::rust] {
             let result: Vec<(String, String, String, bool)> = train(
@@ -1657,7 +1658,7 @@ mod tests {
         // to test deployments.
         let setting = Spi::get_one::<String>("select setting from pg_settings where name = 'data_directory'").unwrap();
 
-        info!("Data directory: {}", setting.unwrap());
+        notice!("Data directory: {}", setting.unwrap());
 
         for runtime in [Runtime::python, Runtime::rust] {
             let result: Vec<(String, String, String, bool)> = train(
@@ -1695,7 +1696,7 @@ mod tests {
         // to test deployments.
         let setting = Spi::get_one::<String>("select setting from pg_settings where name = 'data_directory'").unwrap();
 
-        info!("Data directory: {}", setting.unwrap());
+        notice!("Data directory: {}", setting.unwrap());
 
         for runtime in [Runtime::python, Runtime::rust] {
             let result: Vec<(String, String, String, bool)> = train(

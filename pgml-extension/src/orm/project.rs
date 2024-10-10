@@ -74,7 +74,7 @@ impl Project {
     }
 
     pub fn deploy(&self, model_id: i64, strategy: Strategy) {
-        info!("Deploying model id: {:?}", model_id);
+        notice!("Deploying model id: {:?}", model_id);
         Spi::get_one_with_args::<i64>(
             "INSERT INTO pgml.deployments (project_id, model_id, strategy) VALUES ($1, $2, $3::pgml.strategy) RETURNING id",
             vec![
