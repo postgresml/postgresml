@@ -31,6 +31,7 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Result<Arc<Box<dyn 
     let mut runtime: Option<String> = None;
     let mut algorithm: Option<String> = None;
     let mut task: Option<String> = None;
+    let mut hyperparams: Option<JsonB> = None;
 
     Spi::connect(|client| {
         let result = client
@@ -39,7 +40,8 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Result<Arc<Box<dyn 
                     data,
                     runtime::TEXT,
                     algorithm::TEXT,
-                    task::TEXT
+                    task::TEXT,
+                    hyperparams
                 FROM pgml.models
                     INNER JOIN pgml.files
                         ON models.id = files.model_id 
@@ -66,6 +68,7 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Result<Arc<Box<dyn 
             runtime = result.get(2).expect("Runtime for model is corrupted.");
             algorithm = result.get(3).expect("Algorithm for model is corrupted.");
             task = result.get(4).expect("Task for project is corrupted.");
+            hyperparams = result.get(5).expect("Hyperparams for model is corrupted.");
         }
     });
 
@@ -83,6 +86,7 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Result<Arc<Box<dyn 
     let runtime = Runtime::from_str(&runtime.unwrap()).unwrap();
     let algorithm = Algorithm::from_str(&algorithm.unwrap()).unwrap();
     let task = Task::from_str(&task.unwrap()).unwrap();
+    let hyperparams = hyperparams.unwrap();
 
     debug1!(
         "runtime = {:?}, algorithm = {:?}, task = {:?}",
@@ -94,22 +98,22 @@ pub fn find_deployed_estimator_by_model_id(model_id: i64) -> Result<Arc<Box<dyn 
     let bindings: Box<dyn Bindings> = match runtime {
         Runtime::rust => {
             match algorithm {
-                Algorithm::xgboost => crate::bindings::xgboost::Estimator::from_bytes(&data)?,
-                Algorithm::lightgbm => crate::bindings::lightgbm::Estimator::from_bytes(&data)?,
+                Algorithm::xgboost => crate::bindings::xgboost::Estimator::from_bytes(&data, &hyperparams)?,
+                Algorithm::lightgbm => crate::bindings::lightgbm::Estimator::from_bytes(&data, &hyperparams)?,
                 Algorithm::linear => match task {
-                    Task::regression => crate::bindings::linfa::LinearRegression::from_bytes(&data)?,
+                    Task::regression => crate::bindings::linfa::LinearRegression::from_bytes(&data, &hyperparams)?,
                     Task::classification => {
-                        crate::bindings::linfa::LogisticRegression::from_bytes(&data)?
+                        crate::bindings::linfa::LogisticRegression::from_bytes(&data, &hyperparams)?
                     }
                     _ => error!("Rust runtime only supports `classification` and `regression` task types for linear algorithms."),
                 },
-                Algorithm::svm => crate::bindings::linfa::Svm::from_bytes(&data)?,
+                Algorithm::svm => crate::bindings::linfa::Svm::from_bytes(&data, &hyperparams)?,
                 _ => todo!(), //smartcore_load(&data, task, algorithm, &hyperparams),
             }
         }
 
         #[cfg(feature = "python")]
-        Runtime::python => crate::bindings::sklearn::Estimator::from_bytes(&data)?,
+        Runtime::python => crate::bindings::sklearn::Estimator::from_bytes(&data, &hyperparams)?,
 
         #[cfg(not(feature = "python"))]
         Runtime::python => {

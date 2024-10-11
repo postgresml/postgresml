@@ -197,7 +197,7 @@ impl Bindings for Estimator {
     }
 
     /// Deserialize self from bytes, with additional context
-    fn from_bytes(bytes: &[u8]) -> Result<Box<dyn Bindings>>
+    fn from_bytes(bytes: &[u8], _hyperparams: &JsonB) -> Result<Box<dyn Bindings>>
     where
         Self: Sized,
     {

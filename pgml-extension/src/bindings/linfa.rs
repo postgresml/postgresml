@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use super::Bindings;
 use crate::orm::*;
+use pgrx::*;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct LinearRegression {
@@ -58,7 +59,7 @@ impl Bindings for LinearRegression {
     }
 
     /// Deserialize self from bytes, with additional context
-    fn from_bytes(bytes: &[u8]) -> Result<Box<dyn Bindings>>
+    fn from_bytes(bytes: &[u8], _hyperparams: &JsonB) -> Result<Box<dyn Bindings>>
     where
         Self: Sized,
     {
@@ -187,7 +188,7 @@ impl Bindings for LogisticRegression {
     }
 
     /// Deserialize self from bytes, with additional context
-    fn from_bytes(bytes: &[u8]) -> Result<Box<dyn Bindings>>
+    fn from_bytes(bytes: &[u8], _hyperparams: &JsonB) -> Result<Box<dyn Bindings>>
     where
         Self: Sized,
     {
@@ -261,7 +262,7 @@ impl Bindings for Svm {
     }
 
     /// Deserialize self from bytes, with additional context
-    fn from_bytes(bytes: &[u8]) -> Result<Box<dyn Bindings>>
+    fn from_bytes(bytes: &[u8], _hyperparams: &JsonB) -> Result<Box<dyn Bindings>>
     where
         Self: Sized,
     {
