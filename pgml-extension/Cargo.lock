@@ -3389,7 +3389,7 @@ dependencies = [
 [[package]]
 name = "xgboost"
 version = "0.2.0"
-source = "git+https://github.com/postgresml/rust-xgboost?branch=master#a11d05d486395dcc059abf9106af84f70b2f5291"
+source = "git+https://github.com/postgresml/rust-xgboost?branch=master#747631d5e50dcc9553f2a66988627f4ddec5b180"
 dependencies = [
  "derive_builder 0.12.0",
  "indexmap 2.1.0",
@@ -3402,7 +3402,7 @@ dependencies = [
 [[package]]
 name = "xgboost-sys"
 version = "0.2.0"
-source = "git+https://github.com/postgresml/rust-xgboost?branch=master#a11d05d486395dcc059abf9106af84f70b2f5291"
+source = "git+https://github.com/postgresml/rust-xgboost?branch=master#747631d5e50dcc9553f2a66988627f4ddec5b180"
 dependencies = [
  "bindgen",
  "cmake",

@@ -360,6 +360,7 @@ impl Model {
                 )
                 .unwrap()
                 .unwrap();
+                let hyperparams = result.get(11).unwrap().unwrap();
 
                 let bindings: Box<dyn Bindings> = match runtime {
                     Runtime::openai => {
@@ -369,27 +370,27 @@ impl Model {
                     Runtime::rust => {
                         match algorithm {
                             Algorithm::xgboost => {
-                                xgboost::Estimator::from_bytes(&data)?
+                                xgboost::Estimator::from_bytes(&data, &hyperparams)?
                             }
                             Algorithm::lightgbm => {
-                                lightgbm::Estimator::from_bytes(&data)?
+                                lightgbm::Estimator::from_bytes(&data, &hyperparams)?
                             }
                             Algorithm::linear => match project.task {
                                 Task::regression => {
-                                    linfa::LinearRegression::from_bytes(&data)?
+                                    linfa::LinearRegression::from_bytes(&data, &hyperparams)?
                                 }
                                 Task::classification => {
-                                    linfa::LogisticRegression::from_bytes(&data)?
+                                    linfa::LogisticRegression::from_bytes(&data, &hyperparams)?
                                 }
                                 _ => bail!("No default runtime available for tasks other than `classification` and `regression` when using a linear algorithm."),
                             },
-                            Algorithm::svm => linfa::Svm::from_bytes(&data)?,
+                            Algorithm::svm => linfa::Svm::from_bytes(&data, &hyperparams)?,
                             _ => todo!(), //smartcore_load(&data, task, algorithm, &hyperparams),
                         }
                     }
 
                     #[cfg(feature = "python")]
-                    Runtime::python => sklearn::Estimator::from_bytes(&data)?,
+                    Runtime::python => sklearn::Estimator::from_bytes(&data, &hyperparams)?,
 
                     #[cfg(not(feature = "python"))]
                     Runtime::python => {
@@ -409,7 +410,7 @@ impl Model {
                     snapshot_id,
                     algorithm,
                     runtime,
-                    hyperparams: result.get(6).unwrap().unwrap(),
+                    hyperparams: hyperparams,
                     status: Status::from_str(result.get(7).unwrap().unwrap()).unwrap(),
                     metrics: result.get(8).unwrap(),
                     search: result.get(9).unwrap().map(|search| Search::from_str(search).unwrap()),

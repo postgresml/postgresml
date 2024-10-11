@@ -288,10 +288,18 @@ fn fit(dataset: &Dataset, hyperparams: &Hyperparams, objective: learning::Object
         Err(e) => error!("Failed to train model:\n\n{}", e),
     };
 
-    Ok(Box::new(Estimator { estimator: booster }))
+    let softmax_objective = match hyperparams.get("objective") {
+        Some(value) => match value.as_str().unwrap() {
+            "multi:softmax" => true,
+            _ => false,
+        },
+        None => false,
+    };
+    Ok(Box::new(Estimator { softmax_objective, estimator: booster }))
 }
 
 pub struct Estimator {
+    softmax_objective: bool,
     estimator: xgboost::Booster,
 }
 
@@ -308,6 +316,9 @@ impl Bindings for Estimator {
     fn predict(&self, features: &[f32], num_features: usize, num_classes: usize) -> Result<Vec<f32>> {
         let x = DMatrix::from_dense(features, features.len() / num_features)?;
         let y = self.estimator.predict(&x)?;
+        if self.softmax_objective {
+            return Ok(y);
+        }
         Ok(match num_classes {
             0 => y,
             _ => y
@@ -340,7 +351,7 @@ impl Bindings for Estimator {
     }
 
     /// Deserialize self from bytes, with additional context
-    fn from_bytes(bytes: &[u8]) -> Result<Box<dyn Bindings>>
+    fn from_bytes(bytes: &[u8], hyperparams: &JsonB) -> Result<Box<dyn Bindings>>
     where
         Self: Sized,
     {
@@ -366,6 +377,12 @@ impl Bindings for Estimator {
             .set_param("nthread", &concurrency.to_string())
             .map_err(|e| anyhow!("could not set nthread XGBoost parameter: {e}"))?;
 
-        Ok(Box::new(Estimator { estimator }))
+        let objective_opt = hyperparams.0.get("objective").and_then(|v| v.as_str());
+        let softmax_objective = match objective_opt {
+            Some("multi:softmax") => true,
+            _ => false,
+        };
+
+        Ok(Box::new(Estimator { softmax_objective, estimator }))
     }
 }

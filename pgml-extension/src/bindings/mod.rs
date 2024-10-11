@@ -106,7 +106,7 @@ pub trait Bindings: Send + Sync + Debug + AToAny {
     fn to_bytes(&self) -> Result<Vec<u8>>;
 
     /// Deserialize self from bytes, with additional context
-    fn from_bytes(bytes: &[u8]) -> Result<Box<dyn Bindings>>
+    fn from_bytes(bytes: &[u8], _hyperparams: &JsonB) -> Result<Box<dyn Bindings>>
     where
         Self: Sized;
 }
