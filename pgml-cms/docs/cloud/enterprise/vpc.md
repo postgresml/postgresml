@@ -80,9 +80,9 @@ To launch a VPC in AWS you must have a user with the correct permissions.
      ]
    }
    ```
-7. Review and create the policy, giving it a descriptive name like "VPCSetupPolicy".
+7. Review and create the policy, giving it a descriptive name like "PGMLVPCSetupPolicy".
 8. Back in the role creation process, attach this newly created policy to the role.
-9. Name the role (e.g., "VPCSetupRole") and create it.
+9. Name the role (e.g., "PGMLVPCSetupRole") and create it.
 10. Go to the IAM Users section, select your user, and attach the created role.
 11. Generate new access keys for this user if you haven't already.
 
