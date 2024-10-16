@@ -1,9 +1,13 @@
-use crate::forms;
-use rocket::form::Form;
-use rocket::response::Redirect;
-use rocket::route::Route;
-use rocket::serde::json::Json;
+use crate::{forms, Router};
+use axum::{
+    extract::{Path, Query},
+    response::Redirect,
+    routing::{get, post},
+    Extension, Form, Json,
+};
+use log::debug;
 use sailfish::TemplateOnce;
+use serde::Deserialize;
 
 use crate::{
     guards::Cluster,
@@ -18,9 +22,30 @@ use crate::models;
 use crate::templates;
 use crate::utils::urls;
 
+pub fn routes() -> Router {
+    Router::new()
+        .route("/notebooks", get(notebooks))
+        .route("/notebooks/:notebook_id", get(notebook))
+        .route("/notebooks_turboframe", get(notebook_index))
+        .route("/notebooks", post(notebook_create))
+        .route("/notebooks_turboframe/:notebook_id", get(notebook_get))
+        .route("/notebooks/:notebook_id/reset", post(notebook_reset))
+        .route("/notebooks/:notebook_id/cell", post(cell_create))
+        .route("/notebooks/:notebook_id/reorder", post(notebook_reorder))
+        .route("/notebooks/:notebook_id/cell/:cell_id/delete", post(cell_delete))
+        .route("/notebooks/:notebook_id/cell/:cell_id/remove", post(cell_remove))
+        .route("/notebooks/:notebook_id/cell/:cell_id/play", post(cell_play))
+        .route("/notebooks/:notebook_id/cell/:cell_id/edit", get(cell_trigger_edit))
+        .route("/notebooks/:notebook_id/cell/:cell_id/edit", post(cell_edit))
+        .route("/notebooks/:notebook_id/cell/:cell_id", get(cell_get))
+        .route("/notebooks/:notebook_id/cell/:cell_id/cancel", post(cell_cancel))
+}
+
 // Returns notebook page
-#[get("/notebooks")]
-pub async fn notebooks(cluster: &Cluster, _connected: ConnectedCluster<'_>) -> Result<ResponseOk, Error> {
+pub async fn notebooks(
+    Extension(cluster): Extension<Cluster>,
+    _connected: ConnectedCluster,
+) -> Result<ResponseOk, Error> {
     let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster);
     layout.breadcrumbs(vec![NavLink::new("Notebooks", &urls::deployment_notebooks()).active()]);
 
@@ -35,11 +60,10 @@ pub async fn notebooks(cluster: &Cluster, _connected: ConnectedCluster<'_>) -> R
 }
 
 // Returns the specified notebook page.
-#[get("/notebooks/<notebook_id>")]
 pub async fn notebook(
-    cluster: &Cluster,
-    notebook_id: i64,
-    _connected: ConnectedCluster<'_>,
+    Extension(cluster): Extension<Cluster>,
+    Path(notebook_id): Path<i64>,
+    _connected: ConnectedCluster,
 ) -> Result<ResponseOk, Error> {
     let notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
 
@@ -59,9 +83,16 @@ pub async fn notebook(
     Ok(ResponseOk(layout.render(templates::Dashboard::new(nav_tabs))))
 }
 
+#[derive(Deserialize)]
+struct NotebookIndexParams {
+    new: Option<String>,
+}
+
 // Returns all the notebooks for a deployment in a turbo frame.
-#[get("/notebooks_turboframe?<new>")]
-pub async fn notebook_index(cluster: ConnectedCluster<'_>, new: Option<&str>) -> Result<ResponseOk, Error> {
+async fn notebook_index(
+    cluster: ConnectedCluster,
+    Query(NotebookIndexParams { new }): Query<NotebookIndexParams>,
+) -> Result<ResponseOk, Error> {
     Ok(ResponseOk(
         templates::Notebooks {
             notebooks: models::Notebook::all(cluster.pool()).await?,
@@ -72,19 +103,25 @@ pub async fn notebook_index(cluster: ConnectedCluster<'_>, new: Option<&str>) ->
     ))
 }
 
+#[derive(Deserialize)]
+struct NotebookForm {
+    name: String,
+}
+
 // Creates a new named notebook and redirects to that specific notebook.
-#[post("/notebooks", data = "<data>")]
-pub async fn notebook_create(cluster: &Cluster, data: Form<forms::Notebook<'_>>) -> Result<Redirect, Error> {
-    let notebook = crate::models::Notebook::create(cluster.pool(), data.name).await?;
+async fn notebook_create(
+    Extension(cluster): Extension<Cluster>,
+    Form(data): Form<NotebookForm>,
+) -> Result<Redirect, Error> {
+    let notebook = crate::models::Notebook::create(cluster.pool(), &data.name).await?;
 
     models::Cell::create(cluster.pool(), &notebook, models::CellType::Sql as i32, "").await?;
 
-    Ok(Redirect::to(urls::deployment_notebook_by_id(notebook.id)))
+    Ok(Redirect::to(&urls::deployment_notebook_by_id(notebook.id)))
 }
 
 // Returns the notebook in a turbo frame.
-#[get("/notebooks_turboframe/<notebook_id>")]
-pub async fn notebook_get(cluster: ConnectedCluster<'_>, notebook_id: i64) -> Result<ResponseOk, Error> {
+pub async fn notebook_get(cluster: ConnectedCluster, Path(notebook_id): Path<i64>) -> Result<ResponseOk, Error> {
     let notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
     let cells = notebook.cells(cluster.pool()).await?;
 
@@ -93,44 +130,50 @@ pub async fn notebook_get(cluster: ConnectedCluster<'_>, notebook_id: i64) -> Re
     ))
 }
 
-#[post("/notebooks/<notebook_id>/reset")]
-pub async fn notebook_reset(cluster: ConnectedCluster<'_>, notebook_id: i64) -> Result<Redirect, Error> {
+pub async fn notebook_reset(cluster: ConnectedCluster, Path(notebook_id): Path<i64>) -> Result<Redirect, Error> {
     let notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
     notebook.reset(cluster.pool()).await?;
 
-    Ok(Redirect::to(format!(
-        "{}/{}",
+    Ok(Redirect::to(&format!(
+        "{}/{notebook_id}",
         urls::deployment_notebooks_turboframe(),
-        notebook_id
     )))
 }
 
-#[post("/notebooks/<notebook_id>/cell", data = "<cell>")]
-pub async fn cell_create(
-    cluster: ConnectedCluster<'_>,
-    notebook_id: i64,
-    cell: Form<forms::Cell<'_>>,
+#[derive(Deserialize)]
+struct CellForm {
+    contents: String,
+    cell_type: String,
+}
+
+async fn cell_create(
+    cluster: ConnectedCluster,
+    Path(notebook_id): Path<i64>,
+    Form(cell): Form<CellForm>,
 ) -> Result<Redirect, Error> {
     let notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
-    let mut cell =
-        models::Cell::create(cluster.pool(), &notebook, cell.cell_type.parse::<i32>()?, cell.contents).await?;
+    let mut cell = models::Cell::create(
+        cluster.pool(),
+        &notebook,
+        cell.cell_type.parse::<i32>()?,
+        &cell.contents,
+    )
+    .await?;
 
     if !cell.contents.is_empty() {
         cell.render(cluster.pool()).await?;
     }
 
-    Ok(Redirect::to(format!(
-        "{}/{}",
+    Ok(Redirect::to(&format!(
+        "{}/{notebook_id}",
         urls::deployment_notebooks_turboframe(),
-        notebook_id
     )))
 }
 
-#[post("/notebooks/<notebook_id>/reorder", data = "<cells>")]
 pub async fn notebook_reorder(
-    cluster: ConnectedCluster<'_>,
-    notebook_id: i64,
-    cells: Json<forms::Reorder>,
+    cluster: ConnectedCluster,
+    Path(notebook_id): Path<i64>,
+    Json(cells): Json<forms::Reorder>,
 ) -> Result<Redirect, Error> {
     let _notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
 
@@ -145,15 +188,17 @@ pub async fn notebook_reorder(
 
     transaction.commit().await?;
 
-    Ok(Redirect::to(format!(
-        "{}/{}",
+    Ok(Redirect::to(&format!(
+        "{}/{notebook_id}",
         urls::deployment_notebooks_turboframe(),
-        notebook_id
     )))
 }
 
-#[get("/notebooks/<notebook_id>/cell/<cell_id>")]
-pub async fn cell_get(cluster: ConnectedCluster<'_>, notebook_id: i64, cell_id: i64) -> Result<ResponseOk, Error> {
+pub async fn cell_get(
+    cluster: ConnectedCluster,
+    Path(notebook_id): Path<i64>,
+    Path(cell_id): Path<i64>,
+) -> Result<ResponseOk, Error> {
     let notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
     let cell = models::Cell::get_by_id(cluster.pool(), cell_id).await?;
 
@@ -169,29 +214,29 @@ pub async fn cell_get(cluster: ConnectedCluster<'_>, notebook_id: i64, cell_id: 
     ))
 }
 
-#[post("/notebooks/<notebook_id>/cell/<cell_id>/cancel")]
-pub async fn cell_cancel(cluster: ConnectedCluster<'_>, notebook_id: i64, cell_id: i64) -> Result<Redirect, Error> {
+pub async fn cell_cancel(
+    cluster: ConnectedCluster,
+    Path(notebook_id): Path<i64>,
+    Path(cell_id): Path<i64>,
+) -> Result<Redirect, Error> {
     let cell = models::Cell::get_by_id(cluster.pool(), cell_id).await?;
     cell.cancel(cluster.pool()).await?;
-    Ok(Redirect::to(format!(
-        "{}/{}/cell/{}",
+    Ok(Redirect::to(&format!(
+        "{}/{notebook_id}/cell/{cell_id}",
         urls::deployment_notebooks(),
-        notebook_id,
-        cell_id
     )))
 }
 
-#[post("/notebooks/<notebook_id>/cell/<cell_id>/edit", data = "<data>")]
-pub async fn cell_edit(
-    cluster: ConnectedCluster<'_>,
-    notebook_id: i64,
-    cell_id: i64,
-    data: Form<forms::Cell<'_>>,
+async fn cell_edit(
+    cluster: ConnectedCluster,
+    Path(notebook_id): Path<i64>,
+    Path(cell_id): Path<i64>,
+    Form(data): Form<CellForm>,
 ) -> Result<ResponseOk, Error> {
     let notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
     let mut cell = models::Cell::get_by_id(cluster.pool(), cell_id).await?;
 
-    cell.update(cluster.pool(), data.cell_type.parse::<i32>()?, data.contents)
+    cell.update(cluster.pool(), data.cell_type.parse::<i32>()?, &data.contents)
         .await?;
 
     debug!("Rendering cell id={}", cell.id);
@@ -210,11 +255,10 @@ pub async fn cell_edit(
     ))
 }
 
-#[get("/notebooks/<notebook_id>/cell/<cell_id>/edit")]
 pub async fn cell_trigger_edit(
-    cluster: ConnectedCluster<'_>,
-    notebook_id: i64,
-    cell_id: i64,
+    cluster: ConnectedCluster,
+    Path(notebook_id): Path<i64>,
+    Path(cell_id): Path<i64>,
 ) -> Result<ResponseOk, Error> {
     let notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
     let cell = models::Cell::get_by_id(cluster.pool(), cell_id).await?;
@@ -231,8 +275,11 @@ pub async fn cell_trigger_edit(
     ))
 }
 
-#[post("/notebooks/<notebook_id>/cell/<cell_id>/play")]
-pub async fn cell_play(cluster: ConnectedCluster<'_>, notebook_id: i64, cell_id: i64) -> Result<ResponseOk, Error> {
+pub async fn cell_play(
+    cluster: ConnectedCluster,
+    Path(notebook_id): Path<i64>,
+    Path(cell_id): Path<i64>,
+) -> Result<ResponseOk, Error> {
     let notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
     let mut cell = models::Cell::get_by_id(cluster.pool(), cell_id).await?;
     cell.render(cluster.pool()).await?;
@@ -249,8 +296,11 @@ pub async fn cell_play(cluster: ConnectedCluster<'_>, notebook_id: i64, cell_id:
     ))
 }
 
-#[post("/notebooks/<notebook_id>/cell/<cell_id>/remove")]
-pub async fn cell_remove(cluster: ConnectedCluster<'_>, notebook_id: i64, cell_id: i64) -> Result<ResponseOk, Error> {
+pub async fn cell_remove(
+    cluster: ConnectedCluster,
+    Path(notebook_id): Path<i64>,
+    Path(cell_id): Path<i64>,
+) -> Result<ResponseOk, Error> {
     let notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
     let cell = models::Cell::get_by_id(cluster.pool(), cell_id).await?;
     let bust_cache = std::time::SystemTime::now()
@@ -268,37 +318,18 @@ pub async fn cell_remove(cluster: ConnectedCluster<'_>, notebook_id: i64, cell_i
     ))
 }
 
-#[post("/notebooks/<notebook_id>/cell/<cell_id>/delete")]
-pub async fn cell_delete(cluster: ConnectedCluster<'_>, notebook_id: i64, cell_id: i64) -> Result<Redirect, Error> {
+pub async fn cell_delete(
+    cluster: ConnectedCluster,
+    Path(notebook_id): Path<i64>,
+    Path(cell_id): Path<i64>,
+) -> Result<Redirect, Error> {
     let _notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
     let cell = models::Cell::get_by_id(cluster.pool(), cell_id).await?;
 
     let _ = cell.delete(cluster.pool()).await?;
 
-    Ok(Redirect::to(format!(
-        "{}/{}/cell/{}",
+    Ok(Redirect::to(&format!(
+        "{}/{notebook_id}/cell/{cell_id}",
         urls::deployment_notebooks(),
-        notebook_id,
-        cell_id
     )))
-}
-
-pub fn routes() -> Vec<Route> {
-    routes![
-        notebooks,
-        notebook,
-        notebook_index,
-        notebook_create,
-        notebook_get,
-        notebook_reset,
-        cell_create,
-        notebook_reorder,
-        cell_get,
-        cell_cancel,
-        cell_edit,
-        cell_trigger_edit,
-        cell_play,
-        cell_remove,
-        cell_delete
-    ]
 }

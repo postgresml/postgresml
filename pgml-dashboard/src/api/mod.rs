@@ -1,12 +1,11 @@
-use rocket::route::Route;
+use axum::Router;
+
+use crate::utils::markdown::SiteSearch;
 
 pub mod cms;
 pub mod code_editor;
 pub mod deployment;
 
-pub fn routes() -> Vec<Route> {
-    let mut routes = Vec::new();
-    routes.extend(cms::routes());
-    routes.extend(code_editor::routes());
-    routes
+pub fn routes() -> Router<SiteSearch> {
+    Router::new().merge(cms::routes()).merge(code_editor::routes())
 }
