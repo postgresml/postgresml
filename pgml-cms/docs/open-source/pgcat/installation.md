@@ -27,6 +27,7 @@ As part of our regular release process, we are building and distributing a Debia
 ```
 echo "deb [trusted=yes] https://apt.postgresml.org $(lsb_release -cs) main" | \
 sudo tee -a /etc/apt/sources.list && \
+sudo apt-get update && \
 sudo apt install pgcat
 ```
 
