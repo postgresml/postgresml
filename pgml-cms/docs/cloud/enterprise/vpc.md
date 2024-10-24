@@ -33,6 +33,7 @@ To launch a VPC in AWS you must have a user with the correct permissions.
            "ec2:ModifyInstanceAttribute",
            "ec2:DescribeSecurityGroups",
            "ec2:CreateSecurityGroup",
+           "ec2:DeleteSecurityGroup",
            "ec2:AuthorizeSecurityGroupIngress",
            "ec2:AuthorizeSecurityGroupEgress",
            "ec2:DescribeInstances",
