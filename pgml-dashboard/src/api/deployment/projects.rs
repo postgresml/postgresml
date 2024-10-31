@@ -1,10 +1,10 @@
-use rocket::route::Route;
+use axum::{extract::Path, routing::get, Extension};
 use sailfish::TemplateOnce;
 
 use crate::{
-    guards::Cluster,
-    guards::ConnectedCluster,
+    guards::{Cluster, ConnectedCluster},
     responses::{Error, ResponseOk},
+    Router,
 };
 
 use crate::templates::{components::NavLink, *};
@@ -14,9 +14,19 @@ use crate::templates;
 use crate::utils::tabs;
 use crate::utils::urls;
 
+pub fn routes() -> Router {
+    Router::new()
+        .route("/projects", get(projects))
+        .route("/projects/:project_id", get(project))
+        .route("/projects_turboframe", get(project_index))
+        .route("/projects_turboframe/:id", get(project_get))
+}
+
 // Returns the deployments projects page.
-#[get("/projects")]
-pub async fn projects(cluster: &Cluster, _connected: ConnectedCluster<'_>) -> Result<ResponseOk, Error> {
+pub async fn projects(
+    Extension(cluster): Extension<Cluster>,
+    _connected: ConnectedCluster,
+) -> Result<ResponseOk, Error> {
     let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster);
     layout.breadcrumbs(vec![NavLink::new("Projects", &urls::deployment_projects()).active()]);
 
@@ -31,11 +41,10 @@ pub async fn projects(cluster: &Cluster, _connected: ConnectedCluster<'_>) -> Re
 }
 
 // Return the specified project page.
-#[get("/projects/<project_id>")]
 pub async fn project(
-    cluster: &Cluster,
-    project_id: i64,
-    _connected: ConnectedCluster<'_>,
+    Extension(cluster): Extension<Cluster>,
+    Path(project_id): Path<i64>,
+    _connected: ConnectedCluster,
 ) -> Result<ResponseOk, Error> {
     let project = models::Project::get_by_id(cluster.pool(), project_id).await?;
 
@@ -56,8 +65,7 @@ pub async fn project(
 }
 
 // Returns all the deployments for the project in a turbo frame.
-#[get("/projects_turboframe")]
-pub async fn project_index(cluster: ConnectedCluster<'_>) -> Result<ResponseOk, Error> {
+pub async fn project_index(cluster: ConnectedCluster) -> Result<ResponseOk, Error> {
     Ok(ResponseOk(
         templates::Projects {
             projects: models::Project::all(cluster.pool()).await?,
@@ -68,16 +76,11 @@ pub async fn project_index(cluster: ConnectedCluster<'_>) -> Result<ResponseOk, 
 }
 
 // Returns the specified project page.
-#[get("/projects_turboframe/<id>")]
-pub async fn project_get(cluster: ConnectedCluster<'_>, id: i64) -> Result<ResponseOk, Error> {
+pub async fn project_get(cluster: ConnectedCluster, Path(id): Path<i64>) -> Result<ResponseOk, Error> {
     let project = models::Project::get_by_id(cluster.pool(), id).await?;
     let models = models::Model::get_by_project_id(cluster.pool(), id).await?;
 
     Ok(ResponseOk(
         templates::Project { project, models }.render_once().unwrap(),
     ))
-}
-
-pub fn routes() -> Vec<Route> {
-    routes![projects, project, project_index, project_get,]
 }

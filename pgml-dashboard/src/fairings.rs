@@ -1,8 +1,6 @@
 use std::collections::HashMap;
 
 use once_cell::sync::OnceCell;
-use rocket::fairing::{Fairing, Info, Kind};
-use rocket::{Data, Request, Response};
 
 use crate::utils::datadog::timing;
 
