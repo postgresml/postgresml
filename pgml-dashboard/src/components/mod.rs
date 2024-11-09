@@ -40,10 +40,6 @@ pub mod code_editor;
 pub mod confirm_modal;
 pub use confirm_modal::ConfirmModal;
 
-// src/components/dropdown
-pub mod dropdown;
-pub use dropdown::Dropdown;
-
 // src/components/github_icon
 pub mod github_icon;
 pub use github_icon::GithubIcon;
@@ -59,10 +55,6 @@ pub mod inputs;
 
 // src/components/layouts
 pub mod layouts;
-
-// src/components/left_nav_menu
-pub mod left_nav_menu;
-pub use left_nav_menu::LeftNavMenu;
 
 // src/components/lists
 pub mod lists;

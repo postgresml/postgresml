@@ -14,14 +14,14 @@
         <main>
             <div class="container-fluid p-0 min-vh-lg-100">
                 <div class="row gx-0 min-vh-lg-100 gy-0">
-                    <%+ WebAppNavbar::new(product_left_nav.links.clone(), dropdown_nav).cluster(cluster) %>
+                    <%+ WebAppNavbar::new(product_left_nav.links.clone()).cluster(cluster) %>
                     <div class="d-flex">
                         <%+ WebAppLeftNav::new(product_left_nav.clone())
                             .id(&product_left_nav.unique_id()) %>
     
                         <div class="clear-from-under-navbar flex-grow-1 min-vw-0 web-app-content-area">
                             <div class="px-4 px-sm-5 py-3 d-none d-lg-flex" style="position: absolute">
-                                <%- Breadcrumbs::render(breadcrumbs) %>
+                                <%- Breadcrumbs::render(org_dropdown, deployment_dropdown, breadcrumbs) %>
                             </div>
 
                             <div class="px-xs-2 px-md-5 overflow-hidden" style="padding-top: 57px;">

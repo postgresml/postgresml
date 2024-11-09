@@ -49,7 +49,8 @@ pub struct ClustersSettings {
 pub struct Context {
     pub user: models::User,
     pub cluster: models::Cluster,
-    pub dropdown_nav: StaticNav,
+    pub org_dropdown: StaticNav,
+    pub deployment_dropdown: StaticNav,
     pub product_left_nav: StaticNav,
     pub marketing_footer: String,
     pub head_items: Option<String>,
@@ -523,6 +524,8 @@ pub async fn migrate(pool: &PgPool) -> anyhow::Result<()> {
 
 #[cfg(test)]
 mod test {
+    use std::intrinsics::mir::Static;
+
     use super::*;
     use crate::components::sections::footers::MarketingFooter;
     use crate::guards::Cluster;
@@ -647,6 +650,7 @@ mod test {
                             user: models::User::default(),
                             cluster: models::Cluster::default(),
                             dropdown_nav: StaticNav { links: vec![] },
+                            org_dropdown: StaticNav { links: vec![] },
                             product_left_nav: StaticNav { links: vec![] },
                             marketing_footer: MarketingFooter::new().render_once().unwrap(),
                             head_items: None,
@@ -720,6 +724,7 @@ mod test {
                             user: models::User::default(),
                             cluster: models::Cluster::default(),
                             dropdown_nav: StaticNav { links: vec![] },
+                            org_dropdown: StaticNav { links: vec![] },
                             product_left_nav: StaticNav { links: vec![] },
                             marketing_footer: MarketingFooter::new().render_once().unwrap(),
                             head_items: None,

@@ -1,0 +1,14 @@
+
+<div class="dropdown" data-controller="inputs-dropdown-inline-index">
+  <button type="button" class="btn btn-dropdown dropdown-toggle expanded btn-tertiary-web-app" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+    <span><%= title %></span>
+    <span class="material-symbols-outlined">
+      expand_more
+    </span>
+  </button>
+  <div class="dropdown-menu overflow-auto">
+    <% for item in items {%>
+    <%+ item %>
+    <% } %>
+  </div>
+</div>

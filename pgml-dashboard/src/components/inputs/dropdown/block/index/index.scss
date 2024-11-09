@@ -1,0 +1,117 @@
+div[data-controller="inputs-dropdown-block-index"] {
+  .dropdown {
+    @extend .d-flex;
+
+    .dropdown-toggle {
+        a {
+            padding: 8px 12px;
+        }
+
+        &:hover {
+            cursor: pointer;
+        }
+
+        &:after {
+            content: none;
+        }
+    }
+
+    .dropdown-menu {
+        width: 100%;
+    }
+
+    &.expandable {
+        .dropdown-menu {
+            width: auto;
+            min-width: 100%;
+        }
+    }
+
+    .dropdown-item {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        --bs-dropdown-link-hover-bg: #{$gray-700};
+        --bs-dropdown-link-active-bg: #{$neon-tint-100};
+    }
+  }
+
+  .btn-dropdown {
+      border-radius: $border-radius;
+      background: #{$gray-700};
+      color: #{$gray-100};
+      display: flex;
+      justify-content: space-between;
+      font-weight: $font-weight-normal;
+      padding: 16px 20px;
+
+      --bs-btn-border-color: transparent;
+      --bs-btn-border-width: 1px;
+      --bs-btn-hover-border-color: #{$neon-shade-100};
+      --bs-btn-active-border-color: #{$neon-shade-100};
+      --bs-btn-active-bg: #{$gray-700};
+      --bs-btn-active-color: #{$gray-100};
+      --bs-btn-hover-color: #{$gray-100};
+
+      &.error {
+          border-color: #{$error};
+      }
+
+      .material-symbols-outlined {
+          color: #{$neon-shade-100};
+      }
+
+      &:after {
+          content: None;
+      }
+
+      &.show {
+          .material-symbols-outlined {
+              transform: rotate(-180deg);
+          }
+      }
+
+      .btn-dropdown-text {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          text-align: left;
+      }
+
+      .menu-item {
+          a, div {
+              padding: 8px 12px;
+              overflow: hidden;
+              text-overflow: ellipsis;
+          }
+
+          &:hover {
+              cursor: pointer;
+          }
+
+          &:after {
+              content: None;
+          }
+      }
+  }
+
+  @mixin dropdown-menu($primary-color: null) {
+      padding: 20px 0px 20px 0px;
+      overflow-y: auto;
+
+      @if ($primary-color) {
+          background-color: #{$primary-color};
+      }
+  }
+
+  .dropdown-menu {
+      @include dropdown-menu($gray-600);
+      max-height: $dropdown-menu-height;
+      overflow: hidden;
+  }
+
+}
+.sub-menu-dropdown {
+    padding: 20px 0px 20px 0px;
+    overflow-y: auto;
+    border-radius: 0px;
+    box-shadow: 1px 1px 8px 0px rgba(0, 0, 0, 0.30);
+}

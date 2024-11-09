@@ -19,7 +19,7 @@ impl Default for DropdownValue {
 }
 
 #[derive(TemplateOnce, Default)]
-#[template(path = "dropdown/dropdown_items.html")]
+#[template(path = "inputs/dropdown/block/index/dropdown_items.html")]
 pub struct DropdownItems {
     items: Vec<Component>,
 }
@@ -33,7 +33,7 @@ impl DropdownItems {
 component!(DropdownItems);
 
 #[derive(TemplateOnce, Default)]
-#[template(path = "dropdown/dropdown_frame.html")]
+#[template(path = "inputs/dropdown/block/index/dropdown_frame.html")]
 pub struct DropdownFrame {
     src: Option<String>,
     id: String,
@@ -61,8 +61,8 @@ impl DropdownFrame {
 component!(DropdownFrame);
 
 #[derive(TemplateOnce, Default)]
-#[template(path = "dropdown/template.html")]
-pub struct Dropdown {
+#[template(path = "inputs/dropdown/block/index/template.html")]
+pub struct Index {
     /// The currently selected value.
     value: DropdownValue,
 
@@ -87,9 +87,9 @@ pub struct Dropdown {
     show: String,
 }
 
-impl Dropdown {
-    pub fn new() -> Self {
-        Dropdown {
+impl Index {
+    pub fn new() -> Index {
+        Index {
             items: DropdownItems::default().into(),
             value: DropdownValue::Text("Dropdown".to_owned().into()),
             offset: "0, 10".to_owned(),
@@ -100,7 +100,7 @@ impl Dropdown {
     }
 
     pub fn new_no_button() -> Self {
-        Dropdown {
+        Index {
             value: DropdownValue::None,
             ..Self::new()
         }
@@ -122,7 +122,7 @@ impl Dropdown {
             items.push(item.into());
         }
 
-        Dropdown {
+        Index {
             items: DropdownItems::new(items).into(),
             value: DropdownValue::Text(value.into()),
             offset: "0, 10".to_owned(),
@@ -194,4 +194,4 @@ impl Dropdown {
     }
 }
 
-component!(Dropdown);
+component!(Index);

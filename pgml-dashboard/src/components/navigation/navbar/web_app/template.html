@@ -1,7 +1,6 @@
 <% 
   use crate::utils::config;
-  use crate::templates::components::PostgresLogo;
-  use crate::components::Dropdown;
+  use crate::components::inputs::dropdown::block::Index as Dropdown;
   use crate::models::Cluster;
 
   let standalone_dashboard = config::standalone_dashboard();
@@ -20,10 +19,6 @@
             <span class="icon-owl icomoon text-white mx-1"></span>
           </div>
         </button>
-
-        <div class="web-app-left-nav-sized-container">
-          <%+ PostgresLogo::new(home_link).hide_owl() %>
-        </div>
   
         <!-- Button to toggle collapsed menu for less than lg screens -->
         <button class="navbar-toggler collapsed top-nav-controls" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,41 +34,7 @@
       <div class="collapse navbar-collapse drawer-submenu-container" id="navbarSupportedContent">
         <!-- Main Menu -->
         <div class="nav-item w-100 d-flex flex-column flex-lg-row align-items-lg-center collapse collapse-horizontal horizontal-collapse show drawer-submenu">
-          <ul class="navbar-nav flex-grow-1 ps-4 p-lg-0 d-none d-lg-block">
-            <li class="nav-item d-flex align-items-center">
-              <div class="deployment_controls">
-                <%+ Dropdown::nav(deployment_controls.links) %>
-              </div>
-            </li>
-          </ul>
-          
-          <!-- Main nav links for lg screens -->
-          <ul class="navbar-nav gap-3 mb-0 d-none d-lg-flex">
-            <li class="align-items-center d-none d-lg-flex">
-              <button type="text" class="btn nav-link btn-search-input-webapp border-0 p-0" name="search" data-bs-toggle="modal" data-bs-target="#search" autocomplete="off" data-search-target="searchTrigger" data-action="search#openSearch">
-                <span class="material-symbols-outlined">search</span>
-              </button>
-            </li>
-  
-            <li class="nav-item d-flex align-items-center">
-              <a class="nav-link p-lg-0" href="/docs">Docs</a>
-            </li>
-
-            <li class="nav-item d-flex align-items-center">
-              <a class="nav-link p-lg-0" href="/blog">Blog</a>
-            </li>
-
-            <% if !standalone_dashboard { %>
-            <li class="nav-item d-flex align-items-center">
-              <a class="nav-link p-lg-0" href="/support">Support</a>
-            </li>
-            <% } %>
-
-            <!-- coming back to feedback -->
-            <!-- <li class="d-none d-lg-flex nav-item align-items-center">
-              <a class="nav-link p-lg-0" href="/support">Feedback lgscb</a>
-            </li> -->
-          </ul>
+          <!-- No main top nav for large screens -->
 
           <!-- Main nav links for less than lg screens -->
           <ul class="sub-menu-dropdown mb-2 d-lg-none d-flex flex-column gap-3">
@@ -90,9 +51,9 @@
               <a class="ps-4" href="/docs">Docs</a>
             </li>
 
-            <li class="menu-item rounded-0 d-flex align-items-center">
+            <!-- <li class="menu-item rounded-0 d-flex align-items-center">
               <a class="ps-4" href="/blog">Blog</a>
-            </li>
+            </li> -->
 
             <% if !standalone_dashboard { %>
             <li class="menu-item rounded-0 d-flex align-items-center">

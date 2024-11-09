@@ -1,6 +1,7 @@
 <%
   use crate::utils::config;
   use crate::utils::urls;
+  use crate::components::inputs::dropdown::inline::index::Index as Dropdown;
 
   let home_uri = if config::standalone_dashboard() {
     urls::deployment_notebooks()
@@ -12,15 +13,15 @@
 <nav>
   <nav aria-label="breadcrumb z-1">
     <ol class="breadcrumb">
-      <li class="breadcrumb-item body-regular-text <% if links.is_empty() {%>active<% } %>">
-        <a class="d-flex gap-2 align-items-center" href="<%- home_uri %>">
-          <span class="icon-owl icomoon"></span>
-          Home
-        </a>
-      </li>
+      <% if !dropdown_1.links.is_empty() {%>
+      <%+ Dropdown::new()
+        .set_nav_items(dropdown_1) %>
+      <% } %>
 
-      <% if !links.is_empty() {%>
+      <% if !dropdown_2.links.is_empty() {%>
       <div class="vr my-1 mx-2"></div>
+      <%+ Dropdown::new()
+        .set_nav_items(dropdown_2) %>
       <% } %>
 
       <% for link in links {

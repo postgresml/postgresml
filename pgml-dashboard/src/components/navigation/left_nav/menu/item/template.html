@@ -1,0 +1,32 @@
+<%
+  let mut spans = vec![];
+  if let Some(icon) = icon {
+    spans.push(format!("<span class=\"material-symbols-outlined\">{}</span>", icon));
+  }
+
+  spans.push(format!("<span class=\"collapse collapse-horizontal leftnav-collapse\">{}</span>", name));
+
+  let vis = spans.join("");
+%>
+
+<% if !hide_for_lg_screens { %>
+<li class="menu-item leftnav-collapse-affect collapsed <% if disabled { %>disabled<% } %>" data-controller="navigation-left-nav-menu-item">
+    <% if let Some(link) = link {%>
+    <a
+    data-navigation-left-nav-menu-index-target="link"
+    class="d-flex align-items-center justify-content-start gap-3 <% if disabled  { %> disabled <% } %> <% if active { %> active <% } %>"
+    href="<%= link %>"
+    >
+    <%- vis %>
+    </a>
+    <% } %>
+
+    <% if let Some(actions) = actions {%>
+    <button 
+      class="d-flex align-items-center justify-content-start gap-3 <% if disabled  { %> disabled <% } %> <% if active { %> active <% } %>" 
+      <%- actions %>>
+      <%- vis %>
+    </button>
+    <% } %>
+</li>
+<% } %>

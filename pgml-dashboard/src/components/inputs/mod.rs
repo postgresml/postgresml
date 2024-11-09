@@ -5,6 +5,9 @@
 pub mod checkbox;
 pub use checkbox::Checkbox;
 
+// src/components/inputs/dropdown
+pub mod dropdown;
+
 // src/components/inputs/labels
 pub mod labels;
 

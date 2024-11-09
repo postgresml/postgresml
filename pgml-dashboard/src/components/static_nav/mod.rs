@@ -11,12 +11,12 @@ impl StaticNav {
         self.links.push(link);
     }
 
-    pub fn get_active(self) -> StaticNavLink {
-        match self.links.iter().find(|item| item.active) {
-            Some(item) => item.clone(),
-            None => StaticNavLink::default(),
-        }
-    }
+    // pub fn get_active(self) -> StaticNavLink {
+    //     match self.links.iter().find(|item| item.active) {
+    //         Some(item) => item.clone(),
+    //         None => StaticNavLink::default(),
+    //     }
+    // }
 
     pub fn unique_id(&self) -> String {
         let mut id = String::new();

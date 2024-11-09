@@ -1013,7 +1013,7 @@ async fn demo(search: Option<String>) -> Result<Response, Error> {
 
     #[cfg(debug_assertions)]
     {
-        use crate::components::dropdown::{DropdownFrame, DropdownItems};
+        use crate::components::inputs::dropdown::block::index::{DropdownFrame, DropdownItems};
         use crate::components::inputs::text::search::SearchOption;
         if let Some(search) = search {
             let candidates = vec!["hello", "world", "foo", "bar"]

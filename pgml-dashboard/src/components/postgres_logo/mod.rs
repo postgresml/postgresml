@@ -7,6 +7,7 @@ pub struct PostgresLogo {
     link: String,
     bigger: bool,
     hide_owl: bool,
+    collapsable: bool,
 }
 
 impl PostgresLogo {
@@ -15,6 +16,7 @@ impl PostgresLogo {
             link: link.to_owned(),
             bigger: false,
             hide_owl: false,
+            collapsable: false,
         }
     }
 
@@ -25,6 +27,11 @@ impl PostgresLogo {
 
     pub fn hide_owl(mut self) -> PostgresLogo {
         self.hide_owl = true;
+        self
+    }
+
+    pub fn collapsable(mut self) -> PostgresLogo {
+        self.collapsable = true;
         self
     }
 }

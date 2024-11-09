@@ -1,0 +1,50 @@
+<%
+  use crate::components::inputs::dropdown::block::index::DropdownValue;
+%>
+
+<!-- Dropdown component -->
+<div data-controller="inputs-dropdown-block-index">
+  <div class="dropdown <% if expandable { %>expandable<% } %>">
+    <% if let DropdownValue::Icon(icon) = value { %>
+      <a
+        class="top-nav-controls dropdown-toggle"
+        role="button"
+        data-bs-toggle="dropdown"
+        data-bs-offset="<%= offset %>"
+        href="#"
+        aria-expanded="false">
+          <%+ icon %>
+      </a>
+      <% } else if let DropdownValue::Text(text) = value { %>
+      <button
+        class="horizontal-hide btn btn-dropdown dropdown-toggle expanded <% if collapsable { %>leftnav-collapse-affect<% } %>"
+        role="button"
+        data-bs-toggle="dropdown"
+        data-bs-offset="<%= offset %>"
+        aria-expanded="false">
+          <span class="btn-dropdown-text" <%- value_target %>><%+ text %></span>
+          <span class="material-symbols-outlined">
+            expand_more
+          </span>
+      </button>
+      <% } %>
+    
+      <% if collapsable { %>
+      <div
+        class="menu-item horizontal-hide dropdown-toggle collapsed <% if collapsable { %> leftnav-collapse-affect <% } %>"
+        role="button"
+        data-bs-toggle="dropdown"
+        data-bs-offset="<%= offset_collapsed %>"
+        aria-expanded="false"
+      >
+        <a class="d-flex align-items-center justify-content-start gap-2">
+          <span class="material-symbols-outlined">grid_view</span>
+        </a>
+      </div>
+      <% } %>
+    
+      <ul class="dropdown-menu overflow-auto <%= menu_position %> <%= show %>">
+        <%+ items %>
+      </ul>
+  </div>
+</div>

@@ -32,5 +32,11 @@
     opacity: 1;
     color: #{$gray-600};
     width: 2px;
+    transform: rotate(20deg);
+  }
+
+
+  .btn-tertiary-web-app {
+    font-weight: $font-weight-normal;
   }
 }

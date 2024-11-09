@@ -118,7 +118,8 @@ pub struct WebAppBase<'a> {
     pub content: Option<String>,
     pub breadcrumbs: Vec<NavLink<'a>>,
     pub head: Head,
-    pub dropdown_nav: StaticNav,
+    pub org_dropdown: StaticNav,
+    pub deployment_dropdown: StaticNav,
     pub product_left_nav: StaticNav,
     pub body_components: Vec<Component>,
     pub cluster: Cluster,
@@ -145,7 +146,8 @@ impl<'a> WebAppBase<'a> {
         WebAppBase {
             head,
             cluster,
-            dropdown_nav: context.context.dropdown_nav.clone(),
+            org_dropdown: StaticNav { links: vec![] },
+            deployment_dropdown: StaticNav { links: vec![] },
             product_left_nav: context.context.product_left_nav.clone(),
             product_banners_high: all_product_high_level,
             product_banner_medium: ProductBanner::from_notification(Notification::next_product_of_level(
@@ -160,8 +162,44 @@ impl<'a> WebAppBase<'a> {
         }
     }
 
+    // Create breadcrumbs from a list of links.
     pub fn breadcrumbs(&mut self, breadcrumbs: Vec<NavLink<'a>>) -> &mut Self {
         self.breadcrumbs = breadcrumbs.to_owned();
+        self
+    }
+
+    // Create breadcrumbs from a uri, and optionally include inline dropdowns.
+    pub fn breadcrumbs_from_uri(
+        &mut self,
+        dropdown_1: Vec<StaticNavLink>,
+        dropdown_2: Vec<StaticNavLink>,
+        href: &str,
+    ) -> &mut Self {
+        let mut crumbs = href.split("/").filter(|x| !x.is_empty()).collect::<Vec<&str>>();
+        let mut uri = String::new();
+
+        if !dropdown_1.is_empty() {
+            uri = uri + "/" + crumbs.remove(0);
+            self.org_dropdown = StaticNav {
+                links: dropdown_1.to_owned(),
+            };
+        }
+
+        if !dropdown_2.is_empty() {
+            uri = uri + "/" + crumbs.remove(0);
+            self.deployment_dropdown = StaticNav {
+                links: dropdown_2.to_owned(),
+            };
+        }
+
+        for (i, crumb) in crumbs.iter().enumerate() {
+            let uri = uri.clone() + "/" + crumb;
+
+            let link = NavLink::new(crumb, &uri);
+            let link = if i == crumbs.len() - 1 { link.active() } else { link };
+            self.breadcrumbs.push(link);
+        }
+
         self
     }
 

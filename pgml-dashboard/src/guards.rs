@@ -46,9 +46,8 @@ impl Cluster {
             context: Context {
                 user: models::User::default(),
                 cluster: models::Cluster::default(),
-                dropdown_nav: StaticNav {
-                    links: vec![StaticNavLink::new("Local".to_string(), "/dashboard".to_string()).active(true)],
-                },
+                deployment_dropdown: StaticNav { links: vec![] },
+                org_dropdown: StaticNav { links: vec![] },
                 product_left_nav: StaticNav {
                     links: vec![
                         StaticNavLink::new("Notebooks".to_string(), urls::deployment_notebooks())

@@ -7,15 +7,13 @@ use sailfish::TemplateOnce;
 #[template(path = "navigation/navbar/web_app/template.html")]
 pub struct WebApp {
     pub links: Vec<StaticNavLink>,
-    pub deployment_controls: StaticNav,
     pub cluster: Cluster,
 }
 
 impl WebApp {
-    pub fn new(links: Vec<StaticNavLink>, deployment_controls: StaticNav) -> WebApp {
+    pub fn new(links: Vec<StaticNavLink>) -> WebApp {
         WebApp {
             links,
-            deployment_controls,
             cluster: Cluster::default(),
         }
     }
