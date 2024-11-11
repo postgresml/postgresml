@@ -39,17 +39,19 @@ pub struct Layout {
     pub footer: Option<String>,
     pub alert_banner: AlertBanner,
     pub feature_banner: FeatureBanner,
+    pub body_components: Vec<Component>,
 }
 
 impl Layout {
     pub fn new(title: &str, context: Option<&crate::guards::Cluster>) -> Self {
-        let (head, footer, user) = match context.as_ref() {
+        let (head, footer, user, body_components) = match context.as_ref() {
             Some(context) => (
                 Head::new().title(title).context(&context.context.head_items),
                 Some(context.context.marketing_footer.clone()),
                 Some(context.context.user.clone()),
+                context.context.body_components.clone(),
             ),
-            None => (Head::new().title(title), None, None),
+            None => (Head::new().title(title), None, None, Vec::new()),
         };
 
         Layout {
@@ -58,6 +60,7 @@ impl Layout {
             user,
             alert_banner: AlertBanner::from_notification(Notification::next_alert(context)),
             feature_banner: FeatureBanner::from_notification(Notification::next_feature(context)),
+            body_components,
             ..Default::default()
         }
     }
@@ -156,6 +159,7 @@ impl<'a> WebAppBase<'a> {
                 context,
                 NotificationLevel::ProductMarketing,
             )),
+            body_components: context.context.body_components.clone(),
             ..Default::default()
         }
     }
@@ -182,7 +186,7 @@ impl<'a> WebAppBase<'a> {
     }
 
     pub fn body_components(&mut self, components: Vec<Component>) -> &mut Self {
-        self.body_components = components;
+        self.body_components.extend(components);
         self
     }
 

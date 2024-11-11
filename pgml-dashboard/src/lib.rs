@@ -33,6 +33,7 @@ use crate::utils::urls;
 use chrono;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
+use pgml_components::Component;
 
 #[derive(Debug, Default, Clone)]
 pub struct ClustersSettings {
@@ -53,6 +54,7 @@ pub struct Context {
     pub product_left_nav: StaticNav,
     pub marketing_footer: String,
     pub head_items: Option<String>,
+    pub body_components: Vec<Component>,
 }
 
 #[derive(Debug, Clone, Default)]
