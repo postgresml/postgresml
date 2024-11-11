@@ -11,3 +11,6 @@ pub use head::Head;
 
 // src/components/layouts/marketing
 pub mod marketing;
+
+// src/components/layouts/product
+pub mod product;

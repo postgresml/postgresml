@@ -4,6 +4,7 @@ use rocket::response::Redirect;
 use rocket::route::Route;
 use sailfish::TemplateOnce;
 
+use crate::components::layouts::product::Index as Product;
 use crate::{
     guards::Cluster,
     guards::ConnectedCluster,
@@ -20,7 +21,7 @@ use crate::utils::urls;
 // Returns the uploader page.
 #[get("/uploader")]
 pub async fn uploader(cluster: &Cluster, _connected: ConnectedCluster<'_>) -> Result<ResponseOk, Error> {
-    let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster);
+    let mut layout = Product::new("Dashboard", &cluster);
     layout.breadcrumbs(vec![NavLink::new("Upload Data", &urls::deployment_uploader()).active()]);
 
     let tabs = vec![tabs::Tab {

@@ -7,6 +7,7 @@ use crate::{
     responses::{Error, ResponseOk},
 };
 
+use crate::components::layouts::product::Index as Product;
 use crate::templates::{components::NavLink, *};
 
 use crate::models;
@@ -17,7 +18,7 @@ use crate::utils::urls;
 // Returns the deployments projects page.
 #[get("/projects")]
 pub async fn projects(cluster: &Cluster, _connected: ConnectedCluster<'_>) -> Result<ResponseOk, Error> {
-    let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster);
+    let mut layout = Product::new("Dashboard", &cluster);
     layout.breadcrumbs(vec![NavLink::new("Projects", &urls::deployment_projects()).active()]);
 
     let tabs = vec![tabs::Tab {
@@ -39,7 +40,7 @@ pub async fn project(
 ) -> Result<ResponseOk, Error> {
     let project = models::Project::get_by_id(cluster.pool(), project_id).await?;
 
-    let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster);
+    let mut layout = Product::new("Dashboard", &cluster);
     layout.breadcrumbs(vec![
         NavLink::new("Projects", &urls::deployment_projects()),
         NavLink::new(project.name.as_str(), &urls::deployment_project_by_id(project_id)).active(),

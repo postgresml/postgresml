@@ -11,6 +11,7 @@ use crate::{
     responses::{Error, ResponseOk},
 };
 
+use crate::components::layouts::product::Index as Product;
 use crate::templates::{components::NavLink, *};
 use crate::utils::tabs;
 
@@ -21,7 +22,7 @@ use crate::utils::urls;
 // Returns notebook page
 #[get("/notebooks")]
 pub async fn notebooks(cluster: &Cluster, _connected: ConnectedCluster<'_>) -> Result<ResponseOk, Error> {
-    let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster);
+    let mut layout = Product::new("Dashboard", &cluster);
     layout.breadcrumbs(vec![NavLink::new("Notebooks", &urls::deployment_notebooks()).active()]);
 
     let tabs = vec![tabs::Tab {
@@ -43,7 +44,7 @@ pub async fn notebook(
 ) -> Result<ResponseOk, Error> {
     let notebook = models::Notebook::get_by_id(cluster.pool(), notebook_id).await?;
 
-    let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster);
+    let mut layout = Product::new("Dashboard", &cluster);
     layout.breadcrumbs(vec![
         NavLink::new("Notebooks", &urls::deployment_notebooks()),
         NavLink::new(notebook.name.as_str(), &urls::deployment_notebook_by_id(notebook_id)).active(),
