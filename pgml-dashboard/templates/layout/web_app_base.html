@@ -19,7 +19,7 @@
                         <%+ WebAppLeftNav::new(product_left_nav.clone())
                             .id(&product_left_nav.unique_id()) %>
     
-                        <div class="clear-from-under-navbar flex-grow-1 min-vw-0 web-app-content-area">
+                        <div class="flex-grow-1 min-vw-0 web-app-content-area">
                             <div class="px-4 px-sm-5 py-3 d-none d-lg-flex" style="position: absolute">
                                 <%- Breadcrumbs::render(org_dropdown, deployment_dropdown, breadcrumbs) %>
                             </div>

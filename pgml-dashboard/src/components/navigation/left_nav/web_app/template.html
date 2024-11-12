@@ -1,9 +1,4 @@
-<% 
-  use crate::utils::config;
-  use crate::templates::components::PostgresLogo; 
-  let standalone_dashboard = config::standalone_dashboard();
-  let home_link = if standalone_dashboard {"/"} else {"/deployments"};
-%>
+<% use crate::templates::components::PostgresLogo; %>
 <div class="leftnav-container py-3 font-family-primary" data-controller="navigation-left-nav-web-app" data-turbo-permanent id='<%- id.unwrap_or_else(|| String::from("defaultId"))%>'>
   <nav 
     class="leftnav nav-pills h-100" 
@@ -14,7 +9,7 @@
       <div class="d-flex flex-column h-100">
         <span class="leftnav-collapse collapse" data-extend-bs-collapse-target="stateReference" data-navigation-left-nav-web-app-target="stateReference"></span>
         <div class="leftnav-collapse-affect collapsed overflow-hidden" style="height: 3rem;">
-          <%+ PostgresLogo::new(home_link).collapsable() %>
+          <%+ PostgresLogo::new(&home_link).collapsable() %>
         </div>
         <div class="d-flex flex-column justify-content-between h-100">
           <%+ upper_nav %>

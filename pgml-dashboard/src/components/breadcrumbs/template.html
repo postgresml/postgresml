@@ -15,13 +15,17 @@
     <ol class="breadcrumb">
       <% if !dropdown_1.links.is_empty() {%>
       <%+ Dropdown::new()
-        .set_nav_items(dropdown_1) %>
+        .set_nav_items(dropdown_1.clone()) %>
       <% } %>
 
       <% if !dropdown_2.links.is_empty() {%>
-      <div class="vr my-1 mx-2"></div>
+        <div class="vr my-1 mx-2"></div>
       <%+ Dropdown::new()
         .set_nav_items(dropdown_2) %>
+      <% } %>
+
+      <% if !dropdown_1.links.is_empty() && !links.is_empty() {%>
+      <div class="vr my-1 mx-2"></div> 
       <% } %>
 
       <% for link in links {

@@ -11,10 +11,13 @@ pub struct WebApp {
     pub upper_nav: LeftNavMenu,
     pub lower_nav: LeftNavMenu,
     pub id: Option<String>,
+    pub home_link: String,
 }
 
 impl WebApp {
-    pub fn new(upper_nav: StaticNav) -> WebApp {
+    pub fn new(mut upper_nav: StaticNav) -> WebApp {
+        let home_link = upper_nav.links.remove(0).href;
+
         let mut upper_nav_items = vec![];
         for item in upper_nav.links {
             upper_nav_items.push(LeftNavItem::from_static_nav(&item).into());
@@ -37,6 +40,7 @@ impl WebApp {
             upper_nav,
             lower_nav,
             id: None,
+            home_link,
         }
     }
 

@@ -1,7 +1,6 @@
 .leftnav-container {
-    position: fixed; 
-    top: $navbar-height; 
-    height: calc( 100vh - $navbar-height );
+    position: fixed;
+    height: 100vh;
     background-color: var(--webapp-nav-bg);
     max-width: $left-nav-w;
     padding-top: 0px;
