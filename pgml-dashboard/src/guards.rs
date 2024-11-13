@@ -62,6 +62,7 @@ impl Cluster {
                 },
                 marketing_footer: MarketingFooter::new().render_once().unwrap(),
                 head_items: None,
+                body_components: Vec::new(),
             },
             notifications: None,
         }
