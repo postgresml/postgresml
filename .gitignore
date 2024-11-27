@@ -129,6 +129,13 @@ ENV/
 env.bak/
 venv.bak/
 
+# devenv environment
+.cargo_home
+.devenv
+.devenv.flake.nix
+devenv.nix
+devenv.lock
+
 # Spyder project settings
 .spyderproject
 .spyproject
