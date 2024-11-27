@@ -334,7 +334,7 @@ impl Column {
             }
         }
 
-        info!("Column {:?}: {:?}", self.name, statistics);
+        notice!("Column {:?}: {:?}", self.name, statistics);
     }
 }
 
@@ -860,7 +860,7 @@ impl Snapshot {
 
         let data = data.unwrap();
 
-        info!("{}", data);
+        notice!("{}", data);
 
         data
     }
@@ -963,7 +963,7 @@ impl Snapshot {
 
         let data = data.unwrap();
 
-        info!("{}", data);
+        notice!("{}", data);
 
         data
     }
@@ -1058,7 +1058,7 @@ impl Snapshot {
 
         let data = data.unwrap();
 
-        info!("{}", data);
+        notice!("{}", data);
 
         data
     }
@@ -1364,7 +1364,7 @@ impl Snapshot {
 
         let data = data.unwrap();
 
-        info!("{}", data);
+        notice!("{}", data);
 
         data
     }
