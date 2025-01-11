@@ -6,7 +6,7 @@ package_version="$1"
 
 if [[ -z "$package_version" ]]; then
   echo "postgresml package build and release script"
-  echo "usage: $0 <package version, e.g. 2.7.12>"
+  echo "usage: $0 <package version, e.g. 2.9.4>"
   exit 1
 fi
 

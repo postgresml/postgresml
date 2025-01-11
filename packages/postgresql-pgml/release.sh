@@ -4,7 +4,7 @@ set -e
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 if [[ -z "${1}" ]]; then
-  echo "Usage: $0 <package version, e.g. 2.7.12>"
+  echo "Usage: $0 <package version, e.g. 2.9.4>"
   exit 1
 fi
 
