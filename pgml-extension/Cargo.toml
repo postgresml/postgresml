@@ -6,13 +6,18 @@ edition = "2021"
 [lib]
 crate-type = ["lib", "cdylib"]
 
+[[bin]]
+name = "pgrx_embed_pgml"
+path = "./src/bin/pgrx_embed.rs"
+
 [features]
-default = ["pg16", "python"]
+default = ["pg17", "python"]
 pg12 = ["pgrx/pg12", "pgrx-tests/pg12"]
 pg13 = ["pgrx/pg13", "pgrx-tests/pg13"]
 pg14 = ["pgrx/pg14", "pgrx-tests/pg14"]
 pg15 = ["pgrx/pg15", "pgrx-tests/pg15"]
 pg16 = ["pgrx/pg16", "pgrx-tests/pg16"]
+pg17 = ["pgrx/pg17", "pgrx-tests/pg17"]
 use_as_lib = []
 pg_test = []
 python = ["pyo3"]
@@ -26,6 +31,7 @@ blas = { version = "0.22" }
 blas-src = { version = "0.9", features = ["openblas"] }
 indexmap = { version = "2.1", features = ["serde"] }
 itertools = "0.12"
+hash32 = { version = "=0.2.1" }
 heapless = "0.7"
 lightgbm = { git = "https://github.com/postgresml/lightgbm-rs", branch = "main" }
 linfa = { path = "deps/linfa" }
@@ -39,8 +45,8 @@ openblas-src = { version = "0.10", features = ["cblas", "system"] }
 ndarray = { version = "0.15.6", features = ["serde", "blas"] }
 ndarray-stats = "0.5.1"
 parking_lot = "0.12"
-pgrx = "=0.11.3"
-pgrx-pg-sys = "=0.11.3"
+pgrx = "=0.12.9"
+pgrx-pg-sys = "=0.12.9"
 pyo3 = { version = "0.20.0", features = ["anyhow", "auto-initialize"], optional = true }
 rand = "0.8"
 rmp-serde = { version = "1.1" }
@@ -51,7 +57,7 @@ typetag = "0.2"
 xgboost = { git = "https://github.com/postgresml/rust-xgboost", branch = "master" }
 
 [dev-dependencies]
-pgrx-tests = "=0.11.3"
+pgrx-tests = "=0.12.9"
 
 [build-dependencies]
 vergen = { version = "8", features = ["build", "git", "gitcl"] }

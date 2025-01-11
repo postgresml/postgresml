@@ -51,7 +51,7 @@ jobs:
         run: |
           curl https://sh.rustup.rs -sSf | sh -s -- -y
           source ~/.cargo/env
-          cargo install cargo-pgrx --version "0.11.2" --locked
+          cargo install cargo-pgrx --version "0.12.9" --locked
 
           if [[ ! -d ~/.pgrx ]]; then
             cargo pgrx init

@@ -1,5 +1,4 @@
 use anyhow::Result;
-use pgrx::*;
 use pyo3::prelude::*;
 use pyo3::types::PyTuple;
 

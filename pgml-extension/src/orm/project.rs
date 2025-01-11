@@ -3,12 +3,88 @@ use std::collections::HashMap;
 use std::fmt::{Display, Error, Formatter};
 use std::str::FromStr;
 
+use hash32::{BuildHasherDefault, FnvHasher};
+use heapless::IndexMap;
 use once_cell::sync::Lazy;
-use pgrx::*;
+use pgrx::{datum::*, *}; // Use FnvHasher directly instead of dyn Hasher
 
 use crate::orm::*;
 
-static PROJECT_ID_TO_DEPLOYED_MODEL_ID: PgLwLock<heapless::FnvIndexMap<i64, i64, 1024>> = PgLwLock::new();
+// We need a wrapper to implement PGRXSharedMemory for IndexMap
+#[derive(Default)]
+pub struct ProjectIdMap(IndexMap<i64, i64, BuildHasherDefault<FnvHasher>, 1024>);
+
+unsafe impl PGRXSharedMemory for ProjectIdMap {}
+
+impl ProjectIdMap {
+    pub fn new() -> Self {
+        Self(IndexMap::new())
+    }
+
+    pub fn insert(&mut self, project_id: i64, model_id: i64) -> Option<i64> {
+        self.0.insert(project_id, model_id).unwrap()
+    }
+
+    pub fn get(&self, project_id: &i64) -> Option<i64> {
+        self.0.get(project_id).copied()
+    }
+
+    pub fn clear(&mut self) {
+        self.0.clear()
+    }
+
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+}
+
+// Wrapper for the PgLwLock
+pub struct ProjectDeploymentMap(PgLwLock<ProjectIdMap>);
+
+impl ProjectDeploymentMap {
+    pub const fn new() -> Self {
+        Self(PgLwLock::new())
+    }
+
+    pub fn insert(&'static self, project_id: i64, model_id: i64) -> Option<i64> {
+        self.0.exclusive().insert(project_id, model_id)
+    }
+
+    pub fn get(&'static self, project_id: &i64) -> Option<i64> {
+        self.0.share().get(project_id)
+    }
+
+    pub fn clear(&'static self) {
+        self.0.exclusive().clear()
+    }
+
+    pub fn len(&'static self) -> usize {
+        self.0.share().len()
+    }
+
+    pub fn lock(&'static self) -> &'static PgLwLock<ProjectIdMap> {
+        &self.0
+    }
+}
+
+// Implement the required traits for our wrapper
+unsafe impl PGRXSharedMemory for ProjectDeploymentMap {}
+
+impl PgSharedMemoryInitialization for ProjectDeploymentMap {
+    fn pg_init(&'static self) {
+        PgSharedMem::pg_init_locked(&self.0);
+    }
+
+    unsafe fn shmem_init(&'static self) {
+        unsafe {
+            PgSharedMem::shmem_init_locked(&self.0);
+        }
+    }
+}
+
+// Static declaration
+static PROJECT_ID_TO_DEPLOYED_MODEL_ID: ProjectDeploymentMap = ProjectDeploymentMap::new();
+
 static PROJECT_NAME_TO_PROJECT_ID: Lazy<Mutex<HashMap<String, i64>>> = Lazy::new(|| Mutex::new(HashMap::new()));
 
 /// Initialize shared memory.
@@ -61,7 +137,7 @@ impl Project {
                 let model_id = model_id
                     .unwrap_or_else(|| error!("No deployed model exists for the project named: `{}`", project_name));
                 projects.insert(project_name.to_string(), project_id);
-                let mut projects = PROJECT_ID_TO_DEPLOYED_MODEL_ID.exclusive();
+                let mut projects = PROJECT_ID_TO_DEPLOYED_MODEL_ID.0.exclusive();
                 if projects.len() == 1024 {
                     warning!("Active projects have exceeded capacity map, clearing caches.");
                     projects.clear();
@@ -70,7 +146,7 @@ impl Project {
                 project_id
             }
         };
-        *PROJECT_ID_TO_DEPLOYED_MODEL_ID.share().get(&project_id).unwrap()
+        PROJECT_ID_TO_DEPLOYED_MODEL_ID.0.share().get(&project_id).unwrap()
     }
 
     pub fn deploy(&self, model_id: i64, strategy: Strategy) {
@@ -82,13 +158,13 @@ impl Project {
                 (PgBuiltInOids::INT8OID.oid(), model_id.into_datum()),
                 (PgBuiltInOids::TEXTOID.oid(), strategy.to_string().into_datum()),
             ],
-        ).unwrap();
-        let mut projects = PROJECT_ID_TO_DEPLOYED_MODEL_ID.exclusive();
+        ).expect("Deployment to be insertable");
+        let mut projects = PROJECT_ID_TO_DEPLOYED_MODEL_ID.0.exclusive();
         if projects.len() == 1024 {
             warning!("Active projects has exceeded capacity map, clearing caches.");
             projects.clear();
         }
-        projects.insert(self.id, model_id).unwrap();
+        projects.insert(self.id, model_id);
     }
 
     pub fn find(id: i64) -> Option<Project> {
