@@ -1,5 +1,4 @@
 [build]
-# Postgres symbols won't be available until runtime
 rustflags = ["-C", "link-args=-Wl,-undefined,dynamic_lookup"]
 
 [target.x86_64-unknown-linux-gnu]
@@ -7,3 +6,6 @@ rustflags = ["-C", "link-args=-Wl,-undefined,dynamic_lookup,-fuse-ld=lld"]
 
 [target.aarch64-unknown-linux-gnu]
 rustflags = ["-C", "link-args=-Wl,-undefined,dynamic_lookup,-fuse-ld=lld"]
+
+[target.aarch64-apple-darwin]
+rustflags = ["-C", "link-args=-WL,-undefined,dynamic_lookup"]

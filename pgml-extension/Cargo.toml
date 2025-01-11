@@ -1,6 +1,6 @@
 [package]
 name = "pgml"
-version = "2.9.3"
+version = "2.9.4"
 edition = "2021"
 
 [lib]
@@ -47,7 +47,7 @@ ndarray-stats = "0.5.1"
 parking_lot = "0.12"
 pgrx = "=0.12.9"
 pgrx-pg-sys = "=0.12.9"
-pyo3 = { version = "0.20.0", features = ["anyhow", "auto-initialize"], optional = true }
+pyo3 = { version = "0.23", features = ["anyhow", "auto-initialize"], optional = true }
 rand = "0.8"
 rmp-serde = { version = "1.1" }
 signal-hook = "0.3"
