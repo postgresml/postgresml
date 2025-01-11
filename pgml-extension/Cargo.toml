@@ -34,20 +34,18 @@ itertools = "0.12"
 hash32 = { version = "=0.2.1" }
 heapless = "0.7"
 lightgbm = { git = "https://github.com/postgresml/lightgbm-rs", branch = "main" }
-linfa = { path = "deps/linfa" }
-linfa-linear = { path = "deps/linfa/algorithms/linfa-linear", features = [
-    "serde",
-] }
-linfa-logistic = { path = "deps/linfa/algorithms/linfa-logistic" }
-linfa-svm = { path = "deps/linfa/algorithms/linfa-svm", features = ["serde"] }
+linfa = { git = "https://github.com/postgresml/linfa", branch = "montana/a" }
+linfa-linear = { git = "https://github.com/postgresml/linfa", branch = "montana/a", features = ["serde"] }
+linfa-logistic = { git = "https://github.com/postgresml/linfa", branch = "montana/a", features = ["serde"] }
+linfa-svm = { git = "https://github.com/postgresml/linfa", branch = "montana/a", features = ["serde"] }
 once_cell = { version = "1", features = ["parking_lot"] }
 openblas-src = { version = "0.10", features = ["cblas", "system"] }
-ndarray = { version = "0.15.6", features = ["serde", "blas"] }
-ndarray-stats = "0.5.1"
+ndarray = { version = "0.15", features = ["serde", "blas"] }
+ndarray-stats = "0.5"
 parking_lot = "0.12"
 pgrx = "=0.12.9"
 pgrx-pg-sys = "=0.12.9"
-pyo3 = { version = "0.23", features = ["anyhow", "auto-initialize"], optional = true }
+pyo3 = { version = "0.20", features = ["anyhow", "auto-initialize"], optional = true }
 rand = "0.8"
 rmp-serde = { version = "1.1" }
 signal-hook = "0.3"

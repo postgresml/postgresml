@@ -28,4 +28,3 @@ dpkg-deb \
   -z1 \
   --build "$deb_dir" \
   postgresml-${PGVERSION}-${PACKAGE_VERSION}-ubuntu${UBUNTU_VERSION}-all.deb
-  

@@ -58,45 +58,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "approx"
-version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cab112f0a86d568ea0e627cc1d6be74a1e9cd55214684db5561995f6dad897c6"
-dependencies = [
- "num-traits",
-]
-
-[[package]]
 name = "argmin"
-version = "0.4.7"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7fc077a0240b05e5df4e658e4ad8a3d42b856e3136d4a05ac8330e0a9170d39e"
-dependencies = [
- "anyhow",
- "approx 0.5.1",
- "bincode",
- "instant",
- "ndarray",
- "ndarray-rand",
- "num",
- "num-complex",
- "paste",
- "rand",
- "rand_xorshift",
- "serde",
- "serde_json",
- "slog",
- "slog-async",
- "slog-json",
- "slog-term",
- "thiserror",
-]
-
-[[package]]
-name = "argmin"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5698c8cd3510117a4e6b96749a8061ba7dce1a19578ce4ecdb12dd36d94a7f8d"
+checksum = "523c0b5258fa1fb9072748b7306fb0db1625cf235ec6da4d05de2560ef56f882"
 dependencies = [
  "anyhow",
  "argmin-math",
@@ -114,9 +79,9 @@ dependencies = [
 
 [[package]]
 name = "argmin-math"
-version = "0.2.1"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "75f2b0dada81340718682df780c9a696b090b6ef7e83c3dcc770af6de9302995"
+checksum = "a8798ca7447753fcb3dd98d9095335b1564812a68c6e7c3d1926e1d5cf094e37"
 dependencies = [
  "anyhow",
  "cfg-if",
@@ -156,17 +121,6 @@ checksum = "b29ec3788e96fb4fdb275ccb9d62811f2fa903d76c5eb4dd6fe7d09a7ed5871f"
 dependencies = [
  "cfg-if",
  "rustc_version 0.3.3",
-]
-
-[[package]]
-name = "atty"
-version = "0.2.14"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d9b39be18770d11421cdb1b9947a45dd3f37e93092cbf377614828a319d5fee8"
-dependencies = [
- "hermit-abi 0.1.19",
- "libc",
- "winapi",
 ]
 
 [[package]]
@@ -546,16 +500,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7059fff8937831a9ae6f0fe4d658ffabf58f2ca96aa9dec1c889f936f705f216"
 
 [[package]]
-name = "crossbeam-channel"
-version = "0.5.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "82a9b73a36529d9c47029b9fb3a6f0ea3cc916a261195352ba19e770fc1748b2"
-dependencies = [
- "cfg-if",
- "crossbeam-utils",
-]
-
-[[package]]
 name = "crossbeam-deque"
 version = "0.8.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -734,31 +678,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "dirs-next"
-version = "2.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b98cf8ebf19c3d1b223e151f99a4f9f0690dca41414773390fc824184ac833e1"
-dependencies = [
- "cfg-if",
- "dirs-sys-next",
-]
-
-[[package]]
 name = "dirs-sys"
 version = "0.3.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1b1d1d91c932ef41c0f2663aa8b0ca0342d444d842c06914aa0a7e352d0bada6"
-dependencies = [
- "libc",
- "redox_users",
- "winapi",
-]
-
-[[package]]
-name = "dirs-sys-next"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4ebda144c4fe02d1f7ea1a7d9641b6fc6b580adcfa024ae48797ecdeb6825b4d"
 dependencies = [
  "libc",
  "redox_users",
@@ -1062,15 +985,6 @@ checksum = "95505c38b4572b2d910cecb0281560f54b440a19336cbbcb27bf6ce6adc6f5a8"
 
 [[package]]
 name = "hermit-abi"
-version = "0.1.19"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "62b467343b94ba476dcb2500d242dadbb39557df889310ac77c5d99100aaac33"
-dependencies = [
- "libc",
-]
-
-[[package]]
-name = "hermit-abi"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fbf6a919d6cf397374f7dfeeea91d974c7c0a7221d0d0f4f20d859d329e53fcc"
@@ -1163,7 +1077,7 @@ version = "0.4.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "261f68e344040fbd0edea105bef17c66edf46f984ddb1115b775ce31be948f4b"
 dependencies = [
- "hermit-abi 0.4.0",
+ "hermit-abi",
  "libc",
  "windows-sys 0.52.0",
 ]
@@ -1284,9 +1198,10 @@ dependencies = [
 
 [[package]]
 name = "linfa"
-version = "0.6.1"
+version = "0.7.0"
+source = "git+https://github.com/postgresml/linfa?branch=montana%2Fa#97d52e742d576081bf1dc7e30fc3eff72be621f8"
 dependencies = [
- "approx 0.4.0",
+ "approx",
  "ndarray",
  "num-traits",
  "rand",
@@ -1297,7 +1212,8 @@ dependencies = [
 
 [[package]]
 name = "linfa-kernel"
-version = "0.6.1"
+version = "0.7.0"
+source = "git+https://github.com/postgresml/linfa?branch=montana%2Fa#97d52e742d576081bf1dc7e30fc3eff72be621f8"
 dependencies = [
  "linfa",
  "linfa-nn",
@@ -1320,9 +1236,10 @@ dependencies = [
 
 [[package]]
 name = "linfa-linear"
-version = "0.6.1"
+version = "0.7.0"
+source = "git+https://github.com/postgresml/linfa?branch=montana%2Fa#97d52e742d576081bf1dc7e30fc3eff72be621f8"
 dependencies = [
- "argmin 0.7.0",
+ "argmin",
  "argmin-math",
  "linfa",
  "linfa-linalg",
@@ -1334,9 +1251,11 @@ dependencies = [
 
 [[package]]
 name = "linfa-logistic"
-version = "0.6.1"
+version = "0.7.0"
+source = "git+https://github.com/postgresml/linfa?branch=montana%2Fa#97d52e742d576081bf1dc7e30fc3eff72be621f8"
 dependencies = [
- "argmin 0.4.7",
+ "argmin",
+ "argmin-math",
  "linfa",
  "ndarray",
  "ndarray-stats",
@@ -1347,7 +1266,8 @@ dependencies = [
 
 [[package]]
 name = "linfa-nn"
-version = "0.6.1"
+version = "0.7.0"
+source = "git+https://github.com/postgresml/linfa?branch=montana%2Fa#97d52e742d576081bf1dc7e30fc3eff72be621f8"
 dependencies = [
  "kdtree",
  "linfa",
@@ -1361,7 +1281,8 @@ dependencies = [
 
 [[package]]
 name = "linfa-svm"
-version = "0.6.1"
+version = "0.7.0"
+source = "git+https://github.com/postgresml/linfa?branch=montana%2Fa#97d52e742d576081bf1dc7e30fc3eff72be621f8"
 dependencies = [
  "linfa",
  "linfa-kernel",
@@ -1479,7 +1400,7 @@ version = "0.15.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "adb12d4e967ec485a5f71c6311fe28158e9d6f4bc4a447b474184d0f91a8fa32"
 dependencies = [
- "approx 0.4.0",
+ "approx",
  "cblas-sys",
  "libc",
  "matrixmultiply",
@@ -1545,31 +1466,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "num"
-version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b05180d69e3da0e530ba2a1dae5110317e49e3b7f3d41be227dc5f92e49ee7af"
-dependencies = [
- "num-bigint",
- "num-complex",
- "num-integer",
- "num-iter",
- "num-rational",
- "num-traits",
-]
-
-[[package]]
-name = "num-bigint"
-version = "0.4.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "608e7659b5c3d7cba262d894801b9ec9d00de989e8a82bd4bef91d08da45cdc0"
-dependencies = [
- "autocfg",
- "num-integer",
- "num-traits",
-]
-
-[[package]]
 name = "num-complex"
 version = "0.4.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1591,29 +1487,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "225d3389fb3509a24c93f5c29eb6bde2586b98d9f016636dff58d7c6f7569cd9"
 dependencies = [
  "autocfg",
- "num-traits",
-]
-
-[[package]]
-name = "num-iter"
-version = "0.1.43"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7d03e6c028c5dc5cac6e2dec0efda81fc887605bb3d884578bb6d6bf7514e252"
-dependencies = [
- "autocfg",
- "num-integer",
- "num-traits",
-]
-
-[[package]]
-name = "num-rational"
-version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0638a1c9d0a3c0914158145bc76cff373a75a627e6ecbfb71cbe6f453a5a19b0"
-dependencies = [
- "autocfg",
- "num-bigint",
- "num-integer",
  "num-traits",
 ]
 
@@ -1808,7 +1681,7 @@ dependencies = [
 
 [[package]]
 name = "pgml"
-version = "2.9.3"
+version = "2.9.4"
 dependencies = [
  "anyhow",
  "blas",
@@ -2246,7 +2119,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d25bf25ec5ae4a3f1b92f929810509a2f53d7dca2f50b794ff57e3face536c8f"
 dependencies = [
  "rand_core",
- "serde",
 ]
 
 [[package]]
@@ -2633,18 +2505,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8347046d4ebd943127157b94d63abb990fcf729dc4e9978927fdf4ac3c998d06"
 
 [[package]]
-name = "slog-async"
-version = "2.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "72c8038f898a2c79507940990f05386455b3a317d8f18d4caea7cbc3d5096b84"
-dependencies = [
- "crossbeam-channel",
- "slog",
- "take_mut",
- "thread_local",
-]
-
-[[package]]
 name = "slog-json"
 version = "2.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2653,19 +2513,6 @@ dependencies = [
  "serde",
  "serde_json",
  "slog",
- "time",
-]
-
-[[package]]
-name = "slog-term"
-version = "2.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "87d29185c55b7b258b4f120eab00f48557d4d9bc814f41713f449d35b0f8977c"
-dependencies = [
- "atty",
- "slog",
- "term",
- "thread_local",
  "time",
 ]
 
@@ -2819,12 +2666,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "take_mut"
-version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f764005d11ee5f36500a149ace24e00e3da98b0158b3e2d53a7495660d3f4d60"
-
-[[package]]
 name = "tap"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2843,9 +2684,9 @@ dependencies = [
 
 [[package]]
 name = "target-lexicon"
-version = "0.12.13"
+version = "0.12.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "69758bda2e78f098e4ccb393021a0963bb3442eac05f135c30f61b7370bbafae"
+checksum = "61c41af27dd6d1e27b1b16b489db798443478cef1f06a660c96db617ba5de3b1"
 
 [[package]]
 name = "tempfile"
@@ -2858,17 +2699,6 @@ dependencies = [
  "redox_syscall",
  "rustix",
  "windows-sys 0.52.0",
-]
-
-[[package]]
-name = "term"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c59df8ac95d96ff9bede18eb7300b0fda5e5d8d90960e76f8e14ae765eedbf1f"
-dependencies = [
- "dirs-next",
- "rustversion",
- "winapi",
 ]
 
 [[package]]
@@ -2889,16 +2719,6 @@ dependencies = [
  "proc-macro2",
  "quote 1.0.35",
  "syn 2.0.96",
-]
-
-[[package]]
-name = "thread_local"
-version = "1.1.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3fdd6f064ccff2d6567adcb3873ca630700f00b5ad3f060c25b5dcfd9a4ce152"
-dependencies = [
- "cfg-if",
- "once_cell",
 ]
 
 [[package]]
