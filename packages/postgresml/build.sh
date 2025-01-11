@@ -5,6 +5,7 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 export PACKAGE_VERSION=${1:-"2.7.12"}
 export PGVERSION=${2:-"14"}
+export UBUNTU_VERSION=${3:-"24.04"}
 
 deb_dir="/tmp/postgresml/deb-build"
 
@@ -26,5 +27,4 @@ dpkg-deb \
   --root-owner-group \
   -z1 \
   --build "$deb_dir" \
-  postgresml-${PGVERSION}-${PACKAGE_VERSION}-ubuntu22.04-all.deb
-
+  postgresml-${PGVERSION}-${PACKAGE_VERSION}-ubuntu${UBUNTU_VERSION}-all.deb
