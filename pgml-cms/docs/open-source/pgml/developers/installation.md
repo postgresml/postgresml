@@ -36,7 +36,7 @@ brew bundle
 PostgresML is written in Rust, so you'll need to install the latest compiler from [rust-lang.org](https://rust-lang.org). Additionally, we use the Rust PostgreSQL extension framework `pgrx`, which requires some initialization steps:
 
 ```bash
-cargo install cargo-pgrx --version 0.11.2 && \
+cargo install cargo-pgrx --version 0.12.9 && \
 cargo pgrx init
 ```
 
@@ -287,7 +287,7 @@ We use the `pgrx` Postgres Rust extension framework, which comes with its own in
 
 ```bash
 cd pgml-extension && \
-cargo install cargo-pgrx --version 0.11.2 && \
+cargo install cargo-pgrx --version 0.12.9 && \
 cargo pgrx init
 ```
 

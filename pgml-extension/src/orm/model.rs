@@ -13,7 +13,7 @@ use itertools::{izip, Itertools};
 use ndarray::ArrayView1;
 use once_cell::sync::Lazy;
 use pgrx::heap_tuple::PgHeapTuple;
-use pgrx::*;
+use pgrx::{datum::*, *};
 use rand::prelude::SliceRandom;
 use serde_json::json;
 
@@ -1079,52 +1079,52 @@ impl Model {
                                     }
                                     // TODO handle NULL to NaN for arrays
                                     pgrx_pg_sys::BOOLARRAYOID => {
-                                        let element: Result<Option<Vec<bool>>, TryFromDatumError> =
+                                        let element: Result<Option<Array<bool>>, TryFromDatumError> =
                                             tuple.get_by_index(index);
-                                        for j in element.as_ref().unwrap().as_ref().unwrap() {
-                                            features.push(*j as i8 as f32);
+                                        for j in element.unwrap().unwrap() {
+                                            features.push(j.unwrap() as i8 as f32);
                                         }
                                     }
                                     pgrx_pg_sys::INT2ARRAYOID => {
-                                        let element: Result<Option<Vec<i16>>, TryFromDatumError> =
+                                        let element: Result<Option<Array<i16>>, TryFromDatumError> =
                                             tuple.get_by_index(index);
-                                        for j in element.as_ref().unwrap().as_ref().unwrap() {
-                                            features.push(*j as f32);
+                                        for j in element.unwrap().unwrap() {
+                                            features.push(j.unwrap() as f32);
                                         }
                                     }
                                     pgrx_pg_sys::INT4ARRAYOID => {
-                                        let element: Result<Option<Vec<i32>>, TryFromDatumError> =
+                                        let element: Result<Option<Array<i32>>, TryFromDatumError> =
                                             tuple.get_by_index(index);
-                                        for j in element.as_ref().unwrap().as_ref().unwrap() {
-                                            features.push(*j as f32);
+                                        for j in element.unwrap().unwrap() {
+                                            features.push(j.unwrap() as f32);
                                         }
                                     }
                                     pgrx_pg_sys::INT8ARRAYOID => {
-                                        let element: Result<Option<Vec<i64>>, TryFromDatumError> =
+                                        let element: Result<Option<Array<i64>>, TryFromDatumError> =
                                             tuple.get_by_index(index);
-                                        for j in element.as_ref().unwrap().as_ref().unwrap() {
-                                            features.push(*j as f32);
+                                        for j in element.unwrap().unwrap() {
+                                            features.push(j.unwrap() as f32);
                                         }
                                     }
                                     pgrx_pg_sys::FLOAT4ARRAYOID => {
-                                        let element: Result<Option<Vec<f32>>, TryFromDatumError> =
+                                        let element: Result<Option<Array<f32>>, TryFromDatumError> =
                                             tuple.get_by_index(index);
-                                        for j in element.as_ref().unwrap().as_ref().unwrap() {
-                                            features.push(*j);
+                                        for j in element.unwrap().unwrap() {
+                                            features.push(j.unwrap());
                                         }
                                     }
                                     pgrx_pg_sys::FLOAT8ARRAYOID => {
-                                        let element: Result<Option<Vec<f64>>, TryFromDatumError> =
+                                        let element: Result<Option<Array<f64>>, TryFromDatumError> =
                                             tuple.get_by_index(index);
-                                        for j in element.as_ref().unwrap().as_ref().unwrap() {
-                                            features.push(*j as f32);
+                                        for j in element.unwrap().unwrap() {
+                                            features.push(j.unwrap() as f32);
                                         }
                                     }
                                     pgrx_pg_sys::NUMERICARRAYOID => {
-                                        let element: Result<Option<Vec<AnyNumeric>>, TryFromDatumError> =
+                                        let element: Result<Option<Array<AnyNumeric>>, TryFromDatumError> =
                                             tuple.get_by_index(index);
-                                        for j in element.as_ref().unwrap().as_ref().unwrap() {
-                                            features.push(j.clone().try_into().unwrap());
+                                        for j in element.unwrap().unwrap() {
+                                            features.push(j.unwrap().try_into().unwrap());
                                         }
                                     }
                                     _ => error!(
