@@ -1,4 +1,9 @@
-fn main() {
+use anyhow::Result;
+use vergen_git2::{
+    BuildBuilder, CargoBuilder, Emitter, Git2Builder, RustcBuilder, SysinfoBuilder,
+};
+
+fn main() -> Result<()> {
     println!("cargo::rustc-check-cfg=cfg(pgrx_embed)");
 
     #[cfg(target_os = "macos")]
@@ -19,5 +24,11 @@ fn main() {
         std::env::current_dir().unwrap().to_string_lossy(),
     );
 
-    vergen::EmitBuilder::builder().all_git().emit().unwrap();
+    Emitter::default()
+        .add_instructions(&BuildBuilder::all_build()?)?
+        .add_instructions(&CargoBuilder::all_cargo()?)?
+        .add_instructions(&Git2Builder::all_git()?)?
+        .add_instructions(&RustcBuilder::all_rustc()?)?
+        .add_instructions(&SysinfoBuilder::all_sysinfo()?)?
+        .emit()
 }

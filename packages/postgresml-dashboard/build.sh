@@ -5,7 +5,7 @@ dir="/tmp/postgresml-dashboard"
 deb_dir="$dir/deb-build"
 source_dir="$dir/source"
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-export PACKAGE_VERSION=${1:-"2.9.4"}
+export PACKAGE_VERSION=${1:-"2.10.0"}
 export GITHUB_STARS=$(curl -s "https://api.github.com/repos/postgresml/postgresml" | grep stargazers_count | cut -d : -f 2 | tr -d " " | tr -d ",")
 if [[ $(arch) == "x86_64" ]]; then
   export ARCH=amd64
