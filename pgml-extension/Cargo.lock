@@ -1199,7 +1199,7 @@ dependencies = [
 [[package]]
 name = "linfa"
 version = "0.7.0"
-source = "git+https://github.com/postgresml/linfa?branch=montana%2Fa#97d52e742d576081bf1dc7e30fc3eff72be621f8"
+source = "git+https://github.com/postgresml/linfa?branch=master#9d615fcb98d3f3376a4fbd42e666c21ace0c8cb0"
 dependencies = [
  "approx",
  "ndarray",
@@ -1213,7 +1213,7 @@ dependencies = [
 [[package]]
 name = "linfa-kernel"
 version = "0.7.0"
-source = "git+https://github.com/postgresml/linfa?branch=montana%2Fa#97d52e742d576081bf1dc7e30fc3eff72be621f8"
+source = "git+https://github.com/postgresml/linfa?branch=master#9d615fcb98d3f3376a4fbd42e666c21ace0c8cb0"
 dependencies = [
  "linfa",
  "linfa-nn",
@@ -1237,7 +1237,7 @@ dependencies = [
 [[package]]
 name = "linfa-linear"
 version = "0.7.0"
-source = "git+https://github.com/postgresml/linfa?branch=montana%2Fa#97d52e742d576081bf1dc7e30fc3eff72be621f8"
+source = "git+https://github.com/postgresml/linfa?branch=master#9d615fcb98d3f3376a4fbd42e666c21ace0c8cb0"
 dependencies = [
  "argmin",
  "argmin-math",
@@ -1252,7 +1252,7 @@ dependencies = [
 [[package]]
 name = "linfa-logistic"
 version = "0.7.0"
-source = "git+https://github.com/postgresml/linfa?branch=montana%2Fa#97d52e742d576081bf1dc7e30fc3eff72be621f8"
+source = "git+https://github.com/postgresml/linfa?branch=master#9d615fcb98d3f3376a4fbd42e666c21ace0c8cb0"
 dependencies = [
  "argmin",
  "argmin-math",
@@ -1267,7 +1267,7 @@ dependencies = [
 [[package]]
 name = "linfa-nn"
 version = "0.7.0"
-source = "git+https://github.com/postgresml/linfa?branch=montana%2Fa#97d52e742d576081bf1dc7e30fc3eff72be621f8"
+source = "git+https://github.com/postgresml/linfa?branch=master#9d615fcb98d3f3376a4fbd42e666c21ace0c8cb0"
 dependencies = [
  "kdtree",
  "linfa",
@@ -1282,7 +1282,7 @@ dependencies = [
 [[package]]
 name = "linfa-svm"
 version = "0.7.0"
-source = "git+https://github.com/postgresml/linfa?branch=montana%2Fa#97d52e742d576081bf1dc7e30fc3eff72be621f8"
+source = "git+https://github.com/postgresml/linfa?branch=master#9d615fcb98d3f3376a4fbd42e666c21ace0c8cb0"
 dependencies = [
  "linfa",
  "linfa-kernel",

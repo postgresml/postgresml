@@ -34,10 +34,10 @@ itertools = "0.12"
 hash32 = { version = "=0.2.1" }
 heapless = "0.7"
 lightgbm = { git = "https://github.com/postgresml/lightgbm-rs", branch = "main" }
-linfa = { git = "https://github.com/postgresml/linfa", branch = "montana/a" }
-linfa-linear = { git = "https://github.com/postgresml/linfa", branch = "montana/a", features = ["serde"] }
-linfa-logistic = { git = "https://github.com/postgresml/linfa", branch = "montana/a", features = ["serde"] }
-linfa-svm = { git = "https://github.com/postgresml/linfa", branch = "montana/a", features = ["serde"] }
+linfa = { git = "https://github.com/postgresml/linfa", branch = "master" }
+linfa-linear = { git = "https://github.com/postgresml/linfa", branch = "master", features = ["serde"] }
+linfa-logistic = { git = "https://github.com/postgresml/linfa", branch = "master", features = ["serde"] }
+linfa-svm = { git = "https://github.com/postgresml/linfa", branch = "master", features = ["serde"] }
 once_cell = { version = "1", features = ["parking_lot"] }
 openblas-src = { version = "0.10", features = ["cblas", "system"] }
 ndarray = { version = "0.15", features = ["serde", "blas"] }
