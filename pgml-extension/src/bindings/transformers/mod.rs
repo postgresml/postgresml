@@ -6,9 +6,9 @@ use std::{collections::HashMap, path::Path};
 use anyhow::{anyhow, bail, Context, Result};
 use pgrx::*;
 use pyo3::prelude::*;
-use pyo3::types::{PyBool, PyDict, PyFloat, PyInt, PyList, PyString, PyTuple};
+use pyo3::types::{PyBool, PyDict, PyFloat, PyInt, PyList, PyString};
+use pyo3::ffi::c_str;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
 use crate::create_pymodule;
 use crate::orm::{ConversationDataset, Task, TextClassificationDataset, TextPairClassificationDataset};
@@ -23,37 +23,37 @@ pub use transform::*;
 create_pymodule!("/src/bindings/transformers/transformers.py");
 
 // Need a wrapper so we can implement traits for it
-pub struct Json(pub Value);
+pub struct Json(pub serde_json::Value);
 
-impl From<Json> for Value {
+impl From<Json> for serde_json::Value {
     fn from(value: Json) -> Self {
         value.0
     }
 }
 
 impl FromPyObject<'_> for Json {
-    fn extract(ob: &PyAny) -> PyResult<Self> {
+    fn extract_bound(ob: &Bound<'_, PyAny>) -> PyResult<Self> {
         if ob.is_instance_of::<PyDict>() {
-            let dict: &PyDict = ob.downcast()?;
+            let dict: &Bound<PyDict> = ob.downcast()?;
             let mut json = serde_json::Map::new();
             for (key, value) in dict.iter() {
-                let value = Json::extract(value)?;
-                json.insert(String::extract(key)?, value.0);
+                let value = Json::extract_bound(&value)?;
+                json.insert(String::extract_bound(&key)?, value.0);
             }
             Ok(Self(serde_json::Value::Object(json)))
         } else if ob.is_instance_of::<PyBool>() {
-            let value = bool::extract(ob)?;
+            let value = bool::extract_bound(ob)?;
             Ok(Self(serde_json::Value::Bool(value)))
         } else if ob.is_instance_of::<PyInt>() {
-            let value = i64::extract(ob)?;
+            let value = i64::extract_bound(ob)?;
             Ok(Self(serde_json::Value::Number(value.into())))
         } else if ob.is_instance_of::<PyFloat>() {
-            let value = f64::extract(ob)?;
+            let value = f64::extract_bound(ob)?;
             let value =
                 serde_json::value::Number::from_f64(value).context("Could not convert f64 to serde_json::Number")?;
             Ok(Self(serde_json::Value::Number(value)))
         } else if ob.is_instance_of::<PyString>() {
-            let value = String::extract(ob)?;
+            let value = String::extract_bound(ob)?;
             Ok(Self(serde_json::Value::String(value)))
         } else if ob.is_instance_of::<PyList>() {
             let value = ob.downcast::<PyList>()?;
@@ -75,13 +75,13 @@ impl FromPyObject<'_> for Json {
     }
 }
 
-pub fn get_model_from(task: &Value) -> Result<String> {
+pub fn get_model_from(task: &serde_json::Value) -> Result<String> {
     Python::with_gil(|py| -> Result<String> {
         let get_model_from = get_module!(PY_MODULE)
             .getattr(py, "get_model_from")
             .format_traceback(py)?;
         let model = get_model_from
-            .call1(py, PyTuple::new(py, &[task.to_string().into_py(py)]))
+            .call1(py, (PyString::new(py, &task.to_string()),))
             .format_traceback(py)?;
         model.extract(py).format_traceback(py)
     })
@@ -92,19 +92,8 @@ pub fn embed(transformer: &str, inputs: Vec<&str>, kwargs: &serde_json::Value) -
     Python::with_gil(|py| -> Result<Vec<Vec<f32>>> {
         let embed: Py<PyAny> = get_module!(PY_MODULE).getattr(py, "embed").format_traceback(py)?;
         let output = embed
-            .call1(
-                py,
-                PyTuple::new(
-                    py,
-                    &[
-                        transformer.to_string().into_py(py),
-                        inputs.into_py(py),
-                        kwargs.into_py(py),
-                    ],
-                ),
-            )
+            .call1(py, (transformer, inputs, kwargs))
             .format_traceback(py)?;
-
         output.extract(py).format_traceback(py)
     })
 }
@@ -128,14 +117,11 @@ pub fn rank(
         let output = embed
             .call1(
                 py,
-                PyTuple::new(
-                    py,
-                    &[
-                        transformer.to_string().into_py(py),
-                        query.into_py(py),
-                        documents.into_py(py),
-                        kwargs.into_py(py),
-                    ],
+                (
+                    transformer,
+                    query,
+                    documents,
+                    PyString::new(py, &kwargs.to_string()),
                 ),
             )
             .format_traceback(py)?;
@@ -346,16 +332,11 @@ pub fn load_dataset(
             .getattr(py, "load_dataset")
             .format_traceback(py)?;
         load_dataset
-            .call1(
-                py,
-                PyTuple::new(
-                    py,
-                    &[
-                        name.into_py(py),
-                        subset.into_py(py),
-                        limit.into_py(py),
-                        kwargs.into_py(py),
-                    ],
+            .call1(py, (
+                    name,
+                    subset,
+                    limit,
+                    kwargs,
                 ),
             )
             .format_traceback(py)?
@@ -494,7 +475,7 @@ pub fn clear_gpu_cache(memory_usage: Option<f32>) -> Result<bool> {
             .getattr(py, "clear_gpu_cache")
             .format_traceback(py)?;
         let success = clear_gpu_cache
-            .call1(py, PyTuple::new(py, &[memory_usage.into_py(py)]))
+            .call1(py, (memory_usage,))
             .format_traceback(py)?
             .extract(py)
             .format_traceback(py)?;

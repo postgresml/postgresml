@@ -180,7 +180,7 @@ dependencies = [
  "bitflags",
  "cexpr",
  "clang-sys",
- "itertools 0.12.0",
+ "itertools 0.12.1",
  "lazy_static",
  "lazycell",
  "log",
@@ -204,7 +204,7 @@ dependencies = [
  "bitflags",
  "cexpr",
  "clang-sys",
- "itertools 0.12.0",
+ "itertools 0.12.1",
  "proc-macro2",
  "quote 1.0.38",
  "regex",
@@ -451,7 +451,7 @@ version = "4.4.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf9804afaaf59a91e75b022a30fb7229a7901f60c755489cc61c9b423b836442"
 dependencies = [
- "heck",
+ "heck 0.4.1",
  "proc-macro2",
  "quote 1.0.38",
  "syn 2.0.96",
@@ -790,9 +790,9 @@ dependencies = [
 
 [[package]]
 name = "either"
-version = "1.9.0"
+version = "1.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a26ae43d7bcc3b814de94796a5e736d4029efb0ee900c12e2d54c993ad1a1e07"
+checksum = "60b1af1c220855b6ceac025d3f6ecdd2b7c4894bfe9cd9bda4fbb4bc7c0d4cf0"
 
 [[package]]
 name = "enum-map"
@@ -1098,6 +1098,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "95505c38b4572b2d910cecb0281560f54b440a19336cbbcb27bf6ce6adc6f5a8"
 
 [[package]]
+name = "heck"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
+
+[[package]]
 name = "hermit-abi"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1345,9 +1351,9 @@ dependencies = [
 
 [[package]]
 name = "itertools"
-version = "0.12.0"
+version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "25db6b064527c5d482d0423354fcd07a89a2dfe07b67892e62411946db7f07b0"
+checksum = "ba291022dbbd398a455acf126c1e341954079855bc60dfdda641363bd6922569"
 dependencies = [
  "either",
 ]
@@ -1991,7 +1997,7 @@ dependencies = [
  "hash32 0.2.1",
  "heapless 0.7.17",
  "indexmap 2.7.0",
- "itertools 0.12.0",
+ "itertools 0.12.1",
  "lightgbm",
  "linfa",
  "linfa-linear",
@@ -2281,16 +2287,16 @@ dependencies = [
 
 [[package]]
 name = "pyo3"
-version = "0.20.3"
+version = "0.23.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "53bdbb96d49157e65d45cc287af5f32ffadd5f4761438b527b055fb0d4bb8233"
+checksum = "57fe09249128b3173d092de9523eaa75136bf7ba85e0d69eca241c7939c933cc"
 dependencies = [
  "anyhow",
  "cfg-if",
  "indoc",
  "libc",
  "memoffset",
- "parking_lot",
+ "once_cell",
  "portable-atomic",
  "pyo3-build-config",
  "pyo3-ffi",
@@ -2300,9 +2306,9 @@ dependencies = [
 
 [[package]]
 name = "pyo3-build-config"
-version = "0.20.3"
+version = "0.23.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "deaa5745de3f5231ce10517a1f5dd97d53e5a2fd77aa6b5842292085831d48d7"
+checksum = "1cd3927b5a78757a0d71aa9dff669f903b1eb64b54142a9bd9f757f8fde65fd7"
 dependencies = [
  "once_cell",
  "target-lexicon",
@@ -2310,9 +2316,9 @@ dependencies = [
 
 [[package]]
 name = "pyo3-ffi"
-version = "0.20.3"
+version = "0.23.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "62b42531d03e08d4ef1f6e85a2ed422eb678b8cd62b762e53891c05faf0d4afa"
+checksum = "dab6bb2102bd8f991e7749f130a70d05dd557613e39ed2deeee8e9ca0c4d548d"
 dependencies = [
  "libc",
  "pyo3-build-config",
@@ -2320,9 +2326,9 @@ dependencies = [
 
 [[package]]
 name = "pyo3-macros"
-version = "0.20.3"
+version = "0.23.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7305c720fa01b8055ec95e484a6eca7a83c841267f0dd5280f0c8b8551d2c158"
+checksum = "91871864b353fd5ffcb3f91f2f703a22a9797c91b9ab497b1acac7b07ae509c7"
 dependencies = [
  "proc-macro2",
  "pyo3-macros-backend",
@@ -2332,11 +2338,11 @@ dependencies = [
 
 [[package]]
 name = "pyo3-macros-backend"
-version = "0.20.3"
+version = "0.23.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7c7e9b68bb9c3149c5b0cade5d07f953d6d125eb4337723c4ccdb665f1f96185"
+checksum = "43abc3b80bc20f3facd86cd3c60beed58c3e2aa26213f3cda368de39c60a27e4"
 dependencies = [
- "heck",
+ "heck 0.5.0",
  "proc-macro2",
  "pyo3-build-config",
  "quote 1.0.38",

@@ -759,10 +759,11 @@ pub fn transform_stream_json(
     input: default!(&str, "''"),
     cache: default!(bool, false),
 ) -> SetOfIterator<'static, JsonB> {
-    // We can unwrap this becuase if there is an error the current transaction is aborted in the map_err call
+    // We can unwrap this because if there is an error the current transaction is aborted in the map_err call
     let python_iter = crate::bindings::transformers::transform_stream_iterator(&task.0, &args.0, input)
         .map_err(|e| error!("{e}"))
         .unwrap();
+
     SetOfIterator::new(python_iter)
 }
 
@@ -776,7 +777,7 @@ pub fn transform_stream_string(
     cache: default!(bool, false),
 ) -> SetOfIterator<'static, JsonB> {
     let task_json = json!({ "task": task });
-    // We can unwrap this becuase if there is an error the current transaction is aborted in the map_err call
+    // We can unwrap this because if there is an error the current transaction is aborted in the map_err call
     let python_iter = crate::bindings::transformers::transform_stream_iterator(&task_json, &args.0, input)
         .map_err(|e| error!("{e}"))
         .unwrap();
@@ -795,7 +796,7 @@ pub fn transform_stream_conversational_json(
     if !task.0["task"].as_str().is_some_and(|v| v == "conversational") {
         error!("ARRAY[]::JSONB inputs for transform_stream should only be used with a conversational task");
     }
-    // We can unwrap this becuase if there is an error the current transaction is aborted in the map_err call
+    // We can unwrap this because if there is an error the current transaction is aborted in the map_err call
     let python_iter = crate::bindings::transformers::transform_stream_iterator(&task.0, &args.0, inputs)
         .map_err(|e| error!("{e}"))
         .unwrap();
@@ -815,7 +816,7 @@ pub fn transform_stream_conversational_string(
         error!("ARRAY::JSONB inputs for transform_stream should only be used with a conversational task");
     }
     let task_json = json!({ "task": task });
-    // We can unwrap this becuase if there is an error the current transaction is aborted in the map_err call
+    // We can unwrap this because if there is an error the current transaction is aborted in the map_err call
     let python_iter = crate::bindings::transformers::transform_stream_iterator(&task_json, &args.0, inputs)
         .map_err(|e| error!("{e}"))
         .unwrap();
