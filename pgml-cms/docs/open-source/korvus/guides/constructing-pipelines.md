@@ -162,3 +162,48 @@ pipeline = Pipeline(
 The `Pipeline` above generates embeddings and tsvectors for the `abstract` and splits and generates embeddings and tsvectors for the `text`.
 
 We can now perform search over both the `text` and `abstract` key of our documents. See the [guide for vector search](vector-search) for more information on how to do this.
+
+## Self-Hosting Specific Parameters
+
+**This section is only relevant for self hosted instances of PostgresML**. These parameters are never required for instances hosted by PostgresML.
+
+### Trust Remote Code
+
+Some HuggingFace models require the argument `trust_remote_code=true`. To enable this, pass it as a parameter in the pipeline construction:
+
+```python
+pipeline = Pipeline(
+    "v0",
+    {
+        "text": {
+            "semantic_search": {
+                "model": "Alibaba-NLP/gte-base-en-v1.5",
+                "parameters": {
+                    "trust_remote_code": True
+                }
+            }
+        }
+    }
+)
+```
+
+### HuggingFace authentication
+
+Pass your HuggingFace token into the pipeline to access gated repos:
+
+```python
+pipeline = Pipeline(
+    "v0",
+    {
+        "text": {
+            "semantic_search": {
+                "model": "Alibaba-NLP/gte-base-en-v1.5",
+                "parameters": {
+                    "trust_remote_code": True,
+                    "token": "YOUR_TOKEN"
+                }
+            }
+        }
+    }
+)
+```
