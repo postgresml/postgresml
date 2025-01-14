@@ -13,6 +13,9 @@ sudo -u postgres psql -c "CREATE ROLE postgresml PASSWORD 'postgresml' SUPERUSER
 sudo -u postgres createdb postgresml --owner postgresml 2> /dev/null 1>&2
 sudo -u postgres psql -c 'ALTER ROLE postgresml SET search_path TO public,pgml' 2> /dev/null 1>&2
 
+# Create the vector extension
+sudo -u postgres psql -c 'CREATE EXTENSION vector' 2> /dev/null 1>&2
+
 echo "Starting dashboard"
 PGPASSWORD=postgresml psql -c 'CREATE EXTENSION IF NOT EXISTS pgml' \
 	-d postgresml \
