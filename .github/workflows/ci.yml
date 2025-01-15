@@ -10,8 +10,6 @@ jobs:
         working-directory: pgml-extension
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: 'recursive'
       - name: Fetch master
         run: |
           git fetch origin master --depth 1
@@ -45,7 +43,7 @@ jobs:
             ~/.cargo
             pgml-extension/target
             ~/.pgrx
-          key: ${{ runner.os }}-rust-1.74-${{ hashFiles('pgml-extension/Cargo.lock') }}-bust2
+          key: ${{ runner.os }}-rust-1.74-${{ hashFiles('pgml-extension/Cargo.lock') }}-bust3
       - name: Install pgrx
         if: steps.pgml_extension_changed.outputs.PGML_EXTENSION_CHANGED_FILES != '0'
         run: |
@@ -55,17 +53,17 @@ jobs:
 
           if [[ ! -d ~/.pgrx ]]; then
             cargo pgrx init
-            echo "shared_preload_libraries = 'pgml'" >> ~/.pgrx/data-16/postgresql.conf
+            echo "shared_preload_libraries = 'pgml'" >> ~/.pgrx/data-17/postgresql.conf
           fi
       - name: Update extension test
         if: steps.pgml_extension_changed.outputs.PGML_EXTENSION_CHANGED_FILES != '0'
         run: |
           git checkout origin/master
           echo "\q" | cargo pgrx run
-          psql -p 28816 -h localhost -d pgml -P pager -c "DROP EXTENSION IF EXISTS pgml CASCADE; DROP SCHEMA IF EXISTS pgml CASCADE; CREATE EXTENSION pgml;"
+          psql -p 28817 -h localhost -d pgml -P pager -c "DROP EXTENSION IF EXISTS pgml CASCADE; DROP SCHEMA IF EXISTS pgml CASCADE; CREATE EXTENSION pgml;"
           git checkout $GITHUB_SHA
           echo "\q" | cargo pgrx run
-          psql -p 28816 -h localhost -d pgml -P pager -c "ALTER EXTENSION pgml UPDATE;"
+          psql -p 28817 -h localhost -d pgml -P pager -c "ALTER EXTENSION pgml UPDATE;"
       - name: Unit tests
         if: steps.pgml_extension_changed.outputs.PGML_EXTENSION_CHANGED_FILES != '0'
         run: |
@@ -74,4 +72,4 @@ jobs:
         if: steps.pgml_extension_changed.outputs.PGML_EXTENSION_CHANGED_FILES != '0'
         run: |
           echo "\q" | cargo pgrx run
-          psql -p 28816 -h 127.0.0.1 -d pgml -P pager -f tests/test.sql
+          psql -p 28817 -h 127.0.0.1 -d pgml -P pager -f tests/test.sql
