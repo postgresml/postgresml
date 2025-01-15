@@ -1,18 +1,15 @@
-# If you update this file, `pip freeze` the full locked requirements as well to prevent
-# future dependency incompatibility on all supported platforms. We'd use Poetry or some
-# other sane lockfile resolution mechanism other than pip, except we have to maintain
-# this isn't really a Python project, so Poetry conventions don't work, and we need
-# different dependencies on platforms that have different hardware acceleration.
+# Use a Python 3.11 virtualenv with PostgresML:
+# $ virtualenv -p python3.11 pgml-venv
+# $ source pgml-vev/bin/activate
+# $ pip install -r requirements.txt
+
+# Python 3.12 can't resolve all dependencies:
+# catboost and autogptq fail to build
 
 # Only the immediate dependencies of PostgresML are maintained here.
 # See requirements.linux.txt or requirements.macos.txt for complete and locked versions.
-
-# Python 3.12 can't currently resolve all dependencies:
-# catboost fails to build
-# virtualenv -p python3.11 pgml-venv
-
-# These packages are specifically locked to avoid known bugs
-pyarrow==11.0.0 # newer versions cause Postgres segfaults on OOM
+# If you update this file, make sure to pip freeze into platform specific dependencies
+# to avoid bitrot.
 
 # ML
 catboost
@@ -30,6 +27,7 @@ ctransformers
 huggingface-hub
 deepspeed
 einops
+optimum
 peft
 tokenizers
 transformers

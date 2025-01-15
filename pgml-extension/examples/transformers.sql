@@ -2,9 +2,9 @@
 -- \set ON_ERROR_STOP true
 \timing on
 
-SELECT pgml.embed('Alibaba-NLP/gte-base-en-v1.5', 'hi mom');
-SELECT pgml.embed('Alibaba-NLP/gte-base-en-v1.5', 'hi mom', '{"device": "cuda"}');
-SELECT pgml.embed('Alibaba-NLP/gte-base-en-v1.5', 'hi mom', '{"device": "cpu"}');
+SELECT pgml.embed('Alibaba-NLP/gte-base-en-v1.5', 'hi mom', '{"trust_remote_code": true }');
+SELECT pgml.embed('Alibaba-NLP/gte-base-en-v1.5', 'hi mom', '{"trust_remote_code": true, "device": "cuda"}');
+SELECT pgml.embed('Alibaba-NLP/gte-base-en-v1.5', 'hi mom', '{"trust_remote_code": true, "device": "cpu"}');
 SELECT pgml.embed('hkunlp/instructor-xl', 'hi mom', '{"instruction": "Encode it with love"}');
 SELECT pgml.embed('mixedbread-ai/mxbai-embed-large-v1', 'test', '{"prompt": "test prompt: "}');
 
@@ -12,14 +12,15 @@ SELECT pgml.transform(
   task   => '{
     "task": "text-generation",
     "model": "meta-llama/Meta-Llama-3.1-8B-Instruct",
-    "token": "hf_123",
-    "trust_remote_code": true
+    "token": "hf_123"
   }'::JSONB,
   inputs => ARRAY['AI is going to'],
   args   => '{
-    "max_new_tokens": 100
+    "max_new_tokens": 100,
+    "trust_remote_code": true
   }'::JSONB
 );
+
 -- BitsAndBytes support
 SELECT pgml.transform(
     task => '{
@@ -63,8 +64,7 @@ SELECT pgml.transform(
 SELECT pgml.transform(
     task => '{
       "task": "text-generation",
-      "model": "mlabonne/gpt2-GPTQ-4bit",
-      "use_triton": true
+      "model": "Qwen/Qwen2.5-7B-Instruct-GPTQ-Int8"
     }'::JSONB,
     inputs => ARRAY[
         'Once upon a time,',
