@@ -7,7 +7,7 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 deb_dir="/tmp/postgresml-python/deb-build"
 major=${1:-"14"}
 
-export PACKAGE_VERSION=${1:-"2.7.12"}
+export PACKAGE_VERSION=${1:-"2.10.0"}
 export PYTHON_VERSION=${2:-"3.10"}
 
 if [[ $(arch) == "x86_64" ]]; then

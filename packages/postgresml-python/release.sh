@@ -12,7 +12,7 @@ fi
 
 if [[ -z "$package_version" ]]; then
 	echo "postgresml-python package build and release script"
-	echo "usage: $0 <package version, e.g. 2.7.12>"
+	echo "usage: $0 <package version, e.g. 2.10.0>"
 	exit 1
 fi
 

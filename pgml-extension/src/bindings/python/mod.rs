@@ -4,7 +4,8 @@ use anyhow::Result;
 use pgrx::iter::TableIterator;
 use pgrx::*;
 use pyo3::prelude::*;
-use pyo3::types::PyTuple;
+use pyo3::types::PyString;
+use pyo3::ffi::c_str;
 
 use crate::config::PGML_VENV;
 use crate::create_pymodule;
@@ -13,8 +14,8 @@ create_pymodule!("/src/bindings/python/python.py");
 
 pub fn activate_venv(venv: &str) -> Result<bool> {
     Python::with_gil(|py| {
-        let activate_venv: Py<PyAny> = get_module!(PY_MODULE).getattr(py, "activate_venv")?;
-        let result: Py<PyAny> = activate_venv.call1(py, PyTuple::new(py, &[venv.to_string().into_py(py)]))?;
+        let activate_venv = get_module!(PY_MODULE).getattr(py, "activate_venv")?;
+        let result = activate_venv.call1(py, (PyString::new(py, venv),))?;
 
         Ok(result.extract(py)?)
     })

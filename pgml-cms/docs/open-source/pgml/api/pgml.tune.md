@@ -159,7 +159,7 @@ Without tuning, DistilBERT classifies every single movie review as `positive`, a
 
 Once our model has been fine tuned on the dataset, it'll be saved and deployed with a Project visible in the Dashboard, just like models built from simpler algorithms.
 
-[![Fine Tuning](https://github.com/postgresml/postgresml/raw/v2.7.12/dashboard/static/images/dashboard/tuning.png)](https://github.com/postgresml/postgresml/blob/v2.7.12/dashboard/static/images/dashboard/tuning.png)
+[![Fine Tuning](https://github.com/postgresml/postgresml/raw/v2.10.0/dashboard/static/images/dashboard/tuning.png)](https://github.com/postgresml/postgresml/blob/v2.10.0/dashboard/static/images/dashboard/tuning.png)
 
 #### Prepare the data
 

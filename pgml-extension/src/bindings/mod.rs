@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use anyhow::{anyhow, Result};
 #[allow(unused_imports)] // used for test macros
 use pgrx::*;
-use pyo3::{pyfunction, PyResult, Python};
+use pyo3::{pyfunction, PyResult, Python, prelude::PyTracebackMethods};
 
 use crate::orm::*;
 
@@ -42,11 +42,11 @@ macro_rules! create_pymodule {
             once_cell::sync::Lazy::new(|| {
                 pyo3::Python::with_gil(|py| -> anyhow::Result<pyo3::Py<pyo3::types::PyModule>> {
                     use $crate::bindings::TracebackError;
-                    let src = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), $pyfile));
-                    let module = pyo3::types::PyModule::from_code(py, src, "transformers.py", "__main__")
+                    let src = c_str!(include_str!(concat!(env!("CARGO_MANIFEST_DIR"), $pyfile)));
+                    let module = pyo3::types::PyModule::from_code(py, src, c_str!("transformers.py"), c_str!("__main__"))
                         .format_traceback(py)?;
-                    module.add_function(wrap_pyfunction!($crate::bindings::r_insert_logs, module)?)?;
-                    module.add_function(wrap_pyfunction!($crate::bindings::r_log, module)?)?;
+                    module.add_function(wrap_pyfunction!($crate::bindings::r_insert_logs, &module)?)?;
+                    module.add_function(wrap_pyfunction!($crate::bindings::r_log, &module)?)?;
                     Ok(module.into())
                 })
             });
