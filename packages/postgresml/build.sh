@@ -4,7 +4,7 @@ set -e
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 export PACKAGE_VERSION=${1:-"2.10.0"}
-export PGVERSION=${2:-"14"}
+export PGVERSION=${2:-"17"}
 export UBUNTU_VERSION=${3:-"24.04"}
 
 deb_dir="/tmp/postgresml/deb-build"
