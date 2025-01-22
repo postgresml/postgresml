@@ -40,6 +40,12 @@ cargo install cargo-pgrx --version 0.12.9 && \
 cargo pgrx init
 ```
 
+**NOTE: You may need to set the `PGK_CONFIG_PATH` env variable:**
+
+```bash
+export PKG_CONFIG_PATH="/opt/homebrew/opt/icu4c/lib/pkgconfig"
+```
+
 This step will take a few minutes. Perfect opportunity to get a coffee while you wait.
 
 ### Compile and install
