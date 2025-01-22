@@ -12,28 +12,17 @@
 
 <nav>
   <nav aria-label="breadcrumb z-1">
-    <ol class="breadcrumb">
-      <!-- <li class="breadcrumb-item body-regular-text <% if path.is_empty() {%>active<% } %>">
-        <a class="d-flex gap-2 align-items-center" href="<%- home_uri %>">
-          <span class="icon-owl icomoon"></span>
-          Home
-        </a>
-      </li> -->
-
+    <ol class="breadcrumb gap-3">
       <% if !organizations.is_empty() {%>
       <li>
-        <%+ Dropdown::nav(organizations) %>
+        <%+ Dropdown::nav(organizations).inline_style() %>
       </li>
       <% } %>
 
       <% if !databases.is_empty() {%>
       <li>
-        <%+ Dropdown::nav(databases) %>
+        <%+ Dropdown::nav(databases).inline_style() %>
       </li>
-      <% } %>
-
-      <% if !path.is_empty() {%>
-      <div class="vr my-1 mx-2"></div>
       <% } %>
 
       <% for link in path {
@@ -54,9 +43,6 @@
         <a href="<%= link.href %>">
           <%= link.name %>
         </a>
-        <% if active.is_empty() { %>
-        <div class="vr my-1 ms-2"></div>
-        <% } %>
       </li>
       <% } %>
     </ol>

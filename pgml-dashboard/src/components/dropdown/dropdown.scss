@@ -92,6 +92,51 @@
     }
 }
 
+.btn-dropdown-inline {
+    color: #{$slate-shade-100};
+    display: flex;
+    justify-content: space-between;
+    font-weight: $font-weight-normal;
+
+    --bs-btn-hover-color: #{$slate-tint-400};
+    --bs-btn-active-color: #{$slate-tint-700};
+    --bs-btn-active-border-color: transparent;
+
+
+
+    &:after {
+        content: None;
+    }
+
+    &.show {
+        .material-symbols-outlined {
+            transform: rotate(-180deg);
+        }
+    }
+
+    .btn-dropdown-text {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        text-align: left;
+    }
+
+    .menu-item {
+        a, div {
+            padding: 8px 12px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        &:hover {
+            cursor: pointer;
+        }
+
+        &:after {
+            content: None;
+        }
+    }
+}
+
 @mixin dropdown-menu($primary-color: null) {
     padding: 20px 0px 20px 0px;
     overflow-y: auto;

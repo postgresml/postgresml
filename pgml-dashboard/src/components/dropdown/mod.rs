@@ -85,6 +85,9 @@ pub struct Dropdown {
 
     /// If the dropdown should be shown
     show: String,
+
+    /// alt styling for button
+    inline_style: bool,
 }
 
 impl Dropdown {
@@ -95,6 +98,7 @@ impl Dropdown {
             offset: "0, 10".to_owned(),
             offset_collapsed: "68, -44".to_owned(),
             menu_position: "".to_owned(),
+            inline_style: false,
             ..Default::default()
         }
     }
@@ -190,6 +194,11 @@ impl Dropdown {
 
     pub fn show(mut self) -> Self {
         self.show = "show".into();
+        self
+    }
+
+    pub fn inline_style(mut self) -> Self {
+        self.inline_style = true;
         self
     }
 }

@@ -1,8 +1,21 @@
 
 <% use crate::components::dropdown::DropdownValue; %>
+<%
+  let btn_style = if inline_style {
+    "btn-dropdown-inline"
+  } else {
+    "btn-dropdown"
+  };
+
+  let padding = if inline_style {
+    "p-0"
+  } else {
+    ""
+  };
+%>
 
 <!-- Dropdown component -->
-<div class="dropdown <% if expandable { %>expandable<% } %>">
+<div class="dropdown <%- padding %> <% if expandable { %>expandable<% } %>">
   <% if let DropdownValue::Icon(icon) = value { %>
   <a
     class="top-nav-controls dropdown-toggle"
@@ -15,7 +28,7 @@
   </a>
   <% } else if let DropdownValue::Text(text) = value { %>
   <button
-    class="horizontal-hide btn btn-dropdown dropdown-toggle expanded <% if collapsable { %>leftnav-collapse-affect<% } %>"
+    class="horizontal-hide btn <%- btn_style %> dropdown-toggle expanded <% if collapsable { %>leftnav-collapse-affect<% } %>"
     role="button"
     data-bs-toggle="dropdown"
     data-bs-offset="<%= offset %>"

@@ -28,9 +28,16 @@
       }
   }
 
-  .vr {
-    opacity: 1;
-    color: #{$gray-600};
-    width: 2px;
+  > *:not(:last-child) {
+    &::after {
+      content: '/';
+      margin: 0 2px;
+      color: #{$gray-600};
+    }
+  }
+
+  li {
+    display: flex;
+    align-items: center;
   }
 }
