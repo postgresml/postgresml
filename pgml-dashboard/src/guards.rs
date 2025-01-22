@@ -46,22 +46,31 @@ impl Cluster {
             context: Context {
                 user: models::User::default(),
                 cluster: models::Cluster::default(),
-                dropdown_nav: StaticNav {
+                deployment_dropdown: StaticNav {
                     links: vec![StaticNavLink::new("Local".to_string(), "/dashboard".to_string()).active(true)],
                 },
-                product_left_nav: StaticNav {
-                    links: vec![
-                        StaticNavLink::new("Notebooks".to_string(), urls::deployment_notebooks())
-                            .icon("format_list_bulleted_add"),
-                        StaticNavLink::new("Projects".to_string(), urls::deployment_projects()).icon("library_add"),
-                        StaticNavLink::new("Models".to_string(), urls::deployment_models()).icon("grid_view"),
-                        StaticNavLink::new("Snapshots".to_string(), urls::deployment_snapshots())
-                            .icon("filter_center_focus"),
-                        StaticNavLink::new("Upload data".to_string(), urls::deployment_uploader()).icon("upload"),
-                    ],
+                organization_dropdown: StaticNav {
+                    links: vec![StaticNavLink::new(
+                        "Organization".to_string(),
+                        "/organizations".to_string(),
+                    )],
                 },
                 marketing_footer: MarketingFooter::new().render_once().unwrap(),
                 head_items: None,
+                product_left_nav: crate::components::navigation::left_nav::web_app::Menu {
+                    back: None,
+                    items: StaticNav {
+                        links: vec![
+                            StaticNavLink::new("Notebooks".to_string(), urls::deployment_notebooks())
+                                .icon("format_list_bulleted_add"),
+                            StaticNavLink::new("Projects".to_string(), urls::deployment_projects()).icon("library_add"),
+                            StaticNavLink::new("Models".to_string(), urls::deployment_models()).icon("grid_view"),
+                            StaticNavLink::new("Snapshots".to_string(), urls::deployment_snapshots())
+                                .icon("filter_center_focus"),
+                            StaticNavLink::new("Upload data".to_string(), urls::deployment_uploader()).icon("upload"),
+                        ],
+                    },
+                },
             },
             notifications: None,
         }

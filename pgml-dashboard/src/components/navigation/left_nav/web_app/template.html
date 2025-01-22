@@ -9,7 +9,12 @@
     <div class="d-flex flex-column justify-content-between h-100 menu-container leftnav-collapse-affect collapsed">
       <div class="d-flex flex-column">
         <span class="leftnav-collapse collapse" data-extend-bs-collapse-target="stateReference" data-navigation-left-nav-web-app-target="stateReference"></span>
-        <%+ LeftNavMenu { nav: upper_nav } %>
+        <% if let Some(back_link) = menu.back {%>
+          <a class="btn btn-tertiary justify-content-start gap-3" style="height: 2rem;" href="<%- back_link.href %>">
+            <span class="material-symbols-outlined">arrow_back</span>
+            <span class="collapse collapse-horizontal leftnav-collapse text-nowrap overflow-hidden"><%- back_link.name %></span></a>
+        <% } %>
+        <%+ LeftNavMenu { nav: menu.items } %>
       </div>
     </div>
   </nav>

@@ -1,16 +1,24 @@
+use crate::components::dropdown::{Dropdown, DropdownItems};
 use crate::components::NavLink;
+use crate::components::StaticNavLink;
 use pgml_components::component;
 use sailfish::TemplateOnce;
 
-#[derive(TemplateOnce)]
+#[derive(TemplateOnce, Clone, Default)]
 #[template(path = "breadcrumbs/template.html")]
 pub struct Breadcrumbs<'a> {
-    pub links: Vec<NavLink<'a>>,
+    pub organizations: Vec<StaticNavLink>,
+    pub databases: Vec<StaticNavLink>,
+    pub path: Vec<NavLink<'a>>,
 }
 
 impl<'a> Breadcrumbs<'a> {
-    pub fn render(links: Vec<NavLink<'a>>) -> String {
-        Breadcrumbs { links }.render_once().unwrap()
+    pub fn new(path: Vec<NavLink<'a>>, organizations: Vec<StaticNavLink>, databases: Vec<StaticNavLink>) -> Self {
+        Breadcrumbs {
+            path,
+            databases,
+            organizations,
+        }
     }
 }
 

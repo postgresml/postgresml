@@ -1,6 +1,7 @@
 <%
   use crate::utils::config;
   use crate::utils::urls;
+  use crate::components::dropdown::Dropdown;
 
   let home_uri = if config::standalone_dashboard() {
     urls::deployment_notebooks()
@@ -12,18 +13,30 @@
 <nav>
   <nav aria-label="breadcrumb z-1">
     <ol class="breadcrumb">
-      <li class="breadcrumb-item body-regular-text <% if links.is_empty() {%>active<% } %>">
+      <!-- <li class="breadcrumb-item body-regular-text <% if path.is_empty() {%>active<% } %>">
         <a class="d-flex gap-2 align-items-center" href="<%- home_uri %>">
           <span class="icon-owl icomoon"></span>
           Home
         </a>
-      </li>
+      </li> -->
 
-      <% if !links.is_empty() {%>
+      <% if !organizations.is_empty() {%>
+      <li>
+        <%+ Dropdown::nav(organizations) %>
+      </li>
+      <% } %>
+
+      <% if !databases.is_empty() {%>
+      <li>
+        <%+ Dropdown::nav(databases) %>
+      </li>
+      <% } %>
+
+      <% if !path.is_empty() {%>
       <div class="vr my-1 mx-2"></div>
       <% } %>
 
-      <% for link in links {
+      <% for link in path {
         let active = if link.active {
           "active"
         } else {

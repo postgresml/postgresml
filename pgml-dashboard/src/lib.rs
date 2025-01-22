@@ -49,10 +49,11 @@ pub struct ClustersSettings {
 pub struct Context {
     pub user: models::User,
     pub cluster: models::Cluster,
-    pub dropdown_nav: StaticNav,
-    pub product_left_nav: StaticNav,
+    pub organization_dropdown: StaticNav,
+    pub deployment_dropdown: StaticNav,
     pub marketing_footer: String,
     pub head_items: Option<String>,
+    pub product_left_nav: crate::components::navigation::left_nav::web_app::Menu,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -646,7 +647,8 @@ mod test {
                         context: Context {
                             user: models::User::default(),
                             cluster: models::Cluster::default(),
-                            dropdown_nav: StaticNav { links: vec![] },
+                            deployment_dropdown: StaticNav { links: vec![] },
+                            organization_dropdown: StaticNav { links: vec![] },
                             product_left_nav: StaticNav { links: vec![] },
                             marketing_footer: MarketingFooter::new().render_once().unwrap(),
                             head_items: None,
@@ -719,7 +721,8 @@ mod test {
                         context: Context {
                             user: models::User::default(),
                             cluster: models::Cluster::default(),
-                            dropdown_nav: StaticNav { links: vec![] },
+                            deployment_dropdown: StaticNav { links: vec![] },
+                            organization_dropdown: StaticNav { links: vec![] },
                             product_left_nav: StaticNav { links: vec![] },
                             marketing_footer: MarketingFooter::new().render_once().unwrap(),
                             head_items: None,

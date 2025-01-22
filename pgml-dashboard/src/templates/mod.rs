@@ -12,6 +12,7 @@ use sqlx::postgres::types::PgMoney;
 use sqlx::types::time::PrimitiveDateTime;
 use sqlx::{Column, Executor, PgPool, Row, Statement, TypeInfo, ValueRef};
 
+use crate::components::breadcrumbs::Breadcrumbs;
 use crate::models;
 use crate::utils::tabs;
 
@@ -116,10 +117,10 @@ impl From<Layout> for String {
 #[template(path = "layout/web_app_base.html")]
 pub struct WebAppBase<'a> {
     pub content: Option<String>,
-    pub breadcrumbs: Vec<NavLink<'a>>,
+    pub breadcrumbs: Breadcrumbs<'a>,
     pub head: Head,
     pub dropdown_nav: StaticNav,
-    pub product_left_nav: StaticNav,
+    pub product_left_nav: crate::components::navigation::left_nav::web_app::Menu,
     pub body_components: Vec<Component>,
     pub cluster: Cluster,
     pub product_banners_high: Vec<ProductBanner>,
@@ -145,7 +146,7 @@ impl<'a> WebAppBase<'a> {
         WebAppBase {
             head,
             cluster,
-            dropdown_nav: context.context.dropdown_nav.clone(),
+            dropdown_nav: context.context.deployment_dropdown.clone(),
             product_left_nav: context.context.product_left_nav.clone(),
             product_banners_high: all_product_high_level,
             product_banner_medium: ProductBanner::from_notification(Notification::next_product_of_level(
@@ -161,18 +162,22 @@ impl<'a> WebAppBase<'a> {
     }
 
     pub fn breadcrumbs(&mut self, breadcrumbs: Vec<NavLink<'a>>) -> &mut Self {
-        self.breadcrumbs = breadcrumbs.to_owned();
+        self.breadcrumbs.path = breadcrumbs.clone();
         self
     }
 
     pub fn disable_upper_nav(&mut self) -> &mut Self {
         let links: Vec<StaticNavLink> = self
             .product_left_nav
+            .items
             .links
             .iter()
             .map(|item| item.to_owned().disabled(true))
             .collect();
-        self.product_left_nav = StaticNav { links };
+        self.product_left_nav = crate::components::navigation::left_nav::web_app::Menu {
+            back: self.product_left_nav.back.clone(),
+            items: StaticNav { links },
+        };
         self
     }
 
@@ -183,6 +188,56 @@ impl<'a> WebAppBase<'a> {
 
     pub fn body_components(&mut self, components: Vec<Component>) -> &mut Self {
         self.body_components = components;
+        self
+    }
+
+    pub fn breadcrumbs_from_uri(
+        &mut self,
+        org_dropdown: Vec<StaticNavLink>,
+        database_dropdown: Vec<StaticNavLink>,
+        uri: &str,
+    ) -> &mut Self {
+        let uri = if uri.starts_with("/") {
+            uri.chars().skip(1).collect::<String>()
+        } else {
+            uri.to_string()
+        };
+
+        let start_index = match (org_dropdown.is_empty(), database_dropdown.is_empty()) {
+            (true, true) => 0,
+            (false, true) => 1,
+            _ => 2,
+        };
+
+        let mut uris = uri
+            .split("/")
+            .skip(start_index)
+            .enumerate()
+            .map(|(i, part)| {
+                let path = uri
+                    .split("/")
+                    .into_iter()
+                    .take(1 + i + start_index)
+                    .collect::<Vec<&str>>()
+                    .join("/");
+                let mut out = "/".to_owned();
+                out.push_str(&path);
+
+                NavLink::new(part, &out)
+            })
+            .collect::<Vec<NavLink>>();
+
+        if let Some(last) = uris.clone().into_iter().next_back() {
+            uris.pop();
+            uris.push(last.active());
+        }
+
+        self.breadcrumbs = Breadcrumbs {
+            organizations: org_dropdown,
+            databases: database_dropdown,
+            path: uris,
+        };
+
         self
     }
 
