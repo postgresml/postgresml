@@ -295,7 +295,10 @@ fn fit(dataset: &Dataset, hyperparams: &Hyperparams, objective: learning::Object
         },
         None => false,
     };
-    Ok(Box::new(Estimator { softmax_objective, estimator: booster }))
+    Ok(Box::new(Estimator {
+        softmax_objective,
+        estimator: booster,
+    }))
 }
 
 pub struct Estimator {
@@ -383,6 +386,9 @@ impl Bindings for Estimator {
             _ => false,
         };
 
-        Ok(Box::new(Estimator { softmax_objective, estimator }))
+        Ok(Box::new(Estimator {
+            softmax_objective,
+            estimator,
+        }))
     }
 }

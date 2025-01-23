@@ -7,6 +7,9 @@
 <html lang="en-US">
     <%+ head %>
     <body data-bs-theme="dark" data-theme="docs">
+      <% for component in body_components {%>
+        <%+ component %>
+      <% } %>
       <div class="border-bottom" data-controller="layouts-docs">
         <%+ MarketingNavbar::new(user).style_alt() %>
 

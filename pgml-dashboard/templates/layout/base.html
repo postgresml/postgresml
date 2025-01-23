@@ -8,6 +8,9 @@
   <%+ head %>
 
   <body data-bs-theme="dark" data-theme="docs">
+    <% for component in body_components {%>
+      <%+ component %>
+    <% } %>
     <main>
       <div class="bg-primary min-vh-100">
         <div class="ellipse-container position-absolute" style="margin: -2rem; height: 100vh; width: 100vw;">

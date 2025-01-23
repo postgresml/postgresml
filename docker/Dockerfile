@@ -1,4 +1,4 @@
-FROM nvidia/cuda:12.1.1-devel-ubuntu22.04
+FROM nvidia/cuda:12.6.3-devel-ubuntu24.04
 ENV PATH="/usr/local/cuda/bin:${PATH}"
 RUN apt update && \
 	apt install -y \
@@ -15,8 +15,8 @@ RUN curl https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor | te
 
 ENV TZ=UTC
 ENV DEBIAN_FRONTEND=noninteractive
-RUN apt update -y && apt install git postgresml-15 postgresml-dashboard -y
-RUN git clone --branch v0.5.0 https://github.com/pgvector/pgvector && \
+RUN apt update -y && apt install git postgresml-17 postgresml-dashboard -y
+RUN git clone --branch v0.8.0 https://github.com/pgvector/pgvector && \
 cd pgvector && \
 echo "trusted = true" >> vector.control && \
 	make && \
@@ -25,7 +25,7 @@ echo "trusted = true" >> vector.control && \
 COPY entrypoint.sh /app/entrypoint.sh
 COPY dashboard.sh /app/dashboard.sh
 
-COPY --chown=postgres:postgres local_dev.conf /etc/postgresql/15/main/conf.d/01-local_dev.conf
-COPY --chown=postgres:postgres pg_hba.conf /etc/postgresql/15/main/pg_hba.conf
+COPY --chown=postgres:postgres local_dev.conf /etc/postgresql/17/main/conf.d/01-local_dev.conf
+COPY --chown=postgres:postgres pg_hba.conf /etc/postgresql/17/main/pg_hba.conf
 
 ENTRYPOINT ["bash", "/app/entrypoint.sh"]

@@ -3,7 +3,7 @@ use crate::components::notifications::marketing::AlertBanner;
 use crate::guards::Cluster;
 use crate::models::User;
 use crate::Notification;
-use pgml_components::component;
+use pgml_components::{component, Component};
 use sailfish::TemplateOnce;
 use std::fmt;
 
@@ -35,19 +35,21 @@ pub struct Base {
     pub user: Option<User>,
     pub theme: Theme,
     pub no_transparent_nav: bool,
+    pub body_components: Vec<Component>,
 }
 
 impl Base {
     pub fn new(title: &str, context: Option<&Cluster>) -> Base {
         let title = format!("{} - PostgresML", title);
 
-        let (head, footer, user) = match context.as_ref() {
+        let (head, footer, user, body_components) = match context.as_ref() {
             Some(context) => (
                 Head::new().title(&title).context(&context.context.head_items),
                 Some(context.context.marketing_footer.clone()),
                 Some(context.context.user.clone()),
+                context.context.body_components.clone(),
             ),
-            None => (Head::new().title(&title), None, None),
+            None => (Head::new().title(&title), None, None, Vec::new()),
         };
 
         Base {
@@ -56,6 +58,7 @@ impl Base {
             alert_banner: AlertBanner::from_notification(Notification::next_alert(context)),
             user,
             no_transparent_nav: false,
+            body_components,
             ..Default::default()
         }
     }

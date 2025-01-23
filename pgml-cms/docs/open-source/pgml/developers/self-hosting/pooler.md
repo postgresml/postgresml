@@ -115,6 +115,6 @@ Type "help" for help.
 postgresml=> SELECT pgml.version();
  version
 ---------
- 2.9.3
+ 2.10.0
 (1 row)
 ```

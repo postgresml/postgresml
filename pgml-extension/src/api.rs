@@ -233,7 +233,7 @@ fn train_joint(
         algorithm
     };
 
-    // # Default repeatable random state when possible
+    // TODO Default repeatable random state when possible
     // let algorithm = Model.algorithm_from_name_and_task(algorithm, task);
     // if "random_state" in algorithm().get_params() and "random_state" not in hyperparams:
     //     hyperparams["random_state"] = 0
@@ -599,9 +599,10 @@ pub fn embed(transformer: &str, text: &str, kwargs: default!(JsonB, "'{}'")) -> 
 #[pg_extern(immutable, parallel_safe, name = "embed")]
 pub fn embed_batch(
     transformer: &str,
-    inputs: Vec<&str>,
+    inputs: Array<&str>,
     kwargs: default!(JsonB, "'{}'"),
 ) -> SetOfIterator<'static, Vec<f32>> {
+    let inputs: Vec<&str> = inputs.iter().map(|x| x.unwrap()).collect();
     match crate::bindings::transformers::embed(transformer, inputs, &kwargs.0) {
         Ok(output) => SetOfIterator::new(output),
         Err(e) => error!("{e}"),
@@ -613,9 +614,10 @@ pub fn embed_batch(
 pub fn rank(
     transformer: &str,
     query: &str,
-    documents: Vec<&str>,
+    documents: Array<&str>,
     kwargs: default!(JsonB, "'{}'"),
 ) -> TableIterator<'static, (name!(corpus_id, i64), name!(score, f64), name!(text, Option<String>))> {
+    let documents: Vec<&str> = documents.iter().map(|x| x.unwrap()).collect();
     match crate::bindings::transformers::rank(transformer, query, documents, &kwargs.0) {
         Ok(output) => TableIterator::new(output.into_iter().map(|x| (x.corpus_id, x.score, x.text))),
         Err(e) => error!("{e}"),
@@ -671,13 +673,14 @@ pub fn chunk(
 pub fn transform_json(
     task: JsonB,
     args: default!(JsonB, "'{}'"),
-    inputs: default!(Vec<&str>, "ARRAY[]::TEXT[]"),
+    inputs: default!(Array<&str>, "ARRAY[]::TEXT[]"),
     cache: default!(bool, false),
 ) -> JsonB {
     if let Err(err) = crate::bindings::transformers::whitelist::verify_task(&task.0) {
         error!("{err}");
     }
 
+    let inputs: Vec<&str> = inputs.iter().map(|x| x.unwrap()).collect();
     match crate::bindings::transformers::transform(&task.0, &args.0, inputs) {
         Ok(output) => JsonB(output),
         Err(e) => error!("{e}"),
@@ -690,13 +693,14 @@ pub fn transform_json(
 pub fn transform_string(
     task: String,
     args: default!(JsonB, "'{}'"),
-    inputs: default!(Vec<&str>, "ARRAY[]::TEXT[]"),
+    inputs: default!(Array<&str>, "ARRAY[]::TEXT[]"),
     cache: default!(bool, false),
 ) -> JsonB {
     let task_json = json!({ "task": task });
     if let Err(err) = crate::bindings::transformers::whitelist::verify_task(&task_json) {
         error!("{err}");
     }
+    let inputs: Vec<&str> = inputs.iter().map(|x| x.unwrap()).collect();
     match crate::bindings::transformers::transform(&task_json, &args.0, inputs) {
         Ok(output) => JsonB(output),
         Err(e) => error!("{e}"),
@@ -755,10 +759,11 @@ pub fn transform_stream_json(
     input: default!(&str, "''"),
     cache: default!(bool, false),
 ) -> SetOfIterator<'static, JsonB> {
-    // We can unwrap this becuase if there is an error the current transaction is aborted in the map_err call
+    // We can unwrap this because if there is an error the current transaction is aborted in the map_err call
     let python_iter = crate::bindings::transformers::transform_stream_iterator(&task.0, &args.0, input)
         .map_err(|e| error!("{e}"))
         .unwrap();
+
     SetOfIterator::new(python_iter)
 }
 
@@ -772,7 +777,7 @@ pub fn transform_stream_string(
     cache: default!(bool, false),
 ) -> SetOfIterator<'static, JsonB> {
     let task_json = json!({ "task": task });
-    // We can unwrap this becuase if there is an error the current transaction is aborted in the map_err call
+    // We can unwrap this because if there is an error the current transaction is aborted in the map_err call
     let python_iter = crate::bindings::transformers::transform_stream_iterator(&task_json, &args.0, input)
         .map_err(|e| error!("{e}"))
         .unwrap();
@@ -791,7 +796,7 @@ pub fn transform_stream_conversational_json(
     if !task.0["task"].as_str().is_some_and(|v| v == "conversational") {
         error!("ARRAY[]::JSONB inputs for transform_stream should only be used with a conversational task");
     }
-    // We can unwrap this becuase if there is an error the current transaction is aborted in the map_err call
+    // We can unwrap this because if there is an error the current transaction is aborted in the map_err call
     let python_iter = crate::bindings::transformers::transform_stream_iterator(&task.0, &args.0, inputs)
         .map_err(|e| error!("{e}"))
         .unwrap();
@@ -811,7 +816,7 @@ pub fn transform_stream_conversational_string(
         error!("ARRAY::JSONB inputs for transform_stream should only be used with a conversational task");
     }
     let task_json = json!({ "task": task });
-    // We can unwrap this becuase if there is an error the current transaction is aborted in the map_err call
+    // We can unwrap this because if there is an error the current transaction is aborted in the map_err call
     let python_iter = crate::bindings::transformers::transform_stream_iterator(&task_json, &args.0, inputs)
         .map_err(|e| error!("{e}"))
         .unwrap();
@@ -821,15 +826,17 @@ pub fn transform_stream_conversational_string(
 #[cfg(feature = "python")]
 #[pg_extern(immutable, parallel_safe, name = "generate")]
 fn generate(project_name: &str, inputs: &str, config: default!(JsonB, "'{}'")) -> String {
-    generate_batch(project_name, Vec::from([inputs]), config)
-        .first()
-        .unwrap()
-        .to_string()
+    let inputs: Vec<&str> = Vec::from([inputs]);
+    match crate::bindings::transformers::generate(Project::get_deployed_model_id(project_name), inputs, config) {
+        Ok(output) => output.first().unwrap().to_string(),
+        Err(e) => error!("{e}"),
+    }
 }
 
 #[cfg(feature = "python")]
 #[pg_extern(immutable, parallel_safe, name = "generate")]
-fn generate_batch(project_name: &str, inputs: Vec<&str>, config: default!(JsonB, "'{}'")) -> Vec<String> {
+fn generate_batch(project_name: &str, inputs: Array<&str>, config: default!(JsonB, "'{}'")) -> Vec<String> {
+    let inputs: Vec<&str> = inputs.iter().map(|x| x.unwrap()).collect();
     match crate::bindings::transformers::generate(Project::get_deployed_model_id(project_name), inputs, config) {
         Ok(output) => output,
         Err(e) => error!("{e}"),

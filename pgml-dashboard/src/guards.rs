@@ -71,6 +71,7 @@ impl Cluster {
                         ],
                     },
                 },
+                body_components: Vec::new(),
             },
             notifications: None,
         }

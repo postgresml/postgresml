@@ -7,6 +7,7 @@ use crate::{
     responses::{Error, ResponseOk},
 };
 
+use crate::components::layouts::product::Index as Product;
 use crate::templates::{components::NavLink, *};
 
 use crate::models;
@@ -18,7 +19,7 @@ use std::collections::HashMap;
 // Returns snapshots page
 #[get("/snapshots")]
 pub async fn snapshots(cluster: &Cluster, _connected: ConnectedCluster<'_>) -> Result<ResponseOk, Error> {
-    let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster);
+    let mut layout = Product::new("Dashboard", &cluster);
     layout.breadcrumbs(vec![NavLink::new("Snapshots", &urls::deployment_snapshots()).active()]);
 
     let tabs = vec![tabs::Tab {
@@ -40,7 +41,7 @@ pub async fn snapshot(
 ) -> Result<ResponseOk, Error> {
     let snapshot = models::Snapshot::get_by_id(cluster.pool(), snapshot_id).await?;
 
-    let mut layout = crate::templates::WebAppBase::new("Dashboard", &cluster);
+    let mut layout = Product::new("Dashboard", &cluster);
     layout.breadcrumbs(vec![
         NavLink::new("Snapshots", &urls::deployment_snapshots()),
         NavLink::new(&snapshot.relation_name, &urls::deployment_snapshot_by_id(snapshot.id)).active(),

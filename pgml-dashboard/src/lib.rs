@@ -27,11 +27,13 @@ use responses::{Error, Response, ResponseOk};
 use templates::{components::StaticNav, *};
 use crate::components::navigation::left_nav;
 
+use crate::components::layouts::product::Index as Product;
 use crate::components::tables::serverless_models::{ServerlessModels, ServerlessModelsTurbo};
 use crate::components::tables::serverless_pricing::{ServerlessPricing, ServerlessPricingTurbo};
 use crate::utils::cookies::{NotificationCookie, Notifications};
 use crate::utils::urls;
 use chrono;
+use pgml_components::Component;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 
@@ -55,6 +57,7 @@ pub struct Context {
     pub marketing_footer: String,
     pub head_items: Option<String>,
     pub product_left_nav: left_nav::web_app::Menu,
+    pub body_components: Vec<Component>,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -325,7 +328,7 @@ pub async fn dashboard(tab: Option<&str>, id: Option<i64>) -> Redirect {
 
 #[get("/playground")]
 pub async fn playground(cluster: &Cluster) -> Result<ResponseOk, Error> {
-    let mut layout = crate::templates::WebAppBase::new("Playground", &cluster);
+    let mut layout = Product::new("Playground", &cluster);
     Ok(ResponseOk(layout.render(templates::Playground {})))
 }
 

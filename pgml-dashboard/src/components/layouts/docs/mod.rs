@@ -2,7 +2,7 @@ use crate::components::cms::IndexLink;
 use crate::components::layouts::Head;
 use crate::guards::Cluster;
 use crate::models::User;
-use pgml_components::component;
+use pgml_components::{component, Component};
 use sailfish::TemplateOnce;
 
 #[derive(TemplateOnce, Default, Clone)]
@@ -13,23 +13,26 @@ pub struct Docs {
     user: Option<User>,
     content: Option<String>,
     index: Vec<IndexLink>,
+    body_components: Vec<Component>,
 }
 
 impl Docs {
     pub fn new(title: &str, context: Option<&Cluster>) -> Docs {
-        let (head, footer, user) = match context.as_ref() {
+        let (head, footer, user, body_components) = match context.as_ref() {
             Some(context) => (
                 Head::new().title(&title).context(&context.context.head_items),
                 Some(context.context.marketing_footer.clone()),
                 Some(context.context.user.clone()),
+                context.context.body_components.clone(),
             ),
-            None => (Head::new().title(&title), None, None),
+            None => (Head::new().title(&title), None, None, Vec::new()),
         };
 
         Docs {
             head,
             footer,
             user,
+            body_components,
             ..Default::default()
         }
     }

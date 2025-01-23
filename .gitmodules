@@ -1,3 +1,0 @@
-[submodule "pgml-extension/deps/linfa"]
-	path = pgml-extension/deps/linfa
-	url = https://github.com/postgresml/linfa
