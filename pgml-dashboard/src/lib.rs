@@ -25,6 +25,7 @@ use components::notifications::product::ProductBanner;
 use guards::Cluster;
 use responses::{Error, Response, ResponseOk};
 use templates::{components::StaticNav, *};
+use crate::components::navigation::left_nav;
 
 use crate::components::tables::serverless_models::{ServerlessModels, ServerlessModelsTurbo};
 use crate::components::tables::serverless_pricing::{ServerlessPricing, ServerlessPricingTurbo};
@@ -53,7 +54,7 @@ pub struct Context {
     pub deployment_dropdown: StaticNav,
     pub marketing_footer: String,
     pub head_items: Option<String>,
-    pub product_left_nav: crate::components::navigation::left_nav::web_app::Menu,
+    pub product_left_nav: left_nav::web_app::Menu,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -649,7 +650,10 @@ mod test {
                             cluster: models::Cluster::default(),
                             deployment_dropdown: StaticNav { links: vec![] },
                             organization_dropdown: StaticNav { links: vec![] },
-                            product_left_nav: StaticNav { links: vec![] },
+                            product_left_nav: left_nav::web_app::Menu {
+                                back: None, 
+                                items: StaticNav { links: vec![] }
+                            },
                             marketing_footer: MarketingFooter::new().render_once().unwrap(),
                             head_items: None,
                         },
@@ -723,7 +727,10 @@ mod test {
                             cluster: models::Cluster::default(),
                             deployment_dropdown: StaticNav { links: vec![] },
                             organization_dropdown: StaticNav { links: vec![] },
-                            product_left_nav: StaticNav { links: vec![] },
+                            product_left_nav: left_nav::web_app::Menu {
+                                back: None,
+                                items: StaticNav { links: vec![] }
+                            },
                             marketing_footer: MarketingFooter::new().render_once().unwrap(),
                             head_items: None,
                         },

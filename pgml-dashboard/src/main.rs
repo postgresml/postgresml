@@ -275,7 +275,7 @@ mod test {
 
     #[rocket::async_test]
     async fn test_deployment_entries() {
-        let deployments_endpoint = "/deployments";
+        let deployments_endpoint = uri!(crate::api::deployment::deployments_index());
         let client = Client::tracked(rocket().await).await.unwrap();
         let response = client.get(deployments_endpoint).dispatch().await;
 

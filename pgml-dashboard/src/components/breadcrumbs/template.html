@@ -2,12 +2,6 @@
   use crate::utils::config;
   use crate::utils::urls;
   use crate::components::dropdown::Dropdown;
-
-  let home_uri = if config::standalone_dashboard() {
-    urls::deployment_notebooks()
-  } else {
-    "/deployments".to_string()
-  };
 %>
 
 <nav>
