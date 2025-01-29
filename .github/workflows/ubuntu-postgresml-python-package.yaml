@@ -45,6 +45,8 @@ jobs:
           python3-pip \
           libpython3.11-dev \
           python3.11-dev
+
+        sudo dpkg --configure -a
     - name: Build and release package
       env:
         AWS_ACCESS_KEY_ID: ${{ vars.AWS_ACCESS_KEY_ID }}

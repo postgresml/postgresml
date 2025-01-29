@@ -110,6 +110,7 @@ jobs:
 
         curl -sLO https://github.com/deb-s3/deb-s3/releases/download/0.11.4/deb-s3-0.11.4.gem
         sudo gem install deb-s3-0.11.4.gem
+        sudo dpkg --configure -a
         dpkg-deb --version
     - name: Install pgrx
       uses: postgresml/gh-actions-cargo@master
@@ -233,6 +234,12 @@ jobs:
     - uses: actions-rs/toolchain@v1
       with:
         toolchain: stable
+    - name: Update dependencies
+      run: |
+        curl -sLO https://github.com/deb-s3/deb-s3/releases/download/0.11.4/deb-s3-0.11.4.gem
+        sudo gem install deb-s3-0.11.4.gem
+        sudo dpkg --configure -a
+        dpkg-deb --version
     - name: Build and release package
       env:
         AWS_ACCESS_KEY_ID: ${{ vars.AWS_ACCESS_KEY_ID }}
