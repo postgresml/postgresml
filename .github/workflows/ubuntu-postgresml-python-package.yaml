@@ -33,6 +33,19 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
+    - name: Install dependencies
+      env:
+        DEBIAN_FRONTEND: noninteractive
+        TZ: Etc/UTC
+      run: |
+        sudo add-apt-repository ppa:deadsnakes/ppa --yes
+        sudo apt update
+
+        sudo apt-get update && sudo apt-fast install -y \
+          python3.11 \
+          python3-pip \
+          libpython3.11-dev \
+          python3.11-dev
     - name: Build and release package
       env:
         AWS_ACCESS_KEY_ID: ${{ vars.AWS_ACCESS_KEY_ID }}
