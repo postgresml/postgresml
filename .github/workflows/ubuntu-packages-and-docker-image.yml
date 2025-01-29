@@ -129,13 +129,7 @@ jobs:
       with:
         working-directory: pgml-extension
         command: pgrx
-        args: init --pg11/usr/lib/postgresql/11/bin/pg_config --pg12=/usr/lib/postgresql/12/bin/pg_config --pg13=/usr/lib/postgresql/13/bin/pg_config --pg14=/usr/lib/postgresql/14/bin/pg_config --pg15=/usr/lib/postgresql/15/bin/pg_config --pg16=/usr/lib/postgresql/16/bin/pg_config --pg17=/usr/lib/postgresql/17/bin/pg_config
-    - name: Build Postgres 11
-      uses: postgresml/gh-actions-cargo@master
-      with:
-        working-directory: pgml-extension
-        command: pgrx
-        args: package --pg-config /usr/lib/postgresql/11/bin/pg_config
+        args: init --pg12=/usr/lib/postgresql/12/bin/pg_config --pg13=/usr/lib/postgresql/13/bin/pg_config --pg14=/usr/lib/postgresql/14/bin/pg_config --pg15=/usr/lib/postgresql/15/bin/pg_config --pg16=/usr/lib/postgresql/16/bin/pg_config --pg17=/usr/lib/postgresql/17/bin/pg_config
     - name: Build Postgres 12
       uses: postgresml/gh-actions-cargo@master
       with:

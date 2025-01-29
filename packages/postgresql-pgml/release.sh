@@ -58,7 +58,7 @@ function package_name() {
 echo "Building packages for Ubuntu ${ubuntu_version} (${CODENAME}) ${ARCH}"
 
 # Loop through PostgreSQL versions
-for pg in {11..17}; do
+for pg in {12..17}; do
   echo "Building PostgreSQL ${pg} package..."
 
   release_dir="$extension_dir/target/release/pgml-pg${pg}"

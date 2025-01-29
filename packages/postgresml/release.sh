@@ -47,7 +47,7 @@ function package_name() {
 echo "Building packages for Ubuntu ${ubuntu_version} (${CODENAME})"
 
 # Loop through PostgreSQL versions
-for pg in {11..17}; do
+for pg in {12..17}; do
   echo "Building PostgreSQL ${pg} package..."
   bash ${SCRIPT_DIR}/build.sh ${package_version} ${pg} ${ubuntu_version}
 
