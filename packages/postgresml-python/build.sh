@@ -37,11 +37,20 @@ rm "$deb_dir/release.sh"
 (cat ${SCRIPT_DIR}/DEBIAN/prerm | envsubst '${PGVERSION} ${PYTHON_VERSION}') > "$deb_dir/DEBIAN/prerm"
 (cat ${SCRIPT_DIR}/DEBIAN/postrm | envsubst '${PGVERSION} ${PYTHON_VERSION}') > "$deb_dir/DEBIAN/postrm"
 
-# Copy appropriate requirements file based on architecture
-if [[ "$ARCH" == "amd64" ]]; then
-  cp ${SCRIPT_DIR}/../../pgml-extension/requirements.linux.txt "$deb_dir/etc/postgresml-python/requirements.txt"
+# Select requirements file based on Ubuntu version and architecture
+if [[ "${UBUNTU_VERSION}" == "20.04" ]]; then
+  # Frozen requirements are not longer available on Ubuntu 20.04
+  cp ${SCRIPT_DIR}/../../pgml-extension/requirements.txt "$deb_dir/etc/postgresml-python/requirements.txt"
+  echo "Recomputing requirements.txt for Ubuntu 20.04"
 else
-  cp ${SCRIPT_DIR}/../../pgml-extension/requirements.macos.txt "$deb_dir/etc/postgresml-python/requirements.txt"
+  # Use frozen requirements for newer Ubuntu versions
+  if [[ "$ARCH" == "amd64" ]]; then
+    cp ${SCRIPT_DIR}/../../pgml-extension/requirements.linux.txt "$deb_dir/etc/postgresml-python/requirements.txt"
+    echo "Using frozen Linux requirements for Ubuntu ${UBUNTU_VERSION}"
+  else
+    cp ${SCRIPT_DIR}/../../pgml-extension/requirements.macos.txt "$deb_dir/etc/postgresml-python/requirements.txt"
+    echo "Using frozen macOS requirements for Ubuntu ${UBUNTU_VERSION}"
+  fi
 fi
 
 # Create and populate virtualenv
