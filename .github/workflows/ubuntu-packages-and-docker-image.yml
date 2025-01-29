@@ -28,10 +28,6 @@ jobs:
           - os: "ubuntu-22.04-arm"
             ubuntu_version: "jammy"
             arch: "arm64"
-          # Ubuntu 20.04 LTS (Focal) - Consider removing after April 2025
-          - os: "ubuntu-20.04"
-            ubuntu_version: "focal"
-            arch: "amd64"
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
@@ -198,10 +194,6 @@ jobs:
           - os: "ubuntu-22.04-arm"
             ubuntu_version: "jammy"
             arch: "arm64"
-          # Ubuntu 20.04 LTS (Focal) - Consider removing after April 2025
-          - os: "ubuntu-20.04"
-            ubuntu_version: "focal"
-            arch: "amd64"
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
@@ -235,10 +227,6 @@ jobs:
           - os: "ubuntu-22.04-arm"
             ubuntu_version: "jammy"
             arch: "arm64"
-          # Ubuntu 20.04 LTS (Focal) - Consider removing after April 2025
-          - os: "ubuntu-20.04"
-            ubuntu_version: "focal"
-            arch: "amd64"
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
