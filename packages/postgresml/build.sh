@@ -3,9 +3,15 @@ set -e
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-export PACKAGE_VERSION=${1:-"2.10.0"}
-export PGVERSION=${2:-"17"}
-export UBUNTU_VERSION=${3:-"24.04"}
+# Parse arguments with environment variable fallbacks
+export PACKAGE_VERSION=${1:-${PACKAGE_VERSION:-"2.10.0"}}
+export PGVERSION=${2:-${PGVERSION:-"17"}}
+export UBUNTU_VERSION=${3:-${ubuntu_version:-$(lsb_release -rs)}}
+
+echo "Building package:"
+echo "- Package Version: ${PACKAGE_VERSION}"
+echo "- PostgreSQL Version: ${PGVERSION}"
+echo "- Ubuntu Version: ${UBUNTU_VERSION}"
 
 deb_dir="/tmp/postgresml/deb-build"
 
@@ -27,4 +33,4 @@ dpkg-deb \
   --root-owner-group \
   -z1 \
   --build "$deb_dir" \
-  postgresml-${PGVERSION}-${PACKAGE_VERSION}-ubuntu${UBUNTU_VERSION}-all.deb
+  "postgresml-${PGVERSION}-${PACKAGE_VERSION}-ubuntu${UBUNTU_VERSION}-all.deb"

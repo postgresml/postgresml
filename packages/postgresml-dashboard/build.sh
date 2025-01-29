@@ -1,14 +1,15 @@
 #!/bin/bash
 set -e
 
-# Parse arguments
-PACKAGE_VERSION=${1:-"2.10.0"}
-UBUNTU_VERSION=${2:-"22.04"}
+# Parse arguments with environment variable fallbacks
+PACKAGE_VERSION=${1:-${PACKAGE_VERSION:-"2.10.0"}}
+UBUNTU_VERSION=${2:-${ubuntu_version:-$(lsb_release -rs)}}
+ARCH=${3:-${ARCH:-$(arch | sed 's/x86_64/amd64/; s/aarch64/arm64/')}}
 
 if [[ -z "$PACKAGE_VERSION" ]]; then
   echo "postgresml dashboard build script"
-  echo "Usage: $0 <package version> [ubuntu version]"
-  echo "Example: $0 2.10.0 22.04"
+  echo "Usage: $0 <package version> [ubuntu version] [arch]"
+  echo "Example: $0 2.10.0 22.04 amd64"
   exit 1
 fi
 
@@ -19,12 +20,16 @@ source_dir="$dir/source"
 
 export PACKAGE_VERSION
 export UBUNTU_VERSION
-export GITHUB_STARS=$(curl -s "https://api.github.com/repos/postgresml/postgresml" | grep stargazers_count | cut -d : -f 2 | tr -d " " | tr -d ",")
-if [[ $(arch) == "x86_64" ]]; then
-  export ARCH=amd64
-else
-  export ARCH=arm64
-fi
+export ARCH
+
+# Fetch GitHub stars count with error handling
+GITHUB_STARS=$(curl -s "https://api.github.com/repos/postgresml/postgresml" | grep stargazers_count | cut -d : -f 2 | tr -d " " | tr -d "," || echo "0")
+export GITHUB_STARS
+
+echo "Building dashboard package:"
+echo "- Version: ${PACKAGE_VERSION}"
+echo "- Ubuntu: ${UBUNTU_VERSION}"
+echo "- Architecture: ${ARCH}"
 
 rm -rf "$dir"
 mkdir -p "$deb_dir"
@@ -32,7 +37,6 @@ mkdir -p "$deb_dir"
 cp -R ${SCRIPT_DIR}/* "$deb_dir"
 rm "$deb_dir/build.sh"
 rm "$deb_dir/release.sh"
-
 
 ( cd ${SCRIPT_DIR}/../../pgml-dashboard && \
   cargo build --release && \

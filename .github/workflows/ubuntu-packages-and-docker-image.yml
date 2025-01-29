@@ -13,7 +13,21 @@ jobs:
     strategy:
       fail-fast: false # Let the other job finish
       matrix:
-        os: ["buildjet-4vcpu-ubuntu-2204", "buildjet-8vcpu-ubuntu-2204-arm"]
+        include:
+          # Ubuntu 24.04 LTS (Noble)
+          - os: "ubuntu-24.04"
+            ubuntu_version: "noble"
+            arch: "amd64"
+          - os: "ubuntu-24.04-arm"
+            ubuntu_version: "noble"
+            arch: "arm64"
+          # Ubuntu 22.04 LTS (Jammy)
+          - os: "ubuntu-22.04"
+            ubuntu_version: "jammy"
+            arch: "amd64"
+          - os: "ubuntu-22.04-arm"
+            ubuntu_version: "jammy"
+            arch: "arm64"
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
@@ -78,14 +92,16 @@ jobs:
           postgresql-14 \
           postgresql-13 \
           postgresql-12 \
+          postgresql-11 \
           postgresql-server-dev-17 \
           postgresql-server-dev-16 \
           postgresql-server-dev-15 \
           postgresql-server-dev-14 \
           postgresql-server-dev-13 \
           postgresql-server-dev-12 \
+          postgresql-server-dev-11 \
           lsb-release \
-          python3.10 \
+          python3.11 \
           python3-pip \
           libpython3.10-dev \
           python3.10-dev \
@@ -94,6 +110,7 @@ jobs:
 
         curl -sLO https://github.com/deb-s3/deb-s3/releases/download/0.11.4/deb-s3-0.11.4.gem
         sudo gem install deb-s3-0.11.4.gem
+        sudo dpkg --configure -a
         dpkg-deb --version
     - name: Install pgrx
       uses: postgresml/gh-actions-cargo@master
@@ -161,9 +178,23 @@ jobs:
   postgresml:
     needs: postgresml-pgml
     strategy:
-      fail-fast: false # Let the other job finish
+      fail-fast: false
       matrix:
-        os: ["ubuntu-22.04"]
+        include:
+          # Ubuntu 24.04 LTS (Noble)
+          - os: "ubuntu-24.04"
+            ubuntu_version: "noble"
+            arch: "amd64"
+          - os: "ubuntu-24.04-arm"
+            ubuntu_version: "noble"
+            arch: "arm64"
+          # Ubuntu 22.04 LTS (Jammy)
+          - os: "ubuntu-22.04"
+            ubuntu_version: "jammy"
+            arch: "amd64"
+          - os: "ubuntu-22.04-arm"
+            ubuntu_version: "jammy"
+            arch: "arm64"
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
@@ -180,15 +211,35 @@ jobs:
   #
   postgresml-dashboard:
     strategy:
-      fail-fast: false # Let the other job finish
+      fail-fast: false
       matrix:
-        os: ["ubuntu-22.04", "buildjet-4vcpu-ubuntu-2204-arm"]
+        include:
+          # Ubuntu 24.04 LTS (Noble)
+          - os: "ubuntu-24.04"
+            ubuntu_version: "noble"
+            arch: "amd64"
+          - os: "ubuntu-24.04-arm"
+            ubuntu_version: "noble"
+            arch: "arm64"
+          # Ubuntu 22.04 LTS (Jammy)
+          - os: "ubuntu-22.04"
+            ubuntu_version: "jammy"
+            arch: "amd64"
+          - os: "ubuntu-22.04-arm"
+            ubuntu_version: "jammy"
+            arch: "arm64"
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
     - uses: actions-rs/toolchain@v1
       with:
         toolchain: stable
+    - name: Update dependencies
+      run: |
+        curl -sLO https://github.com/deb-s3/deb-s3/releases/download/0.11.4/deb-s3-0.11.4.gem
+        sudo gem install deb-s3-0.11.4.gem
+        sudo dpkg --configure -a
+        dpkg-deb --version
     - name: Build and release package
       env:
         AWS_ACCESS_KEY_ID: ${{ vars.AWS_ACCESS_KEY_ID }}
@@ -208,7 +259,9 @@ jobs:
     strategy:
       fail-fast: false # Let the other job finish
       matrix:
-        os: ["buildjet-4vcpu-ubuntu-2204"]
+        include:
+          - os: "ubuntu-24.04"
+            ubuntu_version: "noble"
     runs-on: ${{ matrix.os }}
     defaults:
       run:
