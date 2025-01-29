@@ -13,26 +13,23 @@ jobs:
       matrix:
         include:
           # Ubuntu 24.04 LTS (Noble)
-          - os: "buildjet-4vcpu-ubuntu-2404"
+          - os: "ubuntu-24.04"
             ubuntu_version: "noble"
             arch: "amd64"
-          - os: "buildjet-8vcpu-ubuntu-2404-arm"
+          - os: "ubuntu-24.04-arm"
             ubuntu_version: "noble"
             arch: "arm64"
           # Ubuntu 22.04 LTS (Jammy)
-          - os: "buildjet-4vcpu-ubuntu-2204"
+          - os: "ubuntu-22.04"
             ubuntu_version: "jammy"
             arch: "amd64"
-          - os: "buildjet-8vcpu-ubuntu-2204-arm"
+          - os: "ubuntu-22.04-arm"
             ubuntu_version: "jammy"
             arch: "arm64"
           # Ubuntu 20.04 LTS (Focal) - Consider removing after April 2025
-          - os: "buildjet-4vcpu-ubuntu-2004"
+          - os: "ubuntu-20.04"
             ubuntu_version: "focal"
             arch: "amd64"
-          - os: "buildjet-8vcpu-ubuntu-2004-arm"
-            ubuntu_version: "focal"
-            arch: "arm64"
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
