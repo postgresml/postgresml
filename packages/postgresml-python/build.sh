@@ -4,29 +4,25 @@ set -e
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 deb_dir="/tmp/postgresml-python/deb-build"
 
-# Parse arguments with defaults
-export PACKAGE_VERSION=${1:-"2.10.0"}
-export UBUNTU_VERSION=${2:-"22.04"}
-export PYTHON_VERSION=${3:-"3.10"}
+# Parse arguments with environment variable fallbacks
+export PACKAGE_VERSION=${1:-${PACKAGE_VERSION:-"2.10.0"}}
+export UBUNTU_VERSION=${2:-${ubuntu_version:-$(lsb_release -rs)}}
+export PYTHON_VERSION=${3:-${PYTHON_VERSION:-"3.10"}}
 
-# Handle architecture
-if [[ $(arch) == "x86_64" ]]; then
-  export ARCH=amd64
-else
-  export ARCH=arm64
+# Set architecture from environment or detect it
+if [[ -z "${ARCH}" ]]; then
+  if [[ $(arch) == "x86_64" ]]; then
+    export ARCH=amd64
+  else
+    export ARCH=arm64
+  fi
 fi
 
-# Map Ubuntu versions to Python versions if needed
-# For example: Ubuntu 20.04 uses Python 3.8 by default
-declare -A ubuntu_python_versions=(
-  ["20.04"]="3.8"
-  ["22.04"]="3.10"
-  ["24.04"]="3.11"
-)
-
-if [[ -z "$3" ]]; then
-  PYTHON_VERSION=${ubuntu_python_versions[$UBUNTU_VERSION]:-"3.10"}
-fi
+echo "Building package:"
+echo "- Package Version: ${PACKAGE_VERSION}"
+echo "- Ubuntu Version: ${UBUNTU_VERSION}"
+echo "- Python Version: ${PYTHON_VERSION}"
+echo "- Architecture: ${ARCH}"
 
 rm -rf "$deb_dir"
 mkdir -p "$deb_dir"
@@ -35,17 +31,21 @@ cp -R ${SCRIPT_DIR}/* "$deb_dir"
 rm "$deb_dir/build.sh"
 rm "$deb_dir/release.sh"
 
+# Process template files
 (cat ${SCRIPT_DIR}/DEBIAN/control | envsubst '${PACKAGE_VERSION} ${UBUNTU_VERSION} ${ARCH} ${PYTHON_VERSION}') > "$deb_dir/DEBIAN/control"
 (cat ${SCRIPT_DIR}/DEBIAN/postinst | envsubst '${PGVERSION} ${PYTHON_VERSION}') > "$deb_dir/DEBIAN/postinst"
 (cat ${SCRIPT_DIR}/DEBIAN/prerm | envsubst '${PGVERSION} ${PYTHON_VERSION}') > "$deb_dir/DEBIAN/prerm"
 (cat ${SCRIPT_DIR}/DEBIAN/postrm | envsubst '${PGVERSION} ${PYTHON_VERSION}') > "$deb_dir/DEBIAN/postrm"
 
+# Copy appropriate requirements file based on architecture
 if [[ "$ARCH" == "amd64" ]]; then
   cp ${SCRIPT_DIR}/../../pgml-extension/requirements.linux.txt "$deb_dir/etc/postgresml-python/requirements.txt"
 else
   cp ${SCRIPT_DIR}/../../pgml-extension/requirements.macos.txt "$deb_dir/etc/postgresml-python/requirements.txt"
 fi
 
+# Create and populate virtualenv
+echo "Creating Python virtual environment with Python ${PYTHON_VERSION}"
 virtualenv --python="python${PYTHON_VERSION}" "$deb_dir/var/lib/postgresml-python/pgml-venv"
 source "$deb_dir/var/lib/postgresml-python/pgml-venv/bin/activate"
 

@@ -8,19 +8,40 @@ if [[ -z "${1}" ]]; then
   exit 1
 fi
 
+# Set architecture based on system unless overridden by environment
+if [[ -z "${ARCH}" ]]; then
+  if [[ $(arch) == "x86_64" ]]; then
+    export ARCH=amd64
+  else
+    export ARCH=arm64
+  fi
+fi
+
 export PACKAGE_VERSION=${1}
 
-# Active LTS Ubuntu versions and their codenames
-declare -A ubuntu_versions=(
-  ["20.04"]="focal"
-  ["22.04"]="jammy"
-  ["24.04"]="noble"
-)
+# Get Ubuntu version from environment or try to detect it
+if [[ -z "${ubuntu_version}" ]]; then
+  ubuntu_version=$(lsb_release -rs)
+  echo "No ubuntu_version specified, detected: ${ubuntu_version}"
+fi
 
-# Supported architectures
-declare -a architectures=("amd64" "arm64")
+# Map version number to codename
+case "${ubuntu_version}" in
+  "20.04")
+    export CODENAME="focal"
+    ;;
+  "22.04")
+    export CODENAME="jammy"
+    ;;
+  "24.04")
+    export CODENAME="noble"
+    ;;
+  *)
+    echo "Error: Unsupported Ubuntu version: ${ubuntu_version}"
+    exit 1
+    ;;
+esac
 
-# Install deb-s3 if not present
 if ! which deb-s3; then
   curl -sLO https://github.com/deb-s3/deb-s3/releases/download/0.11.4/deb-s3-0.11.4.gem
   sudo gem install deb-s3-0.11.4.gem
@@ -31,49 +52,37 @@ extension_dir="${SCRIPT_DIR}/../../pgml-extension"
 
 function package_name() {
   local pg_version=$1
-  local ubuntu_version=$2
-  local arch=$3
-  echo "postgresql-pgml-${pg_version}_${PACKAGE_VERSION}-ubuntu${ubuntu_version}-${arch}.deb"
+  echo "postgresql-pgml-${pg_version}_${PACKAGE_VERSION}-ubuntu${ubuntu_version}-${ARCH}.deb"
 }
 
-# Loop through Ubuntu versions
-for ubuntu_version in "${!ubuntu_versions[@]}"; do
-  codename=${ubuntu_versions[$ubuntu_version]}
-  echo "Building packages for Ubuntu ${ubuntu_version} (${codename})"
+echo "Building packages for Ubuntu ${ubuntu_version} (${CODENAME}) ${ARCH}"
 
-  # Loop through architectures
-  for arch in "${architectures[@]}"; do
-    echo "Building for architecture: ${arch}"
-    export ARCH=${arch}
+# Loop through PostgreSQL versions
+for pg in {11..17}; do
+  echo "Building PostgreSQL ${pg} package..."
 
-    # Loop through PostgreSQL versions
-    for pg in {11..17}; do
-      echo "Building PostgreSQL ${pg} package..."
+  release_dir="$extension_dir/target/release/pgml-pg${pg}"
+  mkdir -p "$release_dir/DEBIAN"
 
-      release_dir="$extension_dir/target/release/pgml-pg${pg}"
-      mkdir -p "$release_dir/DEBIAN"
+  export PGVERSION=${pg}
+  # Update control file with Ubuntu version
+  (cat ${SCRIPT_DIR}/DEBIAN/control |
+   envsubst '${PGVERSION} ${PACKAGE_VERSION} ${ARCH}') > "$release_dir/DEBIAN/control"
 
-      export PGVERSION=${pg}
-      # Update control file with Ubuntu version
-      (cat ${SCRIPT_DIR}/DEBIAN/control |
-       envsubst '${PGVERSION} ${PACKAGE_VERSION} ${ARCH}') > "$release_dir/DEBIAN/control"
+  # Build the package
+  dpkg-deb \
+    --root-owner-group \
+    -z1 \
+    --build "$release_dir" \
+    $(package_name ${pg})
 
-      # Build the package
-      dpkg-deb \
-        --root-owner-group \
-        -z1 \
-        --build "$release_dir" \
-        $(package_name ${pg} ${ubuntu_version} ${arch})
+  # Upload to S3
+  deb-s3 upload \
+    --lock \
+    --bucket apt.postgresml.org \
+    $(package_name ${pg}) \
+    --codename ${CODENAME}
 
-      # Upload to S3
-      deb-s3 upload \
-        --lock \
-        --bucket apt.postgresml.org \
-        $(package_name ${pg} ${ubuntu_version} ${arch}) \
-        --codename ${codename}
-
-      # Clean up the package file
-      rm $(package_name ${pg} ${ubuntu_version} ${arch})
-    done
-  done
+  # Clean up the package file
+  rm $(package_name ${pg})
 done

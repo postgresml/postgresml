@@ -4,14 +4,35 @@ on:
   workflow_dispatch:
     inputs:
       packageVersion:
-        default: "2.8.4"
+        default: "2.10.0"
 
 jobs:
   postgresml-python:
     strategy:
       fail-fast: false # Let the other job finish
       matrix:
-        os: ["buildjet-4vcpu-ubuntu-2204", "buildjet-4vcpu-ubuntu-2204-arm", "ubuntu-24.04"]
+        include:
+          # Ubuntu 24.04 LTS (Noble)
+          - os: "buildjet-4vcpu-ubuntu-2404"
+            ubuntu_version: "noble"
+            arch: "amd64"
+          - os: "buildjet-8vcpu-ubuntu-2404-arm"
+            ubuntu_version: "noble"
+            arch: "arm64"
+          # Ubuntu 22.04 LTS (Jammy)
+          - os: "buildjet-4vcpu-ubuntu-2204"
+            ubuntu_version: "jammy"
+            arch: "amd64"
+          - os: "buildjet-8vcpu-ubuntu-2204-arm"
+            ubuntu_version: "jammy"
+            arch: "arm64"
+          # Ubuntu 20.04 LTS (Focal) - Consider removing after April 2025
+          - os: "buildjet-4vcpu-ubuntu-2004"
+            ubuntu_version: "focal"
+            arch: "amd64"
+          - os: "buildjet-8vcpu-ubuntu-2004-arm"
+            ubuntu_version: "focal"
+            arch: "arm64"
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
