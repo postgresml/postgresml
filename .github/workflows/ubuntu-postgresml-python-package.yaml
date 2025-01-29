@@ -34,9 +34,12 @@ jobs:
         DEBIAN_FRONTEND: noninteractive
         TZ: Etc/UTC
       run: |
+        sudo apt-get install -y software-properties-common
+        sudo add-apt-repository ppa:apt-fast/stable --yes
         sudo add-apt-repository ppa:deadsnakes/ppa --yes
         sudo apt update
 
+        sudo apt-get install -y apt-fast
         sudo apt-get update && sudo apt-fast install -y \
           python3.11 \
           python3-pip \
