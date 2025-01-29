@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "python-discord-bot"
+version = "0.1.0"
+description = "A python discord bot using postgresml python SDK"
+authors = ["aplchiangh <alex.boquis@gmail.com>"]
+readme = "README.md"
+packages = [{include = "python_discord_bot"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+python-dotenv = "^1.0.0"
+psycopg-pool = "^3.1.7"
+pgml = "^0.6.0"
+langchain = "^0.0.202"
+discord = "^2.3.0"
+
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
