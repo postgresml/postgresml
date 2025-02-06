@@ -223,12 +223,12 @@ jobs:
       matrix:
         include:
           # Ubuntu 24.04 LTS (Noble)
-          - os: "ubuntu-24.04"
-            ubuntu_version: "noble"
-            arch: "amd64"
-          - os: "ubuntu-24.04-arm"
-            ubuntu_version: "noble"
-            arch: "arm64"
+          # - os: "ubuntu-24.04"
+          #  ubuntu_version: "noble"
+          #  arch: "amd64"
+          # - os: "ubuntu-24.04-arm"
+          #  ubuntu_version: "noble"
+          #  arch: "arm64"
           # Ubuntu 22.04 LTS (Jammy)
           - os: "ubuntu-22.04"
             ubuntu_version: "jammy"
