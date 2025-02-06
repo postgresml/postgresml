@@ -15,6 +15,7 @@ jobs:
   # PostgresML extension.
   #
   postgresml-pgml:
+    needs: postgresml-dashboard # REMOVE: testing serialization
     strategy:
       fail-fast: false # Let the other job finish
       max-parallel: 1  # Only one job at a time from this matrix
