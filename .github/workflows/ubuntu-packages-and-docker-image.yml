@@ -5,6 +5,11 @@ on:
     inputs:
       packageVersion:
         default: "2.10.0"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+      
 jobs:
   #
   # PostgresML extension.
