@@ -114,8 +114,8 @@ jobs:
           ruby \
           lld
 
-        curl -sLO https://github.com/deb-s3/deb-s3/releases/download/0.11.4/deb-s3-0.11.4.gem
-        sudo gem install deb-s3-0.11.4.gem
+        curl -sLO https://github.com/deb-s3/deb-s3/releases/download/0.11.8/deb-s3-0.11.8.gem
+        sudo gem install deb-s3-0.11.8.gem
         sudo dpkg --configure -a
         dpkg-deb --version
         
@@ -244,8 +244,8 @@ jobs:
         toolchain: stable
     - name: Update dependencies
       run: |
-        curl -sLO https://github.com/deb-s3/deb-s3/releases/download/0.11.4/deb-s3-0.11.4.gem
-        sudo gem install deb-s3-0.11.4.gem
+        curl -sLO https://github.com/deb-s3/deb-s3/releases/download/0.11.8/deb-s3-0.11.8.gem
+        sudo gem install deb-s3-0.11.8.gem
         sudo dpkg --configure -a
         dpkg-deb --version
     - name: Build and release package
