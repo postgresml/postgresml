@@ -214,6 +214,7 @@ jobs:
   postgresml-dashboard:
     strategy:
       fail-fast: false
+      max-parallel: 1  # Only one job at a time from this matrix
       matrix:
         include:
           # Ubuntu 24.04 LTS (Noble)
