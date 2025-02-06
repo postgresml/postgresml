@@ -12,6 +12,7 @@ jobs:
   postgresml-pgml:
     strategy:
       fail-fast: false # Let the other job finish
+      max-parallel: 1  # Only one job at a time from this matrix
       matrix:
         include:
           # Ubuntu 24.04 LTS (Noble)
@@ -112,13 +113,6 @@ jobs:
         sudo gem install deb-s3-0.11.4.gem
         sudo dpkg --configure -a
         dpkg-deb --version
-
-    - name: Remove dpkg locks
-      run: |
-        sudo rm -f /var/lib/dpkg/lock
-        sudo rm -f /var/lib/dpkg/lock-frontend
-        sudo rm -f /var/lib/apt/lists/lock
-        sudo rm -f /var/cache/apt/archives/lock
         
     - name: Install pgrx
       uses: postgresml/gh-actions-cargo@master
