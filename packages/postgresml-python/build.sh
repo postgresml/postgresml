@@ -58,6 +58,8 @@ echo "Creating Python virtual environment with Python ${PYTHON_VERSION}"
 virtualenv --python="python${PYTHON_VERSION}" "$deb_dir/var/lib/postgresml-python/pgml-venv"
 source "$deb_dir/var/lib/postgresml-python/pgml-venv/bin/activate"
 
+pip install --upgrade setuptools
+
 python -m pip install -r "${deb_dir}/etc/postgresml-python/requirements.txt"
 
 deactivate
