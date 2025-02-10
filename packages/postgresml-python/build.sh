@@ -49,6 +49,8 @@ fi
 virtualenv --python="python${PYTHON_VERSION}" "$deb_dir/var/lib/postgresml-python/pgml-venv"
 source "$deb_dir/var/lib/postgresml-python/pgml-venv/bin/activate"
 
+export SETUPTOOLS_USE_DISTUTILS=stdlib
+
 python -m pip install -r "${deb_dir}/etc/postgresml-python/requirements.txt"
 
 deactivate
