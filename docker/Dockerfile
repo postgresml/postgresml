@@ -9,6 +9,7 @@ RUN apt update && \
 		coreutils \
 		sudo \
 		openssl \
+  		cmake \
     		software-properties-common
 
 RUN add-apt-repository ppa:deadsnakes/ppa -y
