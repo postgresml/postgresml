@@ -8,7 +8,12 @@ RUN apt update && \
 		gnupg \
 		coreutils \
 		sudo \
-		openssl
+		openssl \
+  		cmake \
+    		software-properties-common
+
+RUN add-apt-repository ppa:deadsnakes/ppa -y
+      
 RUN echo "deb [trusted=yes] https://apt.postgresml.org $(lsb_release -cs) main" > /etc/apt/sources.list.d/postgresml.list
 RUN echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list
 RUN curl https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor | tee /etc/apt/trusted.gpg.d/apt.postgresql.org.gpg >/dev/null
