@@ -14,6 +14,7 @@ jobs:
       fail-fast: false # Let the other job finish
       matrix:
         os: ["buildjet-4vcpu-ubuntu-2204", "buildjet-8vcpu-ubuntu-2204-arm"]
+        ubuntu_version: ["20.04", "22.04", "24.04"]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
@@ -152,7 +153,7 @@ jobs:
         # Always build using latest scripts
         git checkout master
 
-        bash packages/postgresql-pgml/release.sh ${{ inputs.packageVersion }}
+        bash packages/postgresql-pgml/release.sh ${{ inputs.packageVersion }} ${{ matrix.ubuntu_version }}
 
   #
   # PostgresML meta package which installs
@@ -173,7 +174,7 @@ jobs:
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_DEFAULT_REGION: ${{ vars.AWS_DEFAULT_REGION }}
       run: |
-        bash packages/postgresml/release.sh ${{ inputs.packageVersion }}
+        bash packages/postgresml/release.sh ${{ inputs.packageVersion }} ${{ matrix.ubuntu_version }}
 
   #
   # PostgresML dashboard.
@@ -183,6 +184,7 @@ jobs:
       fail-fast: false # Let the other job finish
       matrix:
         os: ["ubuntu-22.04", "buildjet-4vcpu-ubuntu-2204-arm"]
+        ubuntu_version: ["20.04", "22.04", "24.04"]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
@@ -196,7 +198,7 @@ jobs:
         AWS_DEFAULT_REGION: ${{ vars.AWS_DEFAULT_REGION }}
       run: |
         cargo install cargo-pgml-components
-        bash packages/postgresml-dashboard/release.sh ${{ inputs.packageVersion }}
+        bash packages/postgresml-dashboard/release.sh ${{ inputs.packageVersion }} ${{ matrix.ubuntu_version }}
 
   #
   # PostgresML Docker image.

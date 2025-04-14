@@ -3,10 +3,11 @@ set -e
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 package_version="$1"
+target_ubuntu_version="$2"
 
 if [[ -z "$package_version" ]]; then
   echo "postgresml-python package build and release script"
-  echo "Usage: $0 <package version, e.g. 2.10.0>"
+  echo "Usage: $0 <package version, e.g. 2.10.0> [ubuntu version, e.g. 22.04]"
   exit 1
 fi
 
@@ -17,8 +18,17 @@ declare -A ubuntu_versions=(
   ["24.04"]="noble"
 )
 
-# Supported architectures
-declare -a architectures=("amd64" "arm64")
+# Detect current architecture
+if [[ $(arch) == "x86_64" ]]; then
+  export ARCH=amd64
+elif [[ $(arch) == "aarch64" ]]; then
+  export ARCH=arm64
+else
+  echo "Unsupported architecture: $(arch)"
+  exit 1
+fi
+
+echo "Building for architecture: ${ARCH}"
 
 # Install deb-s3 if not present
 if ! which deb-s3; then
@@ -36,32 +46,43 @@ function package_name() {
   echo "postgresml-python-${package_version}-ubuntu${ubuntu_version}-${arch}.deb"
 }
 
-# Loop through Ubuntu versions
-for ubuntu_version in "${!ubuntu_versions[@]}"; do
-  codename=${ubuntu_versions[$ubuntu_version]}
+build_package() {
+  local ubuntu_version=$1
+  local codename=$2
+  
   echo "Building packages for Ubuntu ${ubuntu_version} (${codename})"
 
-  # Loop through architectures
-  for arch in "${architectures[@]}"; do
-    echo "Building for architecture: ${arch}"
-    export ARCH=${arch}
+  # Build the Python package
+  bash ${SCRIPT_DIR}/build.sh "$package_version" "$ubuntu_version"
 
-    # Build the Python package
-    bash ${SCRIPT_DIR}/build.sh "$package_version" "$ubuntu_version"
+  if [[ ! -f $(package_name ${ubuntu_version} ${ARCH}) ]]; then
+    echo "File $(package_name ${ubuntu_version} ${ARCH}) doesn't exist"
+    exit 1
+  fi
 
-    if [[ ! -f $(package_name ${ubuntu_version} ${arch}) ]]; then
-      echo "File $(package_name ${ubuntu_version} ${arch}) doesn't exist"
-      exit 1
-    fi
+  # Upload to S3
+  deb-s3 upload \
+    --lock \
+    --bucket apt.postgresml.org \
+    $(package_name ${ubuntu_version} ${ARCH}) \
+    --codename ${codename}
 
-    # Upload to S3
-    deb-s3 upload \
-      --lock \
-      --bucket apt.postgresml.org \
-      $(package_name ${ubuntu_version} ${arch}) \
-      --codename ${codename}
+  # Clean up the package file
+  rm $(package_name ${ubuntu_version} ${ARCH})
+}
 
-    # Clean up the package file
-    rm $(package_name ${ubuntu_version} ${arch})
+# If a specific Ubuntu version is provided, only build for that version
+if [[ ! -z "$target_ubuntu_version" ]]; then
+  if [[ -z "${ubuntu_versions[$target_ubuntu_version]}" ]]; then
+    echo "Error: Ubuntu version $target_ubuntu_version is not supported."
+    echo "Supported versions: ${!ubuntu_versions[@]}"
+    exit 1
+  fi
+  
+  build_package "$target_ubuntu_version" "${ubuntu_versions[$target_ubuntu_version]}"
+else
+  # If no version specified, loop through all supported Ubuntu versions
+  for ubuntu_version in "${!ubuntu_versions[@]}"; do
+    build_package "$ubuntu_version" "${ubuntu_versions[$ubuntu_version]}"
   done
-done
+fi

@@ -11,7 +11,8 @@ jobs:
     strategy:
       fail-fast: false # Let the other job finish
       matrix:
-        os: ["buildjet-4vcpu-ubuntu-2204", "buildjet-4vcpu-ubuntu-2204-arm", "ubuntu-24.04"]
+        os: ["buildjet-4vcpu-ubuntu-2204", "buildjet-4vcpu-ubuntu-2204-arm"]
+        ubuntu_version: ["20.04", "22.04", "24.04"]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
@@ -21,4 +22,4 @@ jobs:
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_DEFAULT_REGION: ${{ vars.AWS_DEFAULT_REGION }}
       run: |
-        bash packages/postgresml-python/release.sh ${{ inputs.packageVersion }}
+        bash packages/postgresml-python/release.sh ${{ inputs.packageVersion }} ${{ matrix.ubuntu_version }}
