@@ -165,6 +165,7 @@ jobs:
       fail-fast: false # Let the other job finish
       matrix:
         os: ["ubuntu-22.04"]
+        ubuntu_version: ["20.04", "22.04", "24.04"]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
@@ -180,6 +181,7 @@ jobs:
   # PostgresML dashboard.
   #
   postgresml-dashboard:
+    needs: postgresml
     strategy:
       fail-fast: false # Let the other job finish
       matrix:
