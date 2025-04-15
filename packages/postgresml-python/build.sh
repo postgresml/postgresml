@@ -49,6 +49,11 @@ fi
 virtualenv --python="python${PYTHON_VERSION}" "$deb_dir/var/lib/postgresml-python/pgml-venv"
 source "$deb_dir/var/lib/postgresml-python/pgml-venv/bin/activate"
 
+# For Python 3.12, ensure PyTorch is installed first
+if [[ "${PYTHON_VERSION}" == "3.12" ]]; then
+  python -m pip install torch
+fi
+
 python -m pip install -r "${deb_dir}/etc/postgresml-python/requirements.txt"
 
 deactivate

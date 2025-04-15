@@ -26,7 +26,11 @@ jobs:
         UBUNTU_VERSION: ${{ matrix.ubuntu_version }}
       run: |
         sudo apt update
-        sudo apt install -y python3-dev python3-pip python3-virtualenv
+        sudo apt install -y python3-dev python3-pip python3-virtualenv software-properties-common python3-wheel-whl python3-pip-whl python3-setuptools-whl
+        
+        # Add deadsnakes PPA for all Python versions
+        sudo add-apt-repository -y ppa:deadsnakes/ppa
+        sudo apt update
         
         # Install specific Python versions based on Ubuntu target
         if [[ "$UBUNTU_VERSION" == "20.04" ]]; then
@@ -34,11 +38,11 @@ jobs:
         elif [[ "$UBUNTU_VERSION" == "22.04" ]]; then
           sudo apt install -y python3.10 python3.10-dev python3.10-venv
         elif [[ "$UBUNTU_VERSION" == "24.04" ]]; then
-          # Add deadsnakes PPA for Python 3.12 on Ubuntu 22.04
-          sudo add-apt-repository -y ppa:deadsnakes/ppa
-          sudo apt update
           sudo apt install -y python3.12 python3.12-dev python3.12-venv
         fi
+        
+        # Install PyTorch before running the build script to satisfy auto_gptq's requirements
+        pip install torch --user
         
         bash packages/postgresml-python/release.sh ${{ inputs.packageVersion }} ${{ matrix.ubuntu_version }}
 
