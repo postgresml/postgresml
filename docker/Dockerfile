@@ -18,7 +18,9 @@ RUN curl https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor | te
 
 ENV TZ=UTC
 ENV DEBIAN_FRONTEND=noninteractive
-RUN apt update -y && apt install git postgresml-17 postgresml-dashboard -y
+RUN apt update -y && \
+    apt install -y git postgresml-python && \
+    apt install -y postgresml-17 postgresml-dashboard
 RUN git clone --branch v0.8.0 https://github.com/pgvector/pgvector && \
 cd pgvector && \
 echo "trusted = true" >> vector.control && \

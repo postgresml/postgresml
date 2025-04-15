@@ -7,9 +7,32 @@ on:
         default: "2.10.0"
 jobs:
   #
+  # PostgresML Python package.
+  #
+  postgresml-python:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["ubuntu-22.04", "buildjet-4vcpu-ubuntu-2204-arm"]
+        ubuntu_version: ["20.04", "22.04", "24.04"]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build and release Python package
+      env:
+        AWS_ACCESS_KEY_ID: ${{ vars.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_DEFAULT_REGION: ${{ vars.AWS_DEFAULT_REGION }}
+      run: |
+        sudo apt update
+        sudo apt install -y python3-dev python3-pip python3-virtualenv
+        bash packages/postgresml-python/release.sh ${{ inputs.packageVersion }} ${{ matrix.ubuntu_version }}
+
+  #
   # PostgresML extension.
   #
   postgresml-pgml:
+    needs: postgresml-python
     strategy:
       fail-fast: false # Let the other job finish
       matrix:
