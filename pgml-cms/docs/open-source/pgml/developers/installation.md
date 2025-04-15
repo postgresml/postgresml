@@ -71,14 +71,36 @@ virtualenv pgml-venv && \
 source pgml-venv/bin/activate && \
 pip install -r requirements.txt
 ```
+
+PostgresML has architecture-specific requirements files:
+- `requirements.amd64.txt` - For x86_64/AMD64 architectures
+- `requirements.arm64.txt` - For ARM64/aarch64 architectures
+
+When building from source, use the appropriate file for your architecture:
+
+```bash
+# For AMD64/x86_64 systems
+pip install -r requirements.amd64.txt
+
+# For ARM64/aarch64 systems
+pip install -r requirements.arm64.txt
+```
+
+These files contain frozen dependencies that have been tested with PostgresML. We recommend using Python 3.11 for optimal compatibility with all dependencies.
 {% endtab %}
 
 {% tab title="Globally" %}
 Installing Python packages globally can cause issues with your system. If you wish to proceed nonetheless, you can do so:
 
 ```bash
-pip3 install -r requirements.txt
+# For AMD64/x86_64 systems
+pip3 install -r requirements.amd64.txt
+
+# For ARM64/aarch64 systems
+pip3 install -r requirements.arm64.txt
 ```
+
+We recommend using Python 3.11 for optimal compatibility with all dependencies.
 {% endtab %}
 {% endtabs %}
 
