@@ -47,12 +47,10 @@ build_package() {
     fi
 
     deb-s3 upload \
-      --lock \
       --visibility=public \
       --bucket apt.postgresml.org \
       $(package_name ${pg} ${ubuntu_version}) \
-      --codename ${codename} \
-      --lock-name="all-${ubuntu_version}-$(date +%s)"
+      --codename ${codename}
 
     rm $(package_name ${pg} ${ubuntu_version})
   done

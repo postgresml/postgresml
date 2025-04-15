@@ -57,14 +57,12 @@ build_package() {
     exit 1
   fi
 
-  # Upload to S3 with a unique ID to avoid lock contention
+  # Upload to S3
   deb-s3 upload \
-    --lock \
     --visibility=public \
     --bucket apt.postgresml.org \
     $(package_name ${ubuntu_version} ${ARCH}) \
-    --codename ${codename} \
-    --lock-name="${ARCH}-${ubuntu_version}-$(date +%s)"
+    --codename ${codename}
 
   # Clean up the package file
   rm $(package_name ${ubuntu_version} ${ARCH})
