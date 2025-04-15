@@ -4,7 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       packageVersion:
-        default: "2.8.4"
+        default: "2.10.0"
+  workflow_call:
+    inputs:
+      packageVersion:
+        type: string
+        required: true
+        default: "2.10.0"
 
 jobs:
   postgresml-python:
@@ -21,5 +27,28 @@ jobs:
         AWS_ACCESS_KEY_ID: ${{ vars.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_DEFAULT_REGION: ${{ vars.AWS_DEFAULT_REGION }}
+        UBUNTU_VERSION: ${{ matrix.ubuntu_version }}
       run: |
+        sudo apt update
+        sudo apt install -y python3-dev python3-pip python3-virtualenv software-properties-common python3-wheel-whl python3-pip-whl python3-setuptools-whl
+        
+        # Add deadsnakes PPA for all Python versions
+        sudo add-apt-repository -y ppa:deadsnakes/ppa
+        sudo apt update
+        
+        # Install specific Python versions based on Ubuntu target
+        if [[ "$UBUNTU_VERSION" == "20.04" ]]; then
+          sudo apt install -y python3.8 python3.8-dev python3.8-venv
+        elif [[ "$UBUNTU_VERSION" == "22.04" ]]; then
+          sudo apt install -y python3.10 python3.10-dev python3.10-venv
+        elif [[ "$UBUNTU_VERSION" == "24.04" ]]; then
+          sudo apt install -y python3.12 python3.12-dev python3.12-venv
+        fi
+        
+        # Ensure pip is updated
+        python3 -m pip install --upgrade pip setuptools wheel
+        
+        # Install PyTorch globally before running the build script
+        sudo python3 -m pip install torch
+        
         bash packages/postgresml-python/release.sh ${{ inputs.packageVersion }} ${{ matrix.ubuntu_version }}
