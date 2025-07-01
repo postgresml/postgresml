@@ -97,7 +97,10 @@ SELECT pgml.transform(
 ) AS result;
 
 SELECT pgml.transform(
-    'summarization',
+    task => '{
+        "task": "summarization",
+        "model": "facebook/bart-large-cnn"
+    }'::JSONB,
     inputs => ARRAY[
         'Dominic Cobb is the foremost practitioner of the artistic science of extraction, inserting oneself into a subject''s dreams to obtain hidden information without the subject knowing, a concept taught to him by his professor father-in-law, Dr. Stephen Miles. Dom''s associates are Miles'' former students, who Dom requires as he has given up being the dream architect for reasons he won''t disclose. Dom''s primary associate, Arthur, believes it has something to do with Dom''s deceased wife, Mal, who often figures prominently and violently in those dreams, or Dom''s want to "go home" (get back to his own reality, which includes two young children). Dom''s work is generally in corporate espionage. As the subjects don''t want the information to get into the wrong hands, the clients have zero tolerance for failure. Dom is also a wanted man, as many of his past subjects have learned what Dom has done to them. One of those subjects, Mr. Saito, offers Dom a job he can''t refuse: to take the concept one step further into inception, namely planting thoughts into the subject''s dreams without them knowing. Inception can fundamentally alter that person as a being. Saito''s target is Robert Michael Fischer, the heir to an energy business empire, which has the potential to rule the world if continued on the current trajectory. Beyond the complex logistics of the dream architecture of the case and some unknowns concerning Fischer, the biggest obstacles in success for the team become worrying about one aspect of inception which Cobb fails to disclose to the other team members prior to the job, and Cobb''s newest associate Ariadne''s belief that Cobb''s own subconscious, especially as it relates to Mal, may be taking over what happens in the dreams.'
     ]
