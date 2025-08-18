@@ -1,10 +1,10 @@
 # Examples
 
 ## Prerequisites
-Before running any examples first install dependencies and set the DATABASE_URL environment variable:
+Before running any examples first install dependencies and set the PGML_DATABASE_URL environment variable:
 ```
 pip install -r requirements.txt
-export DATABASE_URL={YOUR DATABASE URL}
+export PGML_DATABASE_URL={YOUR DATABASE URL}
 ```
 
 Optionally, configure a .env file containing a DATABASE_URL variable.
@@ -26,3 +26,9 @@ In this example, we will use [Open Table-and-Text Question Answering (OTT-QA)](h
 
 ## [Summarizing Question Answering](./summarizing_question_answering.py)
 This is an example to find documents relevant to a question from the collection of documents and then summarize those documents.
+
+## [Load Data](./load_data.py)
+This is a simple example to show best practices for upserting data to a collection.
+
+## [Offline Summarization](./offline_summarization.py)
+This sample shows how to perform summarization over documents that have been added to a collection using SQL.
