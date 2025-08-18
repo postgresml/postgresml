@@ -624,6 +624,26 @@ pub fn rank(
     }
 }
 
+#[cfg(all(feature = "python", not(feature = "use_as_lib")))]
+#[pg_extern(immutable, parallel_safe, name = "embed2")]
+pub fn embed_batch2<'a>(
+    transformer: &str,
+    inputs: Vec<&'a str>,
+    kwargs: default!(JsonB, "'{}'"),
+) -> TableIterator<'a, (name!(text, String), name!(embedding, Vec<f32>))> {
+    let rows = match crate::bindings::transformers::embed(transformer, inputs.clone(), &kwargs.0) {
+        Ok(rows) => rows,
+        Err(e) => {
+            error!("{e}");
+        }
+    };
+    TableIterator::new(
+        inputs.into_iter().zip(rows.into_iter()).map(|(text, embedding)| {
+            (text.to_string(), embedding)
+        }),
+    )
+}
+
 /// Clears the GPU cache.
 ///
 /// # Arguments
